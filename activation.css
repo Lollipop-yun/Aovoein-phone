@@ -1,0 +1,37 @@
+/* activation.css - 激活页专属样式 */
+#activation-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: #ffffff; z-index: 999990;
+    display: flex; flex-direction: column; align-items: center; padding-top: 80px;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.6s;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+.hidden-screen { opacity: 0; pointer-events: none; visibility: hidden; }
+
+.activation-header { text-align: center; margin-bottom: 30px; }
+.activation-logo { font-size: 28px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px; color: #000; }
+.activation-sub { font-size: 13px; color: #888; }
+
+.device-id-box { background: #f9f9f9; padding: 12px 20px; border-radius: 12px; font-family: monospace; font-size: 18px; color: #333; letter-spacing: 2px; margin-bottom: 25px; border: 1px solid #eee; text-align: center; user-select: text !important; }
+.device-label { font-size: 10px; color: #aaa; text-transform: uppercase; margin-bottom: 4px; display: block; letter-spacing: 1px; }
+
+.form-group { width: 85%; max-width: 320px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.form-input { width: 100%; padding: 14px 16px; font-size: 15px; border: 2px solid #f0f0f0; border-radius: 12px; outline: none; transition: all 0.3s; background: #fafafa; color: #000; box-sizing: border-box; }
+.form-input:focus { border-color: #000; background: #fff; }
+.form-input.error { border-color: #ff4d4f; background: #fff2f0; }
+
+.disclaimer-check { font-size: 12px; color: #666; display: flex; align-items: center; gap: 6px; margin-bottom: 20px; width: 85%; max-width: 320px; }
+.disclaimer-check a { color: #000; font-weight: bold; text-decoration: underline; cursor: pointer; }
+
+.activate-btn { background-color: #000; color: white; width: 85%; max-width: 320px; padding: 15px; border-radius: 30px; font-size: 15px; font-weight: 600; text-align: center; cursor: pointer; transition: all 0.2s; border: none; }
+.activate-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+.activate-btn:active:not(:disabled) { transform: scale(0.96); }
+
+/* 免责声明弹窗 */
+#disclaimer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 999999; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s; }
+#disclaimer-modal.show { display: flex; opacity: 1; }
+.modal-content { background: white; width: 85%; max-width: 340px; border-radius: 20px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); flex-direction: column; display: flex; }
+.modal-title { font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 16px; color: #000; }
+.modal-text { font-size: 13px; color: #555; line-height: 1.6; max-height: 50vh; overflow-y: auto; margin-bottom: 20px; text-align: justify; padding-right: 4px; }
+.modal-btn { background: #000; color: white; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: bold; text-align: center; cursor: pointer; border: none; transition: 0.2s; }
+.modal-btn:disabled { background: #ddd; cursor: not-allowed; color: #888; }
