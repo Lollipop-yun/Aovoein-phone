@@ -6,13 +6,17 @@ const TaobaoApp = {
             taobaoModal: { 
                 activeTab: 'home', 
                 activeCategory: '服饰', 
+                takeoutCategory: '美食', 
                 selectedItem: null, 
                 storeList: [], 
+                takeoutStoreList: [], 
                 searchKeyword: '', 
                 isSearching: false, 
                 searchResults: [], 
                 hotSales: [], 
-                cartItems: [] 
+                takeoutHotSales: [], 
+                cartItems: [],
+                msgTab: 'merchant' 
             },
             taobaoDescModal: { show: false, content: '', isGenerating: false },
             
@@ -97,6 +101,7 @@ const TaobaoApp = {
             return this.masks.find(m => m.id === id) || { name: '我', avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', bio: '' };
         },
         refreshTaobaoItems() {
+            // 桃宝数据
             this.taobaoModal.storeList = [
                 { id: 1, category: '服饰', name: '优衣库官方旗舰店', tag: '品牌精选', items:[{name: '纯棉短袖T恤', price: '79.00'}, {name: '修身牛仔裤', price: '199.00'}, {name: '防晒轻薄外套', price: '149.00'}] },
                 { id: 2, category: '数码', name: 'Apple产品官方旗舰店', tag: '正品保证', items:[{name: 'AirPods Pro 2', price: '1899.00'}, {name: '20W 充电头', price: '149.00'}, {name: 'MagSafe 保护壳', price: '399.00'}] },
@@ -104,21 +109,42 @@ const TaobaoApp = {
                 { id: 4, category: '零食', name: '三只松鼠旗舰店', tag: '吃货必逛', items:[{name: '每日坚果大礼包', price: '88.00'}, {name: '手撕面包一整箱', price: '29.90'}, {name: '芒果干', price: '25.00'}] },
                 { id: 5, category: '日用', name: '无印良品旗舰店', tag: '生活百货', items:[{name: '香薰机', price: '199.00'}, {name: '极简收纳盒', price: '45.00'}, {name: '纯棉四件套', price: '299.00'}] }
             ];
-
             const merchantIntros = ['本店爆款推荐！材质优良，做工精细，好评率高达99%！', '官方正品保证！细节处理得恰到好处，保证让您惊艳！', '高性价比之选！兼顾美观与实用，设计感拉满！'];
             let allItems = [];
             this.taobaoModal.storeList.forEach(store => {
                 store.items.forEach(item => {
-                    item.cartId = Date.now() + Math.random(); // 唯一标识
+                    item.cartId = Date.now() + Math.random();
                     item.sales = Math.floor(Math.random() * 8000 + 500);
                     item.desc = merchantIntros[Math.floor(Math.random() * merchantIntros.length)];
                     item.appearance = `一件包装精美的${item.name}，使用印有品牌Logo的快递盒仔细封装着。`; 
-                    item.selected = true; // 默认加入购物车勾选
+                    item.selected = true;
                     allItems.push({...item, storeName: store.name, category: store.category});
                 });
             });
             allItems.sort(() => Math.random() - 0.5);
             this.taobaoModal.hotSales = allItems;
+
+            // 外卖数据
+            this.taobaoModal.takeoutStoreList = [
+                { id: 1, category: '美食', name: 'Wagas 沃歌斯', tag: '健康轻食', items:[{name: '煎烤鸡肉沙拉', price: '45.00'}, {name: '牛肉能量碗', price: '52.00'}, {name: '意式肉酱面', price: '38.00'}] },
+                { id: 2, category: '美食', name: 'KFC 肯德基', tag: '西式快餐', items:[{name: '麦辣鸡腿堡套餐', price: '38.00'}, {name: '原味鸡+薯条', price: '25.00'}, {name: '老北京卷', price: '18.00'}] },
+                { id: 3, category: '美食', name: '老乡鸡', tag: '中式快餐', items:[{name: '肥西老母鸡汤', price: '18.00'}, {name: '梅菜扣肉', price: '22.00'}, {name: '葱油鸡', price: '20.00'}] },
+                { id: 4, category: '饮品', name: 'Manner Coffee', tag: '精品咖啡', items:[{name: '冰美式', price: '15.00'}, {name: '桂花燕麦拿铁', price: '22.00'}] },
+                { id: 5, category: '蔬果', name: '百果园', tag: '新鲜水果', items:[{name: 'A级车厘子500g', price: '58.00'}, {name: '红颜草莓300g', price: '35.00'}] }
+            ];
+            let allTakeoutItems = [];
+            this.taobaoModal.takeoutStoreList.forEach(store => {
+                store.items.forEach(item => {
+                    item.cartId = Date.now() + Math.random();
+                    item.sales = Math.floor(Math.random() * 8000 + 500);
+                    item.desc = '本店招牌必点！严选新鲜食材，口感层次极其丰富！';
+                    item.appearance = `一份刚出炉的${item.name}，被仔细装在环保外卖盒中。`; 
+                    item.selected = true;
+                    allTakeoutItems.push({...item, storeName: store.name, category: store.category});
+                });
+            });
+            allTakeoutItems.sort(() => Math.random() - 0.5);
+            this.taobaoModal.takeoutHotSales = allTakeoutItems;
         },
         openTaobaoItem(item, storeName) {
             this.taobaoModal.selectedItem = {
@@ -350,31 +376,30 @@ const TaobaoApp = {
     template: `
         <div class="absolute inset-0 z-[1000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
             <!-- 顶部导航 -->
-            <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#ff5000] text-white shrink-0 z-40 sticky top-0 shadow-sm">
+            <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] text-gray-900 border-b border-gray-200 shrink-0 z-50 sticky top-0">
                 <button @click="taobaoModal.activeTab === 'search' ? (taobaoModal.activeTab = 'home') : closeApp()" class="w-8 h-8 flex items-center justify-center active:opacity-50"><i class="fas fa-chevron-left text-lg"></i></button>
-                <h1 class="font-bold text-[17px] absolute left-1/2 -translate-x-1/2">{{ taobaoModal.activeTab === 'search' ? '搜索' : (taobaoModal.activeTab === 'home' ? '桃宝' : (taobaoModal.activeTab === 'cart' ? '购物车' : '我的桃宝')) }}</h1>
-                <button v-if="taobaoModal.activeTab === 'home'" @click="refreshTaobaoItems" class="w-8 h-8 flex items-center justify-center active:opacity-50"><i class="fas fa-sync-alt"></i></button>
+                <h1 class="font-bold text-[17px] absolute left-1/2 -translate-x-1/2">{{ taobaoModal.activeTab === 'search' ? '搜索' : (taobaoModal.activeTab === 'home' ? '桃宝' : (taobaoModal.activeTab === 'takeout' ? '外卖' : (taobaoModal.activeTab === 'msg' ? '消息' : (taobaoModal.activeTab === 'cart' ? '购物车' : '我的桃宝')))) }}</h1>
+                <button v-if="taobaoModal.activeTab === 'home' || taobaoModal.activeTab === 'takeout'" @click="refreshTaobaoItems" class="w-8 h-8 flex items-center justify-center active:opacity-50"><i class="fas fa-sync-alt"></i></button>
                 <div v-else class="w-8"></div>
             </header>
 
             <div class="flex-1 overflow-y-auto pb-6 relative">
                 <!-- ================= 首页 ================= -->
                 <div v-if="taobaoModal.activeTab === 'home'" class="flex flex-col min-h-full">
-                    <div class="pt-4 px-4 pb-2 bg-[#ff5000] rounded-b-[20px]">
-                        <div class="bg-white rounded-full flex items-center px-4 h-10 shadow-inner cursor-text" @click="taobaoModal.activeTab = 'search'; taobaoModal.searchResults=[]; taobaoModal.searchKeyword='';">
-                            <i class="fas fa-search text-gray-400 mr-2"></i>
+                    <div class="pt-4 px-4 pb-2 bg-[#f2f2f6]">
+                        <div class="bg-white rounded-[10px] flex items-center px-3 h-9 shadow-sm border border-gray-100 cursor-text" @click="taobaoModal.activeTab = 'search'; taobaoModal.searchResults=[]; taobaoModal.searchKeyword='';">
+                            <i class="fas fa-search text-gray-400 mr-2 text-[14px]"></i>
                             <div class="text-gray-400 text-[14px]">寻找宝贝、店铺...</div>
                         </div>
                     </div>
                     <!-- 分类 -->
-                    <div class="px-4 py-3 z-10 sticky top-0 bg-[#f2f2f6]">
-                        <div class="flex items-center justify-between overflow-x-auto scrollbar-hide gap-4">
+                    <div class="px-4 py-2 z-10 sticky top-0 bg-[#f2f2f6]">
+                        <div class="bg-white/80 backdrop-blur-md rounded-full p-1 flex items-center justify-between shadow-sm border border-gray-200/60">
                             <div v-for="cat in ['服饰', '数码', '美妆', '零食', '日用']" :key="cat"
-                                 class="shrink-0 text-center pb-1 text-[14px] font-bold transition-all cursor-pointer relative"
-                                 :class="taobaoModal.activeCategory === cat ? 'text-[#ff5000]' : 'text-gray-500'"
+                                 class="flex-1 text-center py-1.5 rounded-full text-[13px] font-bold transition-all cursor-pointer"
+                                 :class="taobaoModal.activeCategory === cat ? 'bg-[#ff5000] text-white shadow-md' : 'text-gray-500 hover:text-gray-800'"
                                  @click="taobaoModal.activeCategory = cat">
                                 {{ cat }}
-                                <div v-if="taobaoModal.activeCategory === cat" class="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-[#ff5000] rounded-full"></div>
                             </div>
                         </div>
                     </div>
@@ -441,6 +466,92 @@ const TaobaoApp = {
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- ================= 外卖 (图二) ================= -->
+                <div v-if="taobaoModal.activeTab === 'takeout'" class="flex flex-col bg-[#f2f2f6] min-h-full">
+                    <div class="pt-4 px-4 pb-2 bg-[#f2f2f6]">
+                        <div class="bg-white rounded-[10px] flex items-center px-3 h-9 shadow-sm border border-gray-100 cursor-text" @click="taobaoModal.activeTab = 'search'; taobaoModal.searchResults=[]; taobaoModal.searchKeyword='';">
+                            <i class="fas fa-search text-gray-400 mr-2 text-[14px]"></i>
+                            <div class="text-gray-400 text-[14px]">搜外卖、搜商家...</div>
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-2 z-10 sticky top-0 bg-[#f2f2f6]">
+                        <div class="bg-white/80 backdrop-blur-md rounded-full p-1 flex items-center justify-between shadow-sm border border-gray-200/60">
+                            <div v-for="cat in ['美食', '蔬果', '饮品', '日用品', '其他']" :key="cat"
+                                 class="flex-1 text-center py-1.5 rounded-full text-[13px] font-bold transition-all cursor-pointer"
+                                 :class="taobaoModal.takeoutCategory === cat ? 'bg-[#2c2c2e] text-white shadow-md' : 'text-gray-500 hover:text-gray-800'"
+                                 @click="taobaoModal.takeoutCategory = cat">
+                                {{ cat }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="taobaoModal.takeoutHotSales && taobaoModal.takeoutHotSales.length > 0" class="px-4 mb-2 mt-2">
+                        <div class="text-[15px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 ml-1 mb-2">本周热销 <i class="fas fa-fire text-red-500 text-sm"></i></div>
+                        <div class="flex overflow-x-auto gap-3 scrollbar-hide">
+                            <div v-for="(item, idx) in taobaoModal.takeoutHotSales.filter(s => s.category === taobaoModal.takeoutCategory).slice(0, 5)" :key="'hot'+idx" @click="openTaobaoItem(item, item.storeName)" class="w-32 shrink-0 bg-white rounded-2xl p-2 border border-gray-100 shadow-sm cursor-pointer active:scale-95 transition">
+                                <div class="w-full h-20 bg-gray-100 rounded-xl mb-2 flex items-center justify-center text-gray-300 relative overflow-hidden">
+                                    <i class="fas fa-crown text-2xl opacity-30"></i>
+                                    <div class="absolute top-0 left-0 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg">TOP {{ idx + 1 }}</div>
+                                </div>
+                                <div class="text-[13px] font-bold text-gray-800 truncate w-full">{{ item.name }}</div>
+                                <div class="flex justify-between items-center mt-1">
+                                    <span class="text-[14px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
+                                    <span class="text-[9px] text-gray-400 bg-gray-50 px-1 rounded">售{{ item.sales }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-4 space-y-3 pb-4 pt-2">
+                        <div class="text-[15px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 ml-1 mb-1">附近推荐</div>
+                        <div v-for="store in (taobaoModal.takeoutStoreList ||[]).filter(s => s.category === taobaoModal.takeoutCategory)" :key="store.id" class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
+                            <div class="flex items-center gap-3 border-b border-gray-50 pb-3">
+                                <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"><i class="fas fa-store"></i></div>
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-[15px] text-gray-900">{{ store.name }}</span>
+                                    <span class="text-[10px] text-gray-400">{{ store.tag }} · 30分钟送达</span>
+                                </div>
+                            </div>
+                            <div class="flex overflow-x-auto gap-3 scrollbar-hide">
+                                <div v-for="(item, idx) in store.items" :key="idx" @click="openTaobaoItem(item, store.name)" class="w-28 shrink-0 flex flex-col gap-1 cursor-pointer active:scale-95 transition">
+                                    <div class="w-28 h-20 bg-gray-100 rounded-xl overflow-hidden border border-gray-50 flex items-center justify-center text-gray-300"><i class="fas fa-utensils"></i></div>
+                                    <span class="text-[12px] font-medium text-gray-800 truncate">{{ item.name }}</span>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[13px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
+                                        <span class="text-[9px] text-gray-400">售{{ item.sales }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= 消息 ================= -->
+                <div v-if="taobaoModal.activeTab === 'msg'" class="flex flex-col bg-[#f2f2f6] min-h-full">
+                    <div class="px-4 py-3 z-10 sticky top-0 bg-[#f2f2f6] flex justify-center">
+                        <div class="bg-gray-200/60 p-1 rounded-lg flex items-center w-[60%]">
+                            <div class="flex-1 text-center py-1.5 rounded-md text-[13px] font-bold transition-all cursor-pointer"
+                                 :class="taobaoModal.msgTab === 'merchant' ? 'bg-white shadow-sm text-black' : 'text-gray-500'"
+                                 @click="taobaoModal.msgTab = 'merchant'">商家</div>
+                            <div class="flex-1 text-center py-1.5 rounded-md text-[13px] font-bold transition-all cursor-pointer"
+                                 :class="taobaoModal.msgTab === 'rider' ? 'bg-white shadow-sm text-black' : 'text-gray-500'"
+                                 @click="taobaoModal.msgTab = 'rider'">骑手</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto px-4 pt-4">
+                        <div v-if="taobaoModal.msgTab === 'merchant'" class="flex flex-col items-center justify-center mt-32 text-gray-400">
+                            <i class="fas fa-store text-4xl mb-4 opacity-20"></i>
+                            <span class="text-sm font-medium tracking-wide">暂无商家消息</span>
+                        </div>
+                        <div v-else class="flex flex-col items-center justify-center mt-32 text-gray-400">
+                            <i class="fas fa-motorcycle text-4xl mb-4 opacity-20"></i>
+                            <span class="text-sm font-medium tracking-wide">暂无骑手消息</span>
+                        </div>
+                    </div>
+                </div>
                     
                     <!-- 购物车底部结算栏 -->
                     <div v-if="taobaoModal.cartItems.length > 0" class="absolute bottom-0 left-0 w-full bg-white border-t border-gray-200 p-2 pl-4 pr-3 flex justify-between items-center z-20 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
@@ -774,12 +885,10 @@ const TaobaoApp = {
                 <div @click="taobaoModal.activeTab = 'home'" class="flex flex-col items-center gap-1 cursor-pointer transition w-12" :class="taobaoModal.activeTab === 'home' ? 'text-[#ff5000]' : 'text-gray-400'">
                     <i class="fas fa-home text-[22px]"></i><span class="text-[10px] font-bold">首页</span>
                 </div>
-                <!-- 新增：外卖占位 -->
-                <div class="flex flex-col items-center gap-1 cursor-pointer transition w-12 text-gray-400" @click="showToast('外卖模块已迁移并待接入')">
+                <div @click="taobaoModal.activeTab = 'takeout'" class="flex flex-col items-center gap-1 cursor-pointer transition w-12" :class="taobaoModal.activeTab === 'takeout' ? 'text-[#ff5000]' : 'text-gray-400'">
                     <i class="fas fa-motorcycle text-[22px]"></i><span class="text-[10px] font-bold">外卖</span>
                 </div>
-                <!-- 新增：消息占位 -->
-                <div class="flex flex-col items-center gap-1 cursor-pointer transition w-12 text-gray-400" @click="showToast('消息通知功能待开发')">
+                <div @click="taobaoModal.activeTab = 'msg'" class="flex flex-col items-center gap-1 cursor-pointer transition w-12" :class="taobaoModal.activeTab === 'msg' ? 'text-[#ff5000]' : 'text-gray-400'">
                     <i class="fas fa-comment-dots text-[22px]"></i><span class="text-[10px] font-bold">消息</span>
                 </div>
                 <div @click="taobaoModal.activeTab = 'cart'" class="flex flex-col items-center gap-1 cursor-pointer transition w-12" :class="taobaoModal.activeTab === 'cart' ? 'text-[#ff5000]' : 'text-gray-400'">
