@@ -126,24 +126,25 @@ const TaobaoApp = {
 
             // 外卖数据
             this.taobaoModal.takeoutStoreList = [
-                { id: 1, category: '美食', name: 'Wagas 沃歌斯', tag: '健康轻食', items:[{name: '煎烤鸡肉沙拉', price: '45.00'}, {name: '牛肉能量碗', price: '52.00'}, {name: '意式肉酱面', price: '38.00'}] },
+                { id: 1, category: '美食', name: 'Wagas 沃歌斯', tag: '健康轻食', items:[{name: '牛肉能量碗', price: '52.00'}, {name: '煎烤鸡肉沙拉', price: '45.00'}, {name: '意式肉酱面', price: '38.00'}] },
                 { id: 2, category: '美食', name: 'KFC 肯德基', tag: '西式快餐', items:[{name: '麦辣鸡腿堡套餐', price: '38.00'}, {name: '原味鸡+薯条', price: '25.00'}, {name: '老北京卷', price: '18.00'}] },
                 { id: 3, category: '美食', name: '老乡鸡', tag: '中式快餐', items:[{name: '肥西老母鸡汤', price: '18.00'}, {name: '梅菜扣肉', price: '22.00'}, {name: '葱油鸡', price: '20.00'}] },
-                { id: 4, category: '饮品', name: 'Manner Coffee', tag: '精品咖啡', items:[{name: '冰美式', price: '15.00'}, {name: '桂花燕麦拿铁', price: '22.00'}] },
-                { id: 5, category: '蔬果', name: '百果园', tag: '新鲜水果', items:[{name: 'A级车厘子500g', price: '58.00'}, {name: '红颜草莓300g', price: '35.00'}] }
+                { id: 4, category: '饮品', name: '霸王茶姬', tag: '新中式奶茶', items:[{name: '伯牙绝弦', price: '20.00'}, {name: '春日桃桃', price: '18.00'}] },
+                { id: 5, category: '日用品', name: '屈臣氏', tag: '便利超市', items:[{name: '洗脸巾', price: '15.00'}, {name: '洁面乳', price: '45.00'}] }
             ];
             let allTakeoutItems = [];
             this.taobaoModal.takeoutStoreList.forEach(store => {
                 store.items.forEach(item => {
                     item.cartId = Date.now() + Math.random();
-                    item.sales = Math.floor(Math.random() * 8000 + 500);
-                    item.desc = '本店招牌必点！严选新鲜食材，口感层次极其丰富！';
+                    item.sales = Math.floor(Math.random() * 2000 + 2000);
+                    item.desc = '严选新鲜食材，口感层次极其丰富！';
                     item.appearance = `一份刚出炉的${item.name}，被仔细装在环保外卖盒中。`; 
                     item.selected = true;
                     allTakeoutItems.push({...item, storeName: store.name, category: store.category});
                 });
             });
-            allTakeoutItems.sort(() => Math.random() - 0.5);
+            // 按照价格排序假装热销
+            allTakeoutItems.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
             this.taobaoModal.takeoutHotSales = allTakeoutItems;
         },
         openTaobaoItem(item, storeName) {
@@ -467,17 +468,19 @@ const TaobaoApp = {
                         </div>
                     </div>
                     
-                    <!-- ================= 外卖 (图二) ================= -->
-                <div v-if="taobaoModal.activeTab === 'takeout'" class="flex flex-col bg-[#f2f2f6] min-h-full">
-                    <div class="pt-4 px-4 pb-2 bg-[#f2f2f6]">
-                        <div class="bg-white rounded-[10px] flex items-center px-3 h-9 shadow-sm border border-gray-100 cursor-text" @click="taobaoModal.activeTab = 'search'; taobaoModal.searchResults=[]; taobaoModal.searchKeyword='';">
+                    <!-- ================= 外卖 ================= -->
+                <div v-if="taobaoModal.activeTab === 'takeout'" class="flex flex-col bg-[#f5f5f5] min-h-full">
+                    <!-- 搜索栏 -->
+                    <div class="pt-2 px-4 pb-2 bg-[#f5f5f5]">
+                        <div class="bg-white rounded-full flex items-center px-4 h-10 shadow-sm border border-gray-100 cursor-text" @click="taobaoModal.activeTab = 'search'; taobaoModal.searchResults=[]; taobaoModal.searchKeyword='';">
                             <i class="fas fa-search text-gray-400 mr-2 text-[14px]"></i>
                             <div class="text-gray-400 text-[14px]">搜外卖、搜商家...</div>
                         </div>
                     </div>
 
-                    <div class="px-4 py-2 z-10 sticky top-0 bg-[#f2f2f6]">
-                        <div class="bg-white/80 backdrop-blur-md rounded-full p-1 flex items-center justify-between shadow-sm border border-gray-200/60">
+                    <!-- 分类 Tab -->
+                    <div class="px-4 py-2 z-10 sticky top-0 bg-[#f5f5f5]">
+                        <div class="bg-white rounded-full p-1 flex items-center justify-between shadow-sm">
                             <div v-for="cat in ['美食', '蔬果', '饮品', '日用品', '其他']" :key="cat"
                                  class="flex-1 text-center py-1.5 rounded-full text-[13px] font-bold transition-all cursor-pointer"
                                  :class="taobaoModal.takeoutCategory === cat ? 'bg-[#2c2c2e] text-white shadow-md' : 'text-gray-500 hover:text-gray-800'"
@@ -487,40 +490,42 @@ const TaobaoApp = {
                         </div>
                     </div>
 
+                    <!-- 本周热销 -->
                     <div v-if="taobaoModal.takeoutHotSales && taobaoModal.takeoutHotSales.length > 0" class="px-4 mb-2 mt-2">
-                        <div class="text-[15px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 ml-1 mb-2">本周热销 <i class="fas fa-fire text-red-500 text-sm"></i></div>
+                        <div class="text-[16px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 mb-3">本周热销 <i class="fas fa-fire text-red-500 text-sm"></i></div>
                         <div class="flex overflow-x-auto gap-3 scrollbar-hide">
-                            <div v-for="(item, idx) in taobaoModal.takeoutHotSales.filter(s => s.category === taobaoModal.takeoutCategory).slice(0, 5)" :key="'hot'+idx" @click="openTaobaoItem(item, item.storeName)" class="w-32 shrink-0 bg-white rounded-2xl p-2 border border-gray-100 shadow-sm cursor-pointer active:scale-95 transition">
-                                <div class="w-full h-20 bg-gray-100 rounded-xl mb-2 flex items-center justify-center text-gray-300 relative overflow-hidden">
-                                    <i class="fas fa-crown text-2xl opacity-30"></i>
-                                    <div class="absolute top-0 left-0 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg">TOP {{ idx + 1 }}</div>
+                            <div v-for="(item, idx) in taobaoModal.takeoutHotSales.filter(s => s.category === taobaoModal.takeoutCategory).slice(0, 5)" :key="'hot'+idx" @click="openTaobaoItem(item, item.storeName)" class="w-[130px] shrink-0 bg-white rounded-[16px] p-2.5 shadow-sm cursor-pointer active:scale-95 transition">
+                                <div class="w-full h-24 bg-[#f9f9f9] rounded-xl mb-3 flex items-center justify-center text-gray-200 relative overflow-hidden">
+                                    <i class="fas fa-crown text-4xl opacity-40"></i>
+                                    <div class="absolute top-0 left-0 bg-[#ff4d4f] text-white text-[10px] font-bold px-2 py-0.5 rounded-br-xl rounded-tl-xl">TOP {{ idx + 1 }}</div>
                                 </div>
-                                <div class="text-[13px] font-bold text-gray-800 truncate w-full">{{ item.name }}</div>
+                                <div class="text-[14px] font-bold text-gray-900 truncate w-full mb-1">{{ item.name }}</div>
                                 <div class="flex justify-between items-center mt-1">
-                                    <span class="text-[14px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
-                                    <span class="text-[9px] text-gray-400 bg-gray-50 px-1 rounded">售{{ item.sales }}</span>
+                                    <span class="text-[15px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
+                                    <span class="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">售{{ item.sales }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="px-4 space-y-3 pb-4 pt-2">
-                        <div class="text-[15px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 ml-1 mb-1">附近推荐</div>
-                        <div v-for="store in (taobaoModal.takeoutStoreList ||[]).filter(s => s.category === taobaoModal.takeoutCategory)" :key="store.id" class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
+                    <!-- 附近推荐 -->
+                    <div class="px-4 space-y-4 pb-4 pt-3">
+                        <div class="text-[16px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 mb-1">附近推荐</div>
+                        <div v-for="store in (taobaoModal.takeoutStoreList ||[]).filter(s => s.category === taobaoModal.takeoutCategory)" :key="store.id" class="bg-white rounded-[16px] p-4 shadow-sm flex flex-col gap-3">
                             <div class="flex items-center gap-3 border-b border-gray-50 pb-3">
-                                <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"><i class="fas fa-store"></i></div>
+                                <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"><i class="fas fa-store text-xl"></i></div>
                                 <div class="flex flex-col">
-                                    <span class="font-bold text-[15px] text-gray-900">{{ store.name }}</span>
-                                    <span class="text-[10px] text-gray-400">{{ store.tag }} · 30分钟送达</span>
+                                    <span class="font-bold text-[16px] text-gray-900">{{ store.name }}</span>
+                                    <span class="text-[11px] text-gray-500 mt-0.5">{{ store.tag }} · 30分钟送达</span>
                                 </div>
                             </div>
                             <div class="flex overflow-x-auto gap-3 scrollbar-hide">
-                                <div v-for="(item, idx) in store.items" :key="idx" @click="openTaobaoItem(item, store.name)" class="w-28 shrink-0 flex flex-col gap-1 cursor-pointer active:scale-95 transition">
-                                    <div class="w-28 h-20 bg-gray-100 rounded-xl overflow-hidden border border-gray-50 flex items-center justify-center text-gray-300"><i class="fas fa-utensils"></i></div>
-                                    <span class="text-[12px] font-medium text-gray-800 truncate">{{ item.name }}</span>
+                                <div v-for="(item, idx) in store.items" :key="idx" @click="openTaobaoItem(item, store.name)" class="w-[105px] shrink-0 flex flex-col gap-1 cursor-pointer active:scale-95 transition">
+                                    <div class="w-full h-[105px] bg-[#f9f9f9] rounded-xl overflow-hidden flex items-center justify-center text-gray-300"><i class="fas fa-utensils text-3xl"></i></div>
+                                    <span class="text-[13px] font-medium text-gray-900 truncate mt-1">{{ item.name }}</span>
                                     <div class="flex items-center justify-between">
-                                        <span class="text-[13px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
-                                        <span class="text-[9px] text-gray-400">售{{ item.sales }}</span>
+                                        <span class="text-[14px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
+                                        <span class="text-[10px] text-gray-400">售{{ item.sales }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -529,25 +534,24 @@ const TaobaoApp = {
                 </div>
 
                 <!-- ================= 消息 ================= -->
-                <div v-if="taobaoModal.activeTab === 'msg'" class="flex flex-col bg-[#f2f2f6] min-h-full">
-                    <div class="px-4 py-3 z-10 sticky top-0 bg-[#f2f2f6] flex justify-center">
-                        <div class="bg-gray-200/60 p-1 rounded-lg flex items-center w-[60%]">
-                            <div class="flex-1 text-center py-1.5 rounded-md text-[13px] font-bold transition-all cursor-pointer"
-                                 :class="taobaoModal.msgTab === 'merchant' ? 'bg-white shadow-sm text-black' : 'text-gray-500'"
+                <div v-if="taobaoModal.activeTab === 'msg'" class="flex flex-col bg-[#f5f5f5] min-h-full">
+                    <div class="px-4 py-3 z-10 sticky top-0 bg-[#f5f5f5] flex justify-center">
+                        <div class="bg-gray-200/80 p-1 rounded-[10px] flex items-center w-[60%]">
+                            <div class="flex-1 text-center py-1.5 rounded-md text-[14px] font-bold transition-all cursor-pointer"
+                                 :class="taobaoModal.msgTab === 'merchant' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'"
                                  @click="taobaoModal.msgTab = 'merchant'">商家</div>
-                            <div class="flex-1 text-center py-1.5 rounded-md text-[13px] font-bold transition-all cursor-pointer"
-                                 :class="taobaoModal.msgTab === 'rider' ? 'bg-white shadow-sm text-black' : 'text-gray-500'"
+                            <div class="flex-1 text-center py-1.5 rounded-md text-[14px] font-bold transition-all cursor-pointer"
+                                 :class="taobaoModal.msgTab === 'rider' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'"
                                  @click="taobaoModal.msgTab = 'rider'">骑手</div>
                         </div>
                     </div>
-                    
-                    <div class="flex-1 overflow-y-auto px-4 pt-4">
-                        <div v-if="taobaoModal.msgTab === 'merchant'" class="flex flex-col items-center justify-center mt-32 text-gray-400">
-                            <i class="fas fa-store text-4xl mb-4 opacity-20"></i>
+                    <div class="flex-1 overflow-y-auto px-4 pt-10">
+                        <div v-if="taobaoModal.msgTab === 'merchant'" class="flex flex-col items-center justify-center text-gray-400">
+                            <i class="fas fa-store text-5xl mb-4 opacity-20"></i>
                             <span class="text-sm font-medium tracking-wide">暂无商家消息</span>
                         </div>
-                        <div v-else class="flex flex-col items-center justify-center mt-32 text-gray-400">
-                            <i class="fas fa-motorcycle text-4xl mb-4 opacity-20"></i>
+                        <div v-else class="flex flex-col items-center justify-center text-gray-400">
+                            <i class="fas fa-motorcycle text-5xl mb-4 opacity-20"></i>
                             <span class="text-sm font-medium tracking-wide">暂无骑手消息</span>
                         </div>
                     </div>
@@ -612,28 +616,27 @@ const TaobaoApp = {
 
             <!-- ================= 图一：地址管理界面 ================= -->
             <transition name="page-slide">
-                <div v-if="addressModal.showList" class="absolute inset-0 z-[60] bg-[#f5f5f5] flex flex-col pb-safe">
-                    <header class="h-[90px] pt-10 px-4 flex justify-between items-center bg-white shrink-0 sticky top-0 z-10 border-b border-gray-100">
-                        <button @click="addressModal.showList = false" class="text-gray-800 text-xl"><i class="fas fa-chevron-left"></i></button>
-                        <span class="font-bold text-[17px]">我的收货地址</span>
-                        <div class="flex gap-4 text-gray-800 text-lg">
+                <div v-if="addressModal.showList" class="fixed inset-0 z-[100000] bg-[#f5f5f5] flex flex-col pb-safe font-sans">
+                    <header class="h-[90px] pt-10 px-4 flex justify-between items-center bg-white shrink-0 sticky top-0 z-10">
+                        <button @click="addressModal.showList = false" class="text-gray-800 text-xl w-8"><i class="fas fa-chevron-left"></i></button>
+                        <span class="font-bold text-[18px]">我的收货地址</span>
+                        <div class="flex gap-4 text-gray-800 text-xl w-14 justify-end">
                             <i class="fas fa-plus cursor-pointer" @click="addNewAddress"></i>
                             <i class="fas fa-bars cursor-pointer" @click="addressModal.isManageMode = !addressModal.isManageMode"></i>
                         </div>
                     </header>
                     <div class="flex-1 overflow-y-auto p-4 space-y-3">
                         <div v-if="addresses.length === 0" class="text-center text-gray-400 mt-20">暂无地址，请点击右上角添加</div>
-                        
-                        <div v-for="addr in addresses" :key="addr.id" class="bg-white p-4 rounded-xl shadow-sm flex items-center justify-between" @click="checkoutModal.show ? selectAddressForCheckout(addr) : null">
+                        <div v-for="addr in addresses" :key="addr.id" class="bg-white p-4 rounded-[16px] shadow-sm flex items-center justify-between" @click="checkoutModal.show ? selectAddressForCheckout(addr) : null">
                             <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center mt-1 shrink-0 text-white font-bold text-xs" :class="addr.owner === 'me' ? 'bg-blue-400' : 'bg-pink-400'">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center mt-1 shrink-0 text-white font-bold text-xs" :class="addr.owner === 'me' ? 'bg-orange-500' : 'bg-gray-400'">
                                     {{ addr.owner === 'me' ? '我' : 'TA' }}
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2 mb-1">
-                                        <span class="font-bold text-[16px]">{{ addr.region }} {{ addr.detail }}</span>
+                                        <span class="font-bold text-[16px] text-gray-900">{{ addr.region }} {{ addr.detail }}</span>
                                     </div>
-                                    <div class="text-sm text-gray-500 flex items-center gap-2">
+                                    <div class="text-[13px] text-gray-500 flex items-center gap-2">
                                         <span>{{ addr.name }} ({{ addr.gender }})</span>
                                         <span>{{ addr.phone }}</span>
                                         <span v-if="addr.tag" class="text-[10px] px-1.5 py-0.5 border border-[#ff5000] text-[#ff5000] rounded">{{ addr.tag }}</span>
@@ -646,109 +649,107 @@ const TaobaoApp = {
                 </div>
             </transition>
 
-            <!-- ================= 图一：编辑/新增地址界面 ================= -->
-            <transition name="page-slide">
-                <div v-if="addressModal.showEdit" class="absolute inset-0 z-[70] bg-[#f5f5f5] flex flex-col pb-safe relative">
-                    <!-- 模拟地图背景 -->
-                    <div class="absolute top-0 w-full h-[40%] bg-blue-50 opacity-50 overflow-hidden z-0">
-                        <div class="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PHBhdGggZD0iTTAgMGg0MHY0MEgwem0yMCAyMGgyMHYyMEgyMHoiIGZpbGw9IiNlZWYyZmYiIGZpbGwtb3BhY2l0eT0iLjQiLz48L3N2Zz4=')]"></div>
+            <!-- ================= 图一：编辑/新增地址界面 (完美还原) ================= -->
+            <transition name="app-slide">
+                <div v-if="addressModal.showEdit" class="fixed inset-0 z-[100010] bg-[#f5f5f5] flex flex-col font-sans">
+                    <!-- 模拟地图背景层 -->
+                    <div class="absolute top-0 left-0 w-full h-[35%] overflow-hidden z-0 bg-[#e6eed8]">
+                        <!-- 绘制地图网格与道路 -->
+                        <div class="absolute w-[150%] h-[150%] -top-10 -left-10 opacity-30" style="background-image: linear-gradient(#fff 2px, transparent 2px), linear-gradient(90deg, #fff 2px, transparent 2px); background-size: 50px 50px;"></div>
+                        <div class="absolute top-1/3 left-0 w-full h-8 bg-white/60 rotate-12"></div>
                         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                            <div class="bg-white px-3 py-1.5 rounded-lg shadow-md text-sm font-bold flex flex-col items-center relative">
-                                <span class="text-[10px] text-orange-500 mb-0.5">配送至此</span>
-                                {{ addressModal.editForm.detail || '地图定位点' }}
+                            <div class="bg-white px-3 py-2 rounded-[12px] shadow-lg text-[13px] font-bold flex flex-col items-center relative z-10 text-gray-800">
+                                <span class="text-[10px] text-[#ff5000] mb-0.5 font-normal">骑手将配送至此</span>
+                                {{ addressModal.editForm.detail || '可居酒店-大堂' }}
                                 <div class="absolute -bottom-1.5 w-3 h-3 bg-white rotate-45"></div>
                             </div>
-                            <div class="w-1 h-3 bg-black mt-1"></div>
+                            <div class="w-1 h-4 bg-black mt-1 rounded-full shadow-md"></div>
                         </div>
+                        <div class="absolute right-4 bottom-10 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600"><i class="fas fa-crosshairs"></i></div>
                     </div>
 
-                    <header class="h-[90px] pt-10 px-4 flex justify-between items-center bg-transparent shrink-0 z-10">
-                        <button @click="addressModal.showEdit = false" class="text-gray-800 text-xl"><i class="fas fa-chevron-left"></i></button>
-                        <span class="font-bold text-[17px] text-gray-900 drop-shadow-md">编辑地址</span>
-                        <div class="bg-white/80 backdrop-blur rounded-full px-3 py-1 text-sm flex items-center gap-1"><i class="fas fa-search"></i> 搜索</div>
+                    <!-- 顶部透明导航 -->
+                    <header class="h-[90px] pt-10 px-4 flex justify-between items-center shrink-0 z-10 relative">
+                        <button @click="addressModal.showEdit = false" class="text-black text-xl w-10"><i class="fas fa-chevron-left"></i></button>
+                        <span class="font-bold text-[18px] text-black drop-shadow-md">编辑地址</span>
+                        <div class="bg-white rounded-full px-3 py-1.5 text-[13px] font-bold text-gray-800 flex items-center gap-1 shadow-sm cursor-pointer"><i class="fas fa-search text-gray-400"></i> 搜索</div>
                     </header>
 
-                    <div class="flex-1 mt-[5%] px-3 z-10 pb-20">
-                        <div class="bg-white rounded-2xl shadow-lg p-2 divide-y divide-gray-50">
-                            
-                            <!-- 归属人区分 (新增功能) -->
-                            <div class="flex items-center p-3">
-                                <span class="w-20 text-[15px] font-bold text-gray-700">地址归属</span>
-                                <div class="flex gap-4">
-                                    <label class="flex items-center gap-1.5 cursor-pointer">
-                                        <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="addressModal.editForm.owner === 'me' ? 'border-[#ff5000]' : 'border-gray-300'">
-                                            <div v-if="addressModal.editForm.owner === 'me'" class="w-2 h-2 rounded-full bg-[#ff5000]"></div>
-                                        </div>
-                                        <span class="text-[15px]">我的地址</span>
+                    <!-- 表单区域 (盖在地图上方) -->
+                    <div class="flex-1 mt-[25%] bg-white rounded-t-3xl relative z-10 px-4 pt-6 pb-24 overflow-y-auto shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+                        <div class="divide-y divide-gray-50">
+                            <!-- 地址归属 -->
+                            <div class="flex items-center py-5">
+                                <span class="w-24 text-[16px] font-bold text-gray-800">地址归属</span>
+                                <div class="flex gap-6">
+                                    <label class="flex items-center gap-2 cursor-pointer" @click="addressModal.editForm.owner = 'me'">
+                                        <i class="fas text-[18px]" :class="addressModal.editForm.owner === 'me' ? 'fa-dot-circle text-[#ff5000]' : 'fa-circle text-gray-300'"></i>
+                                        <span class="text-[15px] text-gray-800">我的地址</span>
                                     </label>
-                                    <label class="flex items-center gap-1.5 cursor-pointer">
-                                        <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="addressModal.editForm.owner === 'other' ? 'border-[#ff5000]' : 'border-gray-300'">
-                                            <div v-if="addressModal.editForm.owner === 'other'" class="w-2 h-2 rounded-full bg-[#ff5000]"></div>
-                                        </div>
-                                        <span class="text-[15px]">TA的地址</span>
+                                    <label class="flex items-center gap-2 cursor-pointer" @click="addressModal.editForm.owner = 'other'">
+                                        <i class="fas text-[18px]" :class="addressModal.editForm.owner === 'other' ? 'fa-dot-circle text-[#ff5000]' : 'fa-circle text-gray-300'"></i>
+                                        <span class="text-[15px] text-gray-800">TA的地址</span>
                                     </label>
                                 </div>
                             </div>
 
-                            <div class="flex items-center p-3">
-                                <span class="w-20 text-[15px] font-bold text-gray-700">地址</span>
-                                <input v-model="addressModal.editForm.region" placeholder="省份 城市 区县" class="flex-1 bg-transparent outline-none text-[15px] font-bold">
+                            <div class="flex items-center py-5">
+                                <span class="w-24 text-[16px] font-bold text-gray-800">地址</span>
+                                <input v-model="addressModal.editForm.region" placeholder="省份 城市 区县" class="flex-1 outline-none text-[16px] font-bold text-gray-900 placeholder-gray-400">
                                 <i class="fas fa-chevron-right text-gray-300"></i>
                             </div>
-                            <div class="flex items-center p-3">
-                                <span class="w-20 text-[15px] font-bold text-gray-700">门牌号</span>
-                                <input v-model="addressModal.editForm.detail" placeholder="详细地址、小区门牌号" class="flex-1 bg-transparent outline-none text-[15px] font-bold">
+                            <div class="flex items-center py-5">
+                                <span class="w-24 text-[16px] font-bold text-gray-800">门牌号</span>
+                                <input v-model="addressModal.editForm.detail" placeholder="详细地址、小区门牌号" class="flex-1 outline-none text-[16px] font-bold text-gray-900 placeholder-gray-400">
                             </div>
-                            <div class="flex items-center p-3">
-                                <span class="w-20 text-[15px] font-bold text-gray-700">联系人</span>
-                                <input v-model="addressModal.editForm.name" placeholder="名字" class="flex-1 bg-transparent outline-none text-[15px] font-bold max-w-[100px]">
-                                <div class="flex items-center gap-3 ml-auto">
-                                    <label class="flex items-center gap-1 cursor-pointer">
-                                        <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="addressModal.editForm.gender === '先生' ? 'border-[#ff5000]' : 'border-gray-300'">
-                                            <div v-if="addressModal.editForm.gender === '先生'" class="w-2 h-2 rounded-full bg-[#ff5000]"></div>
-                                        </div>
-                                        <span class="text-[14px]">先生</span>
+                            <div class="flex items-center py-5">
+                                <span class="w-24 text-[16px] font-bold text-gray-800">联系人</span>
+                                <input v-model="addressModal.editForm.name" placeholder="名字" class="flex-1 outline-none text-[16px] font-bold text-gray-900 placeholder-gray-400 max-w-[100px]">
+                                <div class="flex items-center gap-4 ml-auto">
+                                    <label class="flex items-center gap-1.5 cursor-pointer" @click="addressModal.editForm.gender = '先生'">
+                                        <i class="far text-[18px]" :class="addressModal.editForm.gender === '先生' ? 'fa-dot-circle text-[#ff5000]' : 'fa-circle text-gray-300'"></i>
+                                        <span class="text-[14px] text-gray-700">先生</span>
                                     </label>
-                                    <label class="flex items-center gap-1 cursor-pointer">
-                                        <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center" :class="addressModal.editForm.gender === '女士' ? 'border-[#ff5000]' : 'border-gray-300'">
-                                            <div v-if="addressModal.editForm.gender === '女士'" class="w-2 h-2 rounded-full bg-[#ff5000]"></div>
-                                        </div>
-                                        <span class="text-[14px]">女士</span>
+                                    <label class="flex items-center gap-1.5 cursor-pointer" @click="addressModal.editForm.gender = '女士'">
+                                        <i class="far text-[18px]" :class="addressModal.editForm.gender === '女士' ? 'fa-dot-circle text-[#ff5000]' : 'fa-circle text-gray-300'"></i>
+                                        <span class="text-[14px] text-gray-700">女士</span>
                                     </label>
                                 </div>
                             </div>
-                            <div class="flex items-center p-3">
-                                <span class="w-20 text-[15px] font-bold text-gray-700">手机号</span>
-                                <input v-model="addressModal.editForm.phone" placeholder="11位手机号" type="number" class="flex-1 bg-transparent outline-none text-[15px] font-bold">
+                            <div class="flex items-center py-5">
+                                <span class="w-24 text-[16px] font-bold text-gray-800">手机号</span>
+                                <input v-model="addressModal.editForm.phone" placeholder="11位手机号" type="number" class="flex-1 outline-none text-[16px] font-bold text-gray-900 placeholder-gray-400">
                             </div>
-                            <div class="flex items-center p-3 min-h-[50px]">
-                                <span class="w-20 text-[15px] font-bold text-gray-700 shrink-0">标签</span>
-                                <div class="flex items-center flex-wrap gap-2 flex-1">
+                            <div class="flex items-center py-5">
+                                <span class="w-24 text-[16px] font-bold text-gray-800 shrink-0">标签</span>
+                                <div class="flex items-center flex-wrap gap-2.5 flex-1">
                                     <span v-for="t in ['家', '公司', '学校']" :key="t" 
-                                          class="px-4 py-1 rounded-full text-[12px] border cursor-pointer transition"
-                                          :class="addressModal.editForm.tag === t ? 'border-[#ff5000] text-[#ff5000] bg-orange-50' : 'border-gray-200 text-gray-600 bg-gray-50'"
+                                          class="px-5 py-1.5 rounded-full text-[13px] border cursor-pointer transition"
+                                          :class="addressModal.editForm.tag === t ? 'border-[#ff5000] text-[#ff5000] bg-orange-50' : 'border-gray-200 text-gray-600 bg-white'"
                                           @click="addressModal.editForm.tag = t; showCustomTagInput = false;">{{ t }}</span>
                                     
-                                    <span class="px-3 py-1 rounded-full text-[12px] border cursor-pointer transition"
-                                          :class="showCustomTagInput ? 'border-[#ff5000] text-[#ff5000] bg-orange-50' : 'border-gray-200 text-gray-600 bg-gray-50'"
+                                    <span class="px-4 py-1.5 rounded-full text-[13px] border cursor-pointer transition"
+                                          :class="showCustomTagInput ? 'border-[#ff5000] text-[#ff5000] bg-orange-50' : 'border-gray-200 text-gray-600 bg-white'"
                                           @click="showCustomTagInput = true">自定义</span>
                                 </div>
                             </div>
-                            <div v-if="showCustomTagInput" class="p-3 bg-gray-50 flex items-center gap-2">
-                                <input v-model="customTagValue" placeholder="输入自定义标签(如：快递柜)" class="flex-1 px-3 py-1.5 text-sm rounded border border-gray-200 outline-none">
+                            <div v-if="showCustomTagInput" class="py-3 bg-white flex items-center">
+                                <span class="w-24"></span>
+                                <input v-model="customTagValue" placeholder="输入自定义标签" class="flex-1 px-4 py-2 text-[14px] rounded-lg border border-gray-200 outline-none focus:border-[#ff5000]">
                             </div>
                         </div>
 
-                        <div class="mt-4 bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between text-gray-400 text-sm">
+                        <!-- 智能识别区 -->
+                        <div class="mt-6 bg-[#f9f9f9] rounded-2xl p-4 flex items-center justify-between text-gray-400 text-[14px] border border-gray-100">
                             <span>粘贴文本，智能识别地址信息</span>
-                            <span class="bg-gray-100 px-4 py-1.5 rounded-full text-black font-bold">粘贴</span>
+                            <span class="bg-white border border-gray-200 px-5 py-1.5 rounded-full text-black font-bold shadow-sm">粘贴</span>
                         </div>
                     </div>
 
-                    <!-- 底部按钮 -->
-                    <div class="absolute bottom-0 w-full bg-white p-3 pb-safe flex gap-3 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-20">
-                        <button v-if="addressModal.editForm.id" @click="deleteAddress(addressModal.editForm.id); addressModal.showEdit=false;" class="w-[100px] bg-white border border-gray-200 text-gray-800 rounded-full font-bold text-[15px] py-3">删除</button>
-                        <button @click="saveAddress" class="flex-1 bg-gradient-to-r from-[#ffcf00] to-[#ff9000] text-white rounded-full font-bold text-[15px] py-3 shadow-md">保存地址</button>
+                    <!-- 底部固定按钮 -->
+                    <div class="fixed bottom-0 left-0 w-full bg-white p-3 pb-safe flex gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] z-20">
+                        <button v-if="addressModal.editForm.id" @click="deleteAddress(addressModal.editForm.id); addressModal.showEdit=false;" class="w-[120px] bg-white border border-gray-200 text-gray-800 rounded-full font-bold text-[16px] py-3.5 shadow-sm">删除地址</button>
+                        <button @click="saveAddress" class="flex-1 bg-[#ffcc00] text-black rounded-full font-bold text-[16px] py-3.5">保存地址</button>
                     </div>
                 </div>
             </transition>
