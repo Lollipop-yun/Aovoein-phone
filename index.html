@@ -4574,6 +4574,7 @@
         :api-config="apiConfig" 
         :home-profile="homeProfile"
         :masks="masks"
+        :npc-avatars="npcAvatars"
         @close="closeApp" 
         @toast="showToast" 
         @save-data="saveData" 
@@ -4822,6 +4823,11 @@
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">图标设置</div><div class="text-[11px] text-gray-400 mt-0.5">自定义桌面App名称和图标</div></div>
         </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
     </div>
+    <div @click="navigateThemes('npc_avatars')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
+        <div class="flex items-center gap-4"><i class="fas fa-users-viewfinder text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
+            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">NPC 头像库</div><div class="text-[11px] text-gray-400 mt-0.5">管理商城评论、论坛等使用的NPC头像</div></div>
+        </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+    </div>
     <div @click="navigateThemes('home_preset')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
         <div class="flex items-center gap-4"><i class="fas fa-mobile-screen text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">桌面预设</div><div class="text-[11px] text-gray-400 mt-0.5">保存与导入桌面全套配置</div></div>
@@ -4986,6 +4992,33 @@
     </transition>
 
     <transition name="page-slide"><div v-if="themesPage === 'wallpaper'" class="absolute inset-0 p-4 space-y-6"><div class="w-full aspect-[9/16] bg-gray-200 rounded-3xl overflow-hidden shadow-lg relative mx-auto max-w-[240px] border-4 border-white"><img v-if="themeConfig.wallpaper" :src="themeConfig.wallpaper" class="w-full h-full object-cover"><div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-100"><i class="fas fa-image text-3xl mb-2"></i><span class="text-xs">默认壁纸</span></div></div><div class="flex flex-col gap-3"><button @click="triggerWallpaperUpload" class="w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold active:scale-95 transition shadow-lg">从相册选择</button><button @click="resetWallpaper" class="w-full bg-white text-gray-600 py-3.5 rounded-2xl font-bold border border-gray-200 active:bg-gray-50 transition">恢复默认</button></div><input type="file" ref="wallpaperInput" accept="image/*" class="hidden" @change="handleWallpaperUpload"></div></transition><transition name="page-slide"><div v-if="themesPage === 'font'" class="absolute inset-0 p-4 pb-20"><div class="space-y-6"><div class="bg-gray-100 rounded-2xl p-6 text-center border border-gray-200" :style="{fontFamily: previewFontFamily || themeConfig.fontFamily}"><div class="text-2xl font-bold mb-2" :style="{color: themeConfig.fontColor}">12:30</div><div class="text-lg" :style="{color: themeConfig.fontColor}">Hello World</div><div class="text-sm opacity-60" :style="{color: themeConfig.fontColor}">预览字体效果</div></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3"><label class="text-xs font-bold text-gray-500 ml-1">字体 URL</label><div class="flex gap-2"><input v-model="fontInputUrl" placeholder="https://..." class="w-2/3 bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none"><button @click="previewFontFromUrl" :disabled="isLoading" class="flex-1 bg-gray-100 text-gray-600 px-2 rounded-xl font-bold text-xs active:scale-95 transition"><span v-if="!isLoading">预览</span><i v-else class="fas fa-spinner fa-spin"></i></button><button @click="applyFontFromUrl" class="flex-1 bg-black text-white px-2 rounded-xl font-bold text-xs active:scale-95 transition">应用</button></div><button @click="resetFont" class="w-full bg-white text-red-500 py-2 rounded-xl font-bold text-xs border border-gray-100 active:bg-gray-50">恢复默认字体</button></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4"><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">大小</span><span class="text-xs text-gray-400">{{ (themeConfig.fontSize * 100).toFixed(0) }}%</span></div><input type="range" min="0.8" max="1.2" step="0.05" v-model.number="themeConfig.fontSize" @change="saveData" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">色号</span></div><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full border border-gray-200 shadow-sm shrink-0" :style="{backgroundColor: themeConfig.fontColor}"></div><input type="text" v-model="themeConfig.fontColor" @change="saveData" placeholder="#000000" class="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-sm border border-gray-200 font-mono outline-none uppercase"></div></div></div><div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"><div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50"><span class="font-bold text-gray-800 text-sm">预设</span><button @click="saveFontPreset" class="text-blue-600 text-xs font-bold px-3 py-1 bg-blue-50 rounded-lg active:bg-blue-100">保存</button></div><div v-if="fontPresets.length === 0" class="p-6 text-center text-gray-400 text-xs">无预设</div><div v-else class="divide-y divide-gray-50"><div v-for="(fp, idx) in fontPresets" :key="idx" class="p-4 flex items-center justify-between"><div class="flex-1 min-w-0 mr-2"><div class="font-bold text-gray-800 text-sm truncate" :style="{fontFamily: fp.fontFamily}">{{ fp.name }}</div></div><div class="flex items-center gap-2"><button @click="applyFontPreset(fp)" class="w-7 h-7 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fas fa-check text-[10px]"></i></button><button @click="deleteFontPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button></div></div></div></div></div></div></transition><transition name="page-slide"><div v-if="themesPage === 'icons'" class="absolute inset-0 p-4 pb-20"><div class="space-y-4"><div class="flex justify-end"><button @click="resetAllIcons" class="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded-lg active:bg-red-100">重置所有</button></div><div class="space-y-3"><div v-for="appId in appList" :key="appId" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0 home-icon-custom"><img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i></div><div class="flex-1"><label class="text-[10px] font-bold text-gray-400 mb-1 block">应用名称</label><input :value="getAppName(appId)" @input="(e)=>setAppName(appId, e.target.value)" class="w-full bg-gray-50 px-2 py-1.5 rounded-lg text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2"><input v-model="tempIconUrls[appId]" placeholder="图标 URL" class="flex-1 bg-gray-50 px-3 py-2 rounded-lg text-xs border border-gray-200 outline-none"><button @click="setAppIcon(appId, tempIconUrls[appId])" class="px-3 bg-black text-white rounded-lg text-xs font-bold">确定</button><button @click="triggerIconUpload(appId)" class="px-3 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold active:bg-gray-200"><i class="fas fa-image"></i></button><button @click="resetApp(appId)" class="px-3 bg-red-50 text-red-500 rounded-lg text-xs active:bg-red-100"><i class="fas fa-undo"></i></button></div></div></div><input type="file" ref="iconUploadInput" accept="image/*" class="hidden" @change="handleIconFile"></div></div></transition></main></div></transition>
+    <transition name="page-slide">
+        <div v-if="themesPage === 'npc_avatars'" class="absolute inset-0 p-4 pb-20 flex flex-col">
+            <div class="flex gap-2 mb-4 shrink-0">
+                <input v-model="npcAvatarInputUrl" placeholder="输入头像 URL 链接" class="flex-1 bg-white p-3 rounded-xl text-sm border border-gray-200 outline-none">
+                <button @click="addNpcAvatarUrl" class="px-4 bg-black text-white rounded-xl text-sm font-bold shadow-md">添加</button>
+            </div>
+            <div class="flex justify-between items-center mb-3 shrink-0">
+                <button @click="triggerNpcAvatarUpload" class="bg-white text-gray-800 border border-gray-200 px-4 py-2 rounded-full text-xs font-bold shadow-sm"><i class="fas fa-upload mr-1"></i> 本地相册上传</button>
+                <button @click="isNpcMultiSelect = !isNpcMultiSelect; selectedNpcAvatars = []" class="text-xs font-bold px-3 py-1.5 rounded-full transition" :class="isNpcMultiSelect ? 'bg-red-50 text-red-500' : 'bg-gray-200 text-gray-600'">{{ isNpcMultiSelect ? '取消多选' : '多选删除' }}</button>
+            </div>
+            <div class="flex-1 overflow-y-auto bg-white rounded-2xl border border-gray-100 p-3 shadow-sm">
+                <div v-if="npcAvatars.length === 0" class="text-center text-gray-400 text-xs mt-10">暂无NPC头像，请添加</div>
+                <div class="grid grid-cols-4 gap-3">
+                    <div v-for="(avatar, idx) in npcAvatars" :key="idx" class="aspect-square rounded-xl overflow-hidden bg-gray-100 relative cursor-pointer border border-gray-100 shadow-sm" @click="toggleNpcAvatarSelect(idx)">
+                        <img :src="avatar" class="w-full h-full object-cover">
+                        <div v-if="isNpcMultiSelect" class="absolute top-1 right-1 w-5 h-5 rounded-full border border-gray-300 bg-white/80 flex items-center justify-center" :class="{'bg-red-500 border-red-500': selectedNpcAvatars.includes(idx)}">
+                            <i v-if="selectedNpcAvatars.includes(idx)" class="fas fa-check text-white text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-if="isNpcMultiSelect && selectedNpcAvatars.length > 0" class="mt-4 shrink-0">
+                <button @click="deleteSelectedNpcAvatars" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold shadow-md">删除选中的 {{selectedNpcAvatars.length}} 个头像</button>
+            </div>
+            <input type="file" ref="npcAvatarInput" accept="image/*" class="hidden" multiple @change="handleNpcAvatarUpload">
+        </div>
+    </transition>
     
     <!-- 世界书 App -->
     <transition name="app-slide"><div v-if="currentApp === 'worldbook'" class="absolute inset-0 z-[1000] bg-gray-50 flex flex-col overflow-hidden"><header class="bg-white/80 backdrop-blur h-[90px] pt-10 flex items-center justify-between px-4 border-b border-gray-200 sticky top-0 z-10"><button @click="closeApp" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-times text-sm"></i></button><h1 class="font-bold text-gray-900 text-[17px]">世界书</h1><div class="flex gap-2"><button @click="openWorldModal('file')" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-plus text-sm"></i></button></div></header><main class="flex-1 overflow-y-auto p-4 space-y-2"><div v-if="folders.length === 0 && rootFiles.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无内容，请点击右上角添加</div><div v-for="folder in folders" :key="folder.id" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm"><div @click="toggleFolder(folder.id)" class="p-4 flex items-center justify-between active:bg-gray-50 transition cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-folder text-yellow-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ folder.name }}</span></div><div class="flex items-center gap-3"><button @click.stop="deleteWorldItem(folder.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button><i class="fas fa-chevron-right text-gray-300 text-xs transition-transform duration-200" :class="{'rotate-90': expandedFolders.includes(folder.id)}"></i></div></div><transition name="expand"><div v-if="expandedFolders.includes(folder.id)" class="bg-gray-50 border-t border-gray-100"><div v-if="getFiles(folder.id).length===0" class="p-3 text-center text-xs text-gray-400">空文件夹</div><div v-for="file in getFiles(folder.id)" :key="file.id" @click="viewFile(file)" class="p-3 pl-10 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-100 cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-blue-400 text-sm"></i><span class="text-sm text-gray-700">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></div></transition></div><div v-for="file in rootFiles" :key="file.id" @click="viewFile(file)" class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between active:scale-[0.98] transition cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-gray-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></main></div></transition>
@@ -5100,6 +5133,7 @@ const app = createApp({
             chatSearchModal: { show: false, keyword: '', results:[] },
             globalSearchModal: { show: false, keyword: '', contacts: [], groups: [], histories:[] },
             themeConfig: { wallpaper: '', fontFamily: '', fontUrl: '', fontSize: 1.0, fontColor: '#000000', isDarkMode: false }, fontPresets:[], fontInputUrl: '',
+            npcAvatars: [], npcAvatarInputUrl: '', isNpcMultiSelect: false, selectedNpcAvatars: [],
             
             // 美化配置
             beautifyConfig: {
@@ -9076,6 +9110,36 @@ Structure:
         async handleIconFile(e) { const f = e.target.files[0]; if(f && this.uploadingAppId) { try { const url = await compressImage(f, 200); this.setAppIcon(this.uploadingAppId, url); } catch(e){} } e.target.value = ''; },
         resetApp(id) { if(this.appCustomization[id]) { delete this.appCustomization[id]; this.saveData(); this.showToast('已重置'); } },
         resetAllIcons() { this.showConfirm("重置所有？", () => { this.appCustomization = {}; this.saveData(); }); },
+        
+        // NPC头像管理逻辑
+        addNpcAvatarUrl() {
+            if (!this.npcAvatarInputUrl.trim()) return this.showToast('请输入URL');
+            this.npcAvatars.unshift(this.npcAvatarInputUrl.trim());
+            this.npcAvatarInputUrl = '';
+            this.saveData();
+            this.showToast('添加成功');
+        },
+        triggerNpcAvatarUpload() { this.$refs.npcAvatarInput.click(); },
+        async handleNpcAvatarUpload(e) {
+            const files = e.target.files; if(!files.length) return;
+            for(let i=0; i<files.length; i++) {
+                try { const url = await compressImage(files[i], 300); this.npcAvatars.unshift(url); } catch(err) {}
+            }
+            this.saveData(); e.target.value = ''; this.showToast('上传成功');
+        },
+        toggleNpcAvatarSelect(idx) {
+            if (!this.isNpcMultiSelect) return;
+            const i = this.selectedNpcAvatars.indexOf(idx);
+            if (i > -1) this.selectedNpcAvatars.splice(i, 1);
+            else this.selectedNpcAvatars.push(idx);
+        },
+        deleteSelectedNpcAvatars() {
+            this.npcAvatars = this.npcAvatars.filter((_, idx) => !this.selectedNpcAvatars.includes(idx));
+            this.selectedNpcAvatars = [];
+            this.isNpcMultiSelect = false;
+            this.saveData();
+            this.showToast('已删除');
+        },
         
         // --- 主屏幕预设逻辑 ---
         saveHomePreset() {
