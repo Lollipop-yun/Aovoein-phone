@@ -40,7 +40,6 @@ const TaobaoApp = {
             },
             taobaoPayTargetModal: { show: false, isRequestPay: false },
             
-            // 独立的 iOS 白灰风格选人弹窗 (支持绑地址 & 转发商品)
             friendSelectModal: { show: false, mode: '' }
         }
     },
@@ -135,7 +134,8 @@ const TaobaoApp = {
                     item.desc = merchantIntros[Math.floor(Math.random() * merchantIntros.length)];
                     item.appearance = `一件包装精美的${item.name}，使用印有品牌Logo的快递盒仔细封装着。`; 
                     item.selected = true;
-                    allItems.push({...item, storeName: store.name, category: store.category});
+                    item.category = store.category; // 保留分类给评价系统用
+                    allItems.push({...item, storeName: store.name});
                 });
             });
             allItems.sort(() => Math.random() - 0.5);
@@ -166,7 +166,8 @@ const TaobaoApp = {
                     item.desc = '严选新鲜食材，口感层次极其丰富！';
                     item.appearance = `一份刚出炉的${item.name}，被仔细装在环保外卖盒中。`; 
                     item.selected = true;
-                    allTakeoutItems.push({...item, storeName: store.name, category: store.category});
+                    item.category = store.category; // 保留分类给评价系统用
+                    allTakeoutItems.push({...item, storeName: store.name});
                 });
             });
             allTakeoutItems.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
@@ -178,28 +179,43 @@ const TaobaoApp = {
             
             const comments = [];
             const commentCount = Math.floor(Math.random() * 4) + 2; 
-            const templates = [
-                `买了这个商品，真的是出乎意料的好！包装很严实，质量绝绝子，完全超出预期，下次还会来回购的！`,
-                `物流非常快，收到后马上就打开看了，做工精细没有瑕疵，身边朋友都问我要链接，绝对是五星好评！`,
-                `看评价买的，果然没有让我失望。款式和颜色都很喜欢，细节处理得很到位，性价比太高了吧，良心商家！`,
-                `稍微有点小贵，但是收到发现物超所值，质感拉满，客服态度也特别好，整体很满意的一段购物体验。`,
-                `非常喜欢这件东西，颜值超高，使用起来也很顺手，卖家包装得非常仔细，强烈推荐给还在犹豫的朋友们！`,
-                `这真的是我近期买过最满意的一件东西了，质感非常棒，没有任何异味，朋友来家里看到了都被安利了！`,
-                `刚收到货就迫不及待试了一下，简直是神仙好物，特别好用，已经推荐给闺蜜了，还会继续支持的。`
+            
+            // 智能区分外卖和网购的评论文案
+            const isFood = ['美食', '饮品', '蔬果', '零食'].includes(item.category);
+            const reviewsPool = isFood ? [
+                { t: "太好吃了！味道绝佳，食材也很新鲜，还会再点的！真的是强烈安利！", r: 5 },
+                { t: "真的是宝藏店铺！这味道绝了，一口下去满满的幸福感，包装也特别好！", r: 5 },
+                { t: "绝绝子！我宣布这是我吃过最好吃的一家，疯狂安利给大家，性价比超高！", r: 5 },
+                { t: "还可以，就是有点辣，不能吃辣的建议备注微辣，总体来说还是很不错的。", r: 4 },
+                { t: "感觉一般般吧，分量偏少，而且有点咸了，不过这个价格也就这样了。", r: 3 },
+                { t: "味道中规中矩吧，没有很惊艳，性价比一般，不会再回购了。", r: 3 },
+                { t: "配送挺快的，但是包装破了，汤汁全漏出来了，体验非常不好，太让人失望了。", r: 2 },
+                { t: "排雷！根本不好吃，而且等了很久才送来，简直是浪费我的时间，差评！", r: 1 }
+            ] : [
+                { t: "买了这个商品，真的是出乎意料的好！包装很严实，质量绝绝子，完全超出预期，下次还会来回购的！", r: 5 },
+                { t: "物流非常快，收到后马上就打开看了，做工精细没有瑕疵，身边朋友都问我要链接，绝对是五星好评！", r: 5 },
+                { t: "看评价买的，果然没有让我失望。款式和颜色都很喜欢，细节处理得很到位，性价比太高了吧！", r: 5 },
+                { t: "稍微有点小贵，但是收到发现物超所值，质感拉满，客服态度也特别好，整体很满意。", r: 5 },
+                { t: "非常喜欢这件东西，颜值超高，使用起来也很顺手，卖家包装得仔细，强烈推荐给还在犹豫的朋友们！", r: 5 },
+                { t: "一般般，没有想象中那么好，材质摸上去有点粗糙，习惯性中评吧，不推荐。", r: 3 },
+                { t: "用了一段时间才来评价的，容易坏，质量不行，真的一分钱一分货，感觉踩雷了。", r: 2 },
+                { t: "看评价买的，结果大失所望。材质很差，跟图片严重不符，退货又麻烦，大家避雷！", r: 1 }
             ];
+
+            reviewsPool.sort(() => Math.random() - 0.5);
             const namesPool = ['匿名用户', '开心小猫', '购物达人', '清风徐来', 'm***8', '月亮不睡我不睡', '草莓味的熊', '一口吃掉月亮', '星河璀璨', '人间清醒'];
             namesPool.sort(() => Math.random() - 0.5);
-            templates.sort(() => Math.random() - 0.5);
             
             for (let i = 0; i < commentCount; i++) {
                 const avatar = (safeAvatars.length > i) ? 
                     safeAvatars[i] : 
                     `https://ui-avatars.com/api/?name=${namesPool[i]}&background=random`;
+                
                 comments.push({
                     name: namesPool[i],
                     avatar: avatar,
-                    rating: Math.floor(Math.random() * 2) + 4, 
-                    text: templates[i % templates.length],
+                    rating: reviewsPool[i % reviewsPool.length].r, 
+                    text: reviewsPool[i % reviewsPool.length].t,
                     time: `2023-10-${Math.floor(Math.random() * 28 + 1).toString().padStart(2, '0')}`
                 });
             }
@@ -351,7 +367,7 @@ const TaobaoApp = {
                 
                 if (session) {
                     session.messages.push({
-                        type: 'food_payment',
+                        type: 'taobao_payment', // 使用专属桃宝代付卡片UI
                         item: `[代付请求] ${item.name}`,
                         amount: item.price,
                         status: 'pending',
@@ -388,7 +404,7 @@ const TaobaoApp = {
                     });
                 } else {
                     session.messages.push({
-                        type: 'food_delivery',
+                        type: 'taobao_order', // 使用专属桃宝订单卡片UI
                         item: `[购物订单] ${displayName}`,
                         amount: totalAmt.toFixed(2),
                         remark: this.checkoutModal.note || '无备注',
@@ -437,7 +453,7 @@ const TaobaoApp = {
                     session.lastMessage = '[商品分享]';
                     this.saveData();
                     this.$emit('scroll-to-bottom');
-                    this.showToast('分享成功');
+                    this.showToast('商品转发成功');
                 }
             }
             this.friendSelectModal.show = false;
@@ -468,7 +484,6 @@ const TaobaoApp = {
                             <div class="text-gray-400 text-[14px]">寻找宝贝、店铺...</div>
                         </div>
                     </div>
-                    <!-- 分类 Tab -->
                     <div class="px-4 py-2 z-10 sticky top-0 bg-[#f5f5f5]">
                         <div class="bg-white rounded-full p-1 flex items-center justify-between shadow-sm">
                             <div v-for="cat in ['服饰', '数码', '美妆', '零食', '日用']" :key="cat"
@@ -479,9 +494,8 @@ const TaobaoApp = {
                             </div>
                         </div>
                     </div>
-                    <!-- 本周热销 -->
                     <div v-if="taobaoModal.hotSales && taobaoModal.hotSales.length > 0" class="px-4 mb-2 mt-2">
-                        <div class="text-[16px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 mb-3">本周热销 <i class="fas fa-heart text-[#ff5000] text-sm"></i></div>
+                        <div class="text-[16px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 mb-3">本周热销 <i class="fas fa-heart text-red-500 text-sm"></i></div>
                         <div class="flex overflow-x-auto gap-3 scrollbar-hide">
                             <div v-for="(item, idx) in taobaoModal.hotSales.filter(s => s.category === taobaoModal.activeCategory).slice(0, 5)" :key="'hot'+idx" @click="openTaobaoItem(item, item.storeName)" class="w-[130px] shrink-0 bg-white rounded-[16px] p-2.5 shadow-sm cursor-pointer active:scale-95 transition">
                                 <div class="w-full h-24 bg-[#f9f9f9] rounded-xl mb-3 flex items-center justify-center text-gray-200 relative overflow-hidden">
@@ -496,12 +510,11 @@ const TaobaoApp = {
                             </div>
                         </div>
                     </div>
-                    <!-- 精选店铺 -->
                     <div class="px-4 space-y-4 pb-4 pt-3">
                         <div class="text-[16px] font-bold text-gray-900 tracking-wide flex items-center gap-1.5 mb-1">精选店铺</div>
                         <div v-for="store in (taobaoModal.storeList ||[]).filter(s => s.category === taobaoModal.activeCategory)" :key="store.id" class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-50 flex flex-col gap-3">
                             <div class="flex items-center gap-3 border-b border-gray-50 pb-3">
-                                <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 shrink-0"><i class="fas fa-store text-xl"></i></div>
+                                <div class="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center text-orange-400 shrink-0"><i class="fas fa-store text-xl"></i></div>
                                 <div class="flex flex-col">
                                     <span class="font-bold text-[16px] text-gray-900">{{ store.name }}</span>
                                     <span class="text-[11px] text-gray-500 mt-0.5">{{ store.tag }} · 官方认证</span>
@@ -665,7 +678,7 @@ const TaobaoApp = {
                                 <div class="flex flex-col flex-1 min-w-0 h-20 py-1">
                                     <span class="text-[13px] text-gray-800 line-clamp-2">{{ item.name }}</span>
                                     <div class="mt-auto flex justify-between items-end w-full">
-                                        <span class="text-[16px] font-bold text-gray-900 font-mono leading-none">¥{{ item.price }}</span>
+                                        <span class="text-[16px] font-bold text-[#ff5000] font-mono leading-none">¥{{ item.price }}</span>
                                         <i class="far fa-trash-alt text-gray-300 cursor-pointer p-2 -mr-2" @click="removeFromCart(item)"></i>
                                     </div>
                                 </div>
@@ -688,7 +701,7 @@ const TaobaoApp = {
                     </div>
                 </div>
 
-                <!-- ================= 我的桃宝 (严格还原图一 UI) ================= -->
+                <!-- ================= 我的桃宝 ================= -->
                 <div v-if="taobaoModal.activeTab === 'me'" class="flex flex-col min-h-full pb-10 bg-[#f9f9f9]">
                     <div class="pt-8 px-4 pb-4">
                         <div class="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4 mb-4 mt-2 border border-gray-50">
@@ -725,7 +738,7 @@ const TaobaoApp = {
                 </div>
             </div>
 
-            <!-- ================= 图二：编辑/新增地址界面 ================= -->
+            <!-- ================= 编辑/新增地址界面 ================= -->
             <transition name="app-slide">
                 <div v-if="addressModal.showEdit" class="fixed inset-0 z-[100010] bg-[#f5f5f5] flex flex-col font-sans">
                     <header class="h-[90px] pt-10 px-4 flex justify-between items-center bg-[#f5f5f5] shrink-0 z-10 relative border-b border-gray-100">
@@ -849,7 +862,7 @@ const TaobaoApp = {
                 </div>
             </transition>
 
-            <!-- ================= 商品详情 (新增 NPC 头像随机评论区) ================= -->
+            <!-- ================= 商品详情 ================= -->
             <transition name="app-slide">
                 <div v-if="taobaoModal.selectedItem" class="absolute inset-0 z-[50] bg-[#f2f2f6] flex flex-col pb-safe">
                     <header class="h-[90px] pt-10 px-4 flex justify-between items-center bg-white/80 backdrop-blur sticky top-0 z-10 border-b border-gray-100">
@@ -865,7 +878,7 @@ const TaobaoApp = {
                             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/60 backdrop-blur px-3 py-1 rounded-full text-[11px] text-gray-600 flex items-center gap-1"><i class="fas fa-search-plus"></i> 点击查看全景描述</div>
                         </div>
                         <div class="bg-white p-4">
-                            <div class="text-3xl font-bold font-mono text-gray-900 mb-2">¥{{ taobaoModal.selectedItem.price }}</div>
+                            <div class="text-3xl font-bold font-mono text-[#ff5000] mb-2">¥{{ taobaoModal.selectedItem.price }}</div>
                             <h2 class="text-lg font-bold text-gray-900 leading-snug">{{ taobaoModal.selectedItem.name }}</h2>
                             <div class="flex justify-between items-center text-xs text-gray-400 mt-3">
                                 <span>{{ taobaoModal.selectedItem.store }}</span>
@@ -972,7 +985,7 @@ const TaobaoApp = {
                 </div>
             </transition>
 
-            <!-- 选择付款对象 -->
+            <!-- 选择付款对象 (代付列表) -->
             <transition name="scale">
                 <div v-if="taobaoPayTargetModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="taobaoPayTargetModal.show = false">
                     <div class="bg-[#f2f2f6] w-[80%] max-h-[70vh] rounded-[20px] overflow-hidden shadow-2xl flex flex-col" @click.stop>
@@ -980,11 +993,12 @@ const TaobaoApp = {
                             <span class="font-bold text-[15px] text-gray-900">{{ taobaoPayTargetModal.isRequestPay ? '选择代付好友' : '请选择付款方式' }}</span>
                         </div>
                         
+                        <!-- 正常付款 (自己) -->
                         <div v-if="!taobaoPayTargetModal.isRequestPay" class="p-3 bg-white flex flex-col gap-2 shrink-0">
                             <button @click="confirmPayTaobao('self')" class="w-full py-3.5 bg-gray-50 rounded-xl text-[15px] font-bold text-gray-800 active:bg-gray-100 transition border border-gray-100">余额支付 (¥{{ checkoutModal.totalPrice }})</button>
                         </div>
 
-                        <!-- 好友列表 -->
+                        <!-- 代付好友列表 -->
                         <div v-else class="flex-1 overflow-y-auto bg-white p-2">
                             <div v-if="wechatState.friendList.length === 0" class="text-center text-gray-400 py-10 text-xs">暂无好友可代付</div>
                             <div v-for="friend in wechatState.friendList" :key="friend.id" @click="confirmPayTaobao(friend.id)" class="flex items-center gap-3 p-3 border-b border-gray-50 last:border-0 active:bg-gray-50 cursor-pointer">
