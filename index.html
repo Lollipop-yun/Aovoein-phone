@@ -2768,12 +2768,12 @@
                         
                         <!-- 左侧排版模式 -->
                         <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'left'" class="flex items-center gap-2 pl-2 flex-1 min-w-0">
-                            <!-- 只有点击头像才弹出心声 -->
-                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80" @click.stop="openStatusModalIfSingle">
+                            <!-- 修复：点击头像弹出心声 -->
+                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80" @click.stop="!wechatState.activeSession.isGroup && openStatusModal()">
                                 <img :src="wechatState.activeSession.isGroup ? wechatState.activeSession.avatar : getCurrentSessionAvatar()" class="w-full h-full object-cover">
                             </div>
                             <div class="flex flex-col flex-1 min-w-0">
-                                <!-- 点击名字修改状态，加入 whitespace-nowrap 修复输入中截断 -->
+                                <!-- 修复：点击名字弹出修改状态 -->
                                 <h1 class="font-bold text-[15px] text-gray-900 leading-tight flex items-center gap-1 cursor-pointer active:opacity-50" @click.stop="!wechatState.activeSession.isGroup && openEditStatusModal()">
                                     <span v-if="isTyping" class="text-sm font-normal text-gray-500 whitespace-nowrap">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                                     <span v-else class="truncate">{{ getCurrentChatTitle() }}</span>
@@ -2788,12 +2788,12 @@
 
                     <!-- 中间排版模式 -->
                     <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'center'" class="flex flex-col items-center absolute left-1/2 -translate-x-1/2 w-[60%]">
-                        <!-- 点击名字跳出心声 -->
-                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 cursor-pointer active:opacity-50 w-full" @click.stop="openStatusModalIfSingle">
+                        <!-- 修复：点击名字弹出心声 -->
+                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 cursor-pointer active:opacity-50 w-full" @click.stop="!wechatState.activeSession.isGroup && openStatusModal()">
                             <span v-if="isTyping" class="whitespace-nowrap text-center">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                             <span v-else class="truncate w-full text-center">{{ getCurrentChatTitle() }}</span>
                         </h1>
-                        <!-- 点击状态修改状态 -->
+                        <!-- 修复：点击状态弹出修改状态 -->
                         <div v-if="!wechatState.activeSession.isGroup" class="flex items-center justify-center gap-1.5 mt-[2px] cursor-pointer active:opacity-50 w-fit mx-auto" @click.stop="openEditStatusModal()">
                             <div class="w-1.5 h-1.5 rounded-full shadow-sm shrink-0" :class="getStatusColorClass(wechatState.activeSession?.onlineStatus)"></div>
                             <span class="text-[10px] text-gray-400 font-medium tracking-wider truncate">{{ wechatState.activeSession?.statusText || '手机在线' }}</span>
@@ -2801,12 +2801,11 @@
                     </div>
 
                     <div class="flex items-center gap-1 shrink-0">
-                        <!-- 加上 v-if="!wechatState.activeSession.isGroup" 判断，群聊不显示此按钮 -->
                         <button v-if="!wechatState.activeSession.isGroup" class="w-8 h-8 flex items-center justify-center text-gray-800" @click="groupSelectModal.show = true"><i class="fas fa-folder-open"></i></button>
                         <button class="w-8 h-8 flex items-center justify-center text-gray-800" @click="goToChatDetails"><i class="fas fa-ellipsis-h"></i></button>
                     </div>
-                </header>                               
-                                               
+                </header>
+                                   
                 <!-- 聊天容器：支持自定义背景图 -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-2 bg-[#fdfdfd] bg-cover bg-center" ref="chatContainer" @click="closeChatMenus"
                      :style="{ backgroundImage: wechatState.activeSession.wallpaper ? 'url(' + wechatState.activeSession.wallpaper + ')' : '' }">
@@ -2921,7 +2920,7 @@
                                     </div>
                                     
                                     <!-- 微信发送文件卡片 -->
-                                    <div v-else-if="msg.type === 'file'" class="bg-white border border-gray-200 rounded-xl w-[240px] overflow-hidden shadow-sm flex items-center p-4 cursor-pointer active:scale-95 transition" @click="showToast('仅作为传输演示，无法直接在手机端打开')">
+                                    <div v-else-if="msg.type === 'file'" class="bg-white border border-gray-200 rounded-xl w-[240px] overflow-hidden shadow-sm flex items-center p-4 cursor-default">
                                         <div class="flex-1 min-w-0 pr-4 flex flex-col justify-center">
                                             <div class="text-[15px] font-medium text-gray-900 line-clamp-2 leading-tight break-all">{{ msg.fileName }}</div>
                                             <div class="text-[11px] text-gray-400 mt-1.5 font-mono">{{ msg.fileSize }}</div>
@@ -5700,41 +5699,38 @@ const app = createApp({
             if (!session) return;
 
             const fileExt = file.name.split('.').pop().toLowerCase();
-            if (!['docx', 'txt', 'pdf'].includes(fileExt)) {
-                this.showToast('仅支持 .docx, .txt, .pdf 文件');
-                e.target.value = '';
-                return;
-            }
-
             const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-            this.showToast('正在解析并发送文件...');
+
+            const msg = {
+                type: 'file',
+                fileName: file.name,
+                fileExt: fileExt,
+                fileSize: fileSize,
+                isSelf: true,
+                time: Date.now(),
+                avatar: this.getMaskById(session.maskId).avatar
+            };
+            session.messages.push(msg);
+            session.lastMessage = '[文件]';
+            this.scrollToBottom();
+            e.target.value = '';
+
+            this.showToast('正在向对方传输文件并解析...');
             let extractedText = "";
 
-            const processFileMsg = () => {
-                const msg = {
-                    type: 'file',
-                    fileName: file.name,
-                    fileExt: fileExt,
-                    fileSize: fileSize,
-                    extractedText: extractedText, // 直接将提取的文字挂载在历史记录里，供 AI 回忆
-                    isSelf: true,
-                    time: Date.now(),
-                    avatar: this.getMaskById(session.maskId).avatar
-                };
-                session.messages.push(msg);
-                session.lastMessage = '[文件]';
-                this.scrollToBottom();
-                e.target.value = '';
-                this.saveData();
-
-                let aiPrompt = `我刚刚给你发送了文件《${file.name}》。`;
+            const processAIResponse = () => {
+                // 【核心修复】：注入最高级别的系统指令，防止大模型乱说话
+                let aiPrompt = `【系统最高级别指令：玩家刚刚向你发送了一个文件】\n文件名: 《${file.name}》\n大小: ${fileSize}。`;
+                
                 if (extractedText) {
-                    aiPrompt += `\n文件正文节选：\n"......\n${extractedText}\n......"\n\n请假装你点开并阅读了这个文件，然后自然地针对内容给我回复。`;
+                    aiPrompt += `\n\n为了让你能直接阅读，系统已为你提取了该文件的核心正文内容如下：\n"......\n${extractedText}\n......"\n\n【行动指令】：请你必须根据上面这段正文内容，像个真人一样给出你看完后的详细反应和看法！不要说你打不开！`;
                 } else if (fileExt === 'pdf') {
-                    aiPrompt += `\n这是一个PDF文件。请根据文件名猜测大致内容，并假装你正在看，给出合理的回复。`;
+                    aiPrompt += `\n【行动指令】：这是一个PDF文件，受限于你的系统你无法看到里面全貌，但请根据这个文件的名字猜测它大概讲了什么，并自然地给出你的反应！`;
+                } else {
+                    aiPrompt += `\n【行动指令】：请根据该文件名假装你点开查看了，并对我做出真实的回应。`;
                 }
                 
-                // 延迟 2.5 秒，模拟对方正在查看文件
+                this.saveData();
                 setTimeout(() => {
                     this.triggerReceive(aiPrompt);
                 }, 2500);
@@ -5743,8 +5739,8 @@ const app = createApp({
             try {
                 if (fileExt === 'txt') {
                     const text = await file.text();
-                    extractedText = text.substring(0, 1500); // 截取前1500字防止爆Token
-                    processFileMsg();
+                    extractedText = text.substring(0, 1000); // 截取1000字防止爆token
+                    processAIResponse();
                 } else if (fileExt === 'docx') {
                     const arrayBuffer = await file.arrayBuffer();
                     if (!window.mammoth) {
@@ -5754,23 +5750,24 @@ const app = createApp({
                         script.onload = async () => {
                             try {
                                 const result = await mammoth.extractRawText({ arrayBuffer });
-                                extractedText = result.value.substring(0, 1500);
-                            } catch(err) {}
-                            processFileMsg();
+                                extractedText = result.value.substring(0, 1000);
+                            } catch(err) { extractedText = ""; }
+                            processAIResponse();
                         };
-                        script.onerror = () => processFileMsg();
+                        script.onerror = () => { processAIResponse(); };
                     } else {
                         try {
                             const result = await mammoth.extractRawText({ arrayBuffer });
-                            extractedText = result.value.substring(0, 1500);
-                        } catch(err) {}
-                        processFileMsg();
+                            extractedText = result.value.substring(0, 1000);
+                        } catch(err) { extractedText = ""; }
+                        processAIResponse();
                     }
                 } else {
-                    processFileMsg();
+                    processAIResponse();
                 }
             } catch(error) {
-                processFileMsg();
+                console.error("文件读取失败", error);
+                processAIResponse(); 
             }
         },
         getCurrentChatTitle() {
@@ -8166,6 +8163,31 @@ const app = createApp({
                 }
             }
 
+            if (!session.isGroup) {
+                const status = session.onlineStatus || 'online';
+                if (status === 'offline') {
+                    this.showToast('对方目前处于离线状态，无法收到你的消息');
+                    return; 
+                }
+            }
+
+            this.isTyping = true; 
+            let prompt = typeof directionPrompt === 'string' ? directionPrompt : '';
+
+            // 【新增核心功能】：自动嗅探上一条消息中是否含有链接 (如小红书/抖音)，强迫大模型打开并探讨！
+            if (session.messages.length > 0) {
+                const lastMsg = session.messages[session.messages.length - 1];
+                if (lastMsg.isSelf && lastMsg.type === 'text') {
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    if (urlRegex.test(lastMsg.content)) {
+                        prompt += (prompt ? '\n' : '') + '【系统行动指令】：我(玩家)刚刚给你发了一条包含链接(如小红书/抖音/微博等网址)的消息。请你假装在手机上点开看了这个链接，根据上下文、文件名或平台特征，直接像真人一样和我讨论这个链接里的内容，给出你的强烈反应！绝对不要说你打不开或者看不见！';
+                    }
+                }
+            }
+
+            this.generateAiReply(prompt);
+        },
+
             // --- 离线状态严格拦截，点击接收不作为 ---
             if (!session.isGroup) {
                 const status = session.onlineStatus || 'online';
@@ -8491,20 +8513,6 @@ ${readContext}
 ${crossChatContext}
 ${blockContext}
 </ENVIRONMENT_CONTEXT>
-// --- 智能识别社交媒体链接指令 ---
-            const lastUserMsg = session.messages.slice(-3).reverse().find(m => m.isSelf);
-            if (lastUserMsg && lastUserMsg.type === 'text') {
-                if (/https?:\/\//i.test(lastUserMsg.content)) {
-                    let platform = '网页';
-                    if (/xhslink|xiaohongshu|小红书/i.test(lastUserMsg.content)) platform = '小红书';
-                    else if (/douyin|v\.douyin|抖音/i.test(lastUserMsg.content)) platform = '抖音视频';
-                    else if (/b23\.tv|bilibili|B站/i.test(lastUserMsg.content)) platform = 'B站视频';
-                    else if (/weibo|微博/i.test(lastUserMsg.content)) platform = '微博动态';
-                    else if (/m\.tb\.cn|taobao|淘宝/i.test(lastUserMsg.content)) platform = '淘宝商品';
-                    
-                    systemPrompt += `\n\n【！！！系统强制指令！！！】：我(玩家)刚刚给你发送了一个[${platform}]的链接。由于系统限制你实际上无法联网查看，但你必须**假装你已经点开链接看过了**！请你根据我发链接时附带的文字，或者链接里的英文字母关键字，猜测视频或帖子的内容，并顺着我的话题进行非常自然、口语化的热烈讨论、吐槽或感叹。**绝对不要**告诉我你打不开链接或看不了！`;
-                }
-            }
 
 IMPORTANT: You must output ONLY a valid JSON object. No Markdown. No other text.
 ${session.isGroup ? `
@@ -8602,10 +8610,6 @@ Structure:
                          });
                     } else if (m.type === 'sticker') {
                          contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[发送了表情包: ${m.desc || '未命名'}]` });
-                         } else if (m.type === 'file') {
-                        let fileStr = `[玩家发送了文件: 《${m.fileName}》]`;
-                        if (m.extractedText) fileStr += `\n(文件正文节选: "${m.extractedText}")`;
-                        contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: fileStr });
                     } else if (m.type === 'moment') { 
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[Shared a moment: ${m.momentData.content}]` });
                     } else if (m.type === 'fake_image') {
@@ -9267,11 +9271,6 @@ Structure:
             this.groupSelectModal.show = false;
             this.activeMomentMenuId = null;
             this.wechatState.showGroupMentionPanel = false; // 【新增】点击空白处关闭@弹窗
-        },
-        openStatusModalIfSingle() {
-            if (this.wechatState.activeSession && !this.wechatState.activeSession.isGroup) {
-                this.openStatusModal();
-            }
         },
         openStatusModal() {
             if(!this.wechatState.activeSession) return;
