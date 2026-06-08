@@ -447,7 +447,7 @@
      <input type="file" ref="docxImportInput" accept=".docx" class="hidden" @change="handleDocxImport">
 <input type="file" ref="aoveinImportInput" accept=".json,.png" class="hidden" @change="handleAoveinImport">
 <input type="file" ref="stImportInput" accept=".png" class="hidden" @change="handleSTImport">
-<input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf,.mp4" class="hidden" @change="handleChatFileUpload">
+<input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf" class="hidden" @change="handleChatFileUpload">
 
     <!-- 全局弹窗 (Z-Index 调高) -->
     <transition name="fade"><div v-if="toast.show" class="fixed inset-0 z-[90000] flex items-center justify-center pointer-events-none"><div class="bg-black/70 text-white px-5 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium">{{ toast.message }}</div></div></transition>
@@ -2769,7 +2769,7 @@
                         <!-- 左侧排版模式 -->
                         <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'left'" class="flex items-center gap-2 pl-2 flex-1 min-w-0">
                             <!-- 只有点击头像才弹出心声 -->
-                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80">
+                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80" @click.stop="openStatusModalIfSingle">
                                 <img :src="wechatState.activeSession.isGroup ? wechatState.activeSession.avatar : getCurrentSessionAvatar()" class="w-full h-full object-cover">
                             </div>
                             <div class="flex flex-col flex-1 min-w-0">
@@ -2789,7 +2789,7 @@
                     <!-- 中间排版模式 -->
                     <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'center'" class="flex flex-col items-center absolute left-1/2 -translate-x-1/2 w-[60%]">
                         <!-- 点击名字跳出心声 -->
-                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 w-full">
+                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 cursor-pointer active:opacity-50 w-full" @click.stop="openStatusModalIfSingle">
                             <span v-if="isTyping" class="whitespace-nowrap text-center">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                             <span v-else class="truncate w-full text-center">{{ getCurrentChatTitle() }}</span>
                         </h1>
@@ -2929,7 +2929,6 @@
                                         <div class="w-10 h-10 shrink-0 flex items-center justify-center">
                                             <i v-if="msg.fileExt === 'pdf'" class="fas fa-file-pdf text-[#ff4d4f] text-4xl"></i>
                                             <i v-else-if="msg.fileExt === 'docx'" class="fas fa-file-word text-[#1677ff] text-4xl"></i>
-                                            <i v-else-if="msg.fileExt === 'mp4'" class="fas fa-file-video text-[#722ed1] text-4xl"></i>
                                             <i v-else-if="msg.fileExt === 'txt'" class="fas fa-file-alt text-[#52c41a] text-4xl"></i>
                                             <i v-else class="fas fa-file text-gray-400 text-4xl"></i>
                                         </div>
@@ -5701,53 +5700,51 @@ const app = createApp({
             if (!session) return;
 
             const fileExt = file.name.split('.').pop().toLowerCase();
+            if (!['docx', 'txt', 'pdf'].includes(fileExt)) {
+                this.showToast('仅支持 .docx, .txt, .pdf 文件');
+                e.target.value = '';
+                return;
+            }
+
             const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-
-            // 先立刻把卡片推送到屏幕上
-            const msg = {
-                type: 'file',
-                fileName: file.name,
-                fileExt: fileExt,
-                fileSize: fileSize,
-                isSelf: true,
-                time: Date.now(),
-                avatar: this.getMaskById(session.maskId).avatar
-            };
-            session.messages.push(msg);
-            session.lastMessage = '[文件]';
-            this.scrollToBottom();
-            e.target.value = '';
-
-            // AI 的文件阅读处理逻辑
-            this.showToast('正在向对方传输文件...');
+            this.showToast('正在解析并发送文件...');
             let extractedText = "";
 
-            const processAIResponse = () => {
-                let aiPrompt = `【行为提示：我刚刚通过微信给你发送了一个文件】\n文件名: 《${file.name}》\n大小: ${fileSize}。`;
-                
+            const processFileMsg = () => {
+                const msg = {
+                    type: 'file',
+                    fileName: file.name,
+                    fileExt: fileExt,
+                    fileSize: fileSize,
+                    extractedText: extractedText, // 直接将提取的文字挂载在历史记录里，供 AI 回忆
+                    isSelf: true,
+                    time: Date.now(),
+                    avatar: this.getMaskById(session.maskId).avatar
+                };
+                session.messages.push(msg);
+                session.lastMessage = '[文件]';
+                this.scrollToBottom();
+                e.target.value = '';
+                this.saveData();
+
+                let aiPrompt = `我刚刚给你发送了文件《${file.name}》。`;
                 if (extractedText) {
-                    aiPrompt += `\n为了方便你读取，文件正文的前段提取内容如下：\n"......\n${extractedText}\n......"\n\n请你假装在手机上点开了这个文件并仔细阅读了它，然后针对它的内容给我回复。`;
-                } else if (fileExt === 'mp4') {
-                    aiPrompt += `\n这是一个视频文件。你看了之后有什么感想？请结合我们当前的话题，或者根据这个视频的文件名，假装你看完了并做出极其口语化的微信回复。`;
+                    aiPrompt += `\n文件正文节选：\n"......\n${extractedText}\n......"\n\n请假装你点开并阅读了这个文件，然后自然地针对内容给我回复。`;
                 } else if (fileExt === 'pdf') {
-                    aiPrompt += `\n这是一个PDF文件。由于系统限制你无法读取长文，但请根据这个文件的名字猜测它大概讲了什么，并假装你接收了该文件向我做出回应。`;
-                } else {
-                    aiPrompt += `\n这是一个文件。请根据该文件名假装你接收并查看了，向我作出真实的回应。`;
+                    aiPrompt += `\n这是一个PDF文件。请根据文件名猜测大致内容，并假装你正在看，给出合理的回复。`;
                 }
                 
-                this.saveData();
-                // 模拟对方观看文件的时间：2.5秒
+                // 延迟 2.5 秒，模拟对方正在查看文件
                 setTimeout(() => {
                     this.triggerReceive(aiPrompt);
                 }, 2500);
             };
 
-            // 文本和 Docx 的内容前置提取器 (截取前1000个字符防止撑爆 Token)
             try {
                 if (fileExt === 'txt') {
                     const text = await file.text();
-                    extractedText = text.substring(0, 1000);
-                    processAIResponse();
+                    extractedText = text.substring(0, 1500); // 截取前1500字防止爆Token
+                    processFileMsg();
                 } else if (fileExt === 'docx') {
                     const arrayBuffer = await file.arrayBuffer();
                     if (!window.mammoth) {
@@ -5757,25 +5754,23 @@ const app = createApp({
                         script.onload = async () => {
                             try {
                                 const result = await mammoth.extractRawText({ arrayBuffer });
-                                extractedText = result.value.substring(0, 1000);
-                            } catch(err) { extractedText = ""; }
-                            processAIResponse();
+                                extractedText = result.value.substring(0, 1500);
+                            } catch(err) {}
+                            processFileMsg();
                         };
-                        script.onerror = () => { processAIResponse(); };
+                        script.onerror = () => processFileMsg();
                     } else {
                         try {
                             const result = await mammoth.extractRawText({ arrayBuffer });
-                            extractedText = result.value.substring(0, 1000);
-                        } catch(err) { extractedText = ""; }
-                        processAIResponse();
+                            extractedText = result.value.substring(0, 1500);
+                        } catch(err) {}
+                        processFileMsg();
                     }
                 } else {
-                    // PDF / MP4 等不提取文字，直接进入反馈链
-                    processAIResponse();
+                    processFileMsg();
                 }
             } catch(error) {
-                console.error("文件读取前置处理失败", error);
-                processAIResponse(); // 即使读取文字失败也要照样触发 AI 反应
+                processFileMsg();
             }
         },
         getCurrentChatTitle() {
@@ -8496,6 +8491,20 @@ ${readContext}
 ${crossChatContext}
 ${blockContext}
 </ENVIRONMENT_CONTEXT>
+// --- 智能识别社交媒体链接指令 ---
+            const lastUserMsg = session.messages.slice(-3).reverse().find(m => m.isSelf);
+            if (lastUserMsg && lastUserMsg.type === 'text') {
+                if (/https?:\/\//i.test(lastUserMsg.content)) {
+                    let platform = '网页';
+                    if (/xhslink|xiaohongshu|小红书/i.test(lastUserMsg.content)) platform = '小红书';
+                    else if (/douyin|v\.douyin|抖音/i.test(lastUserMsg.content)) platform = '抖音视频';
+                    else if (/b23\.tv|bilibili|B站/i.test(lastUserMsg.content)) platform = 'B站视频';
+                    else if (/weibo|微博/i.test(lastUserMsg.content)) platform = '微博动态';
+                    else if (/m\.tb\.cn|taobao|淘宝/i.test(lastUserMsg.content)) platform = '淘宝商品';
+                    
+                    systemPrompt += `\n\n【！！！系统强制指令！！！】：我(玩家)刚刚给你发送了一个[${platform}]的链接。由于系统限制你实际上无法联网查看，但你必须**假装你已经点开链接看过了**！请你根据我发链接时附带的文字，或者链接里的英文字母关键字，猜测视频或帖子的内容，并顺着我的话题进行非常自然、口语化的热烈讨论、吐槽或感叹。**绝对不要**告诉我你打不开链接或看不了！`;
+                }
+            }
 
 IMPORTANT: You must output ONLY a valid JSON object. No Markdown. No other text.
 ${session.isGroup ? `
@@ -8593,6 +8602,10 @@ Structure:
                          });
                     } else if (m.type === 'sticker') {
                          contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[发送了表情包: ${m.desc || '未命名'}]` });
+                         } else if (m.type === 'file') {
+                        let fileStr = `[玩家发送了文件: 《${m.fileName}》]`;
+                        if (m.extractedText) fileStr += `\n(文件正文节选: "${m.extractedText}")`;
+                        contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: fileStr });
                     } else if (m.type === 'moment') { 
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[Shared a moment: ${m.momentData.content}]` });
                     } else if (m.type === 'fake_image') {
@@ -9254,6 +9267,11 @@ Structure:
             this.groupSelectModal.show = false;
             this.activeMomentMenuId = null;
             this.wechatState.showGroupMentionPanel = false; // 【新增】点击空白处关闭@弹窗
+        },
+        openStatusModalIfSingle() {
+            if (this.wechatState.activeSession && !this.wechatState.activeSession.isGroup) {
+                this.openStatusModal();
+            }
         },
         openStatusModal() {
             if(!this.wechatState.activeSession) return;
