@@ -447,6 +447,7 @@
      <input type="file" ref="docxImportInput" accept=".docx" class="hidden" @change="handleDocxImport">
 <input type="file" ref="aoveinImportInput" accept=".json,.png" class="hidden" @change="handleAoveinImport">
 <input type="file" ref="stImportInput" accept=".png" class="hidden" @change="handleSTImport">
+<input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf,.mp4" class="hidden" @change="handleChatFileUpload">
 
     <!-- 全局弹窗 (Z-Index 调高) -->
     <transition name="fade"><div v-if="toast.show" class="fixed inset-0 z-[90000] flex items-center justify-center pointer-events-none"><div class="bg-black/70 text-white px-5 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium">{{ toast.message }}</div></div></transition>
@@ -2856,7 +2857,7 @@
                                 </div>
                                 
                                 <!-- 气泡核心 -->
-                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' || msg.type === 'sticker' ? 'chat-bubble-image' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
+                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' || msg.type === 'sticker' ? 'chat-bubble-image' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
                                      :style="(msg.type === 'voice' && !msg.quote) ? { width: (60 + Math.min(msg.duration, 60) * 4) + 'px' } : {}"
                                      @click="handleChatBubbleClick(msg)"
                                      @contextmenu.prevent="showChatContextMenu($event, msg, i)">
@@ -2917,6 +2918,21 @@
                                     <div v-else-if="msg.type === 'forward'" class="forward-card">
                                         <div class="forward-title">聊天记录</div>
                                         <div class="forward-content">{{ msg.content }}</div>
+                                    </div>
+                                    
+                                    <!-- 微信发送文件卡片 -->
+                                    <div v-else-if="msg.type === 'file'" class="bg-white border border-gray-200 rounded-xl w-[240px] overflow-hidden shadow-sm flex items-center p-4 cursor-pointer active:scale-95 transition" @click="showToast('仅作为传输演示，无法直接在手机端打开')">
+                                        <div class="flex-1 min-w-0 pr-4 flex flex-col justify-center">
+                                            <div class="text-[15px] font-medium text-gray-900 line-clamp-2 leading-tight break-all">{{ msg.fileName }}</div>
+                                            <div class="text-[11px] text-gray-400 mt-1.5 font-mono">{{ msg.fileSize }}</div>
+                                        </div>
+                                        <div class="w-10 h-10 shrink-0 flex items-center justify-center">
+                                            <i v-if="msg.fileExt === 'pdf'" class="fas fa-file-pdf text-[#ff4d4f] text-4xl"></i>
+                                            <i v-else-if="msg.fileExt === 'docx'" class="fas fa-file-word text-[#1677ff] text-4xl"></i>
+                                            <i v-else-if="msg.fileExt === 'mp4'" class="fas fa-file-video text-[#722ed1] text-4xl"></i>
+                                            <i v-else-if="msg.fileExt === 'txt'" class="fas fa-file-alt text-[#52c41a] text-4xl"></i>
+                                            <i v-else class="fas fa-file text-gray-400 text-4xl"></i>
+                                        </div>
                                     </div>
                                     
                                     <!-- 外卖代付请求卡片 (黑白灰UI) -->
@@ -3142,7 +3158,7 @@
                             <div class="attach-item" @click="openRedPacketModal"><div class="attach-icon-box !bg-white border border-gray-200 text-gray-600 !rounded-2xl">
                                 <i class="fas fa-wallet text-lg"></i>
                             </div><span class="attach-label">红包</span></div>
-                            <div class="attach-item" @click="showToast('文件功能待接入')"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
+                            <div class="attach-item" @click="triggerChatFileUpload"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
                             <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                             <div class="attach-item" @click="showToast('敬请期待')"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
@@ -5598,6 +5614,7 @@ const app = createApp({
                 const last = session.messages[session.messages.length - 1];
                 if (last.isRecalled) return '"' + (last.isSelf ? '你' : last.name) + '" 撤回了一条消息';
                 if (last.type === 'image' || last.type === 'fake_image') return '[图片]';
+                if (last.type === 'file') return `[文件] ${last.fileName}`;
                 if (last.type === 'voice') return '[语音]';
                 if (last.type === 'sticker') return '[动画表情]';
                 if (last.type === 'red_packet') return '[微信红包]';
@@ -5670,6 +5687,96 @@ const app = createApp({
                 this.showToast('专属 PNG 角色卡导出成功！');
             };
             reader.readAsArrayBuffer(pngBlob);
+        },
+        triggerChatFileUpload() {
+            if (this.$refs.chatFileInput) {
+                this.$refs.chatFileInput.click();
+            }
+            this.wechatState.showAttachMenu = false;
+        },
+        async handleChatFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const session = this.wechatState.activeSession;
+            if (!session) return;
+
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+
+            // 先立刻把卡片推送到屏幕上
+            const msg = {
+                type: 'file',
+                fileName: file.name,
+                fileExt: fileExt,
+                fileSize: fileSize,
+                isSelf: true,
+                time: Date.now(),
+                avatar: this.getMaskById(session.maskId).avatar
+            };
+            session.messages.push(msg);
+            session.lastMessage = '[文件]';
+            this.scrollToBottom();
+            e.target.value = '';
+
+            // AI 的文件阅读处理逻辑
+            this.showToast('正在向对方传输文件...');
+            let extractedText = "";
+
+            const processAIResponse = () => {
+                let aiPrompt = `【行为提示：我刚刚通过微信给你发送了一个文件】\n文件名: 《${file.name}》\n大小: ${fileSize}。`;
+                
+                if (extractedText) {
+                    aiPrompt += `\n为了方便你读取，文件正文的前段提取内容如下：\n"......\n${extractedText}\n......"\n\n请你假装在手机上点开了这个文件并仔细阅读了它，然后针对它的内容给我回复。`;
+                } else if (fileExt === 'mp4') {
+                    aiPrompt += `\n这是一个视频文件。你看了之后有什么感想？请结合我们当前的话题，或者根据这个视频的文件名，假装你看完了并做出极其口语化的微信回复。`;
+                } else if (fileExt === 'pdf') {
+                    aiPrompt += `\n这是一个PDF文件。由于系统限制你无法读取长文，但请根据这个文件的名字猜测它大概讲了什么，并假装你接收了该文件向我做出回应。`;
+                } else {
+                    aiPrompt += `\n这是一个文件。请根据该文件名假装你接收并查看了，向我作出真实的回应。`;
+                }
+                
+                this.saveData();
+                // 模拟对方观看文件的时间：2.5秒
+                setTimeout(() => {
+                    this.triggerReceive(aiPrompt);
+                }, 2500);
+            };
+
+            // 文本和 Docx 的内容前置提取器 (截取前1000个字符防止撑爆 Token)
+            try {
+                if (fileExt === 'txt') {
+                    const text = await file.text();
+                    extractedText = text.substring(0, 1000);
+                    processAIResponse();
+                } else if (fileExt === 'docx') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    if (!window.mammoth) {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+                        document.head.appendChild(script);
+                        script.onload = async () => {
+                            try {
+                                const result = await mammoth.extractRawText({ arrayBuffer });
+                                extractedText = result.value.substring(0, 1000);
+                            } catch(err) { extractedText = ""; }
+                            processAIResponse();
+                        };
+                        script.onerror = () => { processAIResponse(); };
+                    } else {
+                        try {
+                            const result = await mammoth.extractRawText({ arrayBuffer });
+                            extractedText = result.value.substring(0, 1000);
+                        } catch(err) { extractedText = ""; }
+                        processAIResponse();
+                    }
+                } else {
+                    // PDF / MP4 等不提取文字，直接进入反馈链
+                    processAIResponse();
+                }
+            } catch(error) {
+                console.error("文件读取前置处理失败", error);
+                processAIResponse(); // 即使读取文字失败也要照样触发 AI 反应
+            }
         },
         getCurrentChatTitle() {
             if(!this.wechatState.activeSession) return '';
@@ -9164,29 +9271,42 @@ Structure:
             const session = this.wechatState.activeSession;
             if (!session) return;
             if (!session.boundWorldbookFolderIds) session.boundWorldbookFolderIds =[];
-            if (!session.boundWorldbookFileIds) session.boundWorldbookFileIds =[];
             if (folderId === null) { 
                 session.boundWorldbookFolderIds = []; 
-                session.boundWorldbookFileIds =[]; 
                 session.boundWorldbookFolderId = null; 
-            } 
-            else {
+            } else {
                 const idx = session.boundWorldbookFolderIds.indexOf(folderId);
                 if (idx > -1) session.boundWorldbookFolderIds.splice(idx, 1);
                 else session.boundWorldbookFolderIds.push(folderId);
             }
             this.saveData();
         },
-        toggleWorldBinding(fid) { this.bindWorldFolder(fid); }, 
+        toggleWorldBinding(fid) { 
+            const files = this.worldData.filter(i => i.type === 'file' && i.parentId === fid && i.isActive !== false);
+            if (files.length > 0 && files.every(i => i.isGlobal)) {
+                this.showToast('该文件夹内均为全局世界书，已自动挂载。');
+                return;
+            }
+            this.bindWorldFolder(fid); 
+        }, 
         isFolderBound(fid) {
             const session = this.wechatState.activeSession;
             if (!session) return false;
             if (session.boundWorldbookFolderId === fid) return true; 
-            return session.boundWorldbookFolderIds && session.boundWorldbookFolderIds.includes(fid);
+            if (session.boundWorldbookFolderIds && session.boundWorldbookFolderIds.includes(fid)) return true;
+            // 只要文件夹里全是开着全局设定的文件，就亮起对号
+            const files = this.worldData.filter(i => i.type === 'file' && i.parentId === fid && i.isActive !== false);
+            if (files.length > 0 && files.every(i => i.isGlobal)) return true;
+            return false;
         },
         toggleWorldFileBinding(fileId) {
             const session = this.wechatState.activeSession;
             if (!session) return;
+            const file = this.worldData.find(f => f.id === fileId);
+            if (file && file.isGlobal) {
+                this.showToast('这是全局世界书，已自动绑定。若要取消请去"世界书 App"中关闭全局。');
+                return;
+            }
             if (!session.boundWorldbookFileIds) session.boundWorldbookFileIds =[];
             const idx = session.boundWorldbookFileIds.indexOf(fileId);
             if (idx > -1) session.boundWorldbookFileIds.splice(idx, 1);
@@ -9196,6 +9316,8 @@ Structure:
         isFileBound(fileId) {
             const session = this.wechatState.activeSession;
             if (!session) return false;
+            const file = this.worldData.find(f => f.id === fileId);
+            if (file && file.isGlobal) return true;
             return session.boundWorldbookFileIds && session.boundWorldbookFileIds.includes(fileId);
         },
         toggleBinderFolder(fid) {
