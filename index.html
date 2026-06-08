@@ -2910,6 +2910,24 @@
                                         </div>
                                     </div>
                                     
+                                    <!-- 桃宝商品分享卡片 (iOS黑白灰UI) -->
+                                    <div v-else-if="msg.type === 'taobao_forward'" class="bg-white border border-gray-200 rounded-xl w-[230px] overflow-hidden shadow-sm flex flex-col cursor-pointer active:scale-95 transition" @click="showToast('商品链接已失效')">
+                                        <div class="p-3 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
+                                            <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center shrink-0"><i class="fas fa-shopping-bag text-sm"></i></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm font-bold text-gray-900 truncate">分享了一件商品</div>
+                                                <div class="text-[10px] text-gray-500 mt-0.5 truncate">{{ msg.item.store }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="p-4 flex gap-3 items-center">
+                                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 shrink-0"><i class="fas fa-box-open text-xl"></i></div>
+                                            <div class="flex flex-col flex-1 min-w-0">
+                                                <span class="text-xs font-bold text-gray-800 line-clamp-2">{{ msg.item.name }}</span>
+                                                <span class="text-sm font-bold text-gray-900 font-mono mt-1">¥{{ msg.item.price }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
                                     <!-- 朋友圈转发卡片 -->
                                     <div v-else-if="msg.type === 'moment'" class="moment-card-wrapper">
                                         <div class="moment-card-header"><img :src="msg.momentData.avatar" class="w-4 h-4 rounded-sm"><span>{{ msg.momentData.name }}</span></div>
@@ -4996,10 +5014,15 @@
     <!-- 这是你刚才丢失导致白屏的 NPC 头像库页面，必须紧贴在图标设置的下面，</main>的上面！ -->
     <transition name="page-slide">
         <div v-if="themesPage === 'npc_avatars'" class="absolute inset-0 p-4 pb-20 flex flex-col bg-gray-50">
-            <div class="flex flex-col gap-2 mb-4 shrink-0">
-                <textarea v-model="npcAvatarInputUrl" placeholder="输入头像 URL 链接 (支持批量，一行一个，自动修正乱码与文字格式)" class="w-full h-24 bg-white p-3 rounded-xl text-sm border border-gray-200 outline-none resize-none shadow-sm"></textarea>
-                <button @click="addNpcAvatarUrl" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition">批量添加</button>
+            <div class="flex flex-col gap-3 mb-4 shrink-0">
+                <textarea v-model="npcAvatarInputUrl" placeholder="输入头像 URL 链接 (支持批量，可直接粘贴带有其他字符的文本，自动提取)" class="w-full h-24 bg-white p-3 rounded-xl text-sm border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                <div class="flex gap-2">
+                    <button @click="formatNpcAvatarUrls" class="w-1/4 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold shadow-sm active:bg-gray-200 transition border border-gray-200">修正格式</button>
+                    <button @click="triggerNpcDocxImport" class="w-1/4 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold shadow-sm active:bg-gray-200 transition border border-gray-200">导入docx</button>
+                    <button @click="addNpcAvatarUrl" class="flex-1 bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition">批量添加</button>
+                </div>
             </div>
+            <input type="file" ref="npcDocxInput" accept=".docx" class="hidden" @change="handleNpcDocxImport">
             <div class="flex justify-between items-center mb-3 shrink-0">
                 <button @click="triggerNpcAvatarUpload" class="bg-white text-gray-800 border border-gray-200 px-4 py-2 rounded-full text-xs font-bold shadow-sm active:bg-gray-50"><i class="fas fa-upload mr-1"></i> 本地相册上传</button>
                 <button @click="isNpcMultiSelect = !isNpcMultiSelect; selectedNpcAvatars = []" class="text-xs font-bold px-4 py-2 rounded-full transition shadow-sm" :class="isNpcMultiSelect ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-white text-gray-600 border border-gray-200'">{{ isNpcMultiSelect ? '取消多选' : '多选删除' }}</button>
@@ -9119,13 +9142,59 @@ Structure:
         resetAllIcons() { this.showConfirm("重置所有？", () => { this.appCustomization = {}; this.saveData(); }); },
         
         // NPC头像管理逻辑
+        formatNpcAvatarUrls() {
+            if (!this.npcAvatarInputUrl.trim()) return;
+            const urlRegex = /(https?:\/\/[^\s"'<>]+)/ig;
+            const urls = this.npcAvatarInputUrl.match(urlRegex) || [];
+            if (urls.length > 0) {
+                this.npcAvatarInputUrl = urls.join('\n');
+                this.showToast('格式已修正');
+            } else {
+                this.showToast('未提取到有效链接');
+            }
+        },
+        triggerNpcDocxImport() { this.$refs.npcDocxInput.click(); },
+        handleNpcDocxImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            this.showToast('正在解析文档内容...');
+            if (!window.mammoth) {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+                document.head.appendChild(script);
+                script.onload = () => this.processNpcDocxFile(file);
+                script.onerror = () => this.showToast('加载文档解析库失败，请检查网络连接');
+            } else {
+                this.processNpcDocxFile(file);
+            }
+            e.target.value = '';
+        },
+        processNpcDocxFile(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const arrayBuffer = event.target.result;
+                mammoth.extractRawText({ arrayBuffer: arrayBuffer }).then((result) => {
+                    const text = result.value;
+                    const urlRegex = /(https?:\/\/[^\s"'<>]+)/ig;
+                    const urls = text.match(urlRegex) || [];
+                    if (urls.length > 0) {
+                        urls.forEach(u => this.npcAvatars.unshift(u));
+                        this.saveData();
+                        this.showToast(`成功导入 ${urls.length} 个头像`);
+                    } else {
+                        this.showToast('未能提取到有效的链接');
+                    }
+                }).catch(err => {
+                    this.showToast('文档解析失败');
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        },
         addNpcAvatarUrl() {
             if (!this.npcAvatarInputUrl.trim()) return this.showToast('请输入URL');
-            // 正则匹配提取所有合法的链接，忽略掺杂的中英文或乱码
             const urlRegex = /(https?:\/\/[^\s"'<>]+)/ig;
             const urls = this.npcAvatarInputUrl.match(urlRegex) || [];
             if (urls.length === 0) {
-                // 如果实在没匹配到，兜底直接硬塞
                 this.npcAvatars.unshift(this.npcAvatarInputUrl.trim());
             } else {
                 urls.forEach(u => this.npcAvatars.unshift(u));
