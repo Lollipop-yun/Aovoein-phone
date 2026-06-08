@@ -445,6 +445,8 @@
      :style="{ '--custom-font': themeConfig.fontFamily ? themeConfig.fontFamily : 'inherit', 'color': themeConfig.fontColor || '#000000', 'font-size': (themeConfig.fontSize || 1) + 'em' }">
      
      <input type="file" ref="docxImportInput" accept=".docx" class="hidden" @change="handleDocxImport">
+<input type="file" ref="aoveinImportInput" accept=".json,.png" class="hidden" @change="handleAoveinImport">
+<input type="file" ref="stImportInput" accept=".png" class="hidden" @change="handleSTImport">
 
     <!-- 全局弹窗 (Z-Index 调高) -->
     <transition name="fade"><div v-if="toast.show" class="fixed inset-0 z-[90000] flex items-center justify-center pointer-events-none"><div class="bg-black/70 text-white px-5 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium">{{ toast.message }}</div></div></transition>
@@ -2378,7 +2380,7 @@
                 <div class="flex justify-end items-center gap-4 relative w-16">
                     <i v-if="wechatState.activeNav === 'chat'" class="fas fa-plus text-lg cursor-pointer" @click.stop="wechatState.showPlusMenu = !wechatState.showPlusMenu"></i>
                     
-                    <i v-if="wechatState.activeNav === 'contacts'" class="fas fa-file-import text-lg cursor-pointer text-gray-500 hover:text-black transition" @click="triggerDocxImport" title="导入docx文件"></i>
+                    <i v-if="wechatState.activeNav === 'contacts'" class="fas fa-file-import text-lg cursor-pointer text-gray-500 hover:text-black transition" @click="contactImportModal.show = true" title="导入角色数据"></i>
                     <i v-if="wechatState.activeNav === 'contacts'" class="fas fa-plus text-lg cursor-pointer" @click="openAddContactModal"></i>
                     
                     <div v-if="wechatState.showPlusMenu" class="wechat-dropdown">
@@ -2387,6 +2389,42 @@
                     </div>
                 </div>
             </header>
+            
+            <!-- 联系人导入菜单 -->
+            <transition name="app-slide">
+                <div v-if="contactImportModal.show" class="fixed inset-0 z-[105000]">
+                    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="contactImportModal.show = false"></div>
+                    <div class="absolute bottom-0 w-full bg-[#f2f2f6] rounded-t-2xl overflow-hidden pb-safe font-sans">
+                        <div class="bg-white divide-y divide-gray-100 text-center text-[16px] font-medium text-gray-900">
+                            <div class="p-4 text-xs text-gray-400 font-normal">选择导入格式</div>
+                            <div @click="triggerAoveinImport" class="p-4 cursor-pointer active:bg-gray-50">导入 Aovein 专属卡 (.json/.png)</div>
+                            <div @click="triggerSTImport" class="p-4 cursor-pointer active:bg-gray-50 text-purple-600">导入 酒馆(SillyTavern) 角色卡 (.png)</div>
+                            <div @click="triggerDocxImport" class="p-4 cursor-pointer active:bg-gray-50">智能文档解析 (.docx)</div>
+                        </div>
+                        <div class="bg-white mt-2 p-4 text-center font-bold text-gray-800 cursor-pointer active:bg-gray-50" @click="contactImportModal.show = false">取消</div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- 酒馆解析引擎 激活弹窗 -->
+            <transition name="scale">
+                <div v-if="stActivationModal.show" class="fixed inset-0 z-[110000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div class="bg-white w-[80%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center mb-4 text-gray-800 text-xl"><i class="fas fa-lock"></i></div>
+                        <h3 class="text-[17px] font-bold text-gray-900 mb-2">解锁酒馆解析引擎</h3>
+                        <p class="text-[12px] text-gray-500 text-center mb-4 leading-relaxed">识别并兼容 SillyTavern 格式图片，自动剥离并在后台写入绑定的世界书节点。</p>
+                        <div class="w-full bg-gray-50 rounded-xl p-3 text-center mb-4 border border-gray-100 shadow-inner">
+                            <span class="text-[10px] text-gray-400 block mb-1">本设备识别码</span>
+                            <span class="text-[15px] font-bold text-gray-800 font-mono tracking-wider select-all">{{ stDeviceId }}</span>
+                        </div>
+                        <input v-model="stActivationModal.code" placeholder="输入激活密钥" class="w-full bg-white p-3.5 rounded-xl text-sm border border-gray-200 outline-none text-center font-mono tracking-widest mb-4 focus:border-gray-800 transition">
+                        <div class="flex gap-3 w-full">
+                            <button @click="stActivationModal.show = false" class="flex-1 bg-white border border-gray-200 text-gray-600 py-3 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition">取消</button>
+                            <button @click="verifySTCode" class="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition">验证并解锁</button>
+                        </div>
+                    </div>
+                </div>
+            </transition>
 
             <!-- 钱包页面 -->
             <div v-if="wechatState.activeNav === 'wallet'" class="flex-1 flex flex-col bg-white absolute inset-0 z-50">
@@ -5219,6 +5257,10 @@ const app = createApp({
             appList: Object.keys(DEFAULT_APPS), appCustomization: {}, tempIconUrls: {}, uploadingAppId: null,
             homeScreenPresets:[],
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
+            contactImportModal: { show: false },
+            stActivationModal: { show: false, code: '' },
+            stDeviceId: '',
+            stActivated: false,
             expandedGroups: ['all'],
             groupSelectModal: { show: false },
             addContactModal: { show: false }, chatWizard: { show: false, step: 1, type: 'single', selectedContacts:[], selectedMask: null, isObserver: false },
@@ -5436,6 +5478,8 @@ const app = createApp({
         }, 2000);
 
         this.updateTime(); this.timer = setInterval(this.updateTime, 1000); this.initBattery(); this.fetchWeather();
+        
+        this.generateSTDeviceId();
         
         // 全局后台活动轮询 (每 60 秒检查)
         setInterval(() => {
@@ -5668,14 +5712,6 @@ const app = createApp({
                     content: `[微信转账] 你已收取了 ${msg.name || session.name} 的转账`,
                     time: Date.now()
                 });
-                // 自动发送一条文字消息给对方
-                session.messages.push({
-                    type: 'text',
-                    content: `我接收了你的转账`,
-                    isSelf: true,
-                    time: Date.now(),
-                    avatar: this.getMaskById(session.maskId).avatar
-                });
                 this.scrollToBottom();
             }
             this.saveData();
@@ -5700,16 +5736,6 @@ const app = createApp({
                 content: `[微信转账] ${msg.isSelf ? '你' : (msg.name || session.name)} 退还了转账`,
                 time: Date.now()
             });
-
-            // 自动发送文字消息
-            session.messages.push({
-                type: 'text',
-                content: msg.isSelf ? `我退还了我的转账` : `我退还了你的转账`,
-                isSelf: true,
-                time: Date.now(),
-                avatar: this.getMaskById(session.maskId).avatar
-            });
-            
             this.scrollToBottom();
             this.saveData();
         },
@@ -7150,13 +7176,15 @@ const app = createApp({
                 session = { 
                     id: Date.now().toString(), targetId: target.id, name: target.remark || target.name, 
                     avatar: target.avatar, maskId: mask.id, messages: [], lastMessage: '', time: Date.now(),
-                    isPinned: false, boundWorldbookFolderId: null, boundWorldbookFolderIds: [],
+                    isPinned: false, 
+                    boundWorldbookFolderId: target.boundWorldbookFolderId || null, 
+                    boundWorldbookFolderIds: target.boundWorldbookFolderId ? [target.boundWorldbookFolderId] : [],
                     status: {}, statusHistory: [], wallpaper: '', 
                     groupId: null, 
                     customAvatarSelf: '',
                     customAvatarTarget: '',
                     isBlocked: false,
-                    avatarMode: 'all' // 新增：头像显示模式
+                    avatarMode: 'all' 
                 };
                 this.wechatState.sessions.unshift(session);
             }
@@ -7304,18 +7332,186 @@ const app = createApp({
             this.regenerateModal.show = false;
             this.triggerReceive(this.regenerateModal.prompt);
         },
-        // --- 微信通讯录导入 Docx 功能 ---
-        triggerDocxImport() {
-            if (this.$refs.docxImportInput) {
-                this.$refs.docxImportInput.click();
+        generateSTDeviceId() {
+            let did = localStorage.getItem('aovein_st_deviceId');
+            if(!did) {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                const rand = (l) => Array.from({length:l}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+                did = `ST-${rand(4)}-${rand(4)}`;
+                localStorage.setItem('aovein_st_deviceId', did);
             }
+            this.stDeviceId = did;
+            this.stActivated = localStorage.getItem('aovein_st_activated') === 'true';
+        },
+        verifySTCode() {
+            const clean = this.stDeviceId.replace(/ST-|-/g, '');
+            let sum = 0;
+            for(let i=0; i<clean.length; i++) sum += clean.charCodeAt(i) * (i + 7);
+            const valid = ( (sum * 9973) % 999999 ).toString().padStart(6, '0');
+            
+            if (this.stActivationModal.code.trim() === valid) {
+                this.stActivated = true;
+                localStorage.setItem('aovein_st_activated', 'true');
+                this.stActivationModal.show = false;
+                this.showToast('酒馆引擎已成功解锁');
+                this.$refs.stImportInput.click();
+            } else {
+                this.showToast('激活码错误，请核对');
+            }
+        },
+        triggerAoveinImport() {
+            this.contactImportModal.show = false;
+            this.$refs.aoveinImportInput.click();
+        },
+        triggerSTImport() {
+            this.contactImportModal.show = false;
+            if (this.stActivated) {
+                this.$refs.stImportInput.click();
+            } else {
+                this.stActivationModal.code = '';
+                this.stActivationModal.show = true;
+            }
+        },
+        triggerDocxImport() {
+            this.contactImportModal.show = false;
+            if (this.$refs.docxImportInput) this.$refs.docxImportInput.click();
+        },
+        handleAoveinImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const buffer = ev.target.result;
+                if (file.name.toLowerCase().endsWith('.png')) {
+                    const uint8 = new Uint8Array(buffer);
+                    const magic = new TextEncoder().encode("AOVEIN_OS_DATA_V1:");
+                    let magicIdx = -1;
+                    for (let i = uint8.length - magic.length; i >= 0; i--) {
+                        let match = true;
+                        for (let j = 0; j < magic.length; j++) {
+                            if (uint8[i+j] !== magic[j]) { match = false; break; }
+                        }
+                        if (match) { magicIdx = i; break; }
+                    }
+                    if (magicIdx > -1) {
+                        const dataBytes = uint8.slice(magicIdx + magic.length);
+                        try {
+                            const jsonStr = new TextDecoder().decode(dataBytes);
+                            const data = JSON.parse(jsonStr);
+                            this.newContact = { ...this.newContact, ...data, id: null };
+                            this.addContactModal.show = true;
+                            this.showToast('Aovein 专属卡解析成功');
+                        } catch(err) { this.showToast('Aovein 数据解析失败'); }
+                    } else {
+                        this.showToast('错误：该图片不是 Aovein 导出的角色卡');
+                    }
+                } else if (file.name.toLowerCase().endsWith('.json')) {
+                    try {
+                        const jsonStr = new TextDecoder().decode(buffer);
+                        const data = JSON.parse(jsonStr);
+                        if (data.name !== undefined) {
+                            this.newContact = { ...this.newContact, ...data, id: null };
+                            this.addContactModal.show = true;
+                            this.showToast('Aovein JSON 解析成功');
+                        } else {
+                            this.showToast('文件格式不合法，缺少联系人标识');
+                        }
+                    } catch(err) { this.showToast('JSON 格式错误，该文件不是由本系统导出'); }
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
+        },
+        async handleSTImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            this.showToast('正在解析酒馆数据...');
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const buffer = ev.target.result;
+                const dataView = new DataView(buffer);
+                let offset = 8;
+                let jsonStr = null;
+                while (offset < dataView.byteLength) {
+                    const length = dataView.getUint32(offset);
+                    const type = String.fromCharCode(dataView.getUint8(offset+4), dataView.getUint8(offset+5), dataView.getUint8(offset+6), dataView.getUint8(offset+7));
+                    if (type === 'tEXt') {
+                        const chunkData = new Uint8Array(buffer, offset+8, length);
+                        let textStr = new TextDecoder('utf-8').decode(chunkData);
+                        if (textStr.startsWith('chara\0')) {
+                            const b64 = textStr.substring(6);
+                            const binStr = atob(b64);
+                            const bytes = new Uint8Array(binStr.length);
+                            for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+                            jsonStr = new TextDecoder('utf-8').decode(bytes);
+                            break;
+                        }
+                    }
+                    offset += 8 + length + 4;
+                }
+                
+                if (jsonStr) {
+                    try {
+                        const stData = JSON.parse(jsonStr);
+                        const charData = stData.data || stData; 
+                        
+                        let bio = '';
+                        if (charData.description) bio += '描述: ' + charData.description + '\n';
+                        if (charData.personality) bio += '性格: ' + charData.personality + '\n';
+                        if (charData.scenario) bio += '世界观: ' + charData.scenario + '\n';
+                        
+                        let compressedAvatar = 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg';
+                        try {
+                            compressedAvatar = await compressImage(file, 300);
+                        } catch(err) { console.error("头像压缩失败"); }
+                        
+                        let folderId = null;
+                        if (charData.character_book && charData.character_book.entries && charData.character_book.entries.length > 0) {
+                            const folderName = (charData.name || '酒馆角色') + '的专属世界书';
+                            folderId = 'folder_' + Date.now().toString();
+                            this.worldData.push({ id: folderId, type: 'folder', name: folderName, isActive: true });
+                            
+                            charData.character_book.entries.forEach((entry, idx) => {
+                                this.worldData.push({
+                                    id: Date.now().toString() + '_' + idx,
+                                    type: 'file',
+                                    name: entry.keys ? entry.keys.join(',') : ('条目' + (idx+1)),
+                                    parentId: folderId,
+                                    isActive: true,
+                                    content: entry.content || '',
+                                    isGlobal: false
+                                });
+                            });
+                            this.showToast('已同步导入其包含的世界书，在发起聊天时将自动挂载！');
+                        }
+                        
+                        this.newContact = {
+                            id: null,
+                            name: charData.name || '未知角色',
+                            remark: '', username: '', gender: '女',
+                            height: '', weight: '', age: '', birthday: '',
+                            bio: bio.trim(),
+                            relationship: '', nudge: '', 
+                            signature: charData.first_mes || '',
+                            avatar: compressedAvatar,
+                            boundWorldbookFolderId: folderId
+                        };
+                        this.addContactModal.show = true;
+                        
+                    } catch(err) {
+                        this.showToast('酒馆数据读取损坏');
+                    }
+                } else {
+                    this.showToast('这不是酒馆卡片：未在图片中找到 chara 数据');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            e.target.value = '';
         },
         handleDocxImport(e) {
             const file = e.target.files[0];
             if (!file) return;
             this.showToast('正在解析文档内容...');
-            
-            // 动态注入 mammoth.js 解析 word
             if (!window.mammoth) {
                 const script = document.createElement('script');
                 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
