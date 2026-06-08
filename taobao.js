@@ -62,7 +62,17 @@ const TaobaoApp = {
             if (this.checkoutModal.selectedAddressId) return this.addresses.find(a => a.id === this.checkoutModal.selectedAddressId) || this.addresses[0];
             return this.addresses[0] || null;
         },
-        formatMoney() { return (val) => parseFloat(val).toFixed(2); }
+        formatMoney() { return (val) => parseFloat(val).toFixed(2); },
+        formatPhoneDisplay() {
+            return (phone) => {
+                if (!phone) return '';
+                const p = String(phone).replace(/\s/g, '');
+                if (p.length === 11) {
+                    return p.substring(0,3) + ' **** ' + p.substring(7);
+                }
+                return p;
+            };
+        }
     },
     mounted() {
         this.refreshTaobaoItems();
@@ -75,6 +85,30 @@ const TaobaoApp = {
         saveData() { this.$emit('save-data'); },
         saveAddressesToLocal() { localStorage.setItem('aovein_taobao_addresses', JSON.stringify(this.addresses)); },
         getMaskById(id) { return this.masks.find(m => m.id === id) || { name: '我', avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', bio: '' }; },
+        getFriendAvatar(id) {
+            const f = this.wechatState.friendList.find(x => x.id === id);
+            return f ? f.avatar : 'https://ui-avatars.com/api/?name=User';
+        },
+        getFriendName(id) {
+            const f = this.wechatState.friendList.find(x => x.id === id);
+            return f ? (f.remark || f.name) : '未知好友';
+        },
+        createOrGetSession(friendId) {
+            let session = this.wechatState.sessions.find(s => s.targetId === friendId);
+            if (!session) {
+                const friend = this.wechatState.friendList.find(f => f.id === friendId);
+                if (friend) {
+                    const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
+                    session = { 
+                        id: Date.now().toString(), targetId: friend.id, name: friend.remark || friend.name, 
+                        avatar: friend.avatar, maskId: myMaskId, messages: [], lastMessage: '', time: Date.now(),
+                        isPinned: false, wallpaper: '', groupId: null, isBlocked: false, avatarMode: 'all'
+                    };
+                    this.wechatState.sessions.unshift(session);
+                }
+            }
+            return session;
+        },
         refreshTaobaoItems() {
             // 商城数据：每类至少3个
             this.taobaoModal.storeList = [
@@ -142,8 +176,8 @@ const TaobaoApp = {
             this.taobaoModal.takeoutHotSales = allTakeoutItems;
         },
         openTaobaoItem(item, storeName) {
-            // 防崩溃兜底：确保 npcAvatars 存在
-            const safeAvatars = (this.npcAvatars && Array.isArray(this.npcAvatars)) ? this.npcAvatars : [];
+            const safeAvatars = (this.npcAvatars && Array.isArray(this.npcAvatars)) ? [...this.npcAvatars] : [];
+            safeAvatars.sort(() => Math.random() - 0.5); // 打乱头像
             
             const comments = [];
             const commentCount = Math.floor(Math.random() * 4) + 2; 
@@ -152,19 +186,23 @@ const TaobaoApp = {
                 `物流非常快，收到后马上就打开看了，做工精细没有瑕疵，身边朋友都问我要链接，绝对是五星好评！`,
                 `看评价买的，果然没有让我失望。款式和颜色都很喜欢，细节处理得很到位，性价比太高了吧，良心商家！`,
                 `稍微有点小贵，但是收到发现物超所值，质感拉满，客服态度也特别好，整体很满意的一段购物体验。`,
-                `非常喜欢这件东西，颜值超高，使用起来也很顺手，卖家包装得非常仔细，强烈推荐给还在犹豫的朋友们！`
+                `非常喜欢这件东西，颜值超高，使用起来也很顺手，卖家包装得非常仔细，强烈推荐给还在犹豫的朋友们！`,
+                `这真的是我近期买过最满意的一件东西了，质感非常棒，没有任何异味，朋友来家里看到了都被安利了！`,
+                `刚收到货就迫不及待试了一下，简直是神仙好物，特别好用，已经推荐给闺蜜了，还会继续支持的。`
             ];
-            const names = ['匿名用户', '开心小猫', '购物达人', '清风徐来', 'm***8', '月亮不睡我不睡'];
+            const namesPool = ['匿名用户', '开心小猫', '购物达人', '清风徐来', 'm***8', '月亮不睡我不睡', '草莓味的熊', '一口吃掉月亮', '星河璀璨', '人间清醒'];
+            namesPool.sort(() => Math.random() - 0.5);
+            templates.sort(() => Math.random() - 0.5);
             
             for (let i = 0; i < commentCount; i++) {
-                const avatar = (safeAvatars.length > 0) ? 
-                    safeAvatars[Math.floor(Math.random() * safeAvatars.length)] : 
-                    `https://ui-avatars.com/api/?name=${i}&background=random`;
+                const avatar = (safeAvatars.length > i) ? 
+                    safeAvatars[i] : 
+                    `https://ui-avatars.com/api/?name=${namesPool[i]}&background=random`;
                 comments.push({
-                    name: names[Math.floor(Math.random() * names.length)],
+                    name: namesPool[i],
                     avatar: avatar,
                     rating: Math.floor(Math.random() * 2) + 4, 
-                    text: templates[Math.floor(Math.random() * templates.length)],
+                    text: templates[i % templates.length],
                     time: `2023-10-${Math.floor(Math.random() * 28 + 1).toString().padStart(2, '0')}`
                 });
             }
@@ -249,7 +287,9 @@ const TaobaoApp = {
         saveAddress() {
             const form = this.addressModal.editForm;
             if (form.owner === 'other' && !form.boundFriendId) return this.showToast('角色地址必须绑定联系人');
-            if (!form.region || !form.detail || !form.name || !form.phone) return this.showToast('请将地址填写完整');
+            if (form.owner === 'me' && !form.phone) return this.showToast('请填写手机号');
+            if (!form.region || !form.detail || !form.name) return this.showToast('请将地址信息填写完整');
+            if (form.owner === 'me' && form.phone && String(form.phone).length !== 11) return this.showToast('手机号必须为11位数字');
             if (this.showCustomTagInput && this.customTagValue) form.tag = this.customTagValue;
 
             if (form.id) {
@@ -306,18 +346,23 @@ const TaobaoApp = {
             const isRequest = this.taobaoPayTargetModal.isRequestPay;
 
             if (isRequest) {
+                const friendId = target;
+                if (!friendId) return this.showToast('请选择代付好友');
+                
                 const item = this.checkoutModal.items[0];
-                if (this.wechatState.activeSession) {
-                    this.wechatState.activeSession.messages.push({
+                const session = this.createOrGetSession(friendId);
+                
+                if (session) {
+                    session.messages.push({
                         type: 'food_payment',
                         item: `[代付请求] ${item.name}`,
                         amount: item.price,
                         status: 'pending',
                         isSelf: true,
                         time: Date.now(),
-                        avatar: this.getMaskById(this.wechatState.activeSession.maskId).avatar
+                        avatar: this.getMaskById(session.maskId).avatar
                     });
-                    this.wechatState.activeSession.lastMessage = '[代付请求]';
+                    session.lastMessage = '[代付请求]';
                     this.$emit('scroll-to-bottom');
                 }
                 this.closeAllTaobaoModals();
@@ -415,7 +460,7 @@ const TaobaoApp = {
                                 </div>
                                 <div class="text-[14px] font-bold text-gray-900 truncate w-full mb-1">{{ item.name }}</div>
                                 <div class="flex justify-between items-center mt-1">
-                                    <span class="text-[15px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
+                                    <span class="text-[15px] font-bold text-[#ff5000] font-mono">¥{{ item.price }}</span>
                                     <span class="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{{ item.sales }}+付款</span>
                                 </div>
                             </div>
@@ -457,7 +502,7 @@ const TaobaoApp = {
                         <div class="bg-white rounded-full p-1 flex items-center justify-between shadow-sm">
                             <div v-for="cat in ['美食', '蔬果', '饮品', '日用品', '其他']" :key="cat"
                                  class="flex-1 text-center py-1.5 rounded-full text-[13px] font-bold transition-all cursor-pointer"
-                                 :class="taobaoModal.takeoutCategory === cat ? 'bg-[#2c2c2e] text-white shadow-md' : 'text-gray-500 hover:text-gray-800'"
+                                 :class="taobaoModal.takeoutCategory === cat ? 'bg-gray-800 text-white shadow-md' : 'text-gray-500 hover:text-gray-800'"
                                  @click="taobaoModal.takeoutCategory = cat">
                                 {{ cat }}
                             </div>
@@ -550,7 +595,7 @@ const TaobaoApp = {
                                     <span class="font-bold text-[15px] text-gray-900 truncate">{{ item.name }}</span>
                                     <span class="text-[11px] text-gray-500 mt-1 truncate"><i class="fas fa-store mr-1 text-gray-300"></i>{{ item.store }}</span>
                                     <div class="mt-auto flex justify-between items-center">
-                                        <span class="text-[16px] font-bold text-gray-900 font-mono">¥{{ item.price }}</span>
+                                        <span class="text-[16px] font-bold text-[#ff5000] font-mono">¥{{ item.price }}</span>
                                         <span class="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{{ item.sales }}+ 人付款</span>
                                     </div>
                                 </div>
@@ -590,7 +635,7 @@ const TaobaoApp = {
                                 <div class="flex flex-col flex-1 min-w-0 h-20 py-1">
                                     <span class="text-[13px] text-gray-800 line-clamp-2">{{ item.name }}</span>
                                     <div class="mt-auto flex justify-between items-end w-full">
-                                        <span class="text-[16px] font-bold text-gray-900 font-mono leading-none">¥{{ item.price }}</span>
+                                        <span class="text-[16px] font-bold text-[#ff5000] font-mono leading-none">¥{{ item.price }}</span>
                                         <i class="far fa-trash-alt text-gray-300 cursor-pointer p-2 -mr-2" @click="removeFromCart(item)"></i>
                                     </div>
                                 </div>
@@ -606,14 +651,14 @@ const TaobaoApp = {
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="flex flex-col items-end">
-                                <div class="text-[12px] text-gray-600">合计: <span class="text-[18px] font-bold text-gray-900 font-mono">¥{{ selectedCartTotal }}</span></div>
+                                <div class="text-[12px] text-gray-600">合计: <span class="text-[18px] font-bold text-[#ff5000] font-mono">¥{{ selectedCartTotal }}</span></div>
                             </div>
                             <button @click="openCheckout('cart')" class="bg-gray-900 text-white px-6 py-2.5 rounded-full font-bold text-[14px] shadow-sm active:scale-95 transition">结算({{ selectedCartCount }})</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- ================= 我的桃宝 (严格还原图一 UI) ================= -->
+                <!-- ================= 我的桃宝 ================= -->
                 <div v-if="taobaoModal.activeTab === 'me'" class="flex flex-col min-h-full pb-10 bg-[#f9f9f9]">
                     <div class="pt-8 px-4 pb-4">
                         <div class="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4 mb-4 mt-2 border border-gray-50">
@@ -639,10 +684,6 @@ const TaobaoApp = {
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-50 divide-y divide-gray-50">
                             <div class="flex items-center justify-between p-4 cursor-pointer active:bg-gray-50 transition" @click="openAddressList">
                                 <span class="text-[15px] text-gray-800">收货地址</span>
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                            </div>
-                            <div class="flex items-center justify-between p-4 cursor-pointer active:bg-gray-50 transition">
-                                <span class="text-[15px] text-gray-800">高级设置</span>
                                 <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                             </div>
                             <div class="flex items-center justify-between p-4 cursor-pointer active:bg-gray-50 transition">
@@ -674,7 +715,6 @@ const TaobaoApp = {
                             <!-- 抽象灰白地图背景 -->
                             <div class="h-[120px] bg-[#f2f4f7] relative overflow-hidden flex flex-col items-center justify-center border-b border-gray-50">
                                 <div class="absolute w-[150%] h-[150%] opacity-20" style="background-image: linear-gradient(#fff 2px, transparent 2px), linear-gradient(90deg, #fff 2px, transparent 2px); background-size: 30px 30px;"></div>
-                                <div class="bg-white px-3 py-1 rounded-md text-[11px] text-gray-600 font-bold mb-1 shadow-sm relative z-10">配送至此</div>
                                 <i class="fas fa-map-marker-alt text-gray-400 text-3xl z-10 drop-shadow-md"></i>
                             </div>
 
@@ -689,7 +729,7 @@ const TaobaoApp = {
 
                                 <div class="flex items-center py-4">
                                     <span class="w-20 text-[14px] text-gray-600">* 所在地区</span>
-                                    <input v-model="addressModal.editForm.region" placeholder="如：广东省 广州市 天河区" class="flex-1 outline-none text-[15px] font-bold text-gray-900 placeholder-gray-300">
+                                    <input v-model="addressModal.editForm.region" placeholder="xx省xx市xx区" class="flex-1 outline-none text-[15px] font-bold text-gray-900 placeholder-gray-300">
                                 </div>
                                 <div class="flex items-center py-4">
                                     <span class="w-20 text-[14px] text-gray-600">* 详细地址</span>
@@ -709,10 +749,10 @@ const TaobaoApp = {
                                         </label>
                                     </div>
                                 </div>
-                                <div class="flex items-center py-4">
+                                <div v-if="addressModal.editForm.owner === 'me'" class="flex items-center py-4">
                                     <span class="text-[14px] text-gray-600 mr-2">+86</span>
                                     <span class="text-[14px] text-gray-600 mr-4">* 手机号</span>
-                                    <input v-model="addressModal.editForm.phone" placeholder="手机号" type="number" class="flex-1 outline-none text-[15px] font-bold text-gray-900 placeholder-gray-300">
+                                    <input v-model="addressModal.editForm.phone" placeholder="11位手机号" type="tel" maxlength="11" class="flex-1 outline-none text-[15px] font-bold text-gray-900 placeholder-gray-300 tracking-wider">
                                 </div>
                                 <div class="py-4">
                                     <span class="text-[14px] text-gray-600 mb-3 block">地址标签</span>
@@ -756,16 +796,17 @@ const TaobaoApp = {
                         <div v-if="addresses.length === 0" class="text-center text-gray-400 mt-20">暂无地址，请点击右上角添加</div>
                         <div v-for="addr in addresses" :key="addr.id" class="bg-white p-4 rounded-[16px] shadow-sm flex items-center justify-between" @click="checkoutModal.show ? selectAddressForCheckout(addr) : null">
                             <div class="flex items-start gap-3">
-                                <div class="w-8 h-8 rounded-full flex items-center justify-center mt-1 shrink-0 text-white font-bold text-xs" :class="addr.owner === 'me' ? 'bg-gray-800' : 'bg-gray-400'">
-                                    {{ addr.owner === 'me' ? '我' : 'TA' }}
+                                <div class="w-10 h-10 rounded-full overflow-hidden mt-0.5 shrink-0 border border-gray-100 bg-gray-100">
+                                    <img :src="addr.owner === 'me' ? homeProfile.avatar : getFriendAvatar(addr.boundFriendId)" class="w-full h-full object-cover">
                                 </div>
-                                <div>
+                                <div class="flex-1">
                                     <div class="flex items-center gap-2 mb-1">
                                         <span class="font-bold text-[16px] text-gray-900">{{ addr.region }} {{ addr.detail }}</span>
                                     </div>
-                                    <div class="text-[13px] text-gray-500 flex items-center gap-2">
-                                        <span>{{ addr.name }} ({{ addr.gender }})</span>
-                                        <span>{{ addr.phone }}</span>
+                                    <div class="text-[13px] text-gray-500 flex items-center gap-2 flex-wrap">
+                                        <span class="font-medium text-gray-800">{{ addr.name }}</span>
+                                        <span>{{ addr.gender }}</span>
+                                        <span v-if="addr.owner === 'me'">{{ formatPhoneDisplay(addr.phone) }}</span>
                                         <span v-if="addr.tag" class="text-[10px] px-1.5 py-0.5 border border-gray-800 text-gray-800 rounded">{{ addr.tag }}</span>
                                     </div>
                                 </div>
@@ -792,7 +833,7 @@ const TaobaoApp = {
                             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/60 backdrop-blur px-3 py-1 rounded-full text-[11px] text-gray-600 flex items-center gap-1"><i class="fas fa-search-plus"></i> 点击查看全景描述</div>
                         </div>
                         <div class="bg-white p-4">
-                            <div class="text-3xl font-bold font-mono text-gray-900 mb-2">¥{{ taobaoModal.selectedItem.price }}</div>
+                            <div class="text-3xl font-bold font-mono text-[#ff5000] mb-2">¥{{ taobaoModal.selectedItem.price }}</div>
                             <h2 class="text-lg font-bold text-gray-900 leading-snug">{{ taobaoModal.selectedItem.name }}</h2>
                             <div class="flex justify-between items-center text-xs text-gray-400 mt-3">
                                 <span>{{ taobaoModal.selectedItem.store }}</span>
@@ -861,12 +902,12 @@ const TaobaoApp = {
                             <div class="absolute bottom-0 left-0 w-full h-1 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0Ij48cGF0aCBkPSJNMCAwaDIwbTR2MEgyMCIgc3Ryb2tlPSIjM2IzYjNiIiBzdHJva2Utd2lkdGg9IjQiIHN0cm9rZS1kYXNoYXJyYXk9IjIwIDIwIi8+PC9zdmc+')]"></div>
                             <div v-if="defaultAddress" class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0" :class="defaultAddress.owner === 'me' ? 'bg-gray-800' : 'bg-gray-400'">
-                                        {{ defaultAddress.owner === 'me' ? '我' : 'TA' }}
+                                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-gray-100 bg-gray-100">
+                                        <img :src="defaultAddress.owner === 'me' ? homeProfile.avatar : getFriendAvatar(defaultAddress.boundFriendId)" class="w-full h-full object-cover">
                                     </div>
                                     <div>
                                         <div class="font-bold text-[16px]">{{ defaultAddress.region }} {{ defaultAddress.detail }}</div>
-                                        <div class="text-[13px] text-gray-500">{{ defaultAddress.name }} {{ defaultAddress.phone }}</div>
+                                        <div class="text-[13px] text-gray-500">{{ defaultAddress.name }} {{ defaultAddress.owner === 'me' ? formatPhoneDisplay(defaultAddress.phone) : '' }}</div>
                                     </div>
                                 </div>
                                 <i class="fas fa-chevron-right text-gray-300"></i>
@@ -899,20 +940,29 @@ const TaobaoApp = {
                 </div>
             </transition>
 
-            <!-- 选择付款对象 -->
+            <!-- 选择付款对象 (代付列表) -->
             <transition name="scale">
                 <div v-if="taobaoPayTargetModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="taobaoPayTargetModal.show = false">
-                    <div class="bg-[#f2f2f6] w-[80%] rounded-[20px] overflow-hidden shadow-2xl flex flex-col" @click.stop>
-                        <div class="p-4 border-b border-gray-200 text-center bg-[#f9f9f9]">
-                            <span class="font-bold text-[15px] text-gray-900">{{ taobaoPayTargetModal.isRequestPay ? '发送代付请求' : '请选择付款方式' }}</span>
+                    <div class="bg-[#f2f2f6] w-[80%] max-h-[70vh] rounded-[20px] overflow-hidden shadow-2xl flex flex-col" @click.stop>
+                        <div class="p-4 border-b border-gray-200 text-center bg-[#f9f9f9] shrink-0">
+                            <span class="font-bold text-[15px] text-gray-900">{{ taobaoPayTargetModal.isRequestPay ? '选择代付好友' : '请选择付款方式' }}</span>
                         </div>
-                        <div class="p-3 bg-white flex flex-col gap-2">
-                            <button v-if="!taobaoPayTargetModal.isRequestPay" @click="confirmPayTaobao('self')" class="w-full py-3.5 bg-gray-50 rounded-xl text-[15px] font-bold text-gray-800 active:bg-gray-100 transition border border-gray-100">余额支付 (¥{{ checkoutModal.totalPrice }})</button>
-                            <button v-if="wechatState.activeSession" @click="confirmPayTaobao('ai')" class="w-full py-3.5 bg-gray-50 rounded-xl text-[15px] font-bold text-gray-800 active:bg-gray-100 transition border border-gray-100">
-                                {{ taobaoPayTargetModal.isRequestPay ? '发给 ' : '找人代付 (' }}{{ wechatState.activeSession?.isGroup ? '群聊' : wechatState.activeSession?.name }}{{ taobaoPayTargetModal.isRequestPay ? '' : ')' }}
-                            </button>
+                        
+                        <!-- 正常付款 (自己) -->
+                        <div v-if="!taobaoPayTargetModal.isRequestPay" class="p-3 bg-white flex flex-col gap-2 shrink-0">
+                            <button @click="confirmPayTaobao('self')" class="w-full py-3.5 bg-gray-50 rounded-xl text-[15px] font-bold text-gray-800 active:bg-gray-100 transition border border-gray-100">余额支付 (¥{{ checkoutModal.totalPrice }})</button>
                         </div>
-                        <div class="p-3 border-t border-gray-200 bg-[#f9f9f9]">
+
+                        <!-- 代付好友列表 -->
+                        <div v-else class="flex-1 overflow-y-auto bg-white p-2">
+                            <div v-if="wechatState.friendList.length === 0" class="text-center text-gray-400 py-10 text-xs">暂无好友可代付</div>
+                            <div v-for="friend in wechatState.friendList" :key="friend.id" @click="confirmPayTaobao(friend.id)" class="flex items-center gap-3 p-3 border-b border-gray-50 last:border-0 active:bg-gray-50 cursor-pointer">
+                                <div class="w-10 h-10 rounded-lg overflow-hidden bg-gray-100"><img :src="friend.avatar" class="w-full h-full object-cover"></div>
+                                <span class="font-bold text-[15px] text-gray-900">{{ friend.remark || friend.name }}</span>
+                            </div>
+                        </div>
+
+                        <div class="p-3 border-t border-gray-200 bg-[#f9f9f9] shrink-0">
                             <button @click="taobaoPayTargetModal.show = false" class="w-full bg-white border border-gray-200 text-gray-500 py-2.5 rounded-[12px] text-[15px] font-bold shadow-sm active:scale-95 transition">取消</button>
                         </div>
                     </div>
