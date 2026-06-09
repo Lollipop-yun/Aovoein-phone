@@ -447,7 +447,7 @@
      <input type="file" ref="docxImportInput" accept=".docx" class="hidden" @change="handleDocxImport">
 <input type="file" ref="aoveinImportInput" accept=".json,.png" class="hidden" @change="handleAoveinImport">
 <input type="file" ref="stImportInput" accept=".png" class="hidden" @change="handleSTImport">
-<input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf" class="hidden" @change="handleChatFileUpload">
+<input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf,.mp4" class="hidden" @change="handleChatFileUpload">
 
     <!-- 全局弹窗 (Z-Index 调高) -->
     <transition name="fade"><div v-if="toast.show" class="fixed inset-0 z-[90000] flex items-center justify-center pointer-events-none"><div class="bg-black/70 text-white px-5 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium">{{ toast.message }}</div></div></transition>
@@ -2766,7 +2766,10 @@
                     <div class="flex items-center h-full flex-1">
                         <button @click="wechatState.activeNav = 'chat'" class="w-8 h-8 flex items-center justify-center shrink-0"><i class="fas fa-chevron-left text-lg text-gray-800"></i></button>
                         
-                        <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80" @click.stop="!wechatState.activeSession.isGroup && openStatusModal()">
+                        <!-- 左侧排版模式 -->
+                        <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'left'" class="flex items-center gap-2 pl-2 flex-1 min-w-0">
+                            <!-- 只有点击头像才弹出心声 -->
+                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80">
                                 <img :src="wechatState.activeSession.isGroup ? wechatState.activeSession.avatar : getCurrentSessionAvatar()" class="w-full h-full object-cover">
                             </div>
                             <div class="flex flex-col flex-1 min-w-0">
@@ -2783,7 +2786,10 @@
                         </div>
                     </div>
 
-                    <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 cursor-pointer active:opacity-50 w-full" @click="!wechatState.activeSession.isGroup && openStatusModal()">
+                    <!-- 中间排版模式 -->
+                    <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'center'" class="flex flex-col items-center absolute left-1/2 -translate-x-1/2 w-[60%]">
+                        <!-- 点击名字跳出心声 -->
+                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 w-full">
                             <span v-if="isTyping" class="whitespace-nowrap text-center">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                             <span v-else class="truncate w-full text-center">{{ getCurrentChatTitle() }}</span>
                         </h1>
@@ -5697,6 +5703,7 @@ const app = createApp({
             const fileExt = file.name.split('.').pop().toLowerCase();
             const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
 
+            // 先立刻把卡片推送到屏幕上
             const msg = {
                 type: 'file',
                 fileName: file.name,
@@ -5711,14 +5718,17 @@ const app = createApp({
             this.scrollToBottom();
             e.target.value = '';
 
-            this.showToast('正在向对方传输文件并解析内容...');
+            // AI 的文件阅读处理逻辑
+            this.showToast('正在向对方传输文件...');
             let extractedText = "";
 
             const processAIResponse = () => {
-                let aiPrompt = `【系统隐秘提示：我刚刚通过微信给你发送了一个文件】\n文件名: 《${file.name}》\n大小: ${fileSize}。`;
+                let aiPrompt = `【行为提示：我刚刚通过微信给你发送了一个文件】\n文件名: 《${file.name}》\n大小: ${fileSize}。`;
                 
                 if (extractedText) {
-                    aiPrompt += `\n【以下是该文件的真实内容正文(部分)】：\n"......\n${extractedText}\n......"\n\n请你假装在手机上点开了这个文件，认真阅读了上面的真实内容，然后围绕文件里写的东西直接给我回复（不用告诉我你读了，直接就像真人一样看完给我反应）。`;
+                    aiPrompt += `\n为了方便你读取，文件正文的前段提取内容如下：\n"......\n${extractedText}\n......"\n\n请你假装在手机上点开了这个文件并仔细阅读了它，然后针对它的内容给我回复。`;
+                } else if (fileExt === 'mp4') {
+                    aiPrompt += `\n这是一个视频文件。你看了之后有什么感想？请结合我们当前的话题，或者根据这个视频的文件名，假装你看完了并做出极其口语化的微信回复。`;
                 } else if (fileExt === 'pdf') {
                     aiPrompt += `\n这是一个PDF文件。由于系统限制你无法读取长文，但请根据这个文件的名字猜测它大概讲了什么，并假装你接收了该文件向我做出回应。`;
                 } else {
@@ -5726,15 +5736,17 @@ const app = createApp({
                 }
                 
                 this.saveData();
+                // 模拟对方观看文件的时间：2.5秒
                 setTimeout(() => {
                     this.triggerReceive(aiPrompt);
-                }, 2000);
+                }, 2500);
             };
 
+            // 文本和 Docx 的内容前置提取器 (截取前1000个字符防止撑爆 Token)
             try {
                 if (fileExt === 'txt') {
                     const text = await file.text();
-                    extractedText = text.substring(0, 2500); 
+                    extractedText = text.substring(0, 1000);
                     processAIResponse();
                 } else if (fileExt === 'docx') {
                     const arrayBuffer = await file.arrayBuffer();
@@ -5745,7 +5757,7 @@ const app = createApp({
                         script.onload = async () => {
                             try {
                                 const result = await mammoth.extractRawText({ arrayBuffer });
-                                extractedText = result.value.substring(0, 2500);
+                                extractedText = result.value.substring(0, 1000);
                             } catch(err) { extractedText = ""; }
                             processAIResponse();
                         };
@@ -5753,15 +5765,17 @@ const app = createApp({
                     } else {
                         try {
                             const result = await mammoth.extractRawText({ arrayBuffer });
-                            extractedText = result.value.substring(0, 2500);
+                            extractedText = result.value.substring(0, 1000);
                         } catch(err) { extractedText = ""; }
                         processAIResponse();
                     }
                 } else {
+                    // PDF / MP4 等不提取文字，直接进入反馈链
                     processAIResponse();
                 }
             } catch(error) {
-                processAIResponse();
+                console.error("文件读取前置处理失败", error);
+                processAIResponse(); // 即使读取文字失败也要照样触发 AI 反应
             }
         },
         getCurrentChatTitle() {
@@ -7354,18 +7368,18 @@ const app = createApp({
             target.style.height = 'auto'; // 先归零
             target.style.height = target.scrollHeight + 'px'; // 再根据内容撑开
         },
-        async sendMessage() {
+        sendMessage() {
             if(!this.inputMsg.trim()) return;
-            const originalText = this.inputMsg.trim();
-            const msg = { content: originalText, isSelf: true, time: Date.now(), avatar: this.getMaskById(this.wechatState.activeSession.maskId).avatar };
+            const msg = { content: this.inputMsg, isSelf: true, time: Date.now(), avatar: this.getMaskById(this.wechatState.activeSession.maskId).avatar };
             if(this.replyingTo) { 
                 let quoteName = this.replyingTo.isSelf ? '我' : (this.wechatState.activeSession.isGroup ? (this.replyingTo.name || '群成员') : this.wechatState.activeSession.name);
                 msg.quote = { name: quoteName, content: this.replyingTo.content }; 
                 this.replyingTo = null; 
             }
             const currentSession = this.wechatState.activeSession;
-            currentSession.messages.push(msg);
+            currentSession.messages.push(msg); // 删除了多余的 push(msg) 修复发送双倍Bug
             
+            // 【新增】群聊玩家发消息升1级
             if (currentSession.isGroup) {
                 if (!currentSession.membersInfo) currentSession.membersInfo = {};
                 if (!currentSession.membersInfo['mine']) currentSession.membersInfo['mine'] = { level: 1, customTitle: '', lastLevelDate: '' };
@@ -7375,52 +7389,22 @@ const app = createApp({
                     currentSession.membersInfo['mine'].lastLevelDate = today;
                 }
             }
-            currentSession.lastMessage = originalText;
-            currentSession.bgTriggerCount = 0; 
-            currentSession.lastBgActivityTime = Date.now(); 
+            currentSession.lastMessage = this.inputMsg;
+            currentSession.bgTriggerCount = 0; // 【核心修正】我发了消息，清空后台触发次数
+            currentSession.lastBgActivityTime = Date.now(); // 重置后台计时起点
             this.inputMsg = ''; this.scrollToBottom(); this.saveData();
             this.$nextTick(() => {
-                if (this.$refs.chatInputArea) this.$refs.chatInputArea.style.height = 'auto';
+                if (this.$refs.chatInputArea) {
+                    this.$refs.chatInputArea.style.height = 'auto';
+                }
             });
 
+            // 【新增】判断是否离线/忙碌，并触发自动回复
             if (!currentSession.isGroup) {
                 const status = currentSession.onlineStatus || 'online';
                 if (status === 'offline' || status === 'busy') {
                     this.triggerAutoReply(currentSession);
-                    return; 
                 }
-            }
-
-            // 智能链接解析 (小红书/抖音等)
-            const urlRegex = /(https?:\/\/[^\s]+)/g;
-            const urls = originalText.match(urlRegex);
-            
-            if (urls && urls.length > 0 && this.apiConfig.apiKey) {
-                this.showToast('检测到链接，正在智能解析网页内容...');
-                let linkContext = '';
-                try {
-                    const targetUrl = urls[0];
-                    // 利用公共爬虫节点穿透跨域限制抓取网页标题和摘要
-                    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-                    const res = await fetch(proxyUrl);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.contents) {
-                            const titleMatch = data.contents.match(/<title[^>]*>([^<]+)<\/title>/i);
-                            const title = titleMatch ? titleMatch[1].trim() : '';
-                            const descMatch = data.contents.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i) || data.contents.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["'][^>]*>/i);
-                            const desc = descMatch ? descMatch[1].trim() : '';
-                            
-                            if (title || desc) {
-                                linkContext = `【系统隐秘提示：我刚刚发给你的链接内容解析如下】\n网页标题：${title}\n网页摘要：${desc}\n\n请你假装在手机上点开了这个链接认真看完了，然后直接自然地回复我关于这个链接内容的看法（不要复述标题，直接给出情绪反馈）。`;
-                            }
-                        }
-                    }
-                } catch(e) { console.log('网页内容爬取受限', e); }
-                
-                this.triggerReceive(linkContext);
-            } else {
-                this.triggerReceive();
             }
         },
         // --- 状态排版与自动回复核心逻辑 ---
@@ -8573,14 +8557,10 @@ Structure:
 ❌ 错误示范：["怎么了？你怎么不说话，别生闷气了行不行，我真的很担心你。"]
 ✅ 正确示范：["怎么了？", "你怎么不说话", "别生闷气了行不行", "我真的很担心你。"]`;
 
-            // 智能区分：是系统底层的隐秘注入（文件/链接），还是用户手写的剧情走向
+            // 如果用户在“重回”时提出了具体的走向要求，强行注入最高优先级的提示词
             if (directionPrompt && directionPrompt.trim() !== '') {
-                if (directionPrompt.includes('【系统隐秘提示')) {
-                    systemPrompt += `\n\n${directionPrompt}`;
-                } else {
-                    systemPrompt += `\n\n【！！！极其重要的剧情走向指令！！！】：\n我(玩家)对你接下来的回复提出了特殊的剧情走向/风格要求：“${directionPrompt}”。请你必须严格按照这个风格/情绪/剧情走向来回复我这一轮的消息！`;
-                }
-            }           
+                systemPrompt += `\n\n【！！！极其重要的剧情走向指令！！！】：\n我(玩家)对你接下来的回复提出了特殊的剧情走向/风格要求：“${directionPrompt}”。请你必须严格按照这个风格/情绪/剧情走向来回复我这一轮的消息！`;
+            }          
 
             contextMessages.push({ role: 'system', content: systemPrompt });
             // --- 读取线下约会相处的记忆 ---
