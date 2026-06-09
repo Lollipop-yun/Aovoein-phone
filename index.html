@@ -230,6 +230,17 @@
         .forward-title { font-size: 14px; font-weight: bold; color: #333; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px; margin-bottom: 2px; }
         .forward-content { font-size: 12px; color: #666; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
 
+        /* 新增：分享链接特殊卡片样式 */
+        .chat-bubble-link { width: 240px; padding: 0 !important; overflow: hidden; border-radius: 12px; background: white; border: 1px solid #eee; display: flex; flex-direction: column; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+        .link-header { padding: 6px 12px; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: white; }
+        .link-header.xhs { background: #ff2442; }
+        .link-header.dy { background: #1c1c1e; }
+        .link-header.bili { background: #fb7299; }
+        .link-header.default { background: #888888; }
+        .link-body { padding: 10px 12px; font-size: 13px; color: #333; background: #ffffff; }
+        .link-title { font-weight: bold; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
+        .link-desc { font-size: 11px; color: #666; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
+
         .voice-transcription { font-size: 12px; color: #666; background: #ffffff; padding: 6px 10px; border-radius: 8px; margin-top: 4px; border: 1px solid #eee; }
         .voice-wave-container { display: flex; align-items: center; gap: 2px; height: 16px; }
         .voice-wave-bar { width: 3px; background-color: currentColor; border-radius: 2px; }
@@ -2857,7 +2868,7 @@
                                 </div>
                                 
                                 <!-- 气泡核心 -->
-                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' || msg.type === 'sticker' ? 'chat-bubble-image' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
+                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' || msg.type === 'sticker' ? 'chat-bubble-image' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file' || msg.type === 'share_link') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
                                      :style="(msg.type === 'voice' && !msg.quote) ? { width: (60 + Math.min(msg.duration, 60) * 4) + 'px' } : {}"
                                      @click="handleChatBubbleClick(msg)"
                                      @contextmenu.prevent="showChatContextMenu($event, msg, i)">
@@ -2921,7 +2932,7 @@
                                     </div>
                                     
                                     <!-- 微信发送文件卡片 -->
-                                    <div v-else-if="msg.type === 'file'" class="bg-white border border-gray-200 rounded-xl w-[240px] overflow-hidden shadow-sm flex items-center p-4 cursor-pointer active:scale-95 transition" @click="showToast('仅作为传输演示，无法直接在手机端打开')">
+                                    <div v-else-if="msg.type === 'file'" class="bg-white border border-gray-200 rounded-xl w-[240px] overflow-hidden shadow-sm flex items-center p-4 cursor-pointer active:scale-95 transition" @click="showToast('文件已被对方读取处理')">
                                         <div class="flex-1 min-w-0 pr-4 flex flex-col justify-center">
                                             <div class="text-[15px] font-medium text-gray-900 line-clamp-2 leading-tight break-all">{{ msg.fileName }}</div>
                                             <div class="text-[11px] text-gray-400 mt-1.5 font-mono">{{ msg.fileSize }}</div>
@@ -2929,12 +2940,23 @@
                                         <div class="w-10 h-10 shrink-0 flex items-center justify-center">
                                             <i v-if="msg.fileExt === 'pdf'" class="fas fa-file-pdf text-[#ff4d4f] text-4xl"></i>
                                             <i v-else-if="msg.fileExt === 'docx'" class="fas fa-file-word text-[#1677ff] text-4xl"></i>
-                                            <i v-else-if="msg.fileExt === 'mp4'" class="fas fa-file-video text-[#722ed1] text-4xl"></i>
                                             <i v-else-if="msg.fileExt === 'txt'" class="fas fa-file-alt text-[#52c41a] text-4xl"></i>
                                             <i v-else class="fas fa-file text-gray-400 text-4xl"></i>
                                         </div>
                                     </div>
                                     
+                                    <!-- 【新增】网页链接分享卡片 -->
+                                    <div v-else-if="msg.type === 'share_link'" class="chat-bubble-link" @click="showToast('无法在系统内直接打开外部链接')">
+                                        <div class="link-header" :class="msg.platformData.colorClass">
+                                            <i :class="msg.platformData.iconClass"></i>
+                                            <span>{{ msg.platformData.name }}</span>
+                                        </div>
+                                        <div class="link-body">
+                                            <div class="link-title">{{ msg.linkTitle || '分享了一个网页链接' }}</div>
+                                            <div class="link-desc">{{ msg.linkDesc || msg.url }}</div>
+                                        </div>
+                                    </div>
+
                                     <!-- 外卖代付请求卡片 (黑白灰UI) -->
                                     <div v-else-if="msg.type === 'food_payment'" class="bg-white border border-gray-200 rounded-xl w-[230px] overflow-hidden shadow-sm flex flex-col cursor-default">
                                         <div class="p-3 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
@@ -3143,6 +3165,39 @@
                         </div>
                     </transition>
 
+                    <!-- 【新增】文件与链接分享弹窗 -->
+                    <transition name="scale">
+                        <div v-if="shareModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="shareModal.show = false">
+                            <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col" @click.stop>
+                                <!-- Tab 栏 -->
+                                <div class="flex border-b border-gray-100 bg-gray-50/50">
+                                    <button @click="shareModal.tab = 'file'" class="flex-1 py-3.5 text-[15px] font-bold transition" :class="shareModal.tab === 'file' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">文件文档</button>
+                                    <button @click="shareModal.tab = 'link'" class="flex-1 py-3.5 text-[15px] font-bold transition" :class="shareModal.tab === 'link' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">网址链接</button>
+                                </div>
+                                <div class="p-6 flex flex-col gap-4 min-h-[220px]">
+                                    <!-- 发送文件区 -->
+                                    <div v-if="shareModal.tab === 'file'" class="flex flex-col items-center justify-center h-full mt-4">
+                                        <button @click="triggerChatFileUpload" class="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl shadow-sm active:scale-95 transition mb-4 border border-blue-100"><i class="fas fa-folder-open"></i></button>
+                                        <span class="text-[13px] font-bold text-gray-800">选择本地文件发给对方</span>
+                                        <span class="text-[11px] text-gray-400 mt-1">支持格式: .txt / .docx / .pdf</span>
+                                    </div>
+                                    <!-- 发送链接区 -->
+                                    <div v-if="shareModal.tab === 'link'" class="flex flex-col h-full gap-3">
+                                        <textarea v-model="shareModal.url" placeholder="在此粘贴 抖音 / 小红书 / B站 / 微博 等网址链接..." class="w-full h-16 bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                                        <textarea v-model="shareModal.fallbackText" placeholder="(强烈建议) 由于平台反爬严重，为防止大模型抓取失败，你可以把帖子标题或内容直接复制一份粘贴在这里，作为兜底辅助理解..." class="w-full h-16 bg-gray-50 p-3 rounded-xl text-xs border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                                        <div class="flex gap-2 mt-2">
+                                            <button @click="shareModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-[13px] active:scale-95 transition">取消</button>
+                                            <button @click="sendShareLink" :disabled="shareModal.isParsing" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition flex items-center justify-center gap-2" :class="{'opacity-70': shareModal.isParsing}">
+                                                <i v-if="shareModal.isParsing" class="fas fa-spinner fa-spin"></i>
+                                                <span v-else>解析并发送</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </transition>
+
                     <!-- 附件菜单 (全新网格布局) -->
                     <transition name="app-slide">
                         <div v-if="wechatState.showAttachMenu" class="chat-attach-menu">
@@ -3158,7 +3213,7 @@
                             <div class="attach-item" @click="openRedPacketModal"><div class="attach-icon-box !bg-white border border-gray-200 text-gray-600 !rounded-2xl">
                                 <i class="fas fa-wallet text-lg"></i>
                             </div><span class="attach-label">红包</span></div>
-                            <div class="attach-item" @click="triggerChatFileUpload"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
+                            <div class="attach-item" @click="openShareModal"><div class="attach-icon-box"><i class="fas fa-share-nodes text-gray-600"></i></div><span class="attach-label">分享</span></div>
                             <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                             <div class="attach-item" @click="showToast('敬请期待')"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
@@ -5274,6 +5329,7 @@ const app = createApp({
             homeScreenPresets:[],
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
+            shareModal: { show: false, tab: 'file', url: '', fallbackText: '', isParsing: false }, // 新增分享弹窗状态
             stActivationModal: { show: false, code: '' },
             stDeviceId: '',
             stActivated: false,
@@ -5688,11 +5744,14 @@ const app = createApp({
             };
             reader.readAsArrayBuffer(pngBlob);
         },
+        openShareModal() {
+            this.shareModal = { show: true, tab: 'file', url: '', fallbackText: '', isParsing: false };
+            this.wechatState.showAttachMenu = false;
+        },
         triggerChatFileUpload() {
             if (this.$refs.chatFileInput) {
                 this.$refs.chatFileInput.click();
             }
-            this.wechatState.showAttachMenu = false;
         },
         async handleChatFileUpload(e) {
             const file = e.target.files[0];
@@ -5702,99 +5761,156 @@ const app = createApp({
 
             const fileExt = file.name.split('.').pop().toLowerCase();
             if(!['txt', 'docx', 'pdf'].includes(fileExt)) {
-                this.showToast('系统仅支持发送 txt, docx, pdf 格式的文件');
+                this.showToast('系统仅支持发送 txt, docx, pdf 格式进行内容读取');
                 return;
             }
             const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            this.shareModal.show = false; // 关闭分享弹窗
 
-            // 先立刻把卡片推送到屏幕上
+            // 立刻将卡片发送到屏幕，同时存入占位符
             const msg = {
                 type: 'file', fileName: file.name, fileExt: fileExt, fileSize: fileSize,
-                isSelf: true, time: Date.now(), avatar: this.getMaskById(session.maskId).avatar
+                isSelf: true, time: Date.now(), avatar: this.getMaskById(session.maskId).avatar,
+                extractedContent: '' // 【核心修复】：为卡片对象分配一个专门存文本的私有变量
             };
             session.messages.push(msg);
             session.lastMessage = '[文件]';
             this.scrollToBottom();
             e.target.value = '';
 
-            this.showToast('正在解析文档内容，请稍候...');
+            this.showToast('正在提取文档正文，请勿操作...');
             let extractedText = "";
-
-            const processAIResponse = () => {
-                let aiPrompt = `【行为提示：我刚刚在微信上给你发送了一个文件】\n文件名: 《${file.name}》\n`;
-                if (extractedText) {
-                    aiPrompt += `以下是该文件的真实内容全文或前段摘录：\n"......\n${extractedText}\n......"\n\n请你仔细阅读上述内容，并像正常人一样在微信里针对文件里的真实内容给我回复。你是真的看到了这些内容，请跟我探讨。`;
-                } else {
-                    aiPrompt += `由于系统解析失败，无法读取内容，请根据文件名猜测内容并与我自然地回复。`;
-                }
-                this.saveData();
-                setTimeout(() => { this.triggerReceive(aiPrompt); }, 1000);
-            };
 
             try {
                 if (fileExt === 'txt') {
                     const text = await file.text();
-                    extractedText = text.substring(0, 3000); // 截取前3000字，防止爆Token
-                    processAIResponse();
+                    extractedText = text.substring(0, 3000); // 截断防止爆 Token
                 } else if (fileExt === 'docx') {
                     const arrayBuffer = await file.arrayBuffer();
                     if (!window.mammoth) {
-                        const script = document.createElement('script');
-                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
-                        document.head.appendChild(script);
-                        script.onload = async () => {
-                            try { const result = await mammoth.extractRawText({ arrayBuffer }); extractedText = result.value.substring(0, 3000); } catch(err) {}
-                            processAIResponse();
-                        };
-                        script.onerror = () => { processAIResponse(); };
-                    } else {
-                        const result = await mammoth.extractRawText({ arrayBuffer });
-                        extractedText = result.value.substring(0, 3000);
-                        processAIResponse();
+                        await new Promise((resolve, reject) => {
+                            const script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+                            script.onload = resolve;
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        });
                     }
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    extractedText = result.value.substring(0, 3000);
                 } else if (fileExt === 'pdf') {
+                    const arrayBuffer = await file.arrayBuffer();
                     if (!window.pdfjsLib) {
-                        const script = document.createElement('script');
-                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-                        document.head.appendChild(script);
-                        script.onload = async () => {
-                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-                            try {
-                                const arrayBuffer = await file.arrayBuffer();
-                                const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
-                                let maxPages = Math.min(pdf.numPages, 5); // 最多读前5页
-                                let fullText = "";
-                                for(let i = 1; i <= maxPages; i++) {
-                                    const page = await pdf.getPage(i);
-                                    const content = await page.getTextContent();
-                                    fullText += content.items.map(item => item.str).join(" ") + "\n";
-                                }
-                                extractedText = fullText.substring(0, 3000);
-                            } catch(err) { console.error("PDF解析错误", err); }
-                            processAIResponse();
-                        };
-                        script.onerror = () => { processAIResponse(); };
-                    } else {
-                        try {
-                            const arrayBuffer = await file.arrayBuffer();
-                            const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
-                            let maxPages = Math.min(pdf.numPages, 5);
-                            let fullText = "";
-                            for(let i = 1; i <= maxPages; i++) {
-                                const page = await pdf.getPage(i);
-                                const content = await page.getTextContent();
-                                fullText += content.items.map(item => item.str).join(" ") + "\n";
-                            }
-                            extractedText = fullText.substring(0, 3000);
-                        } catch(err) { console.error("PDF解析错误", err); }
-                        processAIResponse();
+                        await new Promise((resolve, reject) => {
+                            const script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+                            script.onload = resolve;
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        });
+                        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
                     }
+                    const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    let maxPages = Math.min(pdf.numPages, 4); 
+                    for(let i = 1; i <= maxPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        extractedText += content.items.map(item => item.str).join(" ") + "\n";
+                    }
+                    extractedText = extractedText.substring(0, 3000);
                 }
             } catch(error) {
                 console.error("文件读取失败", error);
-                processAIResponse();
             }
+
+            // 【核心修复】：无论是否提取成功，将内容牢牢绑定在这个消息体内部！
+            if (extractedText && extractedText.trim()) {
+                msg.extractedContent = extractedText.trim();
+                this.showToast('正文提取成功，正在交由 AI 审阅...');
+            } else {
+                msg.extractedContent = "（由于系统限制，文档内容提取失败，文件内容为空）";
+                this.showToast('提取失败或内容为空');
+            }
+            
+            this.saveData();
+            // 在确保提取完成后，干净利落地触发 AI 回复（不带任何干扰提示语，全靠底层的上下文组装）
+            setTimeout(() => { this.triggerReceive(); }, 1000);
         },
+
+        async sendShareLink() {
+            const url = this.shareModal.url.trim();
+            if(!url || !/^https?:\/\//i.test(url)) return this.showToast('请输入合法带 http 的网址链接');
+            
+            this.shareModal.isParsing = true;
+            
+            // 平台正则识别
+            let platformData = { name: '网页链接', iconClass: 'fas fa-link', colorClass: 'default' };
+            if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) {
+                platformData = { name: '小红书', iconClass: 'fas fa-book-open', colorClass: 'xhs' };
+            } else if (url.includes('douyin.com') || url.includes('v.douyin.com')) {
+                platformData = { name: '抖音', iconClass: 'fab fa-tiktok', colorClass: 'dy' };
+            } else if (url.includes('bilibili.com') || url.includes('b23.tv')) {
+                platformData = { name: '哔哩哔哩', iconClass: 'fas fa-tv', colorClass: 'bili' };
+            } else if (url.includes('weibo.com') || url.includes('weibo.cn')) {
+                platformData = { name: '微博', iconClass: 'fab fa-weibo', colorClass: 'weibo' };
+            }
+
+            let extractedTitle = '分享链接';
+            let extractedDesc = url;
+            let extractedFullText = '';
+
+            try {
+                // 利用 Jina API 突破前端跨域，抓取 Markdown 结构正文
+                const res = await fetch('https://r.jina.ai/' + url, {
+                    headers: { 'X-Return-Format': 'markdown' }, // Jina API 配置要求
+                    signal: AbortSignal.timeout(8000) // 设置 8 秒超时防假死
+                });
+                
+                if (res.ok) {
+                    let text = await res.text();
+                    text = text.trim();
+                    // 鉴别是否被严重反爬盾拦截（小红书/抖音常见）
+                    if (text && !text.includes('Please confirm you are human') && !text.includes('Checking your browser')) {
+                        // 提取第一行作为标题
+                        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+                        if (lines.length > 0) {
+                            extractedTitle = lines[0].replace(/#/g, '').trim(); // 去掉 markdown 井号
+                            extractedDesc = lines.slice(1, 4).join(' ').substring(0, 50); // 提取一点简述给UI
+                        }
+                        extractedFullText = text.substring(0, 2000); // 存 2000 字防止爆 Token
+                    }
+                }
+            } catch(err) {
+                console.warn('Jina抓取超时或跨域被拒', err);
+            }
+
+            // 【兜底逻辑】：如果 Jina 抓取失败或者被盾拦了，启用用户的兜底文本补充
+            if (!extractedFullText && this.shareModal.fallbackText.trim()) {
+                extractedFullText = "（系统自动抓取失败，这是用户提供的内容摘要补充）：\n" + this.shareModal.fallbackText.trim();
+                extractedTitle = '分享的图文内容';
+                extractedDesc = this.shareModal.fallbackText.substring(0, 30);
+            }
+
+            const session = this.wechatState.activeSession;
+            // 组装带内容的数据卡片
+            const msg = {
+                type: 'share_link', url: url, linkTitle: extractedTitle, linkDesc: extractedDesc, platformData: platformData,
+                isSelf: true, time: Date.now(), avatar: this.getMaskById(session.maskId).avatar,
+                extractedContent: extractedFullText // 核心：专门存文本给 AI 理解
+            };
+            
+            session.messages.push(msg);
+            session.lastMessage = `[链接] ${extractedTitle}`;
+            
+            this.shareModal.isParsing = false;
+            this.shareModal.show = false;
+            this.scrollToBottom();
+            this.saveData();
+
+            // 触发 AI
+            setTimeout(() => { this.triggerReceive(); }, 1000);
+        },
+
         getCurrentChatTitle() {
             if(!this.wechatState.activeSession) return '';
             const friend = this.wechatState.friendList.find(f => f.id === this.wechatState.activeSession.targetId);
@@ -7385,9 +7501,9 @@ const app = createApp({
             target.style.height = 'auto'; // 先归零
             target.style.height = target.scrollHeight + 'px'; // 再根据内容撑开
         },
-        async sendMessage() {
+        sendMessage() {
             if(!this.inputMsg.trim()) return;
-            const inputContent = this.inputMsg; // 保存输入内容
+            const inputContent = this.inputMsg; 
             const msg = { content: inputContent, isSelf: true, time: Date.now(), avatar: this.getMaskById(this.wechatState.activeSession.maskId).avatar };
             if(this.replyingTo) { 
                 let quoteName = this.replyingTo.isSelf ? '我' : (this.wechatState.activeSession.isGroup ? (this.replyingTo.name || '群成员') : this.wechatState.activeSession.name);
@@ -7416,32 +7532,6 @@ const app = createApp({
                 }
             });
 
-            // 【新增】正则判断是否包含网址链接 (小红书、抖音、微博等均支持)
-            const urlRegex = /(https?:\/\/[^\s\u4e00-\u9fa5]+)/;
-            const match = inputContent.match(urlRegex);
-
-            if (match) {
-                const url = match[0];
-                this.showToast('正在解析网址内容，请稍候...');
-                try {
-                    // 使用免费的 r.jina.ai 实现前端无后端抓取动态网页正文
-                    const res = await fetch('https://r.jina.ai/' + url);
-                    if (res.ok) {
-                        let text = await res.text();
-                        // 提取前2000字，防止小红书/抖音乱码撑爆 Token
-                        text = text.substring(0, 2000); 
-                        const prompt = `【行为提示：我刚刚发给你一个网页链接，以下是通过解析抓取到的该网页的真实内容】：\n\n"${text}"\n\n请仔细阅读上述网页内容，并根据你的角色人设，在微信里自然地回复我关于这个链接（可能是小红书、抖音、新闻等）的看法或讨论。你是真的看到了里面写了什么。`;
-                        this.triggerReceive(prompt);
-                        return; // 中断，防止走到下面触发普通回复
-                    } else {
-                        this.showToast('网页提取受限或链接失效');
-                    }
-                } catch(err) {
-                    this.showToast('无法解析该链接内容');
-                }
-            }
-
-            // 判断是否离线/忙碌，并触发自动回复 (如果不是链接的话)
             if (!currentSession.isGroup) {
                 const status = currentSession.onlineStatus || 'online';
                 if (status === 'offline' || status === 'busy') {
@@ -8616,7 +8706,7 @@ Structure:
                 offlineMemoryContext = `\n[跨次元线下记忆]: 你们最近曾在线下见面并发生过以下互动，请保持记忆连贯，如果合理可以顺势提及线下发生的事或暧昧氛围：\n${recentOffline}\n`;
                 systemPrompt += offlineMemoryContext; // 强行注入大模型大脑
             }
-            const recentMsgs = session.messages.slice(-10); 
+            const recentMsgs = session.messages.slice(-12); // 稍微增加一点回忆广度
             
             recentMsgs.forEach(m => {
                 if(!m.isRecalled) {
@@ -8642,12 +8732,28 @@ Structure:
                          contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: m.inviteType === 'give' ? '[User wants to give Intimate Pay]' : '[User asks for Intimate Pay]' });
                     } else if (m.type === 'location') {
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[Location Shared: ${m.name} - ${m.address}]` });
-                        } else if (m.type === 'voice_call_record') {
+                    } else if (m.type === 'voice_call_record') {
                         const callLog = (m.callData || []).map(t => `[${t.isSelf ? '我(语音中)' : t.name}]: ${t.text}`).join('\n');
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[语音通话历史录音]:\n${callLog}` });
                     } else if (m.type === 'video_call_record') {
                         const callLog = (m.callData || []).map(t => `[${t.isSelf ? '我(视频中)' : t.name}]: 动作：*${t.action||'无'}* 说道："${t.text}"`).join('\n');
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[视频通话历史录像]:\n${callLog}` });
+                    
+                    // 【核心修改】：针对文件和网址分享，将提取到的文本强制作为输入内容，而不是单单提示发了个文件
+                    } else if (m.type === 'file') {
+                        let finalContent = `[发送了文件: ${m.fileName}]`;
+                        if (m.extractedContent) {
+                            finalContent += `\n【系统拦截提取到的文件全文或部分正文】：\n"""\n${m.extractedContent}\n"""\n【重要指令】：请你认真阅读上述文件内容，并像个真人一样针对文件的具体内容与我自然地探讨！`;
+                        }
+                        contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: finalContent });
+                        
+                    } else if (m.type === 'share_link') {
+                        let finalContent = `[分享了网页链接: ${m.linkTitle || m.url}]`;
+                        if (m.extractedContent) {
+                            finalContent += `\n【系统拦截抓取到的网页正文】：\n"""\n${m.extractedContent}\n"""\n【重要指令】：请仔细阅读上述抓取到的帖子/文章内容，并像正常人一样在微信里针对帖子里的情节或话题跟我讨论！`;
+                        }
+                        contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: finalContent });
+
                     } else {
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: m.content });
                     }
