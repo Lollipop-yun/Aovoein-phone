@@ -447,7 +447,7 @@
      <input type="file" ref="docxImportInput" accept=".docx" class="hidden" @change="handleDocxImport">
 <input type="file" ref="aoveinImportInput" accept=".json,.png" class="hidden" @change="handleAoveinImport">
 <input type="file" ref="stImportInput" accept=".png" class="hidden" @change="handleSTImport">
-<input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf,.mp4" class="hidden" @change="handleChatFileUpload">
+<input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf" class="hidden" @change="handleChatFileUpload">
 
     <!-- 全局弹窗 (Z-Index 调高) -->
     <transition name="fade"><div v-if="toast.show" class="fixed inset-0 z-[90000] flex items-center justify-center pointer-events-none"><div class="bg-black/70 text-white px-5 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium">{{ toast.message }}</div></div></transition>
@@ -2769,7 +2769,7 @@
                         <!-- 左侧排版模式 -->
                         <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'left'" class="flex items-center gap-2 pl-2 flex-1 min-w-0">
                             <!-- 只有点击头像才弹出心声 -->
-                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80">
+                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80" @click.stop="openStatusModal()">
                                 <img :src="wechatState.activeSession.isGroup ? wechatState.activeSession.avatar : getCurrentSessionAvatar()" class="w-full h-full object-cover">
                             </div>
                             <div class="flex flex-col flex-1 min-w-0">
@@ -2789,7 +2789,7 @@
                     <!-- 中间排版模式 -->
                     <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'center'" class="flex flex-col items-center absolute left-1/2 -translate-x-1/2 w-[60%]">
                         <!-- 点击名字跳出心声 -->
-                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 w-full">
+                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 w-full cursor-pointer active:opacity-50" @click.stop="openStatusModal()">
                             <span v-if="isTyping" class="whitespace-nowrap text-center">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                             <span v-else class="truncate w-full text-center">{{ getCurrentChatTitle() }}</span>
                         </h1>
@@ -5701,52 +5701,40 @@ const app = createApp({
             if (!session) return;
 
             const fileExt = file.name.split('.').pop().toLowerCase();
+            if(!['txt', 'docx', 'pdf'].includes(fileExt)) {
+                this.showToast('系统仅支持发送 txt, docx, pdf 格式的文件');
+                return;
+            }
             const fileSize = (file.size / 1024 / 1024).toFixed(2) + ' MB';
 
             // 先立刻把卡片推送到屏幕上
             const msg = {
-                type: 'file',
-                fileName: file.name,
-                fileExt: fileExt,
-                fileSize: fileSize,
-                isSelf: true,
-                time: Date.now(),
-                avatar: this.getMaskById(session.maskId).avatar
+                type: 'file', fileName: file.name, fileExt: fileExt, fileSize: fileSize,
+                isSelf: true, time: Date.now(), avatar: this.getMaskById(session.maskId).avatar
             };
             session.messages.push(msg);
             session.lastMessage = '[文件]';
             this.scrollToBottom();
             e.target.value = '';
 
-            // AI 的文件阅读处理逻辑
-            this.showToast('正在向对方传输文件...');
+            this.showToast('正在解析文档内容，请稍候...');
             let extractedText = "";
 
             const processAIResponse = () => {
-                let aiPrompt = `【行为提示：我刚刚通过微信给你发送了一个文件】\n文件名: 《${file.name}》\n大小: ${fileSize}。`;
-                
+                let aiPrompt = `【行为提示：我刚刚在微信上给你发送了一个文件】\n文件名: 《${file.name}》\n`;
                 if (extractedText) {
-                    aiPrompt += `\n为了方便你读取，文件正文的前段提取内容如下：\n"......\n${extractedText}\n......"\n\n请你假装在手机上点开了这个文件并仔细阅读了它，然后针对它的内容给我回复。`;
-                } else if (fileExt === 'mp4') {
-                    aiPrompt += `\n这是一个视频文件。你看了之后有什么感想？请结合我们当前的话题，或者根据这个视频的文件名，假装你看完了并做出极其口语化的微信回复。`;
-                } else if (fileExt === 'pdf') {
-                    aiPrompt += `\n这是一个PDF文件。由于系统限制你无法读取长文，但请根据这个文件的名字猜测它大概讲了什么，并假装你接收了该文件向我做出回应。`;
+                    aiPrompt += `以下是该文件的真实内容全文或前段摘录：\n"......\n${extractedText}\n......"\n\n请你仔细阅读上述内容，并像正常人一样在微信里针对文件里的真实内容给我回复。你是真的看到了这些内容，请跟我探讨。`;
                 } else {
-                    aiPrompt += `\n这是一个文件。请根据该文件名假装你接收并查看了，向我作出真实的回应。`;
+                    aiPrompt += `由于系统解析失败，无法读取内容，请根据文件名猜测内容并与我自然地回复。`;
                 }
-                
                 this.saveData();
-                // 模拟对方观看文件的时间：2.5秒
-                setTimeout(() => {
-                    this.triggerReceive(aiPrompt);
-                }, 2500);
+                setTimeout(() => { this.triggerReceive(aiPrompt); }, 1000);
             };
 
-            // 文本和 Docx 的内容前置提取器 (截取前1000个字符防止撑爆 Token)
             try {
                 if (fileExt === 'txt') {
                     const text = await file.text();
-                    extractedText = text.substring(0, 1000);
+                    extractedText = text.substring(0, 3000); // 截取前3000字，防止爆Token
                     processAIResponse();
                 } else if (fileExt === 'docx') {
                     const arrayBuffer = await file.arrayBuffer();
@@ -5755,27 +5743,56 @@ const app = createApp({
                         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
                         document.head.appendChild(script);
                         script.onload = async () => {
+                            try { const result = await mammoth.extractRawText({ arrayBuffer }); extractedText = result.value.substring(0, 3000); } catch(err) {}
+                            processAIResponse();
+                        };
+                        script.onerror = () => { processAIResponse(); };
+                    } else {
+                        const result = await mammoth.extractRawText({ arrayBuffer });
+                        extractedText = result.value.substring(0, 3000);
+                        processAIResponse();
+                    }
+                } else if (fileExt === 'pdf') {
+                    if (!window.pdfjsLib) {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+                        document.head.appendChild(script);
+                        script.onload = async () => {
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
                             try {
-                                const result = await mammoth.extractRawText({ arrayBuffer });
-                                extractedText = result.value.substring(0, 1000);
-                            } catch(err) { extractedText = ""; }
+                                const arrayBuffer = await file.arrayBuffer();
+                                const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                                let maxPages = Math.min(pdf.numPages, 5); // 最多读前5页
+                                let fullText = "";
+                                for(let i = 1; i <= maxPages; i++) {
+                                    const page = await pdf.getPage(i);
+                                    const content = await page.getTextContent();
+                                    fullText += content.items.map(item => item.str).join(" ") + "\n";
+                                }
+                                extractedText = fullText.substring(0, 3000);
+                            } catch(err) { console.error("PDF解析错误", err); }
                             processAIResponse();
                         };
                         script.onerror = () => { processAIResponse(); };
                     } else {
                         try {
-                            const result = await mammoth.extractRawText({ arrayBuffer });
-                            extractedText = result.value.substring(0, 1000);
-                        } catch(err) { extractedText = ""; }
+                            const arrayBuffer = await file.arrayBuffer();
+                            const pdf = await window.pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                            let maxPages = Math.min(pdf.numPages, 5);
+                            let fullText = "";
+                            for(let i = 1; i <= maxPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const content = await page.getTextContent();
+                                fullText += content.items.map(item => item.str).join(" ") + "\n";
+                            }
+                            extractedText = fullText.substring(0, 3000);
+                        } catch(err) { console.error("PDF解析错误", err); }
                         processAIResponse();
                     }
-                } else {
-                    // PDF / MP4 等不提取文字，直接进入反馈链
-                    processAIResponse();
                 }
             } catch(error) {
-                console.error("文件读取前置处理失败", error);
-                processAIResponse(); // 即使读取文字失败也要照样触发 AI 反应
+                console.error("文件读取失败", error);
+                processAIResponse();
             }
         },
         getCurrentChatTitle() {
@@ -7368,18 +7385,18 @@ const app = createApp({
             target.style.height = 'auto'; // 先归零
             target.style.height = target.scrollHeight + 'px'; // 再根据内容撑开
         },
-        sendMessage() {
+        async sendMessage() {
             if(!this.inputMsg.trim()) return;
-            const msg = { content: this.inputMsg, isSelf: true, time: Date.now(), avatar: this.getMaskById(this.wechatState.activeSession.maskId).avatar };
+            const inputContent = this.inputMsg; // 保存输入内容
+            const msg = { content: inputContent, isSelf: true, time: Date.now(), avatar: this.getMaskById(this.wechatState.activeSession.maskId).avatar };
             if(this.replyingTo) { 
                 let quoteName = this.replyingTo.isSelf ? '我' : (this.wechatState.activeSession.isGroup ? (this.replyingTo.name || '群成员') : this.wechatState.activeSession.name);
                 msg.quote = { name: quoteName, content: this.replyingTo.content }; 
                 this.replyingTo = null; 
             }
             const currentSession = this.wechatState.activeSession;
-            currentSession.messages.push(msg); // 删除了多余的 push(msg) 修复发送双倍Bug
+            currentSession.messages.push(msg); 
             
-            // 【新增】群聊玩家发消息升1级
             if (currentSession.isGroup) {
                 if (!currentSession.membersInfo) currentSession.membersInfo = {};
                 if (!currentSession.membersInfo['mine']) currentSession.membersInfo['mine'] = { level: 1, customTitle: '', lastLevelDate: '' };
@@ -7389,9 +7406,9 @@ const app = createApp({
                     currentSession.membersInfo['mine'].lastLevelDate = today;
                 }
             }
-            currentSession.lastMessage = this.inputMsg;
-            currentSession.bgTriggerCount = 0; // 【核心修正】我发了消息，清空后台触发次数
-            currentSession.lastBgActivityTime = Date.now(); // 重置后台计时起点
+            currentSession.lastMessage = inputContent;
+            currentSession.bgTriggerCount = 0; 
+            currentSession.lastBgActivityTime = Date.now(); 
             this.inputMsg = ''; this.scrollToBottom(); this.saveData();
             this.$nextTick(() => {
                 if (this.$refs.chatInputArea) {
@@ -7399,7 +7416,32 @@ const app = createApp({
                 }
             });
 
-            // 【新增】判断是否离线/忙碌，并触发自动回复
+            // 【新增】正则判断是否包含网址链接 (小红书、抖音、微博等均支持)
+            const urlRegex = /(https?:\/\/[^\s\u4e00-\u9fa5]+)/;
+            const match = inputContent.match(urlRegex);
+
+            if (match) {
+                const url = match[0];
+                this.showToast('正在解析网址内容，请稍候...');
+                try {
+                    // 使用免费的 r.jina.ai 实现前端无后端抓取动态网页正文
+                    const res = await fetch('https://r.jina.ai/' + url);
+                    if (res.ok) {
+                        let text = await res.text();
+                        // 提取前2000字，防止小红书/抖音乱码撑爆 Token
+                        text = text.substring(0, 2000); 
+                        const prompt = `【行为提示：我刚刚发给你一个网页链接，以下是通过解析抓取到的该网页的真实内容】：\n\n"${text}"\n\n请仔细阅读上述网页内容，并根据你的角色人设，在微信里自然地回复我关于这个链接（可能是小红书、抖音、新闻等）的看法或讨论。你是真的看到了里面写了什么。`;
+                        this.triggerReceive(prompt);
+                        return; // 中断，防止走到下面触发普通回复
+                    } else {
+                        this.showToast('网页提取受限或链接失效');
+                    }
+                } catch(err) {
+                    this.showToast('无法解析该链接内容');
+                }
+            }
+
+            // 判断是否离线/忙碌，并触发自动回复 (如果不是链接的话)
             if (!currentSession.isGroup) {
                 const status = currentSession.onlineStatus || 'online';
                 if (status === 'offline' || status === 'busy') {
