@@ -2316,9 +2316,23 @@
             </div>
         </transition>
 
-        <!-- 聊天顶部备注位置排版弹窗 -->
+        <!-- 时区选择弹窗 -->
         <transition name="app-slide">
-            <div v-if="headerLayoutModal.show" class="fixed inset-0 z-[105000]">
+            <div v-if="timezoneModal.show" class="fixed inset-0 z-[105000]">
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="timezoneModal.show = false"></div>
+                <div class="ios-list-modal max-h-[70vh]">
+                    <div class="ios-list-header">选择{{ timezoneModal.target === 'mine' ? '我' : 'TA' }}所在的时区 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="timezoneModal.show = false">取消</button></div>
+                    <div class="ios-list-content p-0 bg-white">
+                        <div v-for="tz in timezones" :key="tz.value" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="selectTimezone(tz.value)">
+                            <span class="text-gray-900 font-medium">{{ tz.name }}</span>
+                            <i v-if="(timezoneModal.target === 'mine' ? (wechatState.activeSession?.myTimezone || 'Asia/Shanghai') : (wechatState.activeSession?.aiTimezone || 'Asia/Shanghai')) === tz.value" class="fas fa-check text-blue-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 聊天顶部备注位置排版弹窗 -->
                 <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="headerLayoutModal.show = false"></div>
                 <div class="ios-list-modal">
                     <div class="ios-list-header">选择顶部排版模式 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="headerLayoutModal.show = false">取消</button></div>
@@ -3650,6 +3664,20 @@
 
                     <!-- 卡片 2：搜索与显示排版 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openTimezoneModal('mine')">
+                            <span class="text-[15px] text-gray-900">我的时区</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[14px] text-gray-500">{{ getTimezoneName(wechatState.activeSession?.myTimezone) }}</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openTimezoneModal('ai')">
+                            <span class="text-[15px] text-gray-900">TA的时区</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[14px] text-gray-500">{{ getTimezoneName(wechatState.activeSession?.aiTimezone) }}</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                            </div>
+                        </div>
                         <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openChatSearch">
                             <span class="text-[15px] text-gray-900">查找聊天记录</span>
                             <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
@@ -5336,6 +5364,20 @@ const app = createApp({
             contactImportModal: { show: false },
             shareModal: { show: false, tab: 'file', url: '', title: '', content: '', isParsing: false }, // 更新分享弹窗状态
             stActivationModal: { show: false, code: '' },
+            timezones: [
+                { name: '北京/上海/台北 (UTC+8)', value: 'Asia/Shanghai' },
+                { name: '东京/首尔 (UTC+9)', value: 'Asia/Tokyo' },
+                { name: '曼谷/雅加达 (UTC+7)', value: 'Asia/Bangkok' },
+                { name: '悉尼/墨尔本 (UTC+10)', value: 'Australia/Sydney' },
+                { name: '伦敦/里斯本 (UTC+0)', value: 'Europe/London' },
+                { name: '巴黎/柏林/罗马 (UTC+1)', value: 'Europe/Paris' },
+                { name: '莫斯科/迪拜 (UTC+3/4)', value: 'Europe/Moscow' },
+                { name: '纽约/华盛顿/多伦多 (EST)', value: 'America/New_York' },
+                { name: '芝加哥/休斯顿 (CST)', value: 'America/Chicago' },
+                { name: '洛杉矶/旧金山/温哥华 (PST)', value: 'America/Los_Angeles' },
+                { name: '夏威夷/阿拉斯加', value: 'Pacific/Honolulu' }
+            ],
+            timezoneModal: { show: false, target: '' },
             stDeviceId: '',
             stActivated: false,
             expandedGroups: ['all'],
@@ -5761,61 +5803,66 @@ const app = createApp({
             const cleanUrl = match[0];
             this.shareModal.url = cleanUrl;
             this.shareModal.isParsing = true;
-            this.showToast('正在抓取网页内容，这可能需要几秒钟...');
+            this.showToast('正在突破反爬抓取网页，请稍候...');
             
             try {
                 let fetchedTitle = '';
                 let fetchedContent = '';
-                let jinaSuccess = false;
+                let success = false;
 
-                // 方案一：尝试 Jina AI
+                // 方案一：Jina AI Markdown 提取
                 try {
-                    const res = await fetch('https://r.jina.ai/' + cleanUrl, {
-                        headers: { 'X-Return-Format': 'markdown' },
-                        signal: AbortSignal.timeout(8000)
-                    });
+                    const res = await fetch('https://r.jina.ai/' + cleanUrl, { headers: { 'X-Return-Format': 'markdown' }, signal: AbortSignal.timeout(10000) });
                     if (res.ok) {
                         let text = await res.text();
-                        text = text.trim();
-                        // 判断是否被Cloudflare或社交平台的反爬验证拦截
                         if (text && !text.includes('Please confirm you are human') && !text.includes('Checking your browser')) {
                             const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
                             if (lines.length > 0) {
                                 fetchedTitle = lines[0].replace(/#/g, '').trim();
                                 fetchedContent = lines.slice(1).join('\n').substring(0, 2000);
-                            } else {
-                                fetchedContent = text.substring(0, 2000);
-                            }
-                            jinaSuccess = true;
+                            } else { fetchedContent = text.substring(0, 2000); }
+                            success = true;
                         }
                     }
-                } catch(err) { console.warn("Jina 解析超时或被拦截"); }
+                } catch(err) {}
 
-                // 方案二：如果 Jina 失败，启用 AllOrigins 代理跨域直取 HTML DOM 树
-                if (!jinaSuccess) {
+                // 方案二：Microlink 元数据提取 (对付抖音/小红书分享页很有效)
+                if (!success) {
+                    try {
+                        const mRes = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(cleanUrl)}`, { signal: AbortSignal.timeout(8000) });
+                        if (mRes.ok) {
+                            const mData = await mRes.json();
+                            if (mData.status === 'success' && mData.data) {
+                                fetchedTitle = mData.data.title || '';
+                                fetchedContent = mData.data.description || '';
+                                if (fetchedTitle || fetchedContent) success = true;
+                            }
+                        }
+                    } catch(err) {}
+                }
+
+                // 方案三：AllOrigins 直抓 HTML DOM
+                if (!success) {
                     const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`);
                     if (res.ok) {
                         const data = await res.json();
-                        const html = data.contents;
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
+                        const doc = new DOMParser().parseFromString(data.contents, 'text/html');
                         fetchedTitle = doc.title || '分享网页';
-                        // 剔除无用的脚本样式标签，提取纯文本
-                        const scripts = doc.querySelectorAll('script, style, noscript');
-                        scripts.forEach(s => s.remove());
-                        fetchedContent = doc.body ? doc.body.innerText.replace(/\s+/g, ' ').substring(0, 2000).trim() : '';
-                    } else {
-                        throw new Error('AllOrigins代理抓取也失败了');
+                        const metaDesc = doc.querySelector('meta[name="description"]');
+                        if (metaDesc) fetchedContent = metaDesc.getAttribute('content');
+                        if (!fetchedContent) {
+                            doc.querySelectorAll('script, style, noscript').forEach(s => s.remove());
+                            fetchedContent = doc.body ? doc.body.innerText.replace(/\s+/g, ' ').substring(0, 2000).trim() : '';
+                        }
                     }
                 }
 
-                // 如果成功获取任意有效内容
                 if (fetchedTitle || fetchedContent) {
                     this.shareModal.title = fetchedTitle || '分享网页';
                     this.shareModal.content = fetchedContent || cleanUrl;
                     this.showToast('解析成功，已自动填充');
                 } else {
-                    this.showToast('防爬限制，未能提取到有效正文，请手动补充');
+                    this.showToast('防爬限制太强，未能自动提取，请手动补充');
                 }
             } catch (err) {
                 this.showToast('目标网站反爬防护极强，请手动填写');
@@ -8498,19 +8545,22 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
-            // --- 精准时间感知逻辑 (强制获取系统真实年月日和时间) ---
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            const day = now.getDate();
-            const hour = now.getHours();
-            const minute = String(now.getMinutes()).padStart(2, '0');
-            const weekDays =['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-            const weekDay = weekDays[now.getDay()];
+            // --- 双边时区精准时间感知逻辑 ---
+            const myTz = session.myTimezone || 'Asia/Shanghai';
+            const aiTz = session.aiTimezone || 'Asia/Shanghai';
             
-            // 加入世界时差计算法则
-            let timeContext = `\n[系统提示-当前真实时间]: 中国北京时间(UTC+8)现在是 ${year}年${month}月${day}日，${weekDay}，${hour}:${minute}。
-【时差感知提醒】：如果你的人设目前位于国外，请根据北京时间自行推算你的当地时间（如：日本/韩国+1小时；英国-8小时；美国东部-13小时，美国西部-16小时；澳洲东部+2小时等），请务必在对话中符合你所在地的作息时间（如北京时间中午时，美国可能是深夜）！`;
+            const getTzTimeStr = (tz) => {
+                try {
+                    return new Intl.DateTimeFormat('zh-CN', { timeZone: tz, year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: 'numeric', minute: 'numeric', hour12: false }).format(new Date());
+                } catch(e) {
+                    return new Date().toLocaleString();
+                }
+            };
+
+            const myTimeStr = getTzTimeStr(myTz);
+            const aiTimeStr = getTzTimeStr(aiTz);
+            
+            let timeContext = `\n[系统提示-当前真实时间]:\n- 我(玩家)此时此刻所在时区的当地时间是: ${myTimeStr}\n- 你(角色)此时此刻所在时区的当地时间是: ${aiTimeStr}\n【时差感知强制提醒】：请你一定要根据你(角色)此时所在的时区时间(比如深夜、清晨、午休等)来决定你现在的作息、在干什么以及聊天的内容！同时你需要明确知道我和你之间是否存在时差！`;
             
             // Music Sense Logic (NEW)
             // --- 强化音乐感知与 AI 主动切歌 ---
@@ -11733,7 +11783,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     body: JSON.stringify({ 
                         model: this.apiConfig.selectedModel, 
                         messages:[
-                            { role: 'system', content: '你是一个精准的翻译助手。请判断用户的输入，如果是外语(英语/日语/韩语等)或方言(粤语/闽南语等)，请直接翻译成标准简体中文并输出；如果是纯正的标准简体中文，或者纯符号、纯数字，请直接回复“无需翻译”。除了翻译结果，绝对不要输出任何多余的解释、音标或引导语！' },
+                            { role: 'system', content: '【最高指令】：你是一个精准的翻译机。请判断用户的输入，如果是任何外语(如英语/日语等)或任何方言(如粤语/闽南语等)，你【必须】【绝对】将其翻译成标准的【简体中文】并输出！严禁翻译成英文或其他语言！哪怕原文是粤语，也必须翻译成简体中文！\n如果原文已经是纯正的简体中文、纯符号或纯数字，请直接回复“无需翻译”。\n除了简体中文的翻译结果，绝对不要输出任何解释！' },
                             { role: 'user', content: msg.content }
                         ],
                         temperature: 0.1 
@@ -13561,6 +13611,28 @@ ${greetingInstruction}`;
             document.removeEventListener('mouseup', this.stopDragVoice);
             document.removeEventListener('touchend', this.stopDragVoice);
         },
+        // --- 时区辅助方法 ---
+        openTimezoneModal(target) {
+            this.timezoneModal.target = target;
+            this.timezoneModal.show = true;
+        },
+        selectTimezone(val) {
+            if (this.wechatState.activeSession) {
+                if (this.timezoneModal.target === 'mine') {
+                    this.wechatState.activeSession.myTimezone = val;
+                } else {
+                    this.wechatState.activeSession.aiTimezone = val;
+                }
+                this.saveData();
+            }
+            this.timezoneModal.show = false;
+        },
+        getTimezoneName(val) {
+            const defaultTz = 'Asia/Shanghai';
+            const v = val || defaultTz;
+            const tz = this.timezones.find(t => t.value === v);
+            return tz ? tz.name : '未知时区';
+        }
         
         // --- 接受 AI 听歌邀请 ---
         acceptMusicInvite(msg) {
