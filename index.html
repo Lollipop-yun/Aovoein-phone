@@ -229,18 +229,7 @@
         
         .forward-title { font-size: 14px; font-weight: bold; color: #333; border-bottom: 1px solid #f5f5f5; padding-bottom: 4px; margin-bottom: 2px; }
         .forward-content { font-size: 12px; color: #666; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
-
-        /* 新增：分享链接特殊卡片样式 */
-        .chat-bubble-link { width: 240px; padding: 0 !important; overflow: hidden; border-radius: 12px; background: white; border: 1px solid #eee; display: flex; flex-direction: column; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-        .link-header { padding: 6px 12px; display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: white; }
-        .link-header.xhs { background: #ff2442; }
-        .link-header.dy { background: #1c1c1e; }
-        .link-header.bili { background: #fb7299; }
-        .link-header.default { background: #888888; }
-        .link-body { padding: 10px 12px; font-size: 13px; color: #333; background: #ffffff; }
-        .link-title { font-weight: bold; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
-        .link-desc { font-size: 11px; color: #666; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
-
+        
         .voice-transcription { font-size: 12px; color: #666; background: #ffffff; padding: 6px 10px; border-radius: 8px; margin-top: 4px; border: 1px solid #eee; }
         .voice-wave-container { display: flex; align-items: center; gap: 2px; height: 16px; }
         .voice-wave-bar { width: 3px; background-color: currentColor; border-radius: 2px; }
@@ -2031,6 +2020,22 @@
             </div>
         </transition>
         <input type="file" ref="groupAvatarInput2" accept="image/*" class="hidden" @change="handleGroupAvatarChange2">
+        
+        <!-- 时区选择弹窗 -->
+        <transition name="app-slide">
+            <div v-if="timezoneModal.show" class="fixed inset-0 z-[105000]">
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="timezoneModal.show = false"></div>
+                <div class="ios-list-modal max-h-[85vh]">
+                    <div class="ios-list-header">选择时区 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="timezoneModal.show = false">取消</button></div>
+                    <div class="ios-list-content p-0 bg-white">
+                        <div v-for="tz in timezones" :key="tz.offset" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setTimezone(tz.offset)">
+                            <div><div class="font-bold text-gray-900">{{ tz.label }}</div></div>
+                            <i v-if="getCurrentTimezone() === tz.offset" class="fas fa-check text-blue-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
  
         <!-- 时间戳显示位置弹窗 -->
         <transition name="app-slide">
@@ -2868,7 +2873,7 @@
                                 </div>
                                 
                                 <!-- 气泡核心 -->
-                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' || msg.type === 'sticker' ? 'chat-bubble-image' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file' || msg.type === 'share_link') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
+                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' || msg.type === 'sticker' ? 'chat-bubble-image' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
                                      :style="(msg.type === 'voice' && !msg.quote) ? { width: (60 + Math.min(msg.duration, 60) * 4) + 'px' } : {}"
                                      @click="handleChatBubbleClick(msg)"
                                      @contextmenu.prevent="showChatContextMenu($event, msg, i)">
@@ -2945,18 +2950,6 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- 【新增】网页链接分享卡片 -->
-                                    <div v-else-if="msg.type === 'share_link'" class="chat-bubble-link" @click="showToast('无法在系统内直接打开外部链接')">
-                                        <div class="link-header" :class="msg.platformData.colorClass">
-                                            <i :class="msg.platformData.iconClass"></i>
-                                            <span>{{ msg.platformData.name }}</span>
-                                        </div>
-                                        <div class="link-body">
-                                            <div class="link-title" style="font-size: 15px;">{{ msg.linkTitle || '分享网页链接' }}</div>
-                                            <div class="link-desc" style="font-size: 12px;">{{ msg.linkDesc && msg.linkDesc.length > 15 ? msg.linkDesc.substring(0, 15) + '...' : msg.linkDesc }}</div>
-                                        </div>
-                                    </div>
-
                                     <!-- 外卖代付请求卡片 (黑白灰UI) -->
                                     <div v-else-if="msg.type === 'food_payment'" class="bg-white border border-gray-200 rounded-xl w-[230px] overflow-hidden shadow-sm flex flex-col cursor-default">
                                         <div class="p-3 border-b border-gray-100 flex items-center gap-3 bg-gray-50">
@@ -3165,37 +3158,26 @@
                         </div>
                     </transition>
 
-                    <!-- 【新增】文件与链接分享弹窗 -->
+                    <!-- 文件发送选择弹窗 (真实/虚拟) -->
                     <transition name="scale">
-                        <div v-if="shareModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="shareModal.show = false">
+                        <div v-if="fileModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="fileModal.show = false">
                             <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col" @click.stop>
-                                <!-- Tab 栏 -->
                                 <div class="flex border-b border-gray-100 bg-gray-50/50">
-                                    <button @click="shareModal.tab = 'file'" class="flex-1 py-3.5 text-[15px] font-bold transition" :class="shareModal.tab === 'file' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">文件文档</button>
-                                    <button @click="shareModal.tab = 'link'" class="flex-1 py-3.5 text-[15px] font-bold transition" :class="shareModal.tab === 'link' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">网址链接</button>
+                                    <button @click="fileModal.tab = 'real'" class="flex-1 py-3.5 text-[15px] font-bold transition" :class="fileModal.tab === 'real' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">真实文件</button>
+                                    <button @click="fileModal.tab = 'virtual'" class="flex-1 py-3.5 text-[15px] font-bold transition" :class="fileModal.tab === 'virtual' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">虚拟文件</button>
                                 </div>
                                 <div class="p-6 flex flex-col gap-4 min-h-[220px]">
-                                    <!-- 发送文件区 -->
-                                    <div v-if="shareModal.tab === 'file'" class="flex flex-col items-center justify-center h-full mt-4">
+                                    <div v-if="fileModal.tab === 'real'" class="flex flex-col items-center justify-center h-full mt-4">
                                         <button @click="triggerChatFileUpload" class="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl shadow-sm active:scale-95 transition mb-4 border border-blue-100"><i class="fas fa-folder-open"></i></button>
                                         <span class="text-[13px] font-bold text-gray-800">选择本地文件发给对方</span>
                                         <span class="text-[11px] text-gray-400 mt-1">支持格式: .txt / .docx / .pdf</span>
                                     </div>
-                                    <!-- 发送链接区 -->
-                                    <div v-if="shareModal.tab === 'link'" class="flex flex-col h-full gap-3">
-                                        <div class="flex gap-2">
-                                            <textarea v-model="shareModal.url" placeholder="粘贴网址 (http/https)..." class="flex-1 h-12 bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none resize-none shadow-sm"></textarea>
-                                            <button @click="parseShareLink" :disabled="shareModal.isParsing" class="w-20 bg-gray-100 text-gray-700 rounded-xl font-bold text-[13px] active:scale-95 transition flex items-center justify-center border border-gray-200" :class="{'opacity-70': shareModal.isParsing}">
-                                                <i v-if="shareModal.isParsing" class="fas fa-spinner fa-spin"></i>
-                                                <span v-else>解析</span>
-                                            </button>
-                                        </div>
-                                        <input v-model="shareModal.title" placeholder="帖子标题" class="w-full bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none shadow-sm">
-                                        <textarea v-model="shareModal.content" placeholder="帖子详细内容" class="w-full h-24 bg-gray-50 p-3 rounded-xl text-xs border border-gray-200 outline-none resize-none shadow-sm"></textarea>
-                                        
+                                    <div v-if="fileModal.tab === 'virtual'" class="flex flex-col h-full gap-3">
+                                        <input v-model="fileModal.title" placeholder="虚拟文件标题 (如: 行程计划表.docx)" class="w-full bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none shadow-sm">
+                                        <textarea v-model="fileModal.content" placeholder="填写文件内想给AI看到的内容正文..." class="w-full h-32 bg-gray-50 p-3 rounded-xl text-xs border border-gray-200 outline-none resize-none shadow-sm"></textarea>
                                         <div class="flex gap-2 mt-2">
-                                            <button @click="shareModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-[13px] active:scale-95 transition">取消</button>
-                                            <button @click="sendShareLink" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition flex items-center justify-center gap-2">发送</button>
+                                            <button @click="fileModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-[13px] active:scale-95 transition">取消</button>
+                                            <button @click="sendVirtualFile" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition flex items-center justify-center gap-2">发送文件</button>
                                         </div>
                                     </div>
                                 </div>
@@ -3218,7 +3200,7 @@
                             <div class="attach-item" @click="openRedPacketModal"><div class="attach-icon-box !bg-white border border-gray-200 text-gray-600 !rounded-2xl">
                                 <i class="fas fa-wallet text-lg"></i>
                             </div><span class="attach-label">红包</span></div>
-                            <div class="attach-item" @click="openShareModal"><div class="attach-icon-box"><i class="fas fa-share-nodes text-gray-600"></i></div><span class="attach-label">分享</span></div>
+                            <div class="attach-item" @click="openFileModal"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
                             <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                             <div class="attach-item" @click="showToast('敬请期待')"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
@@ -3679,6 +3661,20 @@
                             <span class="text-[15px] text-gray-900">头像显示设置</span>
                             <div class="flex items-center gap-2">
                                 <span class="text-[14px] text-gray-500">{{ getAvatarModeName() }}</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openTimezoneModal('user')">
+                            <span class="text-[15px] text-gray-900">我的时区</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[14px] text-gray-500">{{ getTimezoneLabel(wechatState.activeSession?.myTimezone) }}</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openTimezoneModal('ai')">
+                            <span class="text-[15px] text-gray-900">对方(角色)的时区</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[14px] text-gray-500">{{ getTimezoneLabel(wechatState.activeSession?.aiTimezone) }}</span>
                                 <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                             </div>
                         </div>
@@ -5334,7 +5330,20 @@ const app = createApp({
             homeScreenPresets:[],
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
-            shareModal: { show: false, tab: 'file', url: '', title: '', content: '', isParsing: false }, // 更新分享弹窗状态
+            fileModal: { show: false, tab: 'real', title: '', content: '' }, 
+            timezoneModal: { show: false, target: 'user' },
+            timezones: [
+                { label: 'UTC-10 夏威夷', offset: -10 }, { label: 'UTC-9 阿拉斯加', offset: -9 },
+                { label: 'UTC-8 洛杉矶/美西', offset: -8 }, { label: 'UTC-7 丹佛', offset: -7 },
+                { label: 'UTC-6 芝加哥/墨西哥城', offset: -6 }, { label: 'UTC-5 纽约/美东', offset: -5 },
+                { label: 'UTC-4 多伦多', offset: -4 }, { label: 'UTC-3 布宜诺斯艾利斯', offset: -3 },
+                { label: 'UTC+0 伦敦/里斯本', offset: 0 }, { label: 'UTC+1 巴黎/柏林/罗马', offset: 1 },
+                { label: 'UTC+2 雅典/开罗', offset: 2 }, { label: 'UTC+3 莫斯科', offset: 3 },
+                { label: 'UTC+4 迪拜', offset: 4 }, { label: 'UTC+5 伊斯兰堡', offset: 5 },
+                { label: 'UTC+7 曼谷/雅加达', offset: 7 }, { label: 'UTC+8 北京/港澳台/新加坡', offset: 8 },
+                { label: 'UTC+9 东京/首尔', offset: 9 }, { label: 'UTC+10 悉尼/关岛', offset: 10 },
+                { label: 'UTC+11 墨尔本', offset: 11 }, { label: 'UTC+12 惠灵顿/斐济', offset: 12 }
+            ],
             stActivationModal: { show: false, code: '' },
             stDeviceId: '',
             stActivated: false,
@@ -5749,117 +5758,65 @@ const app = createApp({
             };
             reader.readAsArrayBuffer(pngBlob);
         },
-        openShareModal() {
-            this.shareModal = { show: true, tab: 'file', url: '', title: '', content: '', isParsing: false };
+        openFileModal() {
+            this.fileModal = { show: true, tab: 'real', title: '', content: '' };
             this.wechatState.showAttachMenu = false;
         },
-        async parseShareLink() {
-            const urlRegex = /(https?:\/\/[^\s\u4e00-\u9fa5]+)/i;
-            const match = this.shareModal.url.match(urlRegex);
-            if (!match) return this.showToast('未检测到合法网址，请确保包含 http/https');
+        sendVirtualFile() {
+            if (!this.fileModal.title.trim() || !this.fileModal.content.trim()) return this.showToast('标题和内容不能为空');
             
-            const cleanUrl = match[0];
-            this.shareModal.url = cleanUrl;
-            this.shareModal.isParsing = true;
-            this.showToast('正在抓取网页内容，这可能需要几秒钟...');
-            
-            try {
-                let fetchedTitle = '';
-                let fetchedContent = '';
-                let jinaSuccess = false;
-
-                // 方案一：尝试 Jina AI
-                try {
-                    const res = await fetch('https://r.jina.ai/' + cleanUrl, {
-                        headers: { 'X-Return-Format': 'markdown' },
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    if (res.ok) {
-                        let text = await res.text();
-                        text = text.trim();
-                        // 判断是否被Cloudflare或社交平台的反爬验证拦截
-                        if (text && !text.includes('Please confirm you are human') && !text.includes('Checking your browser')) {
-                            const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-                            if (lines.length > 0) {
-                                fetchedTitle = lines[0].replace(/#/g, '').trim();
-                                fetchedContent = lines.slice(1).join('\n').substring(0, 2000);
-                            } else {
-                                fetchedContent = text.substring(0, 2000);
-                            }
-                            jinaSuccess = true;
-                        }
-                    }
-                } catch(err) { console.warn("Jina 解析超时或被拦截"); }
-
-                // 方案二：如果 Jina 失败，启用 AllOrigins 代理跨域直取 HTML DOM 树
-                if (!jinaSuccess) {
-                    const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        const html = data.contents;
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        fetchedTitle = doc.title || '分享网页';
-                        // 剔除无用的脚本样式标签，提取纯文本
-                        const scripts = doc.querySelectorAll('script, style, noscript');
-                        scripts.forEach(s => s.remove());
-                        fetchedContent = doc.body ? doc.body.innerText.replace(/\s+/g, ' ').substring(0, 2000).trim() : '';
-                    } else {
-                        throw new Error('AllOrigins代理抓取也失败了');
-                    }
-                }
-
-                // 如果成功获取任意有效内容
-                if (fetchedTitle || fetchedContent) {
-                    this.shareModal.title = fetchedTitle || '分享网页';
-                    this.shareModal.content = fetchedContent || cleanUrl;
-                    this.showToast('解析成功，已自动填充');
-                } else {
-                    this.showToast('防爬限制，未能提取到有效正文，请手动补充');
-                }
-            } catch (err) {
-                this.showToast('目标网站反爬防护极强，请手动填写');
-            } finally {
-                this.shareModal.isParsing = false;
-            }
-        },
-        sendShareLink() {
-            const url = this.shareModal.url.trim();
-            if(!url || !/^https?:\/\//i.test(url)) return this.showToast('链接栏必须包含合法网址');
-            if(!this.shareModal.title.trim() || !this.shareModal.content.trim()) return this.showToast('标题和详细内容不能为空');
-
-            let platformData = { name: '网页链接', iconClass: 'fas fa-link', colorClass: 'default' };
-            if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) {
-                platformData = { name: '小红书', iconClass: 'fas fa-book-open', colorClass: 'xhs' };
-            } else if (url.includes('douyin.com') || url.includes('v.douyin.com')) {
-                platformData = { name: '抖音', iconClass: 'fab fa-tiktok', colorClass: 'dy' };
-            } else if (url.includes('bilibili.com') || url.includes('b23.tv')) {
-                platformData = { name: '哔哩哔哩', iconClass: 'fas fa-tv', colorClass: 'bili' };
-            } else if (url.includes('weibo.com') || url.includes('weibo.cn')) {
-                platformData = { name: '微博', iconClass: 'fab fa-weibo', colorClass: 'weibo' };
-            }
-
             const session = this.wechatState.activeSession;
+            let fileName = this.fileModal.title.trim();
+            // 如果用户没写后缀，自动补个 .txt，让卡片有个格式图标
+            if (!fileName.includes('.')) fileName += '.txt';
+            
             const msg = {
-                type: 'share_link', 
-                url: url, 
-                linkTitle: this.shareModal.title.trim(), 
-                linkDesc: this.shareModal.content.trim(), // 这里存全内容用于卡片显示(模板里做截断)和AI理解
-                platformData: platformData,
+                type: 'file', 
+                fileName: fileName, 
+                fileExt: fileName.split('.').pop().toLowerCase(), 
+                fileSize: '虚拟文档',
                 isSelf: true, 
                 time: Date.now(), 
                 avatar: this.getMaskById(session.maskId).avatar,
-                extractedContent: this.shareModal.content.trim()
+                extractedContent: this.fileModal.content.trim()
             };
             
             session.messages.push(msg);
-            session.lastMessage = `[链接] ${msg.linkTitle}`;
-            
-            this.shareModal.show = false;
+            session.lastMessage = `[文件] ${fileName}`;
+            this.fileModal.show = false;
             this.scrollToBottom();
             this.saveData();
 
+            this.showToast('文件已发送');
             setTimeout(() => { this.triggerReceive(); }, 1000);
+        },
+        
+        openTimezoneModal(target) {
+            this.timezoneModal.target = target;
+            this.timezoneModal.show = true;
+        },
+        getTimezoneLabel(offset) {
+            if (offset === undefined || offset === null) return 'UTC+8 北京/港澳台/新加坡';
+            const tz = this.timezones.find(t => t.offset === offset);
+            return tz ? tz.label : `UTC${offset > 0 ? '+'+offset : offset}`;
+        },
+        getCurrentTimezone() {
+            const session = this.wechatState.activeSession;
+            if (!session) return 8;
+            if (this.timezoneModal.target === 'user') return session.myTimezone !== undefined ? session.myTimezone : 8;
+            return session.aiTimezone !== undefined ? session.aiTimezone : 8;
+        },
+        setTimezone(offset) {
+            const session = this.wechatState.activeSession;
+            if (session) {
+                if (this.timezoneModal.target === 'user') {
+                    session.myTimezone = offset;
+                } else {
+                    session.aiTimezone = offset;
+                }
+                this.saveData();
+            }
+            this.timezoneModal.show = false;
         },
 
         getCurrentChatTitle() {
@@ -8498,19 +8455,23 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
-            // --- 精准时间感知逻辑 (强制获取系统真实年月日和时间) ---
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            const day = now.getDate();
-            const hour = now.getHours();
-            const minute = String(now.getMinutes()).padStart(2, '0');
-            const weekDays =['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-            const weekDay = weekDays[now.getDay()];
+            // --- 精准双时区计算逻辑 (强制计算 User 和 AI 对应的当地时间) ---
+            const utcNow = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
+            const myTz = session.myTimezone !== undefined ? session.myTimezone : 8;
+            const aiTz = session.aiTimezone !== undefined ? session.aiTimezone : 8;
             
-            // 加入世界时差计算法则
-            let timeContext = `\n[系统提示-当前真实时间]: 中国北京时间(UTC+8)现在是 ${year}年${month}月${day}日，${weekDay}，${hour}:${minute}。
-【时差感知提醒】：如果你的人设目前位于国外，请根据北京时间自行推算你的当地时间（如：日本/韩国+1小时；英国-8小时；美国东部-13小时，美国西部-16小时；澳洲东部+2小时等），请务必在对话中符合你所在地的作息时间（如北京时间中午时，美国可能是深夜）！`;
+            const myDate = new Date(utcNow + 3600000 * myTz);
+            const aiDate = new Date(utcNow + 3600000 * aiTz);
+            
+            const formatTzDate = (d) => {
+                const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+                return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            };
+            
+            let timeContext = `\n[系统提示-双时区时间感知]:
+我(玩家)当前的当地时间是：${formatTzDate(myDate)}。
+你(角色)当前的当地时间是：${formatTzDate(aiDate)}。
+【极度重要作息提醒】：请你务必严格根据【你(角色)所在的时区时间】来进行作息和情境互动！如果你的时间是深夜，你应该在互动中表现出困倦或准备睡觉；如果是早晨，则是刚醒。绝不能把我的时间当成你的时间！`;
             
             // Music Sense Logic (NEW)
             // --- 强化音乐感知与 AI 主动切歌 ---
@@ -8764,21 +8725,14 @@ Structure:
                         const callLog = (m.callData || []).map(t => `[${t.isSelf ? '我(视频中)' : t.name}]: 动作：*${t.action||'无'}* 说道："${t.text}"`).join('\n');
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[视频通话历史录像]:\n${callLog}` });
                     
-                    // 【核心修改】：针对文件和网址分享，将提取到的文本强制作为输入内容，而不是单单提示发了个文件
+                    // 【核心修改】：针对真实文件和虚拟文件，将提取到的文本强制作为输入内容给AI
                     } else if (m.type === 'file') {
-                        let finalContent = `[发送了文件: ${m.fileName}]`;
+                        let finalContent = `[发送了文档/文件: ${m.fileName}]`;
                         if (m.extractedContent) {
-                            finalContent += `\n【系统拦截提取到的文件全文或部分正文】：\n"""\n${m.extractedContent}\n"""\n【重要指令】：请你认真阅读上述文件内容，并像个真人一样针对文件的具体内容与我自然地探讨！`;
+                            finalContent += `\n【系统拦截提取到的文件内真实正文】：\n"""\n${m.extractedContent}\n"""\n【重要指令】：请你认真阅读上述文字内容，并像个真人一样针对文件里写的情节或事情与我自然地探讨！`;
                         }
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: finalContent });
                         
-                    } else if (m.type === 'share_link') {
-                        let finalContent = `[分享了网页链接: ${m.linkTitle || m.url}]`;
-                        if (m.extractedContent) {
-                            finalContent += `\n【系统拦截抓取到的网页正文】：\n"""\n${m.extractedContent}\n"""\n【重要指令】：请仔细阅读上述抓取到的帖子/文章内容，并像正常人一样在微信里针对帖子里的情节或话题跟我讨论！`;
-                        }
-                        contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: finalContent });
-
                     } else {
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: m.content });
                     }
@@ -11733,7 +11687,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     body: JSON.stringify({ 
                         model: this.apiConfig.selectedModel, 
                         messages:[
-                            { role: 'system', content: '你是一个精准的翻译助手。请判断用户的输入，如果是外语(英语/日语/韩语等)或方言(粤语/闽南语等)，请直接翻译成标准简体中文并输出；如果是纯正的标准简体中文，或者纯符号、纯数字，请直接回复“无需翻译”。除了翻译结果，绝对不要输出任何多余的解释、音标或引导语！' },
+                            { role: 'system', content: '你是一个精准的翻译助手。无论用户输入的是英语、日语、韩语等外语，还是粤语、闽南语、文言文等地方语言/古代方言，你都【必须且只能】翻译为【现代标准简体中文】并输出！如果原文已经是纯正的标准简体中文，或者纯符号、纯数字，请直接回复“无需翻译”。除了翻译结果（纯简体中文），绝对不要输出任何英文、拼音、音标或多余的解释！' },
                             { role: 'user', content: msg.content }
                         ],
                         temperature: 0.1 
