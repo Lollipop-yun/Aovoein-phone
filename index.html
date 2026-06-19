@@ -1363,8 +1363,11 @@
     <!-- AI 心声弹窗 -->
     <transition name="scale">
         <div v-if="statusModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="statusModal.show = false">
-            <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative" @click.stop>
-                <div class="absolute top-4 right-4 text-gray-400 cursor-pointer" @click="openStatusHistory"><i class="far fa-clock text-xl"></i></div>
+            <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative aovein-status-card" @click.stop>
+                <!-- 左上角：Aovein 专属心声美化入口 -->
+                <div class="absolute top-4 left-4 text-gray-400 cursor-pointer active:scale-90 transition hover:text-blue-500" @click="statusBeautifyConfig.show = true; statusModal.show = false;"><i class="fas fa-palette text-xl"></i></div>
+                <!-- 右上角：历史记录 -->
+                <div class="absolute top-4 right-4 text-gray-400 cursor-pointer active:scale-90 transition hover:text-gray-800" @click="openStatusHistory"><i class="far fa-clock text-xl"></i></div>
                 <div class="text-center mb-6">
                     <div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg"><img :src="currentStatus.avatar || getChatAvatar({isSelf: false, targetId: wechatState.activeSession.targetId})" class="w-full h-full object-cover"></div>
                     <h3 class="text-xl font-bold text-gray-900">{{ currentStatus.name || wechatState.activeSession?.name }}</h3>
@@ -1377,6 +1380,84 @@
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">{{ currentStatus.note || '无随笔' }}</div></div>
                 </div>
             </div>
+        </div>
+    </transition>
+    
+    <!-- Aovein 专属心声美化界面 -->
+    <transition name="app-slide">
+        <div v-if="statusBeautifyConfig.show" class="fixed inset-0 z-[65000] bg-[#f4f4f6] flex flex-col font-sans">
+            <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 shadow-sm z-10">
+                <button @click="statusBeautifyConfig.show = false; statusModal.show = true;" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left text-lg"></i></button>
+                <h1 class="font-bold text-[16px] text-gray-900 tracking-wide">心声卡片美化</h1>
+                <div class="flex gap-3">
+                    <i class="fas fa-file-export text-gray-500 text-lg cursor-pointer active:text-black" @click="exportStatusBeautify" title="导出代码"></i>
+                    <i class="fas fa-file-import text-gray-500 text-lg cursor-pointer active:text-black" @click="$refs.statusImportSelectModal.show = true" title="导入代码"></i>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto pb-safe flex flex-col p-4 gap-4">
+                <!-- 实时预览区 -->
+                <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 shrink-0">
+                    <div class="text-xs text-gray-400 mb-2 text-center font-bold">效果预览</div>
+                    <div class="bg-white rounded-[24px] shadow-sm p-6 relative aovein-status-card transform scale-90 origin-top">
+                        <div class="text-center mb-4">
+                            <div class="w-16 h-16 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-md"><img :src="getCurrentSessionAvatar()" class="w-full h-full object-cover"></div>
+                            <h3 class="text-lg font-bold text-gray-900">{{ wechatState.activeSession?.name || 'Aovein' }}</h3>
+                            <p class="text-[10px] text-gray-400 mt-1">Current State</p>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">动作</div><div class="text-gray-800">温柔地看着你</div></div>
+                            <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800 italic">"这是专属的预览卡片"</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 专属代码区 -->
+                <div class="flex flex-col shrink-0">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-xs font-bold text-gray-500 ml-1">Aovein 专属代码</span>
+                        <div class="flex gap-2">
+                            <button @click="copyStatusSource" class="text-[10px] text-blue-500 font-bold active:opacity-50">复制源代码</button>
+                        </div>
+                    </div>
+                    <!-- 特殊限制：必须带有Aovein标识 -->
+                    <textarea v-model="statusBeautifyConfig.tempCode" placeholder="输入专属代码...\n必须以 @Aovein-Status-Init 开头\n以 @Aovein-End 结尾" class="w-full h-40 bg-white shadow-sm p-3 rounded-xl text-xs font-mono border border-gray-200 outline-none resize-none mb-2 focus:border-blue-300 transition"></textarea>
+                    <div class="flex gap-2 mb-2 shrink-0">
+                        <button @click="applyStatusBeautify" class="flex-1 bg-black text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">校验并应用</button>
+                        <button @click="saveStatusPreset" class="w-24 bg-gray-200 text-gray-700 py-3 rounded-xl text-xs font-bold active:scale-95 transition">保存预设</button>
+                    </div>
+                </div>
+
+                <!-- 预设列表 -->
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 shrink-0 mb-10">
+                    <div class="p-3 border-b border-gray-50 bg-gray-50/50 text-xs font-bold text-gray-500">我的专属预设库</div>
+                    <div v-if="statusBeautifyConfig.presets.length === 0" class="p-6 text-center text-gray-400 text-xs">暂无预设</div>
+                    <div v-else class="divide-y divide-gray-50">
+                        <div v-for="(preset, idx) in statusBeautifyConfig.presets" :key="idx" class="p-3 flex items-center justify-between">
+                            <span class="font-bold text-gray-700 text-xs truncate max-w-[60%]">{{ preset.name }}</span>
+                            <div class="flex items-center gap-2">
+                                <button @click="loadStatusPreset(preset)" class="px-3 py-1 bg-blue-50 text-blue-600 rounded-md text-[10px] font-bold active:scale-95 transition">应用</button>
+                                <button @click="deleteStatusPreset(idx)" class="w-6 h-6 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:scale-95 transition"><i class="fas fa-trash text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 隐藏的导入 Input -->
+            <input type="file" ref="statusJsonInput" accept=".json" class="hidden" @change="e => importStatusBeautify(e, 'json')">
+            <input type="file" ref="statusDocxInput" accept=".txt,.docx" class="hidden" @change="e => importStatusBeautify(e, 'docx')">
+            
+            <!-- 导入选择小弹窗 -->
+            <transition name="scale">
+                <div v-if="$refs.statusImportSelectModal && $refs.statusImportSelectModal.show" class="fixed inset-0 z-[70000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="$refs.statusImportSelectModal.show = false">
+                    <div class="bg-white w-[75%] rounded-[20px] overflow-hidden shadow-2xl flex flex-col" @click.stop>
+                        <div class="p-4 text-center font-bold text-gray-900 border-b border-gray-100">选择导入格式</div>
+                        <button @click="$refs.statusJsonInput.click(); $refs.statusImportSelectModal.show = false" class="p-4 text-[15px] font-medium text-blue-600 border-b border-gray-100 active:bg-gray-50">导入 Aovein .json 文件</button>
+                        <button @click="$refs.statusDocxInput.click(); $refs.statusImportSelectModal.show = false" class="p-4 text-[15px] font-medium text-gray-700 active:bg-gray-50">自动解析 .txt / .docx</button>
+                    </div>
+                </div>
+            </transition>
         </div>
     </transition>
 
@@ -4054,72 +4135,119 @@
             </transition>            
             
             <!-- 我 -->
-            <main v-if="wechatState.activeNav === 'me'" class="flex-1 overflow-y-auto bg-[#f4f4f6] relative">
-                <!-- 顶部居中头像与信息 -->
-                <div class="flex flex-col items-center pt-16 pb-8 relative z-10">
-                    <div class="w-16 h-16 rounded-full bg-[#e5e5e5] overflow-hidden flex items-center justify-center mb-3 shadow-md border-2 border-white">
-                        <img v-if="homeProfile.avatar" :src="homeProfile.avatar" class="w-full h-full object-cover">
-                        <i v-else class="fas fa-user text-gray-400 text-3xl mt-2"></i>
-                    </div>
-                    <h2 class="text-[20px] font-bold text-gray-800 tracking-wider">{{ homeProfile.name }}</h2>
-                    <p class="text-[11px] text-gray-400 mt-1 font-mono tracking-widest uppercase">ID: {{ homeProfile.id }}</p>
+            <main v-if="wechatState.activeNav === 'me'" class="flex-1 overflow-y-auto bg-[#f4f4f6] relative font-sans pb-24">
+                <!-- 顶部 icity 标题 -->
+                <div class="pt-14 px-6 pb-2">
+                    <h1 class="text-3xl font-bold text-gray-800 tracking-tighter" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.05); font-family: 'Times New Roman', serif;">icity · <span class="text-xl">我的日记</span></h1>
                 </div>
 
-                <!-- 独立圆角卡片列表 (iOS ins 灰白风复刻) -->
-                <div class="px-5 pb-24 relative z-10 font-mono">
-                    <!-- 装饰性 Online 小标签 -->
-                    <div class="flex justify-center mb-3">
-                        <span class="text-[10px] text-gray-400 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</span>
-                    </div>
-
-                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-4" @click="wechatState.activeNav='wallet'">
-                        <div class="flex items-center gap-4">
-                            <i class="fas fa-wallet text-gray-600 text-xl w-6 text-center"></i>
-                            <span class="font-medium text-[14px] text-gray-700 tracking-widest">∆ ∝ ⌒ service</span>
+                <!-- 顶部 icity 风格卡片 -->
+                <div class="px-5 mb-4 relative z-10">
+                    <div class="bg-white/95 backdrop-blur-md rounded-[20px] p-4 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-white relative overflow-hidden" @click="wechatState.activeNav = 'diary'">
+                        <!-- 卡片头部：头像与日期 -->
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                                    <img v-if="homeProfile.avatar" :src="homeProfile.avatar" class="w-full h-full object-cover grayscale opacity-90">
+                                    <i v-else class="fas fa-user text-gray-400 text-xl mt-1 flex justify-center"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-[13px] font-bold text-gray-900 leading-tight">owozzz</span>
+                                    <span class="text-[10px] text-gray-400 font-mono">@{{ homeProfile.id }}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end text-[10px] text-gray-400 font-medium">
+                                <span>{{ displayDate.dateString }} · {{ displayDate.dayString }}</span>
+                                <span>{{ statusBar.time }}</span>
+                            </div>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
-                    </div>
-
-                    <!-- 装饰性 Online 小标签 -->
-                    <div class="flex justify-center mb-3">
-                        <span class="text-[10px] text-gray-400 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</span>
-                    </div>
-
-                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-4" @click="openFavorites">
-                        <div class="flex items-center gap-4">
-                            <i class="fas fa-cube text-gray-600 text-xl w-6 text-center"></i>
-                            <span class="font-medium text-[14px] text-gray-700 tracking-widest">{ ≡···collection }</span>
+                        
+                        <!-- 卡片中段：文字 -->
+                        <div class="text-[14px] text-gray-800 leading-relaxed font-serif tracking-wide mb-6">
+                            - <br>
+                            우리의 사랑은<br>
+                            카메라에 비친 영원한 파라메터다 ‧₊˚·
                         </div>
-                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
-                    </div>
 
-                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-4" @click="openMaskManager">
-                        <div class="flex items-center gap-4">
-                            <i class="fas fa-mask text-gray-600 text-xl w-6 text-center"></i>
-                            <span class="font-medium text-[14px] text-gray-700 tracking-widest">「 #、 」mask</span>
+                        <!-- 卡片底栏：小图标 -->
+                        <div class="flex justify-between items-center text-[10px] text-gray-300 font-mono border-t border-gray-50 pt-3">
+                            <div class="flex items-center gap-1.5"><i class="far fa-clock"></i> 2025-06-17</div>
+                            <div class="flex items-center gap-3.5 text-sm">
+                                <i class="far fa-user"></i>
+                                <i class="far fa-heart"></i>
+                                <i class="far fa-comment"></i>
+                                <div class="flex items-center gap-1 text-[10px]"><i class="far fa-clock text-xs"></i> 18:06</div>
+                                <i class="fas fa-ellipsis-v text-xs ml-1"></i>
+                            </div>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                        <div class="absolute bottom-3 right-4 text-[24px] text-gray-100 font-bold opacity-30 select-none pointer-events-none"># mizuki</div>
                     </div>
+                </div>
 
-                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-4" @click="openStickerManager">
-                        <div class="flex items-center gap-4">
-                            <i class="far fa-smile text-gray-600 text-xl w-6 text-center" style="-webkit-text-stroke: 0.5px;"></i>
-                            <span class="font-medium text-[14px] text-gray-700 tracking-widest">:( :-O emoji</span>
+                <!-- 独立圆角卡片列表 (图二复刻版) -->
+                <div class="px-5 space-y-4">
+                    
+                    <!-- 卡片 1 -->
+                    <div class="relative pt-3">
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-[#f4f4f6] px-2 text-[10px] text-gray-400 font-bold flex items-center gap-1 z-10 tracking-widest"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</div>
+                        <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)]" @click="wechatState.activeNav='wallet'">
+                            <div class="flex items-center gap-5">
+                                <i class="fas fa-camera-retro text-gray-700 text-[22px] w-6 text-center opacity-80"></i>
+                                <span class="font-medium text-[15px] text-gray-700 tracking-[0.1em] font-mono">∆ ∝ ⌒ service</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
                     </div>
 
-                    <!-- 装饰性 Online 小标签 -->
-                    <div class="flex justify-center mb-3">
-                        <span class="text-[10px] text-gray-400 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</span>
-                    </div>
-
-                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="wechatState.activeNav='blacklist-manage'">
-                        <div class="flex items-center gap-4">
-                            <i class="fas fa-user-slash text-gray-600 text-xl w-6 text-center"></i>
-                            <span class="font-medium text-[14px] text-gray-700 tracking-widest">⌋ ★=、 blacklist</span>
+                    <!-- 卡片 2 -->
+                    <div class="relative pt-3">
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-[#f4f4f6] px-2 text-[10px] text-gray-400 font-bold flex items-center gap-1 z-10 tracking-widest"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</div>
+                        <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)]" @click="openFavorites">
+                            <div class="flex items-center gap-5">
+                                <i class="fas fa-cube text-gray-700 text-[22px] w-6 text-center opacity-80"></i>
+                                <span class="font-medium text-[15px] text-gray-700 tracking-[0.1em] font-mono">{ ≡···collection }</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                    </div>
+
+                    <!-- 卡片 3 (朋友圈/面具) -->
+                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)]" @click="openMaskManager">
+                        <div class="flex items-center gap-5">
+                            <i class="far fa-image text-gray-700 text-[22px] w-6 text-center opacity-80"></i>
+                            <span class="font-medium text-[15px] text-gray-700 tracking-[0.1em] font-mono">「 #、 」 pyq</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                    </div>
+
+                    <!-- 卡片 4 (表情) -->
+                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)]" @click="openStickerManager">
+                        <div class="flex items-center gap-5">
+                            <i class="far fa-smile text-gray-700 text-[22px] w-6 text-center opacity-80" style="-webkit-text-stroke: 0.5px;"></i>
+                            <span class="font-medium text-[15px] text-gray-700 tracking-[0.1em] font-mono">:( :-O emoji</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                    </div>
+
+                    <!-- 卡片 5 (设置/占位) -->
+                    <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)]" @click="openApp('settings')">
+                        <div class="flex items-center gap-5">
+                            <i class="fas fa-meteor text-gray-700 text-[22px] w-6 text-center opacity-80"></i>
+                            <span class="font-medium text-[15px] text-gray-700 tracking-[0.1em] font-mono">≡···♣</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                    </div>
+
+                    <!-- 卡片 6 (黑名单) -->
+                    <div class="relative pt-3">
+                        <div class="absolute top-0 left-1/2 -translate-x-1/2 bg-[#f4f4f6] px-2 text-[10px] text-gray-400 font-bold flex items-center gap-1 z-10 tracking-widest"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</div>
+                        <div class="bg-white rounded-[24px] p-5 flex items-center justify-between cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.02)]" @click="wechatState.activeNav='blacklist-manage'">
+                            <div class="flex items-center gap-5">
+                                <i class="fas fa-record-vinyl text-gray-700 text-[22px] w-6 text-center opacity-80"></i>
+                                <span class="font-medium text-[15px] text-gray-700 tracking-[0.1em] font-mono">⌋ ★=、</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -5529,6 +5657,13 @@ const app = createApp({
             offlineBeautifyConfig: { show: false, tempCode: '', activeCSS: '', presets:[] }
         }
     },
+    // 新增：心声专属美化配置
+            statusBeautifyConfig: { 
+                show: false, 
+                tempCode: '', 
+                activeCSS: '', 
+                presets: [] 
+            },
     computed: {
         totalUnreadCount() {
             return this.wechatState.sessions.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
@@ -7182,8 +7317,9 @@ const app = createApp({
                 const bubbleCss = this.beautifyConfig.activeBubbleCSS || '';
                 const themeCss = this.beautifyConfig.activeThemeCSS || '';
                 const offlineCss = this.offlineBeautifyConfig?.activeCSS || '';
-                const voiceCss = this.voiceCallTheme?.customCss || ''; // 新增这句
-                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss;
+                const voiceCss = this.voiceCallTheme?.customCss || '';
+                const statusCss = this.statusBeautifyConfig?.activeCSS || ''; // 引入心声CSS
+                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss + '\n' + statusCss;
             }
         },
         resetBeautify(type) {
@@ -13617,6 +13753,123 @@ ${greetingInstruction}`;
             this.showToast('已加入一起听');
         }
     }
+    // ================= 心声美化专属方法 =================
+        applyStatusBeautify() {
+            const code = this.statusBeautifyConfig.tempCode.trim();
+            if (!code) {
+                this.statusBeautifyConfig.activeCSS = '';
+                this.updateDynamicStyles();
+                this.saveData();
+                return this.showToast('已清空心声样式');
+            }
+            // 验证 Aovein 专属伪语法
+            if (!code.startsWith('@Aovein-Status-Init') || !code.includes('@Aovein-End')) {
+                return this.showToast('校验失败：只能使用 Aovein 的专属代码！');
+            }
+            
+            // 剥离专属外壳提取真实 CSS
+            let realCSS = code.replace('@Aovein-Status-Init', '').replace('@Aovein-End', '').trim();
+            this.statusBeautifyConfig.activeCSS = realCSS;
+            this.updateDynamicStyles();
+            this.saveData();
+            this.showToast('专属样式应用成功！');
+        },
+        copyStatusSource() {
+            const defaultCode = `@Aovein-Status-Init\n/* 修改心声卡片的背景和圆角 */\n.aovein-status-card {\n    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%) !important;\n    border: 1px solid #e2e8f0 !important;\n    box-shadow: 0 10px 30px rgba(0,0,0,0.05) !important;\n}\n/* 修改心声文本颜色 */\n.aovein-status-card .text-gray-800 {\n    color: #4b5563 !important;\n}\n@Aovein-End`;
+            this.statusBeautifyConfig.tempCode = defaultCode;
+            this.copyToClipboard(defaultCode);
+            this.showToast('默认源代码已填入并复制到剪切板');
+        },
+        saveStatusPreset() {
+            if (!this.statusBeautifyConfig.tempCode.trim()) return this.showToast('代码为空');
+            this.showInput('保存预设', '', '给预设起个名字', (name) => {
+                if (name) {
+                    this.statusBeautifyConfig.presets.push({
+                        name: name,
+                        code: this.statusBeautifyConfig.tempCode
+                    });
+                    this.saveData();
+                    this.showToast('预设保存成功');
+                }
+            });
+        },
+        loadStatusPreset(preset) {
+            this.statusBeautifyConfig.tempCode = preset.code;
+            this.applyStatusBeautify();
+        },
+        deleteStatusPreset(idx) {
+            this.showConfirm('确定删除该预设吗？', () => {
+                this.statusBeautifyConfig.presets.splice(idx, 1);
+                this.saveData();
+            });
+        },
+        exportStatusBeautify() {
+            const code = this.statusBeautifyConfig.tempCode.trim();
+            if (!code) return this.showToast('输入栏没有可导出的代码');
+            const dataObj = { type: 'AoveinStatusStyle', code: code };
+            const b = new Blob([JSON.stringify(dataObj, null, 2)], {type:'application/json;charset=utf-8'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a');
+            a.href = u;
+            a.download = `Aovein_Status_Style_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(u);
+            this.showToast('代码已导出为 JSON 文件');
+        },
+        importStatusBeautify(e, type) {
+            const file = e.target.files[0];
+            if (!file) return;
+            this.showToast('正在解析...');
+            
+            const reader = new FileReader();
+            if (type === 'json') {
+                reader.onload = (event) => {
+                    try {
+                        const parsed = JSON.parse(event.target.result);
+                        if (parsed.type === 'AoveinStatusStyle' && parsed.code) {
+                            this.statusBeautifyConfig.tempCode = parsed.code;
+                            this.showToast('导入成功，请点击校验应用');
+                        } else {
+                            throw new Error();
+                        }
+                    } catch(err) {
+                        this.showToast('导入失败：不是有效的 Aovein 样式文件');
+                    }
+                };
+                reader.readAsText(file);
+            } else if (type === 'docx') {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (ext === 'txt') {
+                    reader.onload = (event) => {
+                        this.statusBeautifyConfig.tempCode = event.target.result.trim();
+                        this.showToast('TXT 文本解析填充成功');
+                    };
+                    reader.readAsText(file);
+                } else if (ext === 'docx') {
+                    if (!window.mammoth) {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+                        document.head.appendChild(script);
+                        script.onload = () => {
+                            const r2 = new FileReader();
+                            r2.onload = (ev) => mammoth.extractRawText({ arrayBuffer: ev.target.result }).then(res => {
+                                this.statusBeautifyConfig.tempCode = res.value.trim();
+                                this.showToast('DOCX 提取成功');
+                            });
+                            r2.readAsArrayBuffer(file);
+                        };
+                        script.onerror = () => this.showToast('DOCX解析库加载失败');
+                    } else {
+                        reader.onload = (event) => mammoth.extractRawText({ arrayBuffer: event.target.result }).then(res => {
+                            this.statusBeautifyConfig.tempCode = res.value.trim();
+                            this.showToast('DOCX 提取成功');
+                        });
+                        reader.readAsArrayBuffer(file);
+                    }
+                }
+            }
+            e.target.value = '';
+        }
 });
 app.component('taobao-app', TaobaoApp);
 app.mount('#app');
