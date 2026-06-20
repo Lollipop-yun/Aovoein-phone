@@ -2465,7 +2465,8 @@
             <!-- 头部 -->
             <header v-if="wechatState.activeNav !== 'room' && wechatState.activeNav !== 'chat-details' && wechatState.activeNav !== 'chat-bg-settings' && wechatState.activeNav !== 'red-packet-detail' && wechatState.activeNav !== 'wallet' && wechatState.activeNav !== 'qinmi-manage' && wechatState.activeNav !== 'qinmi-specific-detail' && wechatState.activeNav !== 'moments' && wechatState.activeNav !== 'diary' && wechatState.activeNav !== 'diary-detail' && wechatState.activeNav !== 'new-friends' && wechatState.activeNav !== 'bookshelf' && wechatState.activeNav !== 'blacklist-manage'" class="h-[90px] pt-10 px-4 flex items-center justify-between sticky top-0 z-[60] bg-[#f7f7f7]">
                 <button @click="closeApp" class="w-8 h-8 flex items-center justify-center text-black"><i class="fas fa-times text-lg"></i></button>
-                <h1 class="text-[17px] font-medium">{{ wechatState.activeNav === 'contacts' ? '通讯录' : (wechatState.activeNav === 'discover' ? '发现' : (wechatState.activeNav === 'me' ? '' : '微信')) }}</h1>
+                <!-- 强制绝对居中，并将 me 映射为 设置，其他分别映射为 消息/通讯录/发现 -->
+                <h1 class="text-[17px] font-bold absolute left-1/2 -translate-x-1/2">{{ wechatState.activeNav === 'contacts' ? '联系人' : (wechatState.activeNav === 'discover' ? '发现' : (wechatState.activeNav === 'me' ? '设置' : '消息')) }}</h1>
                 <div class="flex justify-end items-center gap-4 relative w-16">
                     <i v-if="wechatState.activeNav === 'chat'" class="fas fa-plus text-lg cursor-pointer" @click.stop="wechatState.showPlusMenu = !wechatState.showPlusMenu"></i>
                     
@@ -3229,6 +3230,27 @@
                             </div>
                         </div>
                     </transition>
+                    
+                    <!-- AI 生图提示词设置弹窗 -->
+        <transition name="scale">
+            <div v-if="imagePromptModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div class="bg-[#f9f9f9] w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col gap-4 font-sans border border-gray-200">
+                    <h3 class="text-center font-bold text-gray-900 text-lg mb-2">生成自拍/照片 设定</h3>
+                    <div>
+                        <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">角色外貌特征 (Appearance)</label>
+                        <textarea v-model="imagePromptModal.appearance" placeholder="例如: 1girl, silver hair, red eyes, white shirt, looking at viewer..." class="w-full h-20 bg-white p-3.5 rounded-[16px] text-[13px] border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">画面风格与质量 (Style & Quality)</label>
+                        <textarea v-model="imagePromptModal.style" placeholder="例如: masterpiece, best quality, ultra-detailed, anime style, soft lighting..." class="w-full h-16 bg-white p-3.5 rounded-[16px] text-[13px] border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                    </div>
+                    <div class="flex gap-3 mt-2">
+                        <button @click="imagePromptModal.show = false" class="flex-1 bg-white text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200">取消</button>
+                        <button @click="saveImagePrompt" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存设定</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
 
                     <!-- 文件发送选择弹窗 (真实/虚拟) -->
                     <transition name="scale">
@@ -3793,22 +3815,6 @@
 
                     <!-- 卡片 4：AI 自动化功能与开关 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
-                        
-                        <!-- 新增：聊天专属生图开关 -->
-                        <div class="flex flex-col p-4 active:bg-gray-50 transition">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-[15px] text-gray-900 font-bold">允许该角色生成图片</span>
-                                <input type="checkbox" class="switch-checkbox" :id="'img-gen-'+wechatState.activeSession.id" v-model="wechatState.activeSession.enableImageGen" @change="saveData">
-                                <label :for="'img-gen-'+wechatState.activeSession.id" class="switch-label"><div class="switch-button"></div></label>
-                            </div>
-                            <div v-if="wechatState.activeSession.enableImageGen" class="bg-gray-50 rounded-lg p-3 shadow-inner mt-2 border border-gray-100">
-                                <span class="text-[11px] text-gray-500 block mb-1">生图提示词 (决定图片画风或角色长相)：</span>
-                                <textarea v-model="wechatState.activeSession.imageGenPrompt" placeholder="例如: 一个长发白裙的少女，动漫风格，高清画质..." class="w-full h-16 bg-white border border-gray-200 rounded-lg p-2 text-xs text-gray-700 outline-none shadow-sm resize-none" @change="saveData"></textarea>
-                            </div>
-                        </div>
-                        
-                        <div class="flex flex-col p-4 active:bg-gray-50 transition">
-                    <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
                         <div class="flex flex-col p-4 active:bg-gray-50 transition">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-[15px] text-gray-900">允许角色进行后台活动</span>
@@ -3833,6 +3839,20 @@
                                     <span class="text-[13px] text-gray-700">不回消息时最多触发几次 (0为不限)</span>
                                     <input type="number" v-model.number="wechatState.activeSession.bgActivityMaxCount" placeholder="0" class="w-12 bg-white border border-gray-200 rounded px-1 py-1 text-xs text-center outline-none shadow-sm text-gray-600" @change="saveData">
                                 </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col border-b border-gray-100">
+                            <div class="flex justify-between items-center p-4 active:bg-gray-50 transition">
+                                <span class="text-[15px] text-gray-900">允许角色主动发送照片 (生图)</span>
+                                <input type="checkbox" class="switch-checkbox" :id="'auto-img-'+wechatState.activeSession.id" v-model="wechatState.activeSession.enableAutoImage" @change="saveData">
+                                <label :for="'auto-img-'+wechatState.activeSession.id" class="switch-label"><div class="switch-button"></div></label>
+                            </div>
+                            <div v-if="wechatState.activeSession.enableAutoImage" class="flex justify-between items-center p-4 pt-0 active:bg-gray-50 transition cursor-pointer" @click="openImagePromptModal">
+                                <div class="flex flex-col">
+                                    <span class="text-[14px] text-gray-700">设置图片生成提示词</span>
+                                    <span class="text-[11px] text-gray-400 mt-0.5">控制 AI 发送照片的外貌与风格</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                             </div>
                         </div>
 
@@ -4144,14 +4164,12 @@
             <!-- 我 -->
             <main v-if="wechatState.activeNav === 'me'" class="flex-1 overflow-y-auto bg-[#f4f4f6] relative font-mono pb-24">
                 
-                <!-- 左上角标题 (缩小间距) -->
-                <div class="px-5 pt-8 pb-1.5">
+                <div class="px-5 pt-6 pb-2">
                     <span class="text-base font-bold text-gray-300 tracking-[0.1em] font-sans drop-shadow-sm">icity · 我的日记</span>
                 </div>
 
-                <!-- Icity Card 专属复刻 (缩小版) -->
                 <div class="px-4 mb-2 relative z-10">
-                    <div class="bg-white rounded-[14px] p-3 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer active:scale-[0.98] transition">
+                    <div class="bg-white rounded-[16px] p-3 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer active:scale-[0.98] transition">
                         <div class="flex justify-between items-start mb-3">
                             <div class="flex gap-2 items-center">
                                 <div class="w-9 h-9 rounded-full bg-gray-200 overflow-hidden shrink-0 active:opacity-70" @click.stop="triggerIcityAvatarUpload">
@@ -4160,25 +4178,21 @@
                                 </div>
                                 <div class="flex flex-col">
                                     <span class="text-[13px] font-bold text-gray-800 active:opacity-70" @click.stop="editIcityProfile('name')">{{ icityProfile.name }}</span>
-                                    <span class="text-[10px] text-gray-400 tracking-wider active:opacity-70" @click.stop="editIcityProfile('id')">@{{ icityProfile.id }}</span>
+                                    <span class="text-[9px] text-gray-400 tracking-wider active:text-blue-400" @click.stop="editIcityProfile('id')">@{{ icityProfile.id }}</span>
                                 </div>
                             </div>
-                            <!-- 右上角同步北京时间 -->
                             <div class="flex flex-col items-end text-[9px] text-gray-400 tracking-widest">
                                 <span>{{ displayDate.dateString }} · {{ displayDate.dayString }}</span>
                                 <span>{{ statusBar.time }}</span>
                             </div>
                         </div>
-                        <!-- 点击修改签名 -->
                         <div class="text-[12px] text-gray-700 leading-relaxed font-sans mb-3 tracking-wide font-medium active:opacity-70 whitespace-pre-wrap" @click.stop="editIcityProfile('bio')">{{ icityProfile.bio }}</div>
-                        <div class="flex justify-between items-center text-gray-300 text-[10px] border-t border-gray-50 pt-2">
-                            <!-- 底部左下角上一次修改时间：年月日 -->
-                            <div class="flex items-center gap-1.5"><i class="far fa-clock"></i> {{ new Date(icityProfile.lastEditTime).getFullYear() }}-{{ String(new Date(icityProfile.lastEditTime).getMonth()+1).padStart(2,'0') }}-{{ String(new Date(icityProfile.lastEditTime).getDate()).padStart(2,'0') }}</div>
-                            <div class="flex gap-3 items-center text-[10px]">
+                        <div class="flex justify-between items-center text-gray-300 text-[9px] border-t border-gray-50 pt-2">
+                            <div class="flex items-center gap-1"><i class="far fa-clock"></i> {{ new Date(icityProfile.lastEditTime).getFullYear() }}-{{ String(new Date(icityProfile.lastEditTime).getMonth()+1).padStart(2,'0') }}-{{ String(new Date(icityProfile.lastEditTime).getDate()).padStart(2,'0') }}</div>
+                            <div class="flex gap-3 items-center">
                                 <i class="far fa-user hover:text-gray-500 transition"></i>
                                 <i class="far fa-heart hover:text-gray-500 transition"></i>
                                 <i class="far fa-comment hover:text-gray-500 transition"></i>
-                                <!-- 底部右下角上一次修改时间：时分 -->
                                 <span class="flex items-center gap-1"><i class="far fa-clock"></i> {{ String(new Date(icityProfile.lastEditTime).getHours()).padStart(2,'0') }}:{{ String(new Date(icityProfile.lastEditTime).getMinutes()).padStart(2,'0') }}</span>
                                 <i class="fas fa-ellipsis-v hover:text-gray-500 transition ml-1"></i>
                             </div>
@@ -4186,65 +4200,61 @@
                     </div>
                 </div>
 
-                <!-- 导航列表 (更小更紧凑) -->
-                <div class="px-4 relative z-10">
+                <div class="px-4 relative z-10 space-y-2">
                     
-                    <!-- Service 模块 -->
-                    <div class="bg-white rounded-[16px] p-2.5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-2" @click="wechatState.activeNav='wallet'">
+                    <div class="bg-white rounded-[16px] p-2.5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-gray-100" @click="wechatState.activeNav='wallet'">
                         <div class="flex justify-center mb-1">
                             <span class="text-[8px] text-gray-400 tracking-widest flex items-center gap-1"><div class="w-1 h-1 bg-gray-300 rounded-full"></div>Online</span>
                         </div>
-                        <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center justify-between px-2">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-wallet text-gray-600 text-base w-5 text-center"></i>
+                                <i class="fas fa-wallet text-gray-600 text-base w-4 text-center"></i>
                                 <span class="font-medium text-[12px] text-gray-700 tracking-widest">∆ ∝ ⌒ service</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
                         </div>
                     </div>
 
-                    <!-- 收藏、emoji、mask 紧凑合集模块 -->
-                    <div class="bg-white rounded-[16px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col mb-2">
+                    <div class="bg-white rounded-[16px] overflow-hidden shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col">
                         <div class="flex justify-center pt-2 pb-0.5">
                             <span class="text-[8px] text-gray-400 tracking-widest flex items-center gap-1"><div class="w-1 h-1 bg-gray-300 rounded-full"></div>Online</span>
                         </div>
                         
-                        <div class="px-4 py-2.5 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-all duration-300 border-b border-gray-50" @click="openFavorites">
+                        <div class="px-5 py-2.5 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-all duration-300 border-b border-gray-50" @click="openFavorites">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-cube text-gray-600 text-base w-5 text-center"></i>
+                                <i class="fas fa-cube text-gray-600 text-base w-4 text-center"></i>
                                 <span class="font-medium text-[12px] text-gray-700 tracking-widest">{ ≡···collection }</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
                         </div>
                         
-                        <div class="px-4 py-2.5 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-all duration-300 border-b border-gray-50" @click="openStickerManager">
+                        <div class="px-5 py-2.5 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-all duration-300 border-b border-gray-50" @click="openStickerManager">
                             <div class="flex items-center gap-3">
-                                <i class="far fa-smile text-gray-600 text-base w-5 text-center" style="-webkit-text-stroke: 0.5px;"></i>
+                                <i class="far fa-smile text-gray-600 text-base w-4 text-center" style="-webkit-text-stroke: 0.5px;"></i>
                                 <span class="font-medium text-[12px] text-gray-700 tracking-widest">:( :-O emoji</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
                         </div>
 
-                        <div class="px-4 py-2.5 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-all duration-300" @click="openMaskManager">
+                        <div class="px-5 py-2.5 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-all duration-300" @click="openMaskManager">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-rocket text-gray-600 text-base w-5 text-center"></i>
+                                <i class="fas fa-rocket text-gray-600 text-base w-4 text-center"></i>
                                 <span class="font-medium text-[12px] text-gray-700 tracking-widest">≡···♣ mask</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
                         </div>
                     </div>
 
-                    <!-- Blacklist 模块 -->
-                    <div class="bg-white rounded-[16px] p-2.5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="wechatState.activeNav='blacklist-manage'">
+                    <div class="bg-white rounded-[16px] p-2.5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_15px_rgba(0,0,0,0.02)] border border-gray-100" @click="wechatState.activeNav='blacklist-manage'">
                         <div class="flex justify-center mb-1">
                             <span class="text-[8px] text-gray-400 tracking-widest flex items-center gap-1"><div class="w-1 h-1 bg-gray-300 rounded-full"></div>Online</span>
                         </div>
-                        <div class="flex items-center justify-between px-1">
+                        <div class="flex items-center justify-between px-2">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-bullseye text-gray-600 text-base w-5 text-center"></i>
+                                <i class="fas fa-bullseye text-gray-600 text-base w-4 text-center"></i>
                                 <span class="font-medium text-[12px] text-gray-700 tracking-widest">⌋ ★=、 blacklist</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            <i class="fas fa-chevron-right text-gray-300 text-[10px]"></i>
                         </div>
                     </div>
 
@@ -4924,12 +4934,13 @@
         <div class="space-y-5 pb-10">
             <!-- 主 API 配置 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2 flex justify-between items-center">
-                    <span>主 API (聊天核心驱动)</span>
-                    <button @click="testApiConnection('main')" class="text-[10px] bg-blue-50 text-blue-500 px-2 py-1 rounded font-bold">测试连接</button>
-                </div>
+                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2">主 API (聊天核心驱动)</div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">反代地址</label><input v-model="apiConfig.baseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API 密钥</label><input v-model="apiConfig.apiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
+                
+                <!-- 新增：测试连接按钮 -->
+                <button @click="testApiConnection('main')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试主API连接 (将消耗少量额度)</button>
+
                 <button @click="fetchModels('main')" :disabled="isLoading" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取主模型</span></button>
                 <div v-if="availableModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择主模型</label><div @click="openModelSelect('main')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ apiConfig.selectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
                 <div><div class="flex justify-between mb-1"><label class="text-xs font-bold text-gray-500 ml-1">温度 (创造性): {{ apiConfig.temperature }}</label></div><input type="range" min="0" max="2" step="0.1" v-model.number="apiConfig.temperature" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div>
@@ -4937,65 +4948,52 @@
 
             <!-- 副 API 配置 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2 flex items-center justify-between">
-                    <span>副 API (扩展备用)</span>
-                    <button @click="testApiConnection('sub')" class="text-[10px] bg-blue-50 text-blue-500 px-2 py-1 rounded font-bold">测试连接</button>
-                </div>
+                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2 flex items-center justify-between"><span>副 API (后续扩展备用)</span><span class="text-[10px] font-normal text-gray-400">留空则默认调主API</span></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">副反代地址</label><input v-model="apiConfig.subBaseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">副 API 密钥</label><input v-model="apiConfig.subApiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
+                <button @click="testApiConnection('sub')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试副API连接 (将消耗少量额度)</button>
                 <button @click="fetchModels('sub')" :disabled="isLoading" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取副模型</span></button>
                 <div v-if="subAvailableModels && subAvailableModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择副模型</label><div @click="openModelSelect('sub')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ apiConfig.subSelectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
             </div>
 
             <!-- 新增：生图 API 配置 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2 flex justify-between items-center">
-                    <span>AI 生图 API</span>
-                    <button @click="testApiConnection('image')" class="text-[10px] bg-blue-50 text-blue-500 px-2 py-1 rounded font-bold">测试连接</button>
-                </div>
-                <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">生图 URL (如: https://.../v1)</label><input v-model="imageApiConfig.baseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API 密钥</label><input v-model="imageApiConfig.apiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                <button @click="fetchModels('image')" :disabled="isLoading" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取生图模型</span></button>
-                <div v-if="imageModels && imageModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择生图模型</label>
-                    <select v-model="imageApiConfig.selectedModel" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 outline-none cursor-pointer">
-                        <option disabled value="">请选择生图模型</option>
-                        <option v-for="m in imageModels" :key="m" :value="m">{{ m }}</option>
-                    </select>
-                </div>
+                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2">生图 API (DALLE-3 / Midjourney兼容协议)</div>
+                <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">生图反代地址</label><input v-model="imageApiConfig.baseUrl" placeholder="https://... (支持 /v1/images/generations)" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
+                <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">生图 API 密钥</label><input v-model="imageApiConfig.apiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
+                <button @click="testApiConnection('image')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-image"></i> 测试生图连接 (将生成一张占位图消耗额度)</button>
+                <button @click="fetchModels('image')" :disabled="isLoading" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取生图模型</span></button>
+                <div v-if="imageModels && imageModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择生图模型</label><div @click="openModelSelect('image')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ imageApiConfig.selectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
             </div>
 
-            <!-- MiniMax 语音合成面板 -->
-            <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-gray-800 text-sm">MiniMax 语音合成</span>
-                        <button @click="testApiConnection('minimax')" class="text-[10px] bg-blue-50 text-blue-500 px-2 py-1 rounded font-bold">测试连接</button>
-                    </div>
-                    <input type="checkbox" id="minimax-toggle" class="switch-checkbox" v-model="minimaxConfig.enabled" @change="saveData">
-                    <label for="minimax-toggle" class="switch-label"><div class="switch-button"></div></label>
-                </div>
-                <div v-if="minimaxConfig.enabled" class="space-y-4 pt-2">
-                    <!-- 省略原有 Minimax 的配置 input 代码，保持不变即可... -->
-                    <div>
-                        <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">接口域节点</label>
-                        <div class="flex gap-2">
-                            <button @click="minimaxConfig.region = 'cn'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'cn' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">大陆版</button>
-                            <button @click="minimaxConfig.region = 'intl'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'intl' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">海外版</button>
-                        </div>
-                    </div>
-                    <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">Group ID</label><input v-model="minimaxConfig.groupId" placeholder="输入 Group ID" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                    <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API Key</label><input v-model="minimaxConfig.apiKey" type="password" placeholder="输入 API Key" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                    <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">音色 ID (Voice ID)</label><input v-model="minimaxConfig.voiceId" placeholder="如: male-qn-qingse" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                    <button @click="fetchMinimaxModels" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition">获取模型</button>
-                    <div v-if="minimaxModels.length > 0" class="animate-fade-in">
-                        <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择模型</label>
-                        <select v-model="minimaxConfig.selectedModel" @change="saveData" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 outline-none cursor-pointer">
-                            <option disabled value="">请选择模型</option>
-                            <option v-for="m in minimaxModels" :key="m" :value="m">{{ m }}</option>
-                        </select>
-                    </div>
-                </div>
+<!-- === 新增：MiniMax 语音合成面板 === -->
+<div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+    <div class="flex justify-between items-center">
+        <span class="font-bold text-gray-800 text-sm">MiniMax 语音合成</span>
+        <input type="checkbox" id="minimax-toggle" class="switch-checkbox" v-model="minimaxConfig.enabled" @change="saveData">
+        <label for="minimax-toggle" class="switch-label"><div class="switch-button"></div></label>
+    </div>
+    <div v-if="minimaxConfig.enabled" class="space-y-4 pt-4 border-t border-gray-50">
+        <div>
+            <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">接口域节点</label>
+            <div class="flex gap-2">
+                <button @click="minimaxConfig.region = 'cn'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'cn' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">大陆版</button>
+                <button @click="minimaxConfig.region = 'intl'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'intl' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">海外版</button>
             </div>
+        </div>
+        <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">Group ID</label><input v-model="minimaxConfig.groupId" placeholder="输入 Group ID" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
+        <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API Key</label><input v-model="minimaxConfig.apiKey" type="password" placeholder="输入 API Key" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
+        <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">音色 ID (Voice ID)</label><input v-model="minimaxConfig.voiceId" placeholder="如: male-qn-qingse" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
+        <button @click="fetchMinimaxModels" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition">获取模型</button>
+        <div v-if="minimaxModels.length > 0" class="animate-fade-in">
+            <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择模型</label>
+            <select v-model="minimaxConfig.selectedModel" @change="saveData" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 outline-none cursor-pointer">
+                <option disabled value="">请选择模型</option>
+                <option v-for="m in minimaxModels" :key="m" :value="m">{{ m }}</option>
+            </select>
+        </div>
+    </div>
+</div>
 <!-- ============================== -->
 
 <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"><div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50"><span class="font-bold text-gray-800 text-sm">API 预设</span><button @click="savePreset" class="text-blue-600 text-xs font-bold px-3 py-1 bg-blue-50 rounded-lg active:bg-blue-100">保存</button></div><div v-if="apiPresets.length === 0" class="p-8 text-center text-gray-400 text-xs">暂无预设</div><div v-else class="divide-y divide-gray-50"><div v-for="(preset, idx) in apiPresets" :key="idx" class="p-4 flex items-center justify-between"><div class="flex-1 min-w-0 mr-4"><div class="font-bold text-gray-800 text-sm truncate">{{ preset.name }}</div><div class="text-[10px] text-gray-400 truncate">{{ preset.baseUrl }}</div></div><div class="flex items-center gap-2"><button @click="applyPreset(preset)" class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-green-100 hover:text-green-600 transition"><i class="fas fa-check text-xs"></i></button><button @click="deletePreset(idx)" class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-red-100 hover:text-red-600 transition"><i class="fas fa-trash text-xs"></i></button></div></div></div></div><button @click="saveSettings" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition">保存配置</button></div></div></transition><transition name="page-slide">
@@ -5458,9 +5456,10 @@ const app = createApp({
         return {
             isActivated: false,
             isAppOpen: false, currentApp: null, settingsPage: 'main', themesPage: 'main', isLoading: false, isFullScreen: false, hideStatusBar: false,
-            apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [], apiPresets:[], 
-            minimaxConfig: { enabled: false, region: 'cn', groupId: '', apiKey: '', selectedModel: '', voiceId: 'male-qn-qingse' }, minimaxModels:[],
+            apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [], apiPresets:[],
             imageApiConfig: { baseUrl: '', apiKey: '', selectedModel: '' }, imageModels: [],
+            imagePromptModal: { show: false, appearance: '', style: '' }, 
+            minimaxConfig: { enabled: false, region: 'cn', groupId: '', apiKey: '', selectedModel: '', voiceId: 'male-qn-qingse' }, minimaxModels:[],
             notificationConfig: { currentSound: null, currentName: '默认提示音' }, soundPresets:[],
             pushConfig: { enabled: false }, // 新增推送设置
             githubConfig: { token: '', repo: '', filename: 'AoveinOS_Backup.json', autoBackup: false, frequency: 24, lastBackupTime: 0 },
@@ -5819,7 +5818,116 @@ const app = createApp({
             this.beautifyConfig.tempCode = '';
         }
     },
-    methods: {        
+    methods: {
+    // ================= API 测试与生图引擎逻辑 =================
+        async testApiConnection(type) {
+            let url = '';
+            let key = '';
+            let model = '';
+            
+            if (type === 'main') { url = this.apiConfig.baseUrl; key = this.apiConfig.apiKey; model = this.apiConfig.selectedModel || 'gpt-3.5-turbo'; }
+            else if (type === 'sub') { url = this.apiConfig.subBaseUrl || this.apiConfig.baseUrl; key = this.apiConfig.subApiKey || this.apiConfig.apiKey; model = this.apiConfig.subSelectedModel || 'gpt-3.5-turbo'; }
+            else if (type === 'image') { url = this.imageApiConfig.baseUrl; key = this.imageApiConfig.apiKey; model = this.imageApiConfig.selectedModel || 'dall-e-3'; }
+            
+            if (!url || !key) return this.showToast('请先填写 URL 和密钥');
+            this.showToast('正在测试连接，请稍候...');
+
+            try {
+                let cleanUrl = url.trim().replace(/\/+$/, '');
+                if (!cleanUrl.endsWith('/v1')) cleanUrl += '/v1';
+                
+                if (type === 'image') {
+                    // 测试生图 API
+                    const res = await fetch(`${cleanUrl}/images/generations`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key.trim()}` },
+                        body: JSON.stringify({ model: model, prompt: "A pure white blank image for testing", n: 1, size: "1024x1024" })
+                    });
+                    if (res.ok) this.showToast('✅ 生图 API 连接测试成功 (消耗了1张图片额度)');
+                    else throw new Error(`HTTP ${res.status}`);
+                } else {
+                    // 测试对话 API
+                    const res = await fetch(`${cleanUrl}/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key.trim()}` },
+                        body: JSON.stringify({ model: model, messages: [{role:"user", content:"Test. Reply OK."}], max_tokens: 5 })
+                    });
+                    if (res.ok) this.showToast(`✅ ${type === 'main'?'主':'副'} API 连接测试成功 (消耗了极少Token)`);
+                    else throw new Error(`HTTP ${res.status}`);
+                }
+            } catch (e) {
+                this.showToast(`❌ 测试失败: ${e.message}`);
+            }
+        },
+
+        openImagePromptModal() {
+            const session = this.wechatState.activeSession;
+            if (!session) return;
+            this.imagePromptModal = {
+                show: true,
+                appearance: session.imagePromptAppearance || '',
+                style: session.imagePromptStyle || ''
+            };
+        },
+        saveImagePrompt() {
+            const session = this.wechatState.activeSession;
+            if (session) {
+                session.imagePromptAppearance = this.imagePromptModal.appearance;
+                session.imagePromptStyle = this.imagePromptModal.style;
+                this.saveData();
+                this.showToast('生图提示词已保存');
+            }
+            this.imagePromptModal.show = false;
+        },
+
+        // 在聊天中由 AI 自动生成照片发送
+        async generateAutoImage(session) {
+            if (!this.imageApiConfig.apiKey || !this.imageApiConfig.baseUrl || !session.enableAutoImage) return;
+            
+            const appearance = session.imagePromptAppearance || 'A beautiful character';
+            const style = session.imagePromptStyle || 'masterpiece, best quality';
+            const context = session.lastMessage || 'taking a selfie';
+            
+            // 组合最终提示词：外貌 + 风格 + 最近一句话的情境暗示
+            const prompt = `${appearance}, ${style}, (Context action: ${context})`;
+
+            try {
+                let url = this.imageApiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+                
+                const res = await fetch(`${url}/images/generations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.imageApiConfig.apiKey.trim()}` },
+                    body: JSON.stringify({
+                        model: this.imageApiConfig.selectedModel || 'dall-e-3',
+                        prompt: prompt,
+                        n: 1,
+                        size: "1024x1024"
+                    })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    const imgUrl = data.data[0].url;
+                    if (imgUrl) {
+                        session.messages.push({
+                            type: 'image',
+                            content: imgUrl,
+                            isSelf: false,
+                            time: Date.now(),
+                            avatar: this.getChatAvatar({isSelf: false, targetId: session.targetId}),
+                            name: session.name
+                        });
+                        session.lastMessage = '[图片]';
+                        this.scrollToBottom();
+                        this.saveData();
+                        if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
+                    }
+                }
+            } catch(e) {
+                console.error("AI 自动生图请求失败", e);
+            }
+        },        
         // --- 管理员设置逻辑 ---
         openGroupAdminModal() {
             this.groupAdminModal.show = true;
@@ -9338,65 +9446,19 @@ Structure:
 
                     // === 赋予 AI 发送图片 (fake_image) 和 表情包 (sticker_id) 的能力 ===
                     if (block.fake_image) {
-                        setTimeout(async () => {
-                            // 如果聊天室开启了生图功能，且配置了生图 API
-                            if (session.enableImageGen && this.imageApiConfig.baseUrl && this.imageApiConfig.apiKey) {
-                                // 临时插入一个等待气泡
-                                const tempMsg = {
-                                    type: 'fake_image',
-                                    content: '正在呼叫生图模型绘制画面中，请稍候...',
-                                    isRevealed: true,
-                                    isSelf: false,
-                                    time: Date.now(),
-                                    avatar: speakerAvatar,
-                                    name: speakerName
-                                };
-                                session.messages.push(tempMsg);
-                                this.scrollToBottom();
-
-                                try {
-                                    const imgUrl = await this.requestAiImageGeneration(block.fake_image, session.imageGenPrompt);
-                                    // 替换刚才的临时气泡为真实图片
-                                    const idx = session.messages.indexOf(tempMsg);
-                                    if (idx > -1) {
-                                        session.messages[idx] = {
-                                            type: 'image',
-                                            content: imgUrl,
-                                            isSelf: false,
-                                            time: Date.now(),
-                                            avatar: speakerAvatar,
-                                            name: speakerName,
-                                            status: statusObj
-                                        };
-                                        this.saveData();
-                                        this.scrollToBottom();
-                                        if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
-                                    }
-                                } catch (e) {
-                                    // 失败则降级为原来的 fake_image
-                                    const idx = session.messages.indexOf(tempMsg);
-                                    if (idx > -1) {
-                                        session.messages[idx].content = block.fake_image + '\n(调用生图 API 失败)';
-                                        this.saveData();
-                                    }
-                                    this.showToast('AI 生图失败: ' + e.message);
-                                }
-                            } else {
-                                // 默认的文字假图逻辑
-                                session.messages.push({
-                                    type: 'fake_image',
-                                    content: block.fake_image,
-                                    isRevealed: false,
-                                    isSelf: false,
-                                    time: Date.now(),
-                                    avatar: speakerAvatar,
-                                    name: speakerName,
-                                    status: statusObj
-                                });
-                                session.lastMessage = '[图片]';
-                                this.scrollToBottom();
-                                if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
-                            }
+                        setTimeout(() => {
+                            session.messages.push({
+                                type: 'fake_image',
+                                content: block.fake_image,
+                                isSelf: false,
+                                time: Date.now(),
+                                avatar: speakerAvatar,
+                                name: speakerName,
+                                status: statusObj
+                            });
+                            session.lastMessage = '[图片]';
+                            this.scrollToBottom();
+                            if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
                         }, delay);
                         delay += 1500;
                     }
@@ -9519,6 +9581,12 @@ Structure:
                         delay += 1000 + Math.random() * 800; 
                     });
                 });
+                // --- 触发角色随机发送自拍/照片生图功能 (15% 概率) ---
+                if (session.enableAutoImage && Math.random() < 0.15) {
+                    setTimeout(() => {
+                        this.generateAutoImage(session);
+                    }, delay + 2500); // 确保在文字发完之后再发图
+                }
                 // --- 绝对安全追加：等上面所有文字都发完后，再出音乐卡片和切歌 ---
                 setTimeout(() => {
                     // 1. 解析切歌指令
@@ -9997,49 +10065,13 @@ Structure:
             this.saveData(); 
             this.modelSelectModal.show = false; 
         },
-        async testApiConnection(type) {
-            this.showConfirm('⚠️ 注意：测试连接将会向 API 发起一次极简的请求验证连通性，这【可能会扣除您账号中少量的额度(Token)】。确认继续测试吗？', async () => {
-                this.showToast('正在测试连接中，请稍候...');
-                try {
-                    let url = '';
-                    let key = '';
-                    if (type === 'main') { url = this.apiConfig.baseUrl; key = this.apiConfig.apiKey; }
-                    else if (type === 'sub') { url = this.apiConfig.subBaseUrl; key = this.apiConfig.subApiKey; }
-                    else if (type === 'image') { url = this.imageApiConfig.baseUrl; key = this.imageApiConfig.apiKey; }
-                    
-                    if (type === 'minimax') {
-                        url = this.minimaxConfig.region === 'intl' ? 'https://api.minimaxi.chat/v1/models' : 'https://api.minimax.chat/v1/models';
-                        url += `?GroupId=${this.minimaxConfig.groupId.trim()}`;
-                        key = this.minimaxConfig.apiKey;
-                    } else {
-                        url = url.trim().replace(/\/+$/, '');
-                        if (!url.endsWith('/v1')) url += '/v1';
-                        url += '/models';
-                    }
-
-                    if (!key) throw new Error('API 密钥为空');
-
-                    const res = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${key.trim()}` } });
-                    if (res.ok) {
-                        this.showToast('✅ 测试成功：API 连接畅通！');
-                    } else {
-                        this.showToast(`❌ 测试失败：HTTP ${res.status}`);
-                    }
-                } catch(e) {
-                    this.showToast('❌ 测试失败：网络请求不通或跨域拦截');
-                }
-            });
-        },
         async fetchModels(type = 'main') { 
             const isSub = type === 'sub';
-            const isImage = type === 'image';
-            
-            let baseUrl = ''; let apiKey = '';
-            if (isImage) { baseUrl = this.imageApiConfig.baseUrl; apiKey = this.imageApiConfig.apiKey; }
-            else if (isSub) { baseUrl = this.apiConfig.subBaseUrl; apiKey = this.apiConfig.subApiKey; }
-            else { baseUrl = this.apiConfig.baseUrl; apiKey = this.apiConfig.apiKey; }
+            const baseUrl = isSub ? this.apiConfig.subBaseUrl : this.apiConfig.baseUrl;
+            const apiKey = isSub ? this.apiConfig.subApiKey : this.apiConfig.apiKey;
 
             if (!baseUrl) return this.showToast('请输入反代地址'); 
+            if (baseUrl.includes('api520.pro')) return this.showToast('该反代地址不稳定，已被屏蔽'); 
             if (!apiKey) return this.showToast('请输入 API 密钥'); 
             
             this.isLoading = true; 
@@ -10051,45 +10083,26 @@ Structure:
                 const data = await res.json(); 
                 if (data && Array.isArray(data.data)) { 
                     const models = data.data.map(m => m.id);
-                    if (isImage) {
-                        this.imageModels = models;
-                        if (!this.imageApiConfig.selectedModel) this.imageApiConfig.selectedModel = models[0];
-                    } else if (isSub) {
+                    if (type === 'sub') {
                         this.subAvailableModels = models;
                         if (!this.apiConfig.subSelectedModel) this.apiConfig.subSelectedModel = models[0];
+                    } else if (type === 'image') {
+                        this.imageModels = models;
+                        if (!this.imageApiConfig.selectedModel) this.imageApiConfig.selectedModel = models[0];
                     } else {
                         this.availableModels = models;
                         if (!this.apiConfig.selectedModel) this.apiConfig.selectedModel = models[0];
                     }
                     this.showToast(`获取成功: ${models.length}个`); 
-                    if (!isImage) this.openModelSelect(type);
+                    this.openModelSelect(type);
                 } else throw new Error('数据格式错误'); 
             } catch (e) { 
+                console.error(e); 
                 this.showToast('拉取失败: ' + e.message); 
+                if(!isSub && this.availableModels.length===0) this.availableModels =['gpt-3.5-turbo', 'gpt-4', 'claude-3-opus']; 
             } finally { 
                 this.isLoading = false; 
             } 
-        },
-        async requestAiImageGeneration(sceneDesc, promptBasis) {
-            let url = this.imageApiConfig.baseUrl.trim().replace(/\/+$/, '');
-            if (!url.endsWith('/v1')) url += '/v1';
-            
-            const finalPrompt = (promptBasis ? promptBasis + ", " : "") + sceneDesc;
-            
-            const res = await fetch(`${url}/images/generations`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.imageApiConfig.apiKey.trim()}` },
-                body: JSON.stringify({ 
-                    model: this.imageApiConfig.selectedModel || "dall-e-3", 
-                    prompt: finalPrompt, 
-                    n: 1,
-                    size: "1024x1024"
-                })
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            if (data && data.data && data.data[0]) return data.data[0].url;
-            throw new Error('未返回图片URL');
         },
         openWorldModal(type) { 
             this.worldModal = { show: true, type: 'file', name: '', folderName: '', content: '', parentId: '', id: null, isGlobal: false }; 
@@ -10661,7 +10674,7 @@ Structure:
         editHomeProfile(f) { let m = { 'name': '主页名字', 'id': '主页ID', 'bio': '主页签名', 'location': '主页定位' }; this.showInput(m[f], this.homeProfile[f], "请输入...", (v) => { if(v){ this.homeProfile[f]=v; this.saveData(); } }); },
         triggerIcityAvatarUpload() { if(this.$refs.icityAvatarInput) this.$refs.icityAvatarInput.click(); },
         async handleIcityAvatarChange(e) { const f=e.target.files[0]; if(!f)return; try { this.icityProfile.avatar = await compressImage(f); this.icityProfile.lastEditTime = Date.now(); this.saveData(); } catch(e){} e.target.value = ''; },
-        editIcityProfile(f) { let m = { 'name': '修改日记本名字', 'id': '修改日记本ID', 'bio': '修改日记本签名' }; this.showInput(m[f], this.icityProfile[f], "请输入...", (v) => { if(v){ this.icityProfile[f]=v; this.icityProfile.lastEditTime = Date.now(); this.saveData(); } }, f==='bio'?'textarea':'text'); },
+        editIcityProfile(f) { let m = { 'name': '修改名字', 'id': '修改ID', 'bio': '修改签名' }; this.showInput(m[f], this.icityProfile[f], "请输入...", (v) => { if(v){ this.icityProfile[f]=v; this.icityProfile.lastEditTime = Date.now(); this.saveData(); } }, f==='bio'?'textarea':'text'); },
         editHomeConfig(k, t) { this.showInput(t, this.homeConfig[k], "", (v) => { if(v){ this.homeConfig[k]=v; this.saveData(); } }); },
         editCustomWidget(i, f) { let t = f==='bubble'?'气泡文字':'下方文字'; this.showInput(t, this.customWidgets[i][f], "", (v) => { if(v){ this.customWidgets[i][f]=v; this.saveData(); } }); },
         triggerWidgetImageUpload(i) { this.editingWidgetId=i; if(this.$refs.widgetImageInput)this.$refs.widgetImageInput.click(); },
