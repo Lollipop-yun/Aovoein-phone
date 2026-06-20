@@ -2091,6 +2091,7 @@
             </div>
         </transition>
         <input type="file" ref="groupAvatarInput2" accept="image/*" class="hidden" @change="handleGroupAvatarChange2">
+        <input type="file" ref="icityAvatarInput" accept="image/*" class="hidden" @change="handleIcityAvatarChange">
         
         <!-- 时区选择弹窗 -->
         <transition name="app-slide">
@@ -4127,33 +4128,39 @@
             <!-- 我 -->
             <main v-if="wechatState.activeNav === 'me'" class="flex-1 overflow-y-auto bg-[#f4f4f6] relative font-mono pb-24">
                 
-                <div class="flex justify-center items-center py-6">
-                    <span class="text-xl font-bold text-gray-300 tracking-[0.2em] font-sans">icity · 我的日记</span>
-                </div>
-
                 <!-- Icity Card 复刻 -->
-                <div class="px-4 mb-4 relative z-10">
-                    <div class="bg-white rounded-[16px] p-4 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer active:scale-[0.98] transition">
+                <div class="px-4 mt-8 mb-6 relative z-10">
+                    <!-- icity·我的日记 位于卡片左上方 -->
+                    <div class="mb-2">
+                        <span class="text-[22px] font-bold text-gray-400/80 tracking-wide font-sans drop-shadow-sm">icity · 我的日记</span>
+                    </div>
+                    
+                    <div class="bg-white rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 transition">
                         <div class="flex justify-between items-start mb-4">
-                            <div class="flex gap-2 items-center">
-                                <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0"><img :src="homeProfile.avatar" class="w-full h-full object-cover"></div>
-                                <div class="flex flex-col">
-                                    <span class="text-[14px] font-bold text-gray-800">{{ homeProfile.name }}</span>
-                                    <span class="text-[10px] text-gray-400 tracking-wider">@{{ homeProfile.id }}</span>
+                            <div class="flex gap-3 items-center">
+                                <div class="w-11 h-11 rounded-full bg-gray-200 overflow-hidden shrink-0 cursor-pointer active:opacity-70 border border-gray-100" @click="triggerIcityAvatarUpload">
+                                    <img v-if="icityProfile.avatar" :src="icityProfile.avatar" class="w-full h-full object-cover">
+                                    <i v-else class="fas fa-user flex items-center justify-center h-full text-gray-400"></i>
+                                </div>
+                                <div class="flex flex-col cursor-pointer active:opacity-70" @click="editIcityProfile('name')">
+                                    <span class="text-[15px] font-bold text-gray-800">{{ icityProfile.name }}</span>
+                                    <span class="text-[11px] text-gray-400 tracking-wider mt-0.5">{{ icityProfile.id }}</span>
                                 </div>
                             </div>
-                            <div class="flex flex-col items-end text-[10px] text-gray-400 tracking-widest">
+                            <!-- 右上角同步真实系统时间 -->
+                            <div class="flex flex-col items-end text-[11px] text-gray-400 tracking-widest gap-0.5">
                                 <span>{{ displayDate.dateString }} · {{ displayDate.dayString }}</span>
                                 <span>{{ statusBar.time }}</span>
                             </div>
                         </div>
-                        <div class="text-[14px] text-gray-700 leading-relaxed font-sans mb-4 tracking-wide font-medium">
-                            -<br>
-                            우리의 사랑은<br>
-                            카메라에 비친 영원한 파라메터다 ·☆·
-                        </div>
+                        
+                        <!-- 签名 -->
+                        <div class="text-[14px] text-gray-700 leading-relaxed font-sans mb-5 tracking-wide font-medium cursor-pointer active:opacity-70" @click="editIcityProfile('bio')" v-html="formatIcityBio(icityProfile.bio)"></div>
+                        
+                        <!-- 底部信息 -->
                         <div class="flex justify-between items-center text-gray-300 text-[11px] border-t border-gray-50 pt-3">
-                            <div class="flex items-center gap-1.5"><i class="far fa-clock"></i> 2025-06-17</div>
+                            <!-- 左下角为上次修改时间 -->
+                            <div class="flex items-center gap-1.5"><i class="far fa-clock"></i> {{ icityProfile.lastModified }}</div>
                             <div class="flex gap-4 items-center">
                                 <i class="far fa-user hover:text-gray-500 transition"></i>
                                 <i class="far fa-heart hover:text-gray-500 transition"></i>
@@ -4166,75 +4173,71 @@
                 </div>
 
                 <!-- 导航列表 (iOS 灰白风格 + 内置 Online) -->
-                <div class="px-4 space-y-3 relative z-10 mt-6">
-                    <div class="bg-white rounded-[24px] p-5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="wechatState.activeNav='wallet'">
-                        <div class="flex justify-center mb-2">
-                            <span class="text-[9px] text-gray-300 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-200 rounded-full"></div>Online</span>
+                <div class="px-4 space-y-4 relative z-10">
+                    
+                    <!-- 服务插件 -->
+                    <div>
+                        <!-- 变小的 Online 标签 -->
+                        <div class="flex justify-center mb-1.5">
+                            <span class="text-[9px] text-gray-400 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="bg-white rounded-[20px] p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="wechatState.activeNav='wallet'">
                             <div class="flex items-center gap-4">
-                                <i class="fas fa-wallet text-gray-600 text-xl w-6 text-center"></i>
-                                <span class="font-medium text-[15px] text-gray-700 tracking-widest">∆ ∝ ⌒ service</span>
+                                <i class="fas fa-wallet text-gray-600 text-lg w-6 text-center"></i>
+                                <span class="font-medium text-[14px] text-gray-700 tracking-widest">∆ ∝ ⌒ service</span>
                             </div>
                             <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-[24px] p-5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="openFavorites">
-                        <div class="flex justify-center mb-2">
-                            <span class="text-[9px] text-gray-300 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-200 rounded-full"></div>Online</span>
+                    <!-- 收藏、表情、面具 合并成一个卡片 (紧紧挨着没有间隙) -->
+                    <div>
+                        <div class="flex justify-center mb-1.5">
+                            <span class="text-[9px] text-gray-400 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="bg-white rounded-[20px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 divide-y divide-gray-50">
+                            
+                            <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-colors" @click="openFavorites">
+                                <div class="flex items-center gap-4">
+                                    <i class="fas fa-cube text-gray-600 text-lg w-6 text-center"></i>
+                                    <span class="font-medium text-[14px] text-gray-700 tracking-widest">{ ≡···collection }</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            </div>
+
+                            <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-colors" @click="openStickerManager">
+                                <div class="flex items-center gap-4">
+                                    <i class="far fa-smile text-gray-600 text-lg w-6 text-center" style="-webkit-text-stroke: 0.5px;"></i>
+                                    <span class="font-medium text-[14px] text-gray-700 tracking-widest">:( :-O emoji</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            </div>
+
+                            <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-colors" @click="openMaskManager">
+                                <div class="flex items-center gap-4">
+                                    <i class="fas fa-rocket text-gray-600 text-lg w-6 text-center"></i>
+                                    <span class="font-medium text-[14px] text-gray-700 tracking-widest">≡···♣ mask</span>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- 黑名单插件 (另起的一个卡片) -->
+                    <div>
+                        <div class="flex justify-center mb-1.5">
+                            <span class="text-[9px] text-gray-400 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div>Online</span>
+                        </div>
+                        <div class="bg-white rounded-[20px] p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="wechatState.activeNav='blacklist-manage'">
                             <div class="flex items-center gap-4">
-                                <i class="fas fa-cube text-gray-600 text-xl w-6 text-center"></i>
-                                <span class="font-medium text-[15px] text-gray-700 tracking-widest">{ ≡···collection }</span>
+                                <i class="fas fa-bullseye text-gray-600 text-lg w-6 text-center"></i>
+                                <span class="font-medium text-[14px] text-gray-700 tracking-widest">⌋ ★=、 blacklist</span>
                             </div>
                             <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-[24px] p-5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="wechatState.activeNav='moments'">
-                        <div class="flex items-center justify-between mt-1">
-                            <div class="flex items-center gap-4">
-                                <i class="far fa-image text-gray-600 text-xl w-6 text-center"></i>
-                                <span class="font-medium text-[15px] text-gray-700 tracking-widest">「 #、 」pyq</span>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-[24px] p-5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="openStickerManager">
-                        <div class="flex items-center justify-between mt-1">
-                            <div class="flex items-center gap-4">
-                                <i class="far fa-smile text-gray-600 text-xl w-6 text-center" style="-webkit-text-stroke: 0.5px;"></i>
-                                <span class="font-medium text-[15px] text-gray-700 tracking-widest">:( :-O emoji</span>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-[24px] p-5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="openMaskManager">
-                        <div class="flex items-center justify-between mt-1">
-                            <div class="flex items-center gap-4">
-                                <i class="fas fa-rocket text-gray-600 text-xl w-6 text-center"></i>
-                                <span class="font-medium text-[15px] text-gray-700 tracking-widest">≡···♣ mask</span>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
-                        </div>
-                    </div>
-
-                    <div class="bg-white rounded-[24px] p-5 flex flex-col cursor-pointer active:scale-[0.97] transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100" @click="wechatState.activeNav='blacklist-manage'">
-                        <div class="flex justify-center mb-2">
-                            <span class="text-[9px] text-gray-300 tracking-widest flex items-center gap-1.5"><div class="w-1.5 h-1.5 bg-gray-200 rounded-full"></div>Online</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <i class="fas fa-bullseye text-gray-600 text-xl w-6 text-center"></i>
-                                <span class="font-medium text-[15px] text-gray-700 tracking-widest">⌋ ★=、 blacklist</span>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
-                        </div>
-                    </div>
                 </div>
             </main>
 
@@ -5629,6 +5632,7 @@ const app = createApp({
 
             cardProfile: { name: '输入文字', id: '输入文字', bio: '你對我來說是宇宙，但我對你来说只是一顆星嗎？', status: '该用户已注销', avatar: '' },
             homeProfile: { name: '点击修改名字', id: 'username', bio: '点击修改个性签名', location: '未知星系', avatar: '' },
+            icityProfile: { name: 'owoZzz', id: '@mizukiz117', bio: '-\n우리의 사랑은\n카메라에 비친 영원한 파라메터다 ·☆·', avatar: '', lastModified: '2025-06-17' },
             page2Profile: { name: '兔耳抹眼泪_', status: '呆', avatar: '' },
             page2Widget: { title: '福熊兒', image: '', msg: 'Kitty 向您提出了好友申請' },
             page2Widget2: { avatar: '', status: '呆呆嘟' },
@@ -13855,7 +13859,55 @@ ${greetingInstruction}`;
             this.playSong(this.musicPlaylist[randomIdx]);
             this.showToast('已加入一起听');
         }
-    }
+    }, // <--- 注意这里的逗号，用于衔接上面的代码
+
+        // --- Icity 独立资料卡功能 ---
+        triggerIcityAvatarUpload() {
+            this.$refs.icityAvatarInput.click();
+        },
+        async handleIcityAvatarChange(e) {
+            const f = e.target.files[0];
+            if (!f) return;
+            try {
+                this.icityProfile.avatar = await compressImage(f, 300);
+                this.updateIcityTime();
+                this.saveData();
+            } catch(err) {
+                this.showToast('头像修改失败');
+            }
+            e.target.value = '';
+        },
+        editIcityProfile(field) {
+            let title = field === 'name' ? '修改名字 (支持ID一起修改，空格隔开)' : '修改日记签名';
+            let placeholder = field === 'name' ? 'owoZzz @mizukiz117' : '签名内容...';
+            let currentValue = field === 'name' ? `${this.icityProfile.name} ${this.icityProfile.id}` : this.icityProfile.bio;
+            
+            this.showInput(title, currentValue, placeholder, (val) => {
+                if (val !== undefined && val !== null) {
+                    if (field === 'name') {
+                        let parts = val.trim().split(/\s+/);
+                        this.icityProfile.name = parts[0] || '';
+                        if (parts.length > 1) {
+                            this.icityProfile.id = parts.slice(1).join(' ');
+                        } else {
+                            this.icityProfile.id = '';
+                        }
+                    } else {
+                        this.icityProfile.bio = val;
+                    }
+                    this.updateIcityTime();
+                    this.saveData();
+                }
+            }, field === 'bio' ? 'textarea' : 'text');
+        },
+        updateIcityTime() {
+            const now = new Date();
+            this.icityProfile.lastModified = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        },
+        formatIcityBio(bio) {
+            if (!bio) return '点击添加签名';
+            return bio.replace(/\n/g, '<br>');
+        }
 });
 app.component('taobao-app', TaobaoApp);
 app.mount('#app');
