@@ -2913,7 +2913,18 @@
                         </div>
 
                         <!-- 正常消息 -->
-                        <div v-else-if="!msg.isRecalled" class="flex w-full gap-3 mb-2 mt-2" :class="msg.isSelf ? 'flex-row-reverse' : 'flex-row'" @contextmenu.prevent="showChatContextMenu($event, msg, i)">
+                        <div v-else-if="!msg.isRecalled" class="flex w-full gap-3 mb-2 mt-2 relative" 
+                             :class="msg.isSelf ? 'flex-row-reverse' : 'flex-row'" 
+                             :style="{ transform: swipeState.index === i ? `translateX(${swipeState.x}px)` : 'translateX(0)', transition: swipeState.isSwiping ? 'none' : 'transform 0.2s ease-out' }"
+                             @touchstart="onBubbleTouchStart($event, i, msg)" 
+                             @touchmove="onBubbleTouchMove($event, i)" 
+                             @touchend="onBubbleTouchEnd($event, i, msg)"
+                             @contextmenu.prevent="showChatContextMenu($event, msg, i)">
+                            
+                            <!-- 滑动引用的回弹图标 (隐藏在气泡左侧) -->
+                            <div v-if="swipeState.index === i && swipeState.x > 15" class="absolute -left-10 top-1/2 -translate-y-1/2 text-gray-400 flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 shadow-inner" :style="{ opacity: Math.min(swipeState.x / 50, 1) }">
+                                <i class="fas fa-reply text-xs"></i>
+                            </div>
                             <!-- 复选框 -->
                             <div v-if="isMultiSelectMode" class="self-center" @click.stop="toggleSelectMessage(msg)">
                                 <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition" :class="selectedMessageIds.includes(msg) ? 'bg-black border-black' : 'bg-white'">
@@ -3205,6 +3216,15 @@
                 <!-- 聊天输入区域 -->
                 <div class="bg-white border-t border-gray-100 pb-safe relative chat-input-area">
                     
+                    <!-- 【新增】打字时表情包快捷联想推荐面板 -->
+                    <transition name="fade">
+                        <div v-if="suggestedStickers.length > 0" class="absolute bottom-full left-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-100 p-2.5 flex gap-3 overflow-x-auto shadow-[0_-5px_20px_rgba(0,0,0,0.04)] z-[55] scrollbar-hide items-center">
+                            <div v-for="sticker in suggestedStickers" :key="sticker.id" class="w-[68px] h-[68px] rounded-xl bg-gray-50 flex items-center justify-center shrink-0 border border-gray-200 cursor-pointer active:scale-90 transition overflow-hidden shadow-sm p-1.5" @click="sendSticker(sticker); inputMsg=''; wechatState.showGroupMentionPanel = false;">
+                                <img :src="sticker.url" class="w-full h-full object-contain">
+                            </div>
+                        </div>
+                    </transition>
+
                     <!-- 【新增】群聊 @ 弹窗面板 -->
                     <transition name="app-slide">
                         <div v-if="wechatState.showGroupMentionPanel && wechatState.activeSession?.isGroup" class="absolute bottom-full left-0 w-full bg-white z-[60] shadow-[0_-10px_25px_rgba(0,0,0,0.1)] rounded-t-2xl overflow-hidden max-h-72 flex flex-col">
@@ -4875,13 +4895,15 @@
                     <h3 class="text-center font-bold text-gray-900 text-lg mb-2">生成自拍/照片 设定</h3>
                     <div>
                         <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">角色外貌特征 (Appearance)</label>
-                        <textarea v-model="imagePromptModal.appearance" placeholder="例如: 1girl, silver hair, red eyes, white shirt, looking at viewer..." class="w-full h-20 bg-white p-3.5 rounded-[16px] text-[13px] border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                        <!-- 高度增至 h-32 (128px)，增加 leading-relaxed 提升阅读体验 -->
+                        <textarea v-model="imagePromptModal.appearance" placeholder="例如: 1girl, silver hair, red eyes, white shirt, looking at viewer..." class="w-full h-32 bg-white p-3.5 rounded-[16px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
                     </div>
                     <div>
                         <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">画面风格与质量 (Style & Quality)</label>
-                        <textarea v-model="imagePromptModal.style" placeholder="例如: masterpiece, best quality, ultra-detailed, anime style, soft lighting..." class="w-full h-16 bg-white p-3.5 rounded-[16px] text-[13px] border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                        <!-- 高度增至 h-28 (112px) -->
+                        <textarea v-model="imagePromptModal.style" placeholder="例如: masterpiece, best quality, ultra-detailed, anime style, soft lighting..." class="w-full h-28 bg-white p-3.5 rounded-[16px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
                     </div>
-                    <div class="flex gap-3 mt-2">
+                    <div class="flex gap-3 mt-3">
                         <button @click="imagePromptModal.show = false" class="flex-1 bg-white text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200">取消</button>
                         <button @click="saveImagePrompt" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存设定</button>
                     </div>
@@ -5469,6 +5491,7 @@ const app = createApp({
             pushConfig: { enabled: false }, // 新增推送设置
             githubConfig: { token: '', repo: '', filename: 'AoveinOS_Backup.json', autoBackup: false, frequency: 24, lastBackupTime: 0 },
             storageStats: { total: '0 KB', items:[] }, showSettingsDisclaimer: false,
+            swipeState: { startX: 0, startY: 0, x: 0, index: -1, isSwiping: false },
             
             // 新增弹窗控制变量
             githubFreqModal: { show: false },
@@ -5718,6 +5741,12 @@ const app = createApp({
             if(this.activeStickerGroupId === 'all') return this.stickers;
             return this.stickers.filter(s => s.groupId === this.activeStickerGroupId);
         },
+        suggestedStickers() {
+            if (!this.inputMsg || !this.inputMsg.trim()) return [];
+            const kw = this.inputMsg.trim().toLowerCase();
+            // 根据输入的关键字匹配表情包库里的 desc (描述)
+            return this.stickers.filter(s => s.desc && s.desc.toLowerCase().includes(kw));
+        },
         sortedBookshelf() {
             let list = [...this.bookshelf];
             // 收藏的书籍排在最前面
@@ -5824,6 +5853,58 @@ const app = createApp({
         }
     },
     methods: {
+    // ================= 气泡滑动引用交互逻辑 =================
+        onBubbleTouchStart(e, index, msg) {
+            // 系统消息不参与滑动
+            if (msg.type === 'system') return;
+            this.swipeState.startX = e.touches[0].clientX;
+            this.swipeState.startY = e.touches[0].clientY;
+            this.swipeState.index = index;
+            this.swipeState.x = 0;
+            this.swipeState.isSwiping = true;
+        },
+        onBubbleTouchMove(e, index) {
+            if (!this.swipeState.isSwiping || this.swipeState.index !== index) return;
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = currentX - this.swipeState.startX;
+            const diffY = currentY - this.swipeState.startY;
+            
+            // 如果用户在上下滑动聊天记录（Y轴移动大于X轴），则取消横向引用动作
+            if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffX) < 15) {
+                this.swipeState.isSwiping = false;
+                this.swipeState.x = 0;
+                return;
+            }
+            
+            // 只允许向右滑动
+            if (diffX > 0) {
+                // 阻尼效果：超过 50px 后滑动变得吃力
+                this.swipeState.x = diffX < 50 ? diffX : 50 + (diffX - 50) * 0.2;
+            }
+        },
+        onBubbleTouchEnd(e, index, msg) {
+            if (this.swipeState.isSwiping && this.swipeState.index === index) {
+                // 如果滑动距离达到阈值 (40px)，则触发引用
+                if (this.swipeState.x > 40) {
+                    this.replyingTo = msg;
+                    // 如果设备支持，触发一下轻微震动反馈
+                    if (navigator.vibrate) navigator.vibrate(40);
+                    
+                    // 聚焦输入框
+                    this.$nextTick(() => {
+                        if (this.$refs.chatInputArea) this.$refs.chatInputArea.focus();
+                    });
+                }
+            }
+            
+            // 归位动画
+            this.swipeState.isSwiping = false;
+            this.swipeState.x = 0;
+            setTimeout(() => {
+                if (!this.swipeState.isSwiping) this.swipeState.index = -1;
+            }, 200); // 配合 CSS 里的 0.2s 动画时间
+        },
     // ================= API 测试与生图引擎逻辑 =================
         async testApiConnection(type) {
             let url = '';
