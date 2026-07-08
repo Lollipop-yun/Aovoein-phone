@@ -3863,7 +3863,7 @@
                             <label for="time-sense-toggle" class="switch-label"><div class="switch-button"></div></label>
                         </div>
                         <div class="flex justify-between items-center p-4 active:bg-gray-50 transition">
-                            <span class="text-[15px] text-gray-900">点击气泡翻译(外语/方言)</span>
+                            <span class="text-[15px] text-gray-900">自动翻译气泡(含外语/英文)</span>
                             <input type="checkbox" class="switch-checkbox" id="translate-toggle" v-model="wechatState.activeSession.enableClickTranslate" @change="saveData">
                             <label for="translate-toggle" class="switch-label"><div class="switch-button"></div></label>
                         </div>
@@ -3987,8 +3987,8 @@
 
                     <!-- 正常视图模式 -->
                     <div v-else>
-                        <div v-if="wechatState.sessions.length === 0" class="flex flex-col items-center justify-center h-40 text-gray-300 mt-10"><i class="far fa-comment-dots text-4xl mb-3 opacity-20"></i><p class="text-xs">暂无会话</p></div>
-                        <div v-else><div v-for="session in filteredWechatContacts" :key="session.id" @click="enterChatRoom(session)" class="flex items-center p-4 active:bg-gray-50 transition border-b border-gray-50 last:border-0 relative" :class="{'bg-gray-50': session.isPinned}"><div class="relative shrink-0 mr-3"><div class="w-[50px] h-[50px] rounded-full overflow-hidden wechat-avatar-ring"><div class="w-full h-full rounded-full bg-gray-100 overflow-hidden"><img :src="session.customAvatarTarget || session.avatar" class="w-full h-full object-cover"></div></div></div><div class="flex-1 min-w-0"><div class="flex justify-between items-baseline mb-1"><h3 class="text-[16px] font-semibold text-gray-900 truncate flex items-center gap-1">{{ session.name }} <i v-if="session.isPinned" class="fas fa-thumbtack text-[10px] text-gray-400 rotate-45"></i></h3><span class="text-[11px] text-gray-400 font-normal">{{ formatSessionTime(getSessionLastTime(session)) }}</span></div><div class="flex justify-between items-center"><p class="text-[13px] text-gray-500 truncate max-w-[80%]">{{ getSessionLastMessage(session) }}</p><div v-if="session.unreadCount > 0" class="min-w-[16px] h-4 px-[4px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{{ session.unreadCount > 99 ? '99+' : session.unreadCount }}</div></div></div></div></div>
+                        <div v-if="wechatState.sessions.length === 0 && wechatState.activeFilter !== 'All'" class="flex flex-col items-center justify-center h-40 text-gray-300 mt-10"><i class="far fa-comment-dots text-4xl mb-3 opacity-20"></i><p class="text-xs">暂无会话</p></div>
+                        <div v-else><div v-for="session in filteredWechatContacts" :key="session.id" @click="handleSessionClick(session)" class="flex items-center p-4 active:bg-gray-50 transition border-b border-gray-50 last:border-0 relative" :class="{'bg-gray-50': session.isPinned}"><div class="relative shrink-0 mr-3"><div class="w-[50px] h-[50px] rounded-full overflow-hidden wechat-avatar-ring"><div class="w-full h-full rounded-full bg-gray-100 overflow-hidden"><img :src="session.customAvatarTarget || session.avatar" class="w-full h-full object-cover"></div></div></div><div class="flex-1 min-w-0"><div class="flex justify-between items-baseline mb-1"><h3 class="text-[16px] font-semibold text-gray-900 truncate flex items-center gap-1">{{ session.name }} <i v-if="session.isPinned" class="fas fa-thumbtack text-[10px] text-gray-400 rotate-45"></i></h3><span class="text-[11px] text-gray-400 font-normal">{{ formatSessionTime(getSessionLastTime(session)) }}</span></div><div class="flex justify-between items-center"><p class="text-[13px] text-gray-500 truncate max-w-[80%]">{{ getSessionLastMessage(session) }}</p><div v-if="session.unreadCount > 0" class="min-w-[16px] h-4 px-[4px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{{ session.unreadCount > 99 ? '99+' : session.unreadCount }}</div></div></div></div></div>
                     </div>
                 </div>
             </main>
@@ -4043,9 +4043,11 @@
                     <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 shrink-0">
                         <div class="text-xs text-gray-400 mb-2 text-center font-bold tracking-widest">效果预览</div>
                         <div class="bg-[#f2f2f6] rounded-xl p-3 shadow-inner">
-                            <div class="bg-white rounded-[20px] p-1 flex justify-between items-center shadow-sm mb-3">
-                                <div class="wechat-pill-tab wechat-pill-active flex-1 text-center">Chats</div>
-                                <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center">Group</div>
+                            <div class="bg-white rounded-[20px] p-1 flex justify-between items-center shadow-sm mb-3 gap-1">
+                                <div class="wechat-pill-tab wechat-pill-active flex-1 text-center text-[11px] px-1">Chats</div>
+                                <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">Group</div>
+                                <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">Likes</div>
+                                <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">All</div>
                             </div>
                             <div class="bg-white rounded-[18px] p-3 shadow-sm flex items-center border border-gray-50">
                                 <div class="w-10 h-10 rounded-full bg-gray-200 mr-3 shrink-0"><i class="fas fa-user flex h-full items-center justify-center text-gray-400"></i></div>
@@ -4230,28 +4232,28 @@
                 </div>
 
                 <!-- Icity Card 专属复刻 (独立数据) -->
-                <div class="px-4 mb-4 relative z-10">
-                    <div class="bg-white rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer active:scale-[0.98] transition">
-                        <div class="flex justify-between items-start mb-4">
+                <div class="px-4 mb-3 relative z-10">
+                    <div class="bg-white rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 cursor-pointer active:scale-[0.98] transition">
+                        <div class="flex justify-between items-start mb-3">
                             <div class="flex gap-3 items-center">
-                                <div class="w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0 active:opacity-70" @click.stop="triggerIcityAvatarUpload">
+                                <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 active:opacity-70" @click.stop="triggerIcityAvatarUpload">
                                     <img v-if="icityProfile.avatar" :src="icityProfile.avatar" class="w-full h-full object-cover">
-                                    <i v-else class="fas fa-user text-gray-400 flex items-center justify-center h-full text-lg"></i>
+                                    <i v-else class="fas fa-user text-gray-400 flex items-center justify-center h-full text-base"></i>
                                 </div>
                                 <div class="flex flex-col gap-0.5">
-                                    <span class="text-[16px] font-bold text-gray-800 active:opacity-70" @click.stop="editIcityProfile('name')">{{ icityProfile.name }}</span>
-                                    <span class="text-[11px] text-gray-400 tracking-wider active:text-blue-400" @click.stop="editIcityProfile('id')">@{{ icityProfile.id }}</span>
+                                    <span class="text-[15px] font-bold text-gray-800 active:opacity-70" @click.stop="editIcityProfile('name')">{{ icityProfile.name }}</span>
+                                    <span class="text-[10px] text-gray-400 tracking-wider active:text-blue-400" @click.stop="editIcityProfile('id')">@{{ icityProfile.id }}</span>
                                 </div>
                             </div>
                             <!-- 右上角同步北京时间 -->
-                            <div class="flex flex-col items-end text-[10px] text-gray-400 tracking-widest gap-0.5">
+                            <div class="flex flex-col items-end text-[9px] text-gray-400 tracking-widest gap-0.5">
                                 <span>{{ displayDate.dateString }} · {{ displayDate.dayString }}</span>
                                 <span>{{ statusBar.time }}</span>
                             </div>
                         </div>
                         <!-- 点击修改签名 -->
-                        <div class="text-[14px] text-gray-700 leading-relaxed font-sans mb-5 tracking-wide font-medium active:opacity-70 whitespace-pre-wrap" @click.stop="editIcityProfile('bio')">{{ icityProfile.bio }}</div>
-                        <div class="flex justify-between items-center text-gray-300 text-[11px] border-t border-gray-50 pt-3.5">
+                        <div class="text-[13px] text-gray-700 leading-relaxed font-sans mb-3 tracking-wide font-medium active:opacity-70 whitespace-pre-wrap" @click.stop="editIcityProfile('bio')">{{ icityProfile.bio }}</div>
+                        <div class="flex justify-between items-center text-gray-300 text-[11px] border-t border-gray-50 pt-2.5">
                             <!-- 底部左下角上一次修改时间：年月日 -->
                             <div class="flex items-center gap-1.5"><i class="far fa-clock"></i> {{ new Date(icityProfile.lastEditTime).getFullYear() }}-{{ String(new Date(icityProfile.lastEditTime).getMonth()+1).padStart(2,'0') }}-{{ String(new Date(icityProfile.lastEditTime).getDate()).padStart(2,'0') }}</div>
                             <div class="flex gap-4 items-center">
@@ -5800,13 +5802,46 @@ const app = createApp({
         rootFiles() { return this.worldData.filter(i => i.type === 'file' && !i.parentId); },
         filteredWechatContacts() {
             let sessions = [...this.wechatState.sessions];
+            
+            // 如果选择 All，补全通讯录里还没聊过天的好友作为虚拟会话显示
+            if (this.wechatState.activeFilter === 'All') {
+                this.wechatState.friendList.forEach(f => {
+                    if (!sessions.find(s => s.targetId === f.id && !s.isGroup)) {
+                        sessions.push({
+                            id: 'temp_' + f.id,
+                            targetId: f.id,
+                            name: f.remark || f.name,
+                            avatar: f.avatar,
+                            messages: [],
+                            time: 0,
+                            isPinned: false,
+                            isVirtual: true // 标记为虚拟会话
+                        });
+                    }
+                });
+            }
+
+            // 按最新消息的时间倒序排列，同时置顶会话永远在最上方
             sessions.sort((a, b) => {
                 if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
-                return b.time - a.time;
+                const timeA = this.getSessionLastTime(a);
+                const timeB = this.getSessionLastTime(b);
+                return timeB - timeA;
             });
-            if (!this.wechatState.searchQuery) return sessions;
-            const query = this.wechatState.searchQuery.toLowerCase();
-            return sessions.filter(c => c.name.toLowerCase().includes(query));
+
+            // 过滤逻辑：Likes(仅置顶), Chats(仅单聊)
+            if (this.wechatState.activeFilter === 'Likes') {
+                sessions = sessions.filter(s => s.isPinned);
+            } else if (this.wechatState.activeFilter === 'Chats') {
+                sessions = sessions.filter(s => !s.isGroup);
+            }
+            
+            if (this.wechatState.searchQuery) {
+                const query = this.wechatState.searchQuery.toLowerCase();
+                sessions = sessions.filter(c => c.name.toLowerCase().includes(query));
+            }
+            
+            return sessions;
         },
         filteredStickers() {
             if(this.activeStickerGroupId === 'all') return this.stickers;
@@ -7971,6 +8006,18 @@ const app = createApp({
             }
             this.enterChatRoom(session); this.saveData();
         },
+        handleSessionClick(session) {
+            // 如果点击的是 All 列表里还没聊过天的好友，自动创建新会话
+            if (session.isVirtual) {
+                const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+                if (friend) {
+                    const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
+                    this.createSession(friend, this.getMaskById(myMaskId));
+                }
+            } else {
+                this.enterChatRoom(session);
+            }
+        },
         enterChatRoom(session) { 
             this.wechatState.activeSession = session; 
             this.wechatState.activeNav = 'room'; 
@@ -9258,7 +9305,7 @@ Structure:
     {
       "speaker": "说话的角色名字 (必须是群成员之一)",
       "reply":["第一句话", "第二句话"], 
-      "translations":["第一句的中文翻译", "第二句的中文翻译"], // OPTIONAL: 【极度重要】如果你的reply全是普通中文，绝对不要输出 translations 字段！严禁将中文翻译成英文或其他语言！只有当你的reply包含外语/方言时，才必须在此提供对应的【现代标准中文翻译】！
+      "translations":["对应的中文翻译"], // OPTIONAL: 【重要判定】如果 reply 中含有英文、日韩等外语必须提供标准中文翻译！但如果你的 reply 已经是纯中文，则绝对不要输出此字段，严禁把中文强行翻译成英文！, // OPTIONAL: 【极度重要】如果你的reply全是普通中文，绝对不要输出 translations 字段！严禁将中文翻译成英文或其他语言！只有当你的reply包含外语/方言时，才必须在此提供对应的【现代标准中文翻译】！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
       "thought": "当前心声(第一人称思考，每轮必须更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
@@ -9278,7 +9325,7 @@ Structure:
 Structure:
 {
   "reply":["第一句话", "第二句话"], // 必须是数组！
-  "translations":["第一句的中文翻译", "第二句的中文翻译"], // OPTIONAL: 【极度重要】如果你的reply全是普通中文，绝对不要输出 translations 字段！严禁将中文翻译成英文或其他语言！只有当你的reply包含外语/方言时，才必须在此提供对应的【现代标准中文翻译】！
+  "translations":["对应的中文翻译"], // OPTIONAL: 【重要判定】如果 reply 中含有英文、日韩等外语必须提供标准中文翻译！但如果你的 reply 已经是纯中文，则绝对不要输出此字段，严禁把中文强行翻译成英文！, // OPTIONAL: 【极度重要】如果你的reply全是普通中文，绝对不要输出 translations 字段！严禁将中文翻译成英文或其他语言！只有当你的reply包含外语/方言时，才必须在此提供对应的【现代标准中文翻译】！
   "action": "当前具体动作(每轮必须更新，绝不能用'无')",
   "thought": "当前心声(第一人称思考，每轮必须更新)",
   "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
@@ -9304,9 +9351,8 @@ Structure:
 `}
 【极度严格的作答纪律！！！】
 1. "reply" 必须是一个字符串数组！严禁把一大段长篇大论挤在一个句子里发出来！按句号、叹号或呼吸停顿切分！
-2. 【重要】只有当你要反驳、认同、或者针对性地回答我刚刚说过的**某句具体的长话**时，才偶尔使用 "quote_user_message" 字段！日常闲聊、普通对话**绝对不要**使用引用字段！
-❌ 错误示范：["怎么了？你怎么不说话，别生闷气了行不行，我真的很担心你。"]
-✅ 正确示范：["怎么了？", "你怎么不说话", "别生闷气了行不行", "我真的很担心你。"]`;
+2. 【严禁连续引用】："quote_user_message" 仅在偶尔针对性回答时使用一次！绝对不允许在连续多轮对话中一直使用引用！如果之前已经引用过，现在请正常回复，不要再输出 quote_user_message 字段！
+3. 【翻译约束】：如果你的 reply 中包含任何英文、日韩等外语，必须在 "translations" 字段提供标准的中文翻译！但如果你的 reply 已经是纯中文，则绝对不要输出 translations 字段，严禁把中文翻译成英文！`;
 
             // 如果用户在“重回”时提出了具体的走向要求，强行注入最高优先级的提示词
             if (directionPrompt && directionPrompt.trim() !== '') {
@@ -9695,6 +9741,12 @@ Structure:
                                  quote: msgType === 'voice' ? null : quoteObj 
                              };
                              session.messages.push(aiMsg);
+                             // 【新增自动翻译检测 fallback】：当设置开启时，如果 AI 没在 JSON 里提供翻译，但在原句中包含了连续3个以上英文字符，系统自动触发翻译接口
+                             if (session.enableClickTranslate && !trans && /[a-zA-Z]{3,}/.test(seg.trim())) {
+                                 setTimeout(() => {
+                                     this.translateMessage(aiMsg);
+                                 }, 1000);
+                             }
                              
                              // 【新增】群聊AI发消息升1级
                              if (session.isGroup && speakerId) {
