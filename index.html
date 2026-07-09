@@ -9148,10 +9148,10 @@ const app = createApp({
                 return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             };
             
-            let timeContext = `\n[系统提示-双时区时间感知]:
+            let timeContext = `\n[系统提示-时间与时区严格感知]:
 我(玩家)当前的当地时间是：${formatTzDate(myDate)}。
 你(角色)当前的当地时间是：${formatTzDate(aiDate)}。
-【极度重要作息提醒】：请你务必严格根据【你(角色)所在的时区时间】来进行作息和情境互动！如果你的时间是深夜，你应该在互动中表现出困倦或准备睡觉；如果是早晨，则是刚醒。绝不能把我的时间当成你的时间！`;
+【最高优先级警告】：你必须严格以【你(角色)当前的当地时间（${formatTzDate(aiDate)}）】作为你生活作息、吃饭、睡觉、打招呼的唯一标准！例如你的时间是深夜，你必须表现出困意或准备睡觉；你的时间是早晨，你应该说早安。绝不能被我的时间带偏！`;
             
             // Music Sense Logic (NEW)
             // --- 强化音乐感知与 AI 主动切歌 ---
@@ -9305,11 +9305,11 @@ Structure:
     {
       "speaker": "说话的角色名字 (必须是群成员之一)",
       "reply":["第一句话", "第二句话"], 
-      "translations":["对应的中文翻译"], // OPTIONAL: 【重要判定】如果 reply 中含有英文、日韩等外语必须提供标准中文翻译！但如果你的 reply 已经是纯中文，则绝对不要输出此字段，严禁把中文强行翻译成英文！, // OPTIONAL: 【极度重要】如果你的reply全是普通中文，绝对不要输出 translations 字段！严禁将中文翻译成英文或其他语言！只有当你的reply包含外语/方言时，才必须在此提供对应的【现代标准中文翻译】！
+      "translations":["对应的中文翻译"], // OPTIONAL: 【极度重要】如果句子是纯中文，或仅夹杂几个英文单词(如"old man", "baby")，绝对不要输出 translations 字段！只有当某句话是【完整的外语长句】时，才在此提供对应的翻译。翻译绝不能包含下一句话！若不需要翻译，直接删除此字段！绝不要输出"无需翻译"等字眼！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
-      "thought": "当前心声(第一人称思考，每轮必须更新)",
+      "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
-      "note": "随笔日记(OPTIONAL: 看你当前心情决定是否提笔)",
+      "note": "随笔日记(OPTIONAL: 看心情决定是否提笔，必须使用纯中文)",
       "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
@@ -9325,11 +9325,11 @@ Structure:
 Structure:
 {
   "reply":["第一句话", "第二句话"], // 必须是数组！
-  "translations":["对应的中文翻译"], // OPTIONAL: 【重要判定】如果 reply 中含有英文、日韩等外语必须提供标准中文翻译！但如果你的 reply 已经是纯中文，则绝对不要输出此字段，严禁把中文强行翻译成英文！, // OPTIONAL: 【极度重要】如果你的reply全是普通中文，绝对不要输出 translations 字段！严禁将中文翻译成英文或其他语言！只有当你的reply包含外语/方言时，才必须在此提供对应的【现代标准中文翻译】！
-  "action": "当前具体动作(每轮必须更新，绝不能用'无')",
-  "thought": "当前心声(第一人称思考，每轮必须更新)",
-  "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
-  "note": "随笔日记(OPTIONAL: 看你当前心情决定是否提笔)",
+  "translations":["对应的中文翻译"], // OPTIONAL: 【极度重要】如果句子是纯中文，或仅夹杂几个英文单词(如"old man", "baby")，绝对不要输出 translations 字段！只有当某句话是【完整的外语长句】时，才在此提供对应的翻译。翻译绝不能包含下一句话！若不需要翻译，直接删除此字段！绝不要输出"无需翻译"等字眼！
+      "action": "当前具体动作(每轮必须更新，绝不能用'无')",
+      "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
+      "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
+      "note": "随笔日记(OPTIONAL: 看心情决定是否提笔，必须使用纯中文)",
   "change_online_status": {"color": "online" | "offline" | "busy", "text": "OPTIONAL: 你在干嘛", "offline_duration_minutes": 60}, // OPTIONAL: 主动修改在线状态。如果改为 offline，必须填写离线多少分钟(数字)！
   "quote_user_message": "OPTIONAL: 填入你想引用的我说过的话的原文内容(针对性回复时使用)",
   "change_remark": "OPTIONAL: 强行修改玩家手机里【对你(AI自身)的备注名】（即玩家的微信里怎么称呼你）。例如你如果是男主，可以把自己在玩家手机里的备注改成'老公'、'哥哥'等。绝对不能改成你对玩家的称呼（如改成'老婆'、'妹妹'等是严重错误）！",
@@ -9710,8 +9710,8 @@ Structure:
                              let trans = null;
                              if (block.translations && Array.isArray(block.translations) && block.translations[index]) {
                                  const tText = block.translations[index].trim();
-                                 // 【新增硬拦截】：如果大模型强迫症发作，把翻译填成了和原文一模一样的中文，则强制拦截不显示！
-                                 if (tText && !tText.includes('无需翻译') && tText !== seg.trim()) {
+                                 // 【新增硬拦截】：如果大模型强迫症发作，把翻译填成了和原文一模一样的中文，或者写了废话，则强制拦截不显示！
+                                 if (tText && !tText.includes('无需翻译') && !tText.includes('不需翻译') && !tText.includes('无翻译') && tText !== seg.trim()) {
                                      trans = tText;
                                  }
                              }
@@ -9741,8 +9741,10 @@ Structure:
                                  quote: msgType === 'voice' ? null : quoteObj 
                              };
                              session.messages.push(aiMsg);
-                             // 【新增自动翻译检测 fallback】：当设置开启时，如果 AI 没在 JSON 里提供翻译，但在原句中包含了连续3个以上英文字符，系统自动触发翻译接口
-                             if (session.enableClickTranslate && !trans && /[a-zA-Z]{3,}/.test(seg.trim())) {
+                             // 【新增自动翻译检测 fallback】：当设置开启时，如果是纯英文长句且未提供翻译，才自动触发接口（彻底过滤掉中英混合和零星单词）
+                             const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
+                             const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
+                             if (session.enableClickTranslate && !trans && !hasChinese && engWordCount >= 3) {
                                  setTimeout(() => {
                                      this.translateMessage(aiMsg);
                                  }, 1000);
@@ -12436,11 +12438,13 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 const data = await res.json();
                 let result = data.choices[0].message.content.trim();
                 
-                // 如果 AI 判断无需翻译，我们标记一下，避免展示无用信息
-                if (result.includes('无需翻译')) {
-                    msg.translation = '原内容为中文，无需翻译';
+                // 如果 AI 判断无需翻译或翻译和原句一样，直接静默不显示，不要生成白色的翻译框
+                if (result.includes('无需翻译') || result.includes('不需要') || result === msg.content) {
+                    msg.translation = null;
+                    msg.showTranslation = false;
                 } else {
                     msg.translation = result;
+                    msg.showTranslation = true;
                 }
             } catch(e) {
                 console.error("翻译失败:", e);
