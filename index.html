@@ -1108,26 +1108,26 @@
             <div v-if="!chatContextMenu.isSelf" class="context-item" @click="handleChatMenuAction('regenerate')"><i class="fas fa-sync-alt text-lg"></i><span>重回</span></div>
         </div>
     </transition>
+
+    <!-- 弹窗组件 -->
+    <transition name="scale"><div v-if="modelSelectModal.show" class="fixed inset-0 z-[65000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[60vh]"><div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white"><h3 class="font-bold text-lg text-gray-900">选择模型</h3><button @click="modelSelectModal.show = false" class="text-gray-400 font-medium text-sm">关闭</button></div><div class="flex-1 overflow-y-auto p-2 space-y-1"><div v-if="availableModels.length===0" class="p-4 text-center text-xs text-gray-400">列表为空</div><div v-for="model in (modelSelectModal.target === 'sub' ? subAvailableModels : availableModels)" :key="model" @click="selectModel(model)" class="p-3.5 rounded-xl flex items-center justify-between active:bg-gray-50 transition" :class="apiConfig.selectedModel === model ? 'bg-blue-50' : ''"><span class="font-bold text-sm text-gray-800">{{ model }}</span><i v-if="apiConfig.selectedModel === model" class="fas fa-check text-blue-500"></i></div></div></div></div></transition>
     
-    <!-- 新版 API 预设选择弹窗 -->
+    <!-- API 预设统一选择弹窗 (iOS 风格) -->
     <transition name="app-slide">
-        <div v-if="apiPresetModal.show" class="fixed inset-0 z-[70000]">
-            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="apiPresetModal.show = false"></div>
-            <div class="ios-list-modal">
-                <div class="ios-list-header">选择预设 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="apiPresetModal.show = false">取消</button></div>
-                <div class="ios-list-content p-0 bg-white max-h-[50vh] overflow-y-auto">
-                    <div v-if="apiPresetModal.list.length === 0" class="p-8 text-center text-gray-400 text-sm">暂无保存的预设</div>
-                    <div v-for="(preset, idx) in apiPresetModal.list" :key="idx" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="selectApiPreset(preset)">
-                        <div class="font-bold text-gray-900 text-[15px]">{{ preset.name }}</div>
-                        <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+        <div v-if="presetModal.show" class="fixed inset-0 z-[110000]">
+            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="presetModal.show = false"></div>
+            <div class="ios-list-modal max-h-[70vh]">
+                <div class="ios-list-header">选择预设 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="presetModal.show = false">取消</button></div>
+                <div class="ios-list-content p-0 bg-white">
+                    <div v-if="getPresetsForTarget().length === 0" class="p-8 text-center text-gray-400 text-sm">暂无预设</div>
+                    <div v-for="(preset, idx) in getPresetsForTarget()" :key="idx" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="applyApiPreset(presetModal.target, preset)">
+                        <div class="font-medium text-gray-900">{{ preset.name }}</div>
+                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
                     </div>
                 </div>
             </div>
         </div>
     </transition>
-
-    <!-- 弹窗组件 -->
-    <transition name="scale"><div v-if="modelSelectModal.show" class="fixed inset-0 z-[65000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[60vh]"><div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white"><h3 class="font-bold text-lg text-gray-900">选择模型</h3><button @click="modelSelectModal.show = false" class="text-gray-400 font-medium text-sm">关闭</button></div><div class="flex-1 overflow-y-auto p-2 space-y-1"><div v-if="availableModels.length===0" class="p-4 text-center text-xs text-gray-400">列表为空</div><div v-for="model in (modelSelectModal.target === 'sub' ? subAvailableModels : availableModels)" :key="model" @click="selectModel(model)" class="p-3.5 rounded-xl flex items-center justify-between active:bg-gray-50 transition" :class="apiConfig.selectedModel === model ? 'bg-blue-50' : ''"><span class="font-bold text-sm text-gray-800">{{ model }}</span><i v-if="apiConfig.selectedModel === model" class="fas fa-check text-blue-500"></i></div></div></div></div></transition>
     
     <!-- 【完美还原】设置群管理员主界面 -->
         <transition name="page-slide">
@@ -3199,7 +3199,7 @@
                                 </div>
                                 <!-- 语音转文字展开 -->
                                 <div v-if="msg.type === 'voice' && msg.isExpanded" class="voice-transcription">
-                                    {{ msg.content }}<span v-if="msg.translation"> ({{ msg.translation }})</span>
+                                    {{ msg.content }}<span v-if="msg.translation && msg.translation !== msg.content"> ({{ msg.translation }})</span>
                                 </div>
                                 
                                 <!-- 气泡外部底部显示 -->
@@ -5050,77 +5050,92 @@
         <div class="space-y-5 pb-10">
             <!-- 主 API 配置 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <span class="font-bold text-sm text-gray-800">主 API (聊天核心驱动)</span>
-                    <button @click="openApiPresetModal('main')" class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-bold active:scale-95 transition shadow-sm">选择预设 <i class="fas fa-chevron-down ml-1 text-[10px]"></i></button>
+                <div class="mb-4 pb-4 border-b border-gray-50 space-y-3">
+                    <div @click="openApiPresetModal('main')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition shadow-sm">
+                        <span class="text-gray-600">选择预设...</span>
+                        <i class="fas fa-list text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex gap-2">
+                        <input v-model="presetInputs.main" placeholder="留空填写预设的名字" class="flex-1 bg-gray-50 p-2.5 rounded-xl text-sm border border-gray-200 outline-none shadow-sm">
+                        <button @click="saveApiPreset('main')" class="px-4 bg-gray-900 text-white rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">保存</button>
+                        <button @click="deleteCurrentApiPreset('main')" class="px-4 bg-red-50 text-red-500 rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">删除</button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input v-model="presetInputMain" placeholder="填写预设名字..." class="flex-1 bg-gray-50 p-2.5 rounded-xl text-xs font-bold border border-gray-200 outline-none">
-                    <button @click="saveApiPreset('main')" class="bg-blue-50 text-blue-600 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">保存</button>
-                    <button @click="deleteApiPreset('main')" class="bg-red-50 text-red-500 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">删除</button>
-                </div>
+                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2">主 API (聊天核心驱动)</div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">反代地址</label><input v-model="apiConfig.baseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API 密钥</label><input v-model="apiConfig.apiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                <button @click="testApiConnection('main')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试主API连接</button>
-                <button @click="fetchModels('main')" :disabled="isMainLoading" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isMainLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取主模型</span></button>
+                
+                <button @click="testApiConnection('main')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试主API连接 (将消耗少量额度)</button>
+
+                <button @click="fetchModels('main')" :disabled="apiLoading.main" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="apiLoading.main" class="fas fa-spinner fa-spin"></i><span v-else>拉取主模型</span></button>
                 <div v-if="availableModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择主模型</label><div @click="openModelSelect('main')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ apiConfig.selectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
                 <div><div class="flex justify-between mb-1"><label class="text-xs font-bold text-gray-500 ml-1">温度 (创造性): {{ apiConfig.temperature }}</label></div><input type="range" min="0" max="2" step="0.1" v-model.number="apiConfig.temperature" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div>
             </div>
 
             <!-- 副 API 配置 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <span class="font-bold text-sm text-gray-800">副 API (扩展备用)</span>
-                    <button @click="openApiPresetModal('sub')" class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-bold active:scale-95 transition shadow-sm">选择预设 <i class="fas fa-chevron-down ml-1 text-[10px]"></i></button>
+                <div class="mb-4 pb-4 border-b border-gray-50 space-y-3">
+                    <div @click="openApiPresetModal('sub')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition shadow-sm">
+                        <span class="text-gray-600">选择预设...</span>
+                        <i class="fas fa-list text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex gap-2">
+                        <input v-model="presetInputs.sub" placeholder="留空填写预设的名字" class="flex-1 bg-gray-50 p-2.5 rounded-xl text-sm border border-gray-200 outline-none shadow-sm">
+                        <button @click="saveApiPreset('sub')" class="px-4 bg-gray-900 text-white rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">保存</button>
+                        <button @click="deleteCurrentApiPreset('sub')" class="px-4 bg-red-50 text-red-500 rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">删除</button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input v-model="presetInputSub" placeholder="填写预设名字..." class="flex-1 bg-gray-50 p-2.5 rounded-xl text-xs font-bold border border-gray-200 outline-none">
-                    <button @click="saveApiPreset('sub')" class="bg-blue-50 text-blue-600 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">保存</button>
-                    <button @click="deleteApiPreset('sub')" class="bg-red-50 text-red-500 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">删除</button>
-                </div>
+                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2 flex items-center justify-between"><span>副 API (后续扩展备用)</span><span class="text-[10px] font-normal text-gray-400">留空则默认调主API</span></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">副反代地址</label><input v-model="apiConfig.subBaseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">副 API 密钥</label><input v-model="apiConfig.subApiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                <button @click="testApiConnection('sub')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试副API连接</button>
-                <button @click="fetchModels('sub')" :disabled="isSubLoading" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isSubLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取副模型</span></button>
+                <button @click="testApiConnection('sub')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试副API连接 (将消耗少量额度)</button>
+                <button @click="fetchModels('sub')" :disabled="apiLoading.sub" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="apiLoading.sub" class="fas fa-spinner fa-spin"></i><span v-else>拉取副模型</span></button>
                 <div v-if="subAvailableModels && subAvailableModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择副模型</label><div @click="openModelSelect('sub')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ apiConfig.subSelectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
             </div>
 
             <!-- 生图 API 配置 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <span class="font-bold text-sm text-gray-800">生图 API (DALLE/MJ)</span>
-                    <button @click="openApiPresetModal('image')" class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-bold active:scale-95 transition shadow-sm">选择预设 <i class="fas fa-chevron-down ml-1 text-[10px]"></i></button>
+                <div class="mb-4 pb-4 border-b border-gray-50 space-y-3">
+                    <div @click="openApiPresetModal('image')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition shadow-sm">
+                        <span class="text-gray-600">选择预设...</span>
+                        <i class="fas fa-list text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex gap-2">
+                        <input v-model="presetInputs.image" placeholder="留空填写预设的名字" class="flex-1 bg-gray-50 p-2.5 rounded-xl text-sm border border-gray-200 outline-none shadow-sm">
+                        <button @click="saveApiPreset('image')" class="px-4 bg-gray-900 text-white rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">保存</button>
+                        <button @click="deleteCurrentApiPreset('image')" class="px-4 bg-red-50 text-red-500 rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">删除</button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input v-model="presetInputImage" placeholder="填写预设名字..." class="flex-1 bg-gray-50 p-2.5 rounded-xl text-xs font-bold border border-gray-200 outline-none">
-                    <button @click="saveApiPreset('image')" class="bg-blue-50 text-blue-600 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">保存</button>
-                    <button @click="deleteApiPreset('image')" class="bg-red-50 text-red-500 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">删除</button>
-                </div>
+                <div class="font-bold text-sm text-gray-800 border-b border-gray-50 pb-2">生图 API (DALLE-3 / Midjourney兼容)</div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">生图反代地址</label><input v-model="imageApiConfig.baseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">生图 API 密钥</label><input v-model="imageApiConfig.apiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <button @click="testApiConnection('image')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-image"></i> 测试生图连接</button>
-                <button @click="fetchModels('image')" :disabled="isImageLoading" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isImageLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取生图模型</span></button>
+                <button @click="fetchModels('image')" :disabled="apiLoading.image" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="apiLoading.image" class="fas fa-spinner fa-spin"></i><span v-else>拉取生图模型</span></button>
                 <div v-if="imageModels && imageModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择生图模型</label><div @click="openModelSelect('image')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ imageApiConfig.selectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
             </div>
 
             <!-- MiniMax 语音合成面板 -->
             <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-                <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                <div class="flex justify-between items-center mb-2">
                     <span class="font-bold text-gray-800 text-sm">MiniMax 语音合成</span>
-                    <div class="flex items-center gap-3">
-                        <button @click="openApiPresetModal('minimax')" class="text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-full font-bold active:scale-95 transition shadow-sm">选择预设 <i class="fas fa-chevron-down ml-1 text-[10px]"></i></button>
-                        <input type="checkbox" id="minimax-toggle" class="switch-checkbox" v-model="minimaxConfig.enabled" @change="saveData">
-                        <label for="minimax-toggle" class="switch-label"><div class="switch-button"></div></label>
+                    <input type="checkbox" id="minimax-toggle" class="switch-checkbox" v-model="minimaxConfig.enabled" @change="saveData">
+                    <label for="minimax-toggle" class="switch-label"><div class="switch-button"></div></label>
+                </div>
+                <div class="mb-4 pb-4 border-b border-gray-50 space-y-3">
+                    <div @click="openApiPresetModal('minimax')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition shadow-sm">
+                        <span class="text-gray-600">选择预设...</span>
+                        <i class="fas fa-list text-gray-400 text-xs"></i>
+                    </div>
+                    <div class="flex gap-2">
+                        <input v-model="presetInputs.minimax" placeholder="留空填写预设的名字" class="flex-1 bg-gray-50 p-2.5 rounded-xl text-sm border border-gray-200 outline-none shadow-sm">
+                        <button @click="saveApiPreset('minimax')" class="px-4 bg-gray-900 text-white rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">保存</button>
+                        <button @click="deleteCurrentApiPreset('minimax')" class="px-4 bg-red-50 text-red-500 rounded-xl text-xs font-bold active:scale-95 transition shadow-sm">删除</button>
                     </div>
                 </div>
                 <div v-if="minimaxConfig.enabled" class="space-y-4">
-                    <div class="flex items-center gap-2">
-                        <input v-model="presetInputMinimax" placeholder="填写预设名字..." class="flex-1 bg-gray-50 p-2.5 rounded-xl text-xs font-bold border border-gray-200 outline-none">
-                        <button @click="saveApiPreset('minimax')" class="bg-blue-50 text-blue-600 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">保存</button>
-                        <button @click="deleteApiPreset('minimax')" class="bg-red-50 text-red-500 px-4 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition">删除</button>
-                    </div>
                     <div>
-                        <div class="flex gap-2 mb-2">
+                        <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">接口域节点</label>
+                        <div class="flex gap-2">
                             <button @click="minimaxConfig.region = 'cn'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'cn' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">大陆版</button>
                             <button @click="minimaxConfig.region = 'intl'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'intl' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">海外版</button>
                         </div>
@@ -5128,7 +5143,7 @@
                     <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">Group ID</label><input v-model="minimaxConfig.groupId" placeholder="输入 Group ID" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                     <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API Key</label><input v-model="minimaxConfig.apiKey" type="password" placeholder="输入 API Key" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                     <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">音色 ID (Voice ID)</label><input v-model="minimaxConfig.voiceId" placeholder="如: male-qn-qingse" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                    <button @click="fetchMinimaxModels" :disabled="isMinimaxLoading" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isMinimaxLoading" class="fas fa-spinner fa-spin"></i><span v-else>拉取语音模型</span></button>
+                    <button @click="fetchMinimaxModels" :disabled="apiLoading.minimax" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="apiLoading.minimax" class="fas fa-spinner fa-spin"></i><span v-else>获取模型</span></button>
                     <div v-if="minimaxModels.length > 0" class="animate-fade-in">
                         <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择模型</label>
                         <select v-model="minimaxConfig.selectedModel" @change="saveData" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 outline-none cursor-pointer">
@@ -5137,10 +5152,7 @@
                         </select>
                     </div>
                 </div>
-            </div>
-<!-- ============================== -->
-
-<button @click="saveSettings" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition">保存配置</button></div></div></transition><transition name="page-slide">
+            </div><button @click="saveSettings" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition">保存配置</button></div></div></transition><transition name="page-slide">
     <div v-if="settingsPage === 'data-manage'" class="absolute inset-0 p-4 pb-20">
         <div class="space-y-5">
             <!-- 存储空间大屏占比视图 -->
@@ -5599,18 +5611,12 @@ const app = createApp({
     data() {
         return {
             isActivated: false,
-            isAppOpen: false, currentApp: null, settingsPage: 'main', themesPage: 'main', isFullScreen: false, hideStatusBar: false,
-            // 独立的加载动画状态
-            isMainLoading: false, isSubLoading: false, isImageLoading: false, isMinimaxLoading: false,
-            
-            // 独立的 API 预设系统
-            apiPresetsMain: [], presetInputMain: '',
-            apiPresetsSub: [], presetInputSub: '',
-            apiPresetsImage: [], presetInputImage: '',
-            apiPresetsMinimax: [], presetInputMinimax: '',
-            apiPresetModal: { show: false, target: '', list: [] },
-
-            apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [],
+            isAppOpen: false, currentApp: null, settingsPage: 'main', themesPage: 'main', isLoading: false, isFullScreen: false, hideStatusBar: false,
+            apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [], apiPresets:[],
+            apiLoading: { main: false, sub: false, image: false, minimax: false },
+            apiPresetsNew: { main: [], sub: [], image: [], minimax: [] },
+            presetInputs: { main: '', sub: '', image: '', minimax: '' },
+            presetModal: { show: false, target: '' },
             imageApiConfig: { baseUrl: '', apiKey: '', selectedModel: '' }, imageModels: [],
             imagePromptModal: { show: false, appearance: '', style: '' }, 
             minimaxConfig: { enabled: false, region: 'cn', groupId: '', apiKey: '', selectedModel: '', voiceId: 'male-qn-qingse' }, minimaxModels:[],
@@ -6205,93 +6211,6 @@ const app = createApp({
             this.groupAdminModal.selectedIds =[];
             this.saveData();
             this.showToast('管理员添加成功');
-        },
-        // --- API 独立预设管理 ---
-        openApiPresetModal(type) {
-            this.apiPresetModal.target = type;
-            if (type === 'main') this.apiPresetModal.list = this.apiPresetsMain;
-            else if (type === 'sub') this.apiPresetModal.list = this.apiPresetsSub;
-            else if (type === 'image') this.apiPresetModal.list = this.apiPresetsImage;
-            else if (type === 'minimax') this.apiPresetModal.list = this.apiPresetsMinimax;
-            this.apiPresetModal.show = true;
-        },
-        selectApiPreset(preset) {
-            const type = this.apiPresetModal.target;
-            if (type === 'main') {
-                this.apiConfig.baseUrl = preset.baseUrl;
-                this.apiConfig.apiKey = preset.apiKey;
-                this.apiConfig.selectedModel = preset.selectedModel;
-                this.presetInputMain = preset.name;
-            } else if (type === 'sub') {
-                this.apiConfig.subBaseUrl = preset.baseUrl;
-                this.apiConfig.subApiKey = preset.apiKey;
-                this.apiConfig.subSelectedModel = preset.selectedModel;
-                this.presetInputSub = preset.name;
-            } else if (type === 'image') {
-                this.imageApiConfig.baseUrl = preset.baseUrl;
-                this.imageApiConfig.apiKey = preset.apiKey;
-                this.imageApiConfig.selectedModel = preset.selectedModel;
-                this.presetInputImage = preset.name;
-            } else if (type === 'minimax') {
-                this.minimaxConfig.groupId = preset.groupId;
-                this.minimaxConfig.apiKey = preset.apiKey;
-                this.minimaxConfig.voiceId = preset.voiceId;
-                this.minimaxConfig.selectedModel = preset.selectedModel;
-                this.minimaxConfig.region = preset.region || 'cn';
-                this.presetInputMinimax = preset.name;
-            }
-            this.saveData();
-            this.apiPresetModal.show = false;
-            this.showToast(`已应用预设: ${preset.name}`);
-        },
-        saveApiPreset(type) {
-            let name, config, list;
-            if (type === 'main') {
-                name = this.presetInputMain; list = this.apiPresetsMain;
-                config = { baseUrl: this.apiConfig.baseUrl, apiKey: this.apiConfig.apiKey, selectedModel: this.apiConfig.selectedModel };
-            } else if (type === 'sub') {
-                name = this.presetInputSub; list = this.apiPresetsSub;
-                config = { baseUrl: this.apiConfig.subBaseUrl, apiKey: this.apiConfig.subApiKey, selectedModel: this.apiConfig.subSelectedModel };
-            } else if (type === 'image') {
-                name = this.presetInputImage; list = this.apiPresetsImage;
-                config = { baseUrl: this.imageApiConfig.baseUrl, apiKey: this.imageApiConfig.apiKey, selectedModel: this.imageApiConfig.selectedModel };
-            } else if (type === 'minimax') {
-                name = this.presetInputMinimax; list = this.apiPresetsMinimax;
-                config = { groupId: this.minimaxConfig.groupId, apiKey: this.minimaxConfig.apiKey, voiceId: this.minimaxConfig.voiceId, selectedModel: this.minimaxConfig.selectedModel, region: this.minimaxConfig.region };
-            }
-
-            if (!name || !name.trim()) return this.showToast('请在输入框填写预设名字');
-            
-            const existingIdx = list.findIndex(p => p.name === name.trim());
-            if (existingIdx > -1) {
-                list[existingIdx] = { name: name.trim(), ...config };
-            } else {
-                list.push({ name: name.trim(), ...config });
-            }
-            this.saveData();
-            this.showToast(`${name.trim()} 保存成功`);
-        },
-        deleteApiPreset(type) {
-            let name, list;
-            if (type === 'main') { name = this.presetInputMain; list = this.apiPresetsMain; }
-            else if (type === 'sub') { name = this.presetInputSub; list = this.apiPresetsSub; }
-            else if (type === 'image') { name = this.presetInputImage; list = this.apiPresetsImage; }
-            else if (type === 'minimax') { name = this.presetInputMinimax; list = this.apiPresetsMinimax; }
-
-            if (!name || !name.trim()) return this.showToast('请先输入或选择要删除的预设名');
-
-            const existingIdx = list.findIndex(p => p.name === name.trim());
-            if (existingIdx > -1) {
-                list.splice(existingIdx, 1);
-                if (type === 'main') this.presetInputMain = '';
-                else if (type === 'sub') this.presetInputSub = '';
-                else if (type === 'image') this.presetInputImage = '';
-                else if (type === 'minimax') this.presetInputMinimax = '';
-                this.saveData();
-                this.showToast('预设已删除');
-            } else {
-                this.showToast('找不到该预设');
-            }
         },
         // ================= 心声卡片专属美化逻辑 =================
         applyStatusBeautify() {
@@ -9290,10 +9209,10 @@ const app = createApp({
                 return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             };
             
-            let timeContext = `\n[系统提示-时间与时区严格感知]:
-我(玩家)当前的当地时间是：${formatTzDate(myDate)}。
-你(角色)当前的当地时间是：${formatTzDate(aiDate)}。
-【最高优先级警告】：你必须严格以【你(角色)当前的当地时间（${formatTzDate(aiDate)}）】作为你生活作息、吃饭、睡觉、打招呼的唯一标准！例如你的时间是深夜，你必须表现出困意或准备睡觉；你的时间是早晨，你应该说早安。绝不能被我的时间带偏！`;
+            let timeContext = `\n[系统提示-肉体时区锚定与绝对时间感知]:
+我(玩家)当前的真实当地时间是：${formatTzDate(myDate)}。
+你(角色)当前的真实当地时间是：${formatTzDate(aiDate)}。
+【最高红色警告】：你必须彻底忘记北京时间！你的肉体完全存在于你当地的时区里（即${formatTzDate(aiDate)}）！如果你的时间是深夜或凌晨，你必须强行表现出困倦、准备睡觉或者熬夜的状态；如果你的时间是早晨，你必须是在吃早饭或刚醒！你的环境光线和作息必须百分百符合你此时此地的时间！决不能被我(玩家)的时间带偏！`;
             
             // Music Sense Logic (NEW)
             // --- 强化音乐感知与 AI 主动切歌 ---
@@ -9447,7 +9366,7 @@ Structure:
     {
       "speaker": "说话的角色名字 (必须是群成员之一)",
       "reply":["第一句话", "第二句话"], 
-      "translations":["对应的中文翻译"], // OPTIONAL: 【极其严格指令】如果句子是纯中文，绝对禁止输出此字段！如果包含外语，翻译必须与 reply 数组长度严格一一对应！严禁把角色的下一句话串行到翻译里！
+      "translations":["对应的中文翻译", ""], // OPTIONAL: 【极其严格的翻译纪律】翻译数组长度必须与 reply 数组元素个数完全一致！对于 reply 中的纯中文句子，对应位置的翻译必须严格填入空字符串 ""！绝不能翻译纯中文，绝不能输出“无需翻译”！只有那句话是完整的外语长句时才写翻译！翻译内容绝不能串联或泄露下一句话的情节！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
       "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
@@ -9467,13 +9386,13 @@ Structure:
 Structure:
 {
   "reply":["第一句话", "第二句话"], // 必须是数组！
-  "translations":["对应的中文翻译"], // OPTIONAL: 【极其严格指令】如果句子是纯中文，绝对禁止输出此字段！如果包含外语，翻译必须与 reply 数组长度严格一一对应！严禁把角色的下一句话串行到翻译里！
+  "translations":["对应的中文翻译", ""], // OPTIONAL: 【极其严格的翻译纪律】翻译数组长度必须与 reply 数组元素个数完全一致！对于 reply 中的纯中文句子，对应位置的翻译必须严格填入空字符串 ""！绝不能翻译纯中文，绝不能输出“无需翻译”！只有那句话是完整的外语长句时才写翻译！翻译内容绝不能串联或泄露下一句话的情节！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
       "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
       "note": "随笔日记(OPTIONAL: 看心情决定是否提笔，必须使用纯中文)",
   "change_online_status": {"color": "online" | "offline" | "busy", "text": "OPTIONAL: 你在干嘛", "offline_duration_minutes": 60}, // OPTIONAL: 主动修改在线状态。如果改为 offline，必须填写离线多少分钟(数字)！
-  "quote_user_message": "OPTIONAL: 填入你想引用的我说过的话的原文内容(针对性回复时使用)",
+  "quote_user_message": "OPTIONAL: 【最高红线警告】只有当你需要针对性地反驳或回答我的某个复杂问题时才可以使用！日常聊天、附和、或者连续对话中【绝对禁止】使用此字段！如果上一轮你已经引用过，这一轮严禁再次引用！直接删除此字段！",
   "change_remark": "OPTIONAL: 强行修改玩家手机里【对你(AI自身)的备注名】（即玩家的微信里怎么称呼你）。例如你如果是男主，可以把自己在玩家手机里的备注改成'老公'、'哥哥'等。绝对不能改成你对玩家的称呼（如改成'老婆'、'妹妹'等是严重错误）！",
   "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
@@ -9493,8 +9412,8 @@ Structure:
 `}
 【极度严格的作答纪律！！！】
 1. "reply" 必须是一个字符串数组！严禁把一大段长篇大论挤在一个句子里发出来！按句号、叹号或呼吸停顿切分！
-2. 【严禁连续引用】："quote_user_message" 仅在偶尔针对性回答时使用一次！绝对不允许在连续多轮对话中一直使用引用！如果你之前已经引用过，现在请正常回复，必须删除 quote_user_message 字段！
-3. 【翻译格式绝密规则】：如果你的 reply 中包含英文等外语，必须在 "translations" 中提供严格对应的中文翻译！并且 translations 的数组长度必须与 reply 数组完全一一对应！绝不允许把你想说的下一句话提前写进翻译框里串行！如果你的 reply 已经是纯中文，则绝对不允许输出 translations 字段！`;
+2. 【严禁连续引用】："quote_user_message" 仅在偶尔针对性回答时使用一次！绝对不允许在连续多轮对话中一直使用引用！如果之前已经引用过，现在请正常回复，不要再输出 quote_user_message 字段！
+3. 【翻译约束】：如果你的 reply 中包含任何英文、日韩等外语，必须在 "translations" 字段提供标准的中文翻译！但如果你的 reply 已经是纯中文，则绝对不要输出 translations 字段，严禁把中文翻译成英文！`;
 
             // 如果用户在“重回”时提出了具体的走向要求，强行注入最高优先级的提示词
             if (directionPrompt && directionPrompt.trim() !== '') {
@@ -9848,26 +9767,25 @@ Structure:
                                  this.sendPushNotification('微信新消息', session.name, msgType === 'voice' ? '[语音]' : seg.trim(), speakerAvatar);
                              }
 
-                             // --- 提取此句话的独立翻译 (绝对拦截机制) ---
+                             // --- 提取此句话的独立翻译 ---
                              let trans = null;
-                             if (block.translations && Array.isArray(block.translations) && block.translations.length > index) {
-                                 let tText = block.translations[index];
-                                 if (typeof tText === 'string') {
-                                     tText = tText.trim();
-                                     // 极度严格判定：只要原句包含中文字符，即使大模型发神经给了翻译，也强行丢弃！
-                                     const hasChinese = /[\u4e00-\u9fa5]/.test(seg);
-                                     if (!hasChinese && tText && !tText.includes('无需翻译') && !tText.includes('不需') && tText !== seg.trim()) {
-                                         trans = tText;
-                                     }
+                             if (block.translations && Array.isArray(block.translations) && block.translations[index]) {
+                                 const tText = block.translations[index].trim();
+                                 const isMostlyChinese = (seg.match(/[\u4e00-\u9fa5]/g) || []).length > 3;
+                                 // 终极拦截：如果原文包含3个以上中文字符，强行判为空。如果翻译内容和原文雷同或是废话，强行判为空。
+                                 if (tText && !isMostlyChinese && !tText.includes('无需翻译') && !tText.includes('不需翻译') && !tText.includes('为空') && tText !== seg.trim()) {
+                                     trans = tText;
                                  }
                              }
-                             // 如果是纯英文长句且没给翻译，才触发后置网络翻译（单个单词不翻译）
-                             const hasChineseFallback = /[\u4e00-\u9fa5]/.test(seg.trim());
+
+                             // 【自动翻译检测 fallback】：当设置开启时，如果是纯外文长句且 JSON 里遗漏了翻译，才自动触发接口（彻底过滤掉零星单词和中文）
+                             const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
                              const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
-                             if (session.enableClickTranslate && !trans && !hasChineseFallback && engWordCount >= 3) {
+                             // 取消由于自动触发导致的延迟视觉，让 API 请求更加隐蔽
+                             if (session.enableClickTranslate && !trans && !hasChinese && engWordCount >= 3) {
                                  setTimeout(() => {
                                      this.translateMessage(aiMsg);
-                                 }, 1000);
+                                 }, 800);
                              }
 
                              if (this.currentApp !== 'wechat' || this.wechatState.activeNav !== 'room' || this.wechatState.activeSession.id !== session.id || document.hidden) {
@@ -10433,18 +10351,14 @@ Structure:
         },
         async fetchModels(type = 'main') { 
             const isSub = type === 'sub';
-            const isImage = type === 'image';
-            const baseUrl = isImage ? this.imageApiConfig.baseUrl : (isSub ? this.apiConfig.subBaseUrl : this.apiConfig.baseUrl);
-            const apiKey = isImage ? this.imageApiConfig.apiKey : (isSub ? this.apiConfig.subApiKey : this.apiConfig.apiKey);
+            const baseUrl = isSub ? this.apiConfig.subBaseUrl : (type === 'image' ? this.imageApiConfig.baseUrl : this.apiConfig.baseUrl);
+            const apiKey = isSub ? this.apiConfig.subApiKey : (type === 'image' ? this.imageApiConfig.apiKey : this.apiConfig.apiKey);
 
             if (!baseUrl) return this.showToast('请输入反代地址'); 
             if (baseUrl.includes('api520.pro')) return this.showToast('该反代地址不稳定，已被屏蔽'); 
             if (!apiKey) return this.showToast('请输入 API 密钥'); 
             
-            if(type === 'main') this.isMainLoading = true;
-            else if(type === 'sub') this.isSubLoading = true;
-            else if(type === 'image') this.isImageLoading = true;
-
+            this.apiLoading[type] = true; 
             try { 
                 let url = baseUrl.trim().replace(/\/+$/, ''); 
                 if (!url.endsWith('/v1')) url += '/v1'; 
@@ -10469,11 +10383,8 @@ Structure:
             } catch (e) { 
                 console.error(e); 
                 this.showToast('拉取失败: ' + e.message); 
-                if(type === 'main' && this.availableModels.length===0) this.availableModels =['gpt-3.5-turbo', 'gpt-4', 'claude-3-opus']; 
             } finally { 
-                if(type === 'main') this.isMainLoading = false;
-                else if(type === 'sub') this.isSubLoading = false;
-                else if(type === 'image') this.isImageLoading = false;
+                this.apiLoading[type] = false; 
             } 
         },
         openWorldModal(type) { 
@@ -11828,7 +11739,10 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             } catch(e) {
                 console.error("电池状态获取失败", e);
             } 
-        },                
+        },
+        savePreset() { if (!this.apiConfig.baseUrl) return this.showToast('配置为空'); this.showInput("预设名称", "", "例如: DeepSeek", (name) => { if (name) { this.apiPresets.push({ name, baseUrl: this.apiConfig.baseUrl, apiKey: this.apiConfig.apiKey, selectedModel: this.apiConfig.selectedModel }); this.saveData(); this.showToast('预设已保存'); } }); },
+        applyPreset(p) { this.apiConfig.baseUrl = p.baseUrl; this.apiConfig.apiKey = p.apiKey; this.apiConfig.selectedModel = p.selectedModel; this.showToast(`已应用: ${p.name}`); },
+        deletePreset(i) { this.showConfirm("确定删除该预设吗？", () => { this.apiPresets.splice(i, 1); this.saveData(); this.showToast('已删除'); }); },
         saveSettings() { this.saveData(); this.showToast('配置已保存'); this.navigateSettings('back'); },
         
         toggleSelectMessage(msg) { const idx = this.selectedMessageIds.indexOf(msg); if (idx > -1) this.selectedMessageIds.splice(idx, 1); else this.selectedMessageIds.push(msg); },
@@ -12453,8 +12367,8 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             if (!this.minimaxConfig.groupId || !this.minimaxConfig.apiKey) {
                 return this.showToast('请先填写 Group ID 和 API Key');
             }
-            this.isMinimaxLoading = true;
             this.showToast('正在获取...');
+            this.apiLoading.minimax = true; // 增加这行
             try {
                 const baseUrl = this.minimaxConfig.region === 'intl' ? 'https://api.minimaxi.chat/v1' : 'https://api.minimax.chat/v1';
                 const res = await fetch(`${baseUrl}/models?GroupId=${this.minimaxConfig.groupId.trim()}`, {
@@ -12472,7 +12386,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 } else {
                     throw new Error('数据解析异常');
                 }
-            } catch (e) {
+            } catch (e) {                
                 console.error(e);
                 this.showToast('拉取失败: ' + e.message);
                 // 容错：如果拉取失败，直接内置 MiniMax 官方常用的两个语音模型
@@ -12480,8 +12394,63 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     this.minimaxModels = ['speech-01-turbo', 'speech-01'];
                 }
             } finally {
-            this.isMinimaxLoading = false;
+                this.apiLoading.minimax = false; // 增加这行
                 this.saveData();
+            }
+        },
+        // --- 独立 API 预设方法 ---
+        openApiPresetModal(target) {
+            this.presetModal.target = target;
+            this.presetModal.show = true;
+        },
+        getPresetsForTarget() {
+            if(!this.apiPresetsNew) this.apiPresetsNew = { main: [], sub: [], image: [], minimax: [] };
+            return this.apiPresetsNew[this.presetModal.target] || [];
+        },
+        saveApiPreset(target) {
+            const name = this.presetInputs[target].trim();
+            if(!name) return this.showToast('请输入预设名称');
+            if(!this.apiPresetsNew) this.apiPresetsNew = { main: [], sub: [], image: [], minimax: [] };
+            if(!this.apiPresetsNew[target]) this.apiPresetsNew[target] = [];
+
+            let presetData = { name: name };
+            if(target === 'main') presetData = { ...presetData, baseUrl: this.apiConfig.baseUrl, apiKey: this.apiConfig.apiKey, selectedModel: this.apiConfig.selectedModel };
+            if(target === 'sub') presetData = { ...presetData, baseUrl: this.apiConfig.subBaseUrl, apiKey: this.apiConfig.subApiKey, selectedModel: this.apiConfig.subSelectedModel };
+            if(target === 'image') presetData = { ...presetData, baseUrl: this.imageApiConfig.baseUrl, apiKey: this.imageApiConfig.apiKey, selectedModel: this.imageApiConfig.selectedModel };
+            if(target === 'minimax') presetData = { ...presetData, region: this.minimaxConfig.region, groupId: this.minimaxConfig.groupId, apiKey: this.minimaxConfig.apiKey, voiceId: this.minimaxConfig.voiceId, selectedModel: this.minimaxConfig.selectedModel };
+
+            const idx = this.apiPresetsNew[target].findIndex(p => p.name === name);
+            if(idx > -1) this.apiPresetsNew[target][idx] = presetData;
+            else this.apiPresetsNew[target].push(presetData);
+
+            this.saveData();
+            this.showToast('预设已保存');
+        },
+        applyApiPreset(target, preset) {
+            this.presetInputs[target] = preset.name;
+            if(target === 'main') { this.apiConfig.baseUrl = preset.baseUrl; this.apiConfig.apiKey = preset.apiKey; this.apiConfig.selectedModel = preset.selectedModel; }
+            if(target === 'sub') { this.apiConfig.subBaseUrl = preset.baseUrl; this.apiConfig.subApiKey = preset.apiKey; this.apiConfig.subSelectedModel = preset.selectedModel; }
+            if(target === 'image') { this.imageApiConfig.baseUrl = preset.baseUrl; this.imageApiConfig.apiKey = preset.apiKey; this.imageApiConfig.selectedModel = preset.selectedModel; }
+            if(target === 'minimax') { this.minimaxConfig.region = preset.region || 'cn'; this.minimaxConfig.groupId = preset.groupId; this.minimaxConfig.apiKey = preset.apiKey; this.minimaxConfig.voiceId = preset.voiceId; this.minimaxConfig.selectedModel = preset.selectedModel; }
+
+            this.presetModal.show = false;
+            this.saveData();
+            this.showToast(`已应用预设: ${preset.name}`);
+        },
+        deleteCurrentApiPreset(target) {
+            const name = this.presetInputs[target].trim();
+            if(!name) return this.showToast('请先填写或选择要删除的预设名称');
+            if(!this.apiPresetsNew || !this.apiPresetsNew[target]) return;
+            const idx = this.apiPresetsNew[target].findIndex(p => p.name === name);
+            if(idx > -1) {
+                this.showConfirm(`确定删除预设 "${name}" 吗？`, () => {
+                    this.apiPresetsNew[target].splice(idx, 1);
+                    this.presetInputs[target] = '';
+                    this.saveData();
+                    this.showToast('已删除');
+                });
+            } else {
+                this.showToast('未找到同名预设');
             }
         },
 
