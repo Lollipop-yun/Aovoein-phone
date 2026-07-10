@@ -1127,7 +1127,23 @@
         </transition>
 
     <!-- 弹窗组件 -->
-    <transition name="scale"><div v-if="modelSelectModal.show" class="fixed inset-0 z-[65000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[60vh]"><div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white"><h3 class="font-bold text-lg text-gray-900">选择模型</h3><button @click="modelSelectModal.show = false" class="text-gray-400 font-medium text-sm">关闭</button></div><div class="flex-1 overflow-y-auto p-2 space-y-1"><div v-if="availableModels.length===0" class="p-4 text-center text-xs text-gray-400">列表为空</div><div v-for="model in (modelSelectModal.target === 'sub' ? subAvailableModels : availableModels)" :key="model" @click="selectModel(model)" class="p-3.5 rounded-xl flex items-center justify-between active:bg-gray-50 transition" :class="apiConfig.selectedModel === model ? 'bg-blue-50' : ''"><span class="font-bold text-sm text-gray-800">{{ model }}</span><i v-if="apiConfig.selectedModel === model" class="fas fa-check text-blue-500"></i></div></div></div></div></transition>
+    <transition name="scale">
+        <div v-if="modelSelectModal.show" class="fixed inset-0 z-[65000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[60vh]">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
+                    <h3 class="font-bold text-lg text-gray-900">选择模型</h3>
+                    <button @click="modelSelectModal.show = false" class="text-gray-400 font-medium text-sm">关闭</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <div v-if="(modelSelectModal.target === 'sub' ? subAvailableModels : (modelSelectModal.target === 'image' ? imageModels : availableModels)).length===0" class="p-4 text-center text-xs text-gray-400">列表为空</div>
+                    <div v-for="model in (modelSelectModal.target === 'sub' ? subAvailableModels : (modelSelectModal.target === 'image' ? imageModels : availableModels))" :key="model" @click="selectModel(model)" class="p-3.5 rounded-xl flex items-center justify-between active:bg-gray-50 transition" :class="(modelSelectModal.target === 'sub' ? apiConfig.subSelectedModel : (modelSelectModal.target === 'image' ? imageApiConfig.selectedModel : apiConfig.selectedModel)) === model ? 'bg-blue-50' : ''">
+                        <span class="font-bold text-sm text-gray-800">{{ model }}</span>
+                        <i v-if="(modelSelectModal.target === 'sub' ? apiConfig.subSelectedModel : (modelSelectModal.target === 'image' ? imageApiConfig.selectedModel : apiConfig.selectedModel)) === model" class="fas fa-check text-blue-500"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </transition>
     
     <!-- 【完美还原】设置群管理员主界面 -->
         <transition name="page-slide">
@@ -5017,6 +5033,7 @@
         :home-profile="homeProfile"
         :masks="masks"
         :npc-avatars="npcAvatars"
+        :npc-names="npcNames"
         @close="closeApp" 
         @toast="showToast" 
         @save-data="saveData" 
@@ -5334,11 +5351,13 @@
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">图标设置</div><div class="text-[11px] text-gray-400 mt-0.5">自定义桌面App名称和图标</div></div>
         </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
     </div>
+    
     <div @click="navigateThemes('npc_avatars')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
         <div class="flex items-center gap-4"><i class="fas fa-users-viewfinder text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
-            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">NPC 头像库</div><div class="text-[11px] text-gray-400 mt-0.5">管理商城评论、论坛等使用的NPC头像</div></div>
+            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">NPC 形象库</div><div class="text-[11px] text-gray-400 mt-0.5">管理商城、论坛使用的 NPC 头像与网名</div></div>
         </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
     </div>
+    
     <div @click="navigateThemes('home_preset')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
         <div class="flex items-center gap-4"><i class="fas fa-mobile-screen text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">桌面预设</div><div class="text-[11px] text-gray-400 mt-0.5">保存与导入桌面全套配置</div></div>
@@ -5563,38 +5582,67 @@
     
     <!-- 这是你刚才丢失导致白屏的 NPC 头像库页面，必须紧贴在图标设置的下面，</main>的上面！ -->
     <transition name="page-slide">
-        <div v-if="themesPage === 'npc_avatars'" class="absolute inset-0 p-4 pb-20 flex flex-col bg-gray-50">
-            <div class="flex flex-col gap-3 mb-4 shrink-0">
-                <textarea v-model="npcAvatarInputUrl" placeholder="输入头像 URL 链接 (支持批量，可直接粘贴带有其他字符的文本，自动提取)" class="w-full h-24 bg-white p-3 rounded-xl text-sm border border-gray-200 outline-none resize-none shadow-sm"></textarea>
-                <div class="flex gap-2">
-                    <button @click="formatNpcAvatarUrls" class="w-1/4 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold shadow-sm active:bg-gray-200 transition border border-gray-200">修正格式</button>
-                    <button @click="triggerNpcDocxImport" class="w-1/4 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold shadow-sm active:bg-gray-200 transition border border-gray-200">导入docx</button>
-                    <button @click="addNpcAvatarUrl" class="flex-1 bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition">批量添加</button>
-                </div>
+        <div v-if="themesPage === 'npc_avatars'" class="absolute inset-0 pt-4 px-4 pb-20 flex flex-col bg-gray-50">
+            <!-- 顶部 Tab 切换 -->
+            <div class="flex bg-gray-200 p-1 rounded-xl mb-4 shrink-0">
+                <button @click="npcLibraryTab='avatar'" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition" :class="npcLibraryTab==='avatar'?'bg-white shadow-sm text-black':'text-gray-500'">头像库</button>
+                <button @click="npcLibraryTab='name'" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition" :class="npcLibraryTab==='name'?'bg-white shadow-sm text-black':'text-gray-500'">网名库</button>
             </div>
-            <input type="file" ref="npcDocxInput" accept=".docx" class="hidden" @change="handleNpcDocxImport">
-            <div class="flex justify-between items-center mb-3 shrink-0">
-                <button @click="triggerNpcAvatarUpload" class="bg-white text-gray-800 border border-gray-200 px-4 py-2 rounded-full text-xs font-bold shadow-sm active:bg-gray-50"><i class="fas fa-upload mr-1"></i> 本地相册上传</button>
-                <button @click="isNpcMultiSelect = !isNpcMultiSelect; selectedNpcAvatars = []" class="text-xs font-bold px-4 py-2 rounded-full transition shadow-sm" :class="isNpcMultiSelect ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-white text-gray-600 border border-gray-200'">{{ isNpcMultiSelect ? '取消多选' : '多选删除' }}</button>
-            </div>
-            <div class="flex-1 overflow-y-auto bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                <div v-if="!npcAvatars || npcAvatars.length === 0" class="flex flex-col items-center text-center text-gray-400 text-xs mt-20">
-                    <i class="fas fa-users-viewfinder text-4xl opacity-20 mb-3 block"></i>
-                    暂无NPC头像，请点击上方添加
+
+            <!-- 头像库 -->
+            <div v-if="npcLibraryTab === 'avatar'" class="flex-1 flex flex-col min-h-0">
+                <div class="flex flex-col gap-3 mb-4 shrink-0">
+                    <textarea v-model="npcAvatarInputUrl" placeholder="输入头像 URL 链接 (支持批量，可直接粘贴带有其他字符的文本，自动提取)" class="w-full h-24 bg-white p-3 rounded-xl text-sm border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                    <div class="flex gap-2">
+                        <button @click="formatNpcAvatarUrls" class="w-1/4 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold shadow-sm active:bg-gray-200 transition border border-gray-200">修正格式</button>
+                        <button @click="triggerNpcDocxImport" class="w-1/4 bg-gray-100 text-gray-700 py-2.5 rounded-xl text-xs font-bold shadow-sm active:bg-gray-200 transition border border-gray-200">导入docx</button>
+                        <button @click="addNpcAvatarUrl" class="flex-1 bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition">批量添加</button>
+                    </div>
                 </div>
-                <div class="grid grid-cols-4 gap-3">
-                    <div v-for="(avatar, idx) in npcAvatars" :key="idx" class="aspect-square rounded-xl overflow-hidden bg-gray-100 relative cursor-pointer border border-gray-100 shadow-sm" @click="toggleNpcAvatarSelect(idx)">
-                        <img :src="avatar" class="w-full h-full object-cover">
-                        <div v-if="isNpcMultiSelect" class="absolute top-1 right-1 w-5 h-5 rounded-full border border-white bg-white/80 flex items-center justify-center shadow-sm" :class="{'bg-red-500 border-red-500': selectedNpcAvatars.includes(idx)}">
-                            <i v-if="selectedNpcAvatars.includes(idx)" class="fas fa-check text-white text-[10px]"></i>
+                <input type="file" ref="npcDocxInput" accept=".docx" class="hidden" @change="handleNpcDocxImport">
+                <div class="flex justify-between items-center mb-3 shrink-0">
+                    <button @click="triggerNpcAvatarUpload" class="bg-white text-gray-800 border border-gray-200 px-4 py-2 rounded-full text-xs font-bold shadow-sm active:bg-gray-50"><i class="fas fa-upload mr-1"></i> 本地相册上传</button>
+                    <button @click="isNpcMultiSelect = !isNpcMultiSelect; selectedNpcAvatars = []" class="text-xs font-bold px-4 py-2 rounded-full transition shadow-sm" :class="isNpcMultiSelect ? 'bg-red-50 text-red-500 border border-red-100' : 'bg-white text-gray-600 border border-gray-200'">{{ isNpcMultiSelect ? '取消多选' : '多选删除' }}</button>
+                </div>
+                <div class="flex-1 overflow-y-auto bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+                    <div v-if="!npcAvatars || npcAvatars.length === 0" class="flex flex-col items-center text-center text-gray-400 text-xs mt-20">
+                        <i class="fas fa-users-viewfinder text-4xl opacity-20 mb-3 block"></i>
+                        暂无NPC头像，请点击上方添加
+                    </div>
+                    <div class="grid grid-cols-4 gap-3">
+                        <div v-for="(avatar, idx) in npcAvatars" :key="idx" class="aspect-square rounded-xl overflow-hidden bg-gray-100 relative cursor-pointer border border-gray-100 shadow-sm" @click="toggleNpcAvatarSelect(idx)">
+                            <img :src="avatar" class="w-full h-full object-cover">
+                            <div v-if="isNpcMultiSelect" class="absolute top-1 right-1 w-5 h-5 rounded-full border border-white bg-white/80 flex items-center justify-center shadow-sm" :class="{'bg-red-500 border-red-500': selectedNpcAvatars.includes(idx)}">
+                                <i v-if="selectedNpcAvatars.includes(idx)" class="fas fa-check text-white text-[10px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-if="isNpcMultiSelect && selectedNpcAvatars.length > 0" class="absolute bottom-4 left-4 right-4 z-20">
+                    <button @click="deleteSelectedNpcAvatars" class="w-full bg-red-500 text-white py-3.5 rounded-2xl font-bold shadow-lg active:scale-95 transition">删除选中的 {{selectedNpcAvatars.length}} 个头像</button>
+                </div>
+                <input type="file" ref="npcAvatarInput" accept="image/*" class="hidden" multiple @change="handleNpcAvatarUpload">
+            </div>
+
+            <!-- 网名库 -->
+            <div v-if="npcLibraryTab === 'name'" class="flex-1 flex flex-col min-h-0">
+                <div class="flex flex-col gap-3 mb-4 shrink-0">
+                    <textarea v-model="npcNameInput" placeholder="输入网名，一行一个\n例如：\n听风者\n落日余晖\nSleepyCat" class="w-full h-32 bg-white p-3 rounded-xl text-sm border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                    <button @click="addNpcNames" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold shadow-sm active:scale-95 transition">批量添加网名</button>
+                </div>
+                <div class="flex-1 overflow-y-auto bg-white rounded-2xl border border-gray-100 p-4 shadow-sm content-start">
+                    <div v-if="!npcNames || npcNames.length === 0" class="flex flex-col items-center text-center text-gray-400 text-xs mt-20">
+                        <i class="fas fa-signature text-4xl opacity-20 mb-3 block"></i>
+                        暂无网名，请在上方输入添加
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <div v-for="(name, idx) in npcNames" :key="idx" class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border border-gray-200">
+                            <span>{{ name }}</span>
+                            <i class="fas fa-times text-gray-400 hover:text-red-500 cursor-pointer p-1" @click="deleteNpcName(idx)"></i>
                         </div>
                     </div>
                 </div>
             </div>
-            <div v-if="isNpcMultiSelect && selectedNpcAvatars.length > 0" class="absolute bottom-4 left-4 right-4 z-20">
-                <button @click="deleteSelectedNpcAvatars" class="w-full bg-red-500 text-white py-3.5 rounded-2xl font-bold shadow-lg active:scale-95 transition">删除选中的 {{selectedNpcAvatars.length}} 个头像</button>
-            </div>
-            <input type="file" ref="npcAvatarInput" accept="image/*" class="hidden" multiple @change="handleNpcAvatarUpload">
         </div>
     </transition>
 
@@ -5726,7 +5774,8 @@ const app = createApp({
             chatSearchModal: { show: false, keyword: '', results:[] },
             globalSearchModal: { show: false, keyword: '', contacts: [], groups: [], histories:[] },
             themeConfig: { wallpaper: '', fontFamily: '', fontUrl: '', fontSize: 1.0, fontColor: '#000000', isDarkMode: false }, fontPresets:[], fontInputUrl: '',
-            npcAvatars: [], npcAvatarInputUrl: '', isNpcMultiSelect: false, selectedNpcAvatars: [],
+            npcLibraryTab: 'avatar', npcAvatars: [], npcAvatarInputUrl: '', isNpcMultiSelect: false, selectedNpcAvatars: [], npcNames: [], npcNameInput: '',
+            npcNames: [], npcNameInput: '', npcTab: 'avatar', isNpcNameMultiSelect: false, selectedNpcNames: [],
             chatlistBeautifyConfig: { activeCSS: '', tempCode: '', presets: [] },
             notificationBeautifyConfig: { activeCSS: '', tempCode: '', presets: [] },
             
@@ -5938,7 +5987,7 @@ const app = createApp({
             return this.wechatState.sessions.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
         },
         settingsTitle() { if (this.settingsPage === 'api-config') return 'API 配置'; if (this.settingsPage === 'data-manage') return '数据管理'; if (this.settingsPage === 'notification') return '消息提示音'; return '系统设置'; },
-        themesTitle() { if (this.themesPage === 'wallpaper') return '壁纸设置'; if (this.themesPage === 'font') return '字体设置'; if (this.themesPage === 'icons') return '图标设置'; if (this.themesPage === 'beautify') return '美化设置'; if (this.themesPage === 'home_preset') return '主屏预设'; if (this.themesPage === 'notification_beautify') return '通知栏美化'; return '主题商店'; },
+        themesTitle() { if (this.themesPage === 'wallpaper') return '壁纸设置'; if (this.themesPage === 'font') return '字体设置'; if (this.themesPage === 'icons') return '图标设置'; if (this.themesPage === 'beautify') return '美化设置'; if (this.themesPage === 'home_preset') return '主屏预设'; if (this.themesPage === 'notification_beautify') return '通知栏美化'; if (this.themesPage === 'npc_avatars') return 'NPC 形象库'; return '主题商店'; },
         folders() { return this.worldData.filter(i => i.type === 'folder'); },
         rootFiles() { return this.worldData.filter(i => i.type === 'file' && !i.parentId); },
         filteredWechatContacts() {
@@ -10465,8 +10514,13 @@ Structure:
             this.modelSelectModal.show = true;
         },
         selectModel(model) { 
-            if (this.modelSelectModal.target === 'sub') {
+            const target = this.modelSelectModal.target;
+            if (target === 'sub') {
                 this.apiConfig.subSelectedModel = model;
+            } else if (target === 'image') {
+                this.imageApiConfig.selectedModel = model;
+            } else if (target === 'minimax') {
+                this.minimaxConfig.selectedModel = model;
             } else {
                 this.apiConfig.selectedModel = model; 
             }
@@ -10750,6 +10804,22 @@ Structure:
             this.isNpcMultiSelect = false;
             this.saveData();
             this.showToast('已删除');
+        },
+        addNpcNames() {
+            if (!this.npcNameInput.trim()) return this.showToast('请输入网名');
+            const names = this.npcNameInput.split('\n').map(n => n.trim()).filter(Boolean);
+            if (names.length > 0) {
+                if (!this.npcNames) this.npcNames = [];
+                this.npcNames.unshift(...names);
+                this.npcNames = [...new Set(this.npcNames)]; // 去重
+                this.saveData();
+                this.npcNameInput = '';
+                this.showToast(`成功添加 ${names.length} 个网名`);
+            }
+        },
+        deleteNpcName(idx) {
+            this.npcNames.splice(idx, 1);
+            this.saveData();
         },
         
         // --- 主屏幕预设逻辑 ---
@@ -11382,7 +11452,7 @@ Structure:
             this.showToast('已恢复默认样式');
         },
         copyChatlistDefault() {
-            const defaultCss = `/* Aovein 专属代码：Chat list 聊天列表美化 */\n.bg-\\[\\#f2f2f6\\] { background-color: #f2f2f6; }\n/* Aovein 顶部选项卡激活态 */\n.wechat-pill-active {\n    background-color: #000;\n    color: #fff;\n}\n/* Aovein 顶部选项卡未激活态 */\n.wechat-pill-inactive {\n    color: #666;\n}\n/* 聊天列表项背景与圆角 */\n.bg-white.rounded-\\[18px\\] {\n    background-color: #fff;\n    border-radius: 18px;\n}`;
+            const defaultCss = `/* Aovein 专属代码：Chat list 聊天列表美化 */\n.bg-\\[\\#f2f2f6\\] { background-color: #f2f2f6; }\n/* Aovein 顶部选项卡激活态 */\n.wechat-pill-active {\n    background-color: #000;\n    color: #fff;\n}\n/* Aovein 顶部选项卡未激活态 */\n.wechat-pill-inactive {\n    color: #666;\n}\n/* 聊天列表项背景与圆角 */\n.bg-white.rounded-\\[18px\\] {\n    background-color: #fff;\n    border-radius: 18px;\n}\n/* 微信底部导航栏/系统Dock栏 美化 */\n.wechat-bottom-nav {\n    background: rgba(255, 255, 255, 0.95);\n    backdrop-filter: blur(10px);\n}\n.dock-container {\n    background: rgba(255, 255, 255, 0.6);\n    backdrop-filter: blur(20px);\n}`;
             this.chatlistBeautifyConfig.tempCode = defaultCss;
             this.copyToClipboard(defaultCss);
             this.showToast('默认Aovein源代码已填入框内并复制到剪贴板');
