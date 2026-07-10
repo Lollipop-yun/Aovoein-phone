@@ -1086,7 +1086,7 @@
 
     <!-- 消息弹窗 -->
     <transition name="app-slide">
-        <div v-if="globalNotification.show" class="top-notification-banner" @click="jumpToChat(globalNotification.sessionId)">
+        <div v-if="globalNotification.show" class="top-notification-banner aovein-notification-banner" @click="jumpToChat(globalNotification.sessionId)">
             <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0"><img :src="globalNotification.avatar" class="w-full h-full object-cover"></div>
             <div class="flex-1 min-w-0"><div class="font-bold text-sm truncate">{{ globalNotification.title }}</div><div class="text-xs text-gray-500 truncate">{{ globalNotification.content }}</div></div>
             <span class="text-xs text-gray-400">现在</span>
@@ -3948,7 +3948,7 @@
             </div>
             
             <!-- 消息列表 -->
-            <main v-if="wechatState.activeNav === 'chat'" class="flex-1 overflow-y-auto px-3 pb-24 z-0 relative">
+            <main v-if="wechatState.activeNav === 'chat'" class="flex-1 overflow-y-auto px-3 pb-24 z-0 relative aovein-chatlist">
                 
                 <!-- 固定的搜索栏与Tab (滑动时吸附在顶部) -->
                 <div class="sticky top-0 z-20 bg-[#f2f2f6] pt-2 pb-2">
@@ -4053,18 +4053,19 @@
                 <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
                     <button @click="wechatState.activeNav = 'me'" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left text-lg"></i></button>
                     <h1 class="font-bold text-[16px] text-gray-900">列表美化 (Chat list)</h1>
-                    <div class="w-8"></div>
+                    <div class="flex items-center gap-3">
+                        <input type="file" ref="chatlistImportInput" accept=".json,.txt,.docx" class="hidden" @change="handleChatlistImport">
+                        <button @click="$refs.chatlistImportInput.click()" class="text-gray-600"><i class="fas fa-file-import"></i></button>
+                    </div>
                 </header>
                 <div class="flex-1 overflow-y-auto pb-safe flex flex-col p-4 gap-4">
                     <!-- 预览区 -->
                     <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 shrink-0">
                         <div class="text-xs text-gray-400 mb-2 text-center font-bold tracking-widest">效果预览</div>
-                        <div class="bg-[#f2f2f6] rounded-xl p-3 shadow-inner">
+                        <div class="bg-[#f2f2f6] rounded-xl p-3 shadow-inner aovein-chatlist">
                             <div class="bg-white rounded-[20px] p-1 flex justify-between items-center shadow-sm mb-3 gap-1">
                                 <div class="wechat-pill-tab wechat-pill-active flex-1 text-center text-[11px] px-1">Chats</div>
                                 <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">Group</div>
-                                <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">Likes</div>
-                                <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">All</div>
                             </div>
                             <div class="bg-white rounded-[18px] p-3 shadow-sm flex items-center border border-gray-50">
                                 <div class="w-10 h-10 rounded-full bg-gray-200 mr-3 shrink-0"><i class="fas fa-user flex h-full items-center justify-center text-gray-400"></i></div>
@@ -4079,13 +4080,13 @@
                     <!-- 代码编辑区 -->
                     <div class="flex flex-col shrink-0">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="text-[11px] font-bold text-gray-500 tracking-wider">CSS 代码</span>
+                            <span class="text-[11px] font-bold text-gray-500 tracking-wider">Aovein 专属代码 (CSS)</span>
                             <div class="flex gap-3">
                                 <button @click="resetChatlistBeautify" class="text-[10px] text-red-500 font-bold active:opacity-50">重置</button>
                                 <button @click="copyChatlistDefault" class="text-[10px] text-blue-500 font-bold active:opacity-50">复制源码</button>
                             </div>
                         </div>
-                        <textarea v-model="chatlistBeautifyConfig.tempCode" placeholder="输入 CSS 代码...\n例如: \n.wechat-pill-active { background-color: #000 !important; }" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
+                        <textarea v-model="chatlistBeautifyConfig.tempCode" placeholder="输入 CSS 代码...\n例如: \n.aovein-chatlist .wechat-pill-active { background-color: #000 !important; }" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
                         
                         <div class="flex gap-2 mb-2 shrink-0">
                             <button @click="applyChatlistBeautify" class="flex-1 bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">应用更改</button>
@@ -4102,6 +4103,7 @@
                                 <span class="font-bold text-gray-700 text-[13px] truncate">{{ preset.name }}</span>
                                 <div class="flex items-center gap-3">
                                     <button @click="loadChatlistPreset(preset)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center active:bg-gray-200"><i class="fas fa-check text-[10px]"></i></button>
+                                    <button @click="exportChatlistPreset(preset)" class="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:bg-green-100"><i class="fas fa-file-export text-[10px]"></i></button>
                                     <button @click="deleteChatlistPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:bg-red-100"><i class="fas fa-trash text-[10px]"></i></button>
                                 </div>
                             </div>
@@ -5316,6 +5318,11 @@
         </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
     </div>
     <div @click="navigateThemes('icons')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
+    <div @click="navigateThemes('notification_beautify')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
+        <div class="flex items-center gap-4"><i class="fas fa-bell text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
+            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">通知栏美化</div><div class="text-[11px] text-gray-400 mt-0.5">自定义顶部消息弹窗样式</div></div>
+        </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+    </div>
         <div class="flex items-center gap-4"><i class="fas fa-cubes text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">图标设置</div><div class="text-[11px] text-gray-400 mt-0.5">自定义桌面App名称和图标</div></div>
         </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
@@ -5526,6 +5533,65 @@
             <input type="file" ref="npcAvatarInput" accept="image/*" class="hidden" multiple @change="handleNpcAvatarUpload">
         </div>
     </transition>
+    
+    <!-- 通知栏美化页面 (iOS 灰白风) -->
+    <transition name="page-slide">
+        <div v-if="themesPage === 'notification_beautify'" class="absolute inset-0 bg-[#f4f4f6] flex flex-col font-sans z-50">
+            <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+                <button @click="navigateThemes('main')" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left text-lg"></i></button>
+                <h1 class="font-bold text-[16px] text-gray-900">通知栏美化</h1>
+                <div class="flex items-center gap-3">
+                    <input type="file" ref="notificationImportInput" accept=".json,.txt,.docx" class="hidden" @change="handleNotificationImport">
+                    <button @click="$refs.notificationImportInput.click()" class="text-gray-600"><i class="fas fa-file-import"></i></button>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto pb-safe flex flex-col p-4 gap-4">
+                <!-- 预览区 -->
+                <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 shrink-0">
+                    <div class="text-xs text-gray-400 mb-6 text-center font-bold tracking-widest">效果预览</div>
+                    <!-- 模拟顶部弹窗，移除 relative 等限制，直接靠自身样式呈现 -->
+                    <div class="aovein-notification-banner bg-white/95 backdrop-blur-[10px] rounded-[16px] p-3 shadow-[0_4px_20px_rgba(0,0,0,0.1)] flex items-center gap-3 mx-auto max-w-[380px]">
+                        <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0"><i class="fas fa-user flex h-full items-center justify-center text-gray-400"></i></div>
+                        <div class="flex-1 min-w-0"><div class="font-bold text-sm text-gray-900 truncate">某位少爷</div><div class="text-xs text-gray-500 truncate">发来了一条新消息...</div></div>
+                        <span class="text-xs text-gray-400">现在</span>
+                    </div>
+                </div>
+
+                <!-- 代码编辑区 -->
+                <div class="flex flex-col shrink-0">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500 tracking-wider">Aovein 专属代码 (CSS)</span>
+                        <div class="flex gap-3">
+                            <button @click="resetNotificationBeautify" class="text-[10px] text-red-500 font-bold active:opacity-50">重置</button>
+                            <button @click="copyNotificationDefault" class="text-[10px] text-blue-500 font-bold active:opacity-50">复制源码</button>
+                        </div>
+                    </div>
+                    <textarea v-model="notificationBeautifyConfig.tempCode" placeholder="输入 CSS 代码...\n例如: \n.aovein-notification-banner { background-color: #000 !important; color: #fff !important; }" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
+                    
+                    <div class="flex gap-2 mb-2 shrink-0">
+                        <button @click="applyNotificationBeautify" class="flex-1 bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">应用更改</button>
+                        <button @click="saveNotificationPreset" class="w-24 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-xs font-bold active:bg-gray-50 transition shadow-sm">保存预设</button>
+                    </div>
+                </div>
+
+                <!-- 预设列表 -->
+                <div class="bg-white rounded-[20px] overflow-hidden shadow-sm border border-gray-100 shrink-0 mb-10">
+                    <div class="p-3 border-b border-gray-50 bg-gray-50/50 text-[11px] font-bold text-gray-400 tracking-wider">我的专属样式预设</div>
+                    <div v-if="notificationBeautifyConfig.presets.length === 0" class="p-6 text-center text-gray-400 text-xs">暂无预设</div>
+                    <div v-else class="divide-y divide-gray-50">
+                        <div v-for="(preset, idx) in notificationBeautifyConfig.presets" :key="idx" class="p-4 flex items-center justify-between">
+                            <span class="font-bold text-gray-700 text-[13px] truncate">{{ preset.name }}</span>
+                            <div class="flex items-center gap-3">
+                                <button @click="loadNotificationPreset(preset)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center active:bg-gray-200"><i class="fas fa-check text-[10px]"></i></button>
+                                <button @click="exportNotificationPreset(preset)" class="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:bg-green-100"><i class="fas fa-file-export text-[10px]"></i></button>
+                                <button @click="deleteNotificationPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:bg-red-100"><i class="fas fa-trash text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </transition>
 
 </main></div></transition>
     
@@ -5657,6 +5723,7 @@ const app = createApp({
             themeConfig: { wallpaper: '', fontFamily: '', fontUrl: '', fontSize: 1.0, fontColor: '#000000', isDarkMode: false }, fontPresets:[], fontInputUrl: '',
             npcAvatars: [], npcAvatarInputUrl: '', isNpcMultiSelect: false, selectedNpcAvatars: [],
             chatlistBeautifyConfig: { activeCSS: '', tempCode: '', presets: [] },
+            notificationBeautifyConfig: { activeCSS: '', tempCode: '', presets: [] },
             
             // 美化配置
             beautifyConfig: {
@@ -7834,7 +7901,8 @@ const app = createApp({
                 const voiceCss = this.voiceCallTheme?.customCss || '';
                 const statusCss = this.statusBeautifyConfig?.activeCSS || '';
                 const chatlistCss = this.chatlistBeautifyConfig?.activeCSS || '';
-                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss + '\n' + statusCss + '\n' + chatlistCss;
+                const notificationCss = this.notificationBeautifyConfig?.activeCSS || '';
+                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss + '\n' + statusCss + '\n' + chatlistCss + '\n' + notificationCss;
             }
         },
         resetBeautify(type) {
@@ -11266,7 +11334,7 @@ Structure:
             this.showToast('已恢复默认样式');
         },
         copyChatlistDefault() {
-            const defaultCss = `/* 聊天列表背景 */\n.bg-\\[\\#f2f2f6\\] { background-color: #f2f2f6; }\n/* 顶部选项卡激活态 */\n.wechat-pill-active {\n    background-color: #000;\n    color: #fff;\n}\n/* 顶部选项卡未激活态 */\n.wechat-pill-inactive {\n    color: #666;\n}\n/* 聊天列表项背景与圆角 */\n.bg-white.rounded-\\[18px\\] {\n    background-color: #fff;\n    border-radius: 18px;\n}`;
+            const defaultCss = `/* Aovein 专属：聊天列表美化 */\n.aovein-chatlist .bg-\\[\\#f2f2f6\\] { background-color: #f2f2f6 !important; }\n.aovein-chatlist .wechat-pill-active {\n    background-color: #000 !important;\n    color: #fff !important;\n}\n.aovein-chatlist .wechat-pill-inactive {\n    color: #666 !important;\n}\n.aovein-chatlist .bg-white.rounded-\\[18px\\] {\n    background-color: #fff !important;\n    border-radius: 18px !important;\n}`;
             this.chatlistBeautifyConfig.tempCode = defaultCss;
             this.copyToClipboard(defaultCss);
             this.showToast('默认源代码已填入框内并复制到剪贴板');
@@ -11290,6 +11358,157 @@ Structure:
                 this.chatlistBeautifyConfig.presets.splice(idx, 1);
                 this.saveData();
             });
+        },
+        exportChatlistPreset(preset) {
+            const exportObj = { type: "Aovein_Chatlist_Style", code: preset.css };
+            const b = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a'); a.href = u;
+            a.download = `${preset.name}.json`;
+            a.click(); URL.revokeObjectURL(u);
+            this.showToast(`已导出 ${preset.name}.json`);
+        },
+        handleChatlistImport(e) {
+            const file = e.target.files[0]; if(!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            this.showToast('正在解析文件...');
+            
+            const parseFile = (text) => {
+                this.chatlistBeautifyConfig.tempCode = text.trim();
+                this.showToast('导入成功');
+            };
+
+            if (ext === 'json') {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        if (data.type === 'Aovein_Chatlist_Style' && data.code) {
+                            parseFile(data.code);
+                        } else throw new Error();
+                    } catch(e) { this.showToast('非标准的 JSON 文件'); }
+                };
+                reader.readAsText(file);
+            } else if (ext === 'txt') {
+                const reader = new FileReader();
+                reader.onload = ev => parseFile(ev.target.result);
+                reader.readAsText(file);
+            } else if (ext === 'docx') {
+                if (!window.mammoth) {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+                    document.head.appendChild(script);
+                    script.onload = () => {
+                        const reader = new FileReader();
+                        reader.onload = ev => mammoth.extractRawText({ arrayBuffer: ev.target.result }).then(res => parseFile(res.value));
+                        reader.readAsArrayBuffer(file);
+                    };
+                    script.onerror = () => this.showToast('加载文档库失败');
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = ev => mammoth.extractRawText({ arrayBuffer: ev.target.result }).then(res => parseFile(res.value));
+                    reader.readAsArrayBuffer(file);
+                }
+            } else {
+                this.showToast('不支持的文件格式');
+            }
+            e.target.value='';
+        },
+
+        // --- 通知栏美化逻辑 ---
+        applyNotificationBeautify() {
+            this.notificationBeautifyConfig.activeCSS = this.notificationBeautifyConfig.tempCode;
+            this.updateDynamicStyles();
+            this.saveData();
+            this.showToast('通知栏样式已应用');
+        },
+        resetNotificationBeautify() {
+            this.notificationBeautifyConfig.activeCSS = '';
+            this.notificationBeautifyConfig.tempCode = '';
+            this.updateDynamicStyles();
+            this.saveData();
+            this.showToast('已恢复默认样式');
+        },
+        copyNotificationDefault() {
+            const defaultCss = `/* Aovein 专属：通知栏弹窗美化 */\n.aovein-notification-banner {\n    background: rgba(255, 255, 255, 0.95) !important;\n    backdrop-filter: blur(10px) !important;\n    border-radius: 16px !important;\n    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;\n    color: #000 !important;\n}`;
+            this.notificationBeautifyConfig.tempCode = defaultCss;
+            this.copyToClipboard(defaultCss);
+            this.showToast('默认源代码已复制');
+        },
+        saveNotificationPreset() {
+            if(!this.notificationBeautifyConfig.tempCode) return this.showToast('代码为空');
+            this.showInput('保存通知栏预设', '', '请输入预设名称', (name) => {
+                if(name) {
+                    this.notificationBeautifyConfig.presets.push({ name: name, css: this.notificationBeautifyConfig.tempCode });
+                    this.saveData();
+                    this.showToast('预设已保存');
+                }
+            });
+        },
+        loadNotificationPreset(preset) {
+            this.notificationBeautifyConfig.tempCode = preset.css;
+            this.applyNotificationBeautify();
+        },
+        deleteNotificationPreset(idx) {
+            this.showConfirm('确定删除此预设吗？', () => {
+                this.notificationBeautifyConfig.presets.splice(idx, 1);
+                this.saveData();
+            });
+        },
+        exportNotificationPreset(preset) {
+            const exportObj = { type: "Aovein_Notification_Style", code: preset.css };
+            const b = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a'); a.href = u;
+            a.download = `${preset.name}.json`;
+            a.click(); URL.revokeObjectURL(u);
+            this.showToast(`已导出 ${preset.name}.json`);
+        },
+        handleNotificationImport(e) {
+            const file = e.target.files[0]; if(!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            this.showToast('正在解析...');
+            
+            const parseFile = (text) => {
+                this.notificationBeautifyConfig.tempCode = text.trim();
+                this.showToast('导入成功');
+            };
+
+            if (ext === 'json') {
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        if (data.type === 'Aovein_Notification_Style' && data.code) {
+                            parseFile(data.code);
+                        } else throw new Error();
+                    } catch(e) { this.showToast('非标准的 JSON 文件'); }
+                };
+                reader.readAsText(file);
+            } else if (ext === 'txt') {
+                const reader = new FileReader();
+                reader.onload = ev => parseFile(ev.target.result);
+                reader.readAsText(file);
+            } else if (ext === 'docx') {
+                if (!window.mammoth) {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+                    document.head.appendChild(script);
+                    script.onload = () => {
+                        const reader = new FileReader();
+                        reader.onload = ev => mammoth.extractRawText({ arrayBuffer: ev.target.result }).then(res => parseFile(res.value));
+                        reader.readAsArrayBuffer(file);
+                    };
+                    script.onerror = () => this.showToast('加载文档库失败');
+                } else {
+                    const reader = new FileReader();
+                    reader.onload = ev => mammoth.extractRawText({ arrayBuffer: ev.target.result }).then(res => parseFile(res.value));
+                    reader.readAsArrayBuffer(file);
+                }
+            } else {
+                this.showToast('不支持的文件格式');
+            }
+            e.target.value='';
         },
         
         // --- 线下美化相关逻辑 (新增开始) ---
