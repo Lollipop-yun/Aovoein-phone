@@ -1125,6 +1125,57 @@
                 </div>
             </div>
         </transition>
+        
+        <!-- 全局生图高级设定弹窗 -->
+        <transition name="scale">
+            <div v-if="globalImageSettings.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div class="bg-[#f9f9f9] w-[85%] max-h-[85vh] overflow-y-auto rounded-[24px] shadow-2xl p-6 flex flex-col gap-4 font-sans border border-gray-200">
+                    <h3 class="text-center font-bold text-gray-900 text-lg mb-2">全局生图高级设定</h3>
+                    
+                    <div>
+                        <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">生成尺寸 (Size / Aspect Ratio)</label>
+                        <select v-model="globalImageSettings.size" class="w-full bg-white p-3 rounded-xl text-sm font-medium border border-gray-200 outline-none shadow-sm">
+                            <option value="1024x1024">1:1 (正方形 1024x1024)</option>
+                            <option value="768x1024">3:4 (竖图 768x1024)</option>
+                            <option value="1024x768">4:3 (横图 1024x768)</option>
+                            <option value="1024x1792">9:16 (修长竖图 1024x1792)</option>
+                            <option value="1792x1024">16:9 (宽屏横图 1792x1024)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">全局正面提示词 (Positive Prompt)</label>
+                        <textarea v-model="globalImageSettings.positivePrompt" placeholder="例如: masterpiece, best quality, ultra-detailed..." class="w-full h-24 bg-white p-3 rounded-[12px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">全局负面提示词 (Negative Prompt)</label>
+                        <textarea v-model="globalImageSettings.negativePrompt" placeholder="例如: nsfw, lowres, bad anatomy, bad hands..." class="w-full h-24 bg-white p-3 rounded-[12px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                    </div>
+
+                    <!-- 生图预设管理 -->
+                    <div class="bg-gray-100 p-3 rounded-xl border border-gray-200 mt-2">
+                        <div class="flex gap-2 mb-2">
+                            <button @click="saveGlobalImagePreset" class="flex-1 bg-white border border-gray-200 text-gray-700 py-2 rounded-lg text-xs font-bold shadow-sm active:scale-95">保存当前为预设</button>
+                        </div>
+                        <div class="max-h-24 overflow-y-auto divide-y divide-gray-200/50">
+                            <div v-for="(preset, idx) in globalImageSettings.presets" :key="idx" class="flex items-center justify-between py-2">
+                                <span class="text-xs font-bold text-gray-700 truncate max-w-[60%]">{{ preset.name }}</span>
+                                <div class="flex gap-2">
+                                    <button @click="loadGlobalImagePreset(preset)" class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold">加载</button>
+                                    <button @click="deleteGlobalImagePreset(idx)" class="px-2 py-1 bg-red-50 text-red-500 rounded text-[10px] font-bold">删除</button>
+                                </div>
+                            </div>
+                            <div v-if="!globalImageSettings.presets || globalImageSettings.presets.length === 0" class="text-center text-gray-400 text-[10px] py-2">暂无保存的预设</div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-2">
+                        <button @click="globalImageSettings.show = false; saveData()" class="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">完成</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
 
     <!-- 弹窗组件 -->
     <transition name="scale">
@@ -4091,12 +4142,18 @@
                                 <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">Likes</div>
                                 <div class="wechat-pill-tab wechat-pill-inactive flex-1 text-center text-[11px] px-1">All</div>
                             </div>
-                            <div class="bg-white rounded-[18px] p-3 shadow-sm flex items-center border border-gray-50">
+                            <div class="bg-white rounded-[18px] p-3 shadow-sm flex items-center border border-gray-50 mb-4">
                                 <div class="w-10 h-10 rounded-full bg-gray-200 mr-3 shrink-0"><i class="fas fa-user flex h-full items-center justify-center text-gray-400"></i></div>
                                 <div class="flex-1">
                                     <div class="font-semibold text-[15px] text-gray-900">某位少爷</div>
                                     <div class="text-[12px] text-gray-500">发来了一条语音消息...</div>
                                 </div>
+                            </div>
+                            <!-- 模拟 Dock 栏预览 -->
+                            <div class="dock-container mt-2 h-14 flex items-center justify-around px-3 relative shadow-sm border border-gray-200/40">
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-sm"><i class="fas fa-comment"></i></div>
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-sm"><i class="fas fa-users"></i></div>
+                                <div class="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-sm"><i class="fas fa-cog"></i></div>
                             </div>
                         </div>
                     </div>
@@ -5072,6 +5129,7 @@
     <span @click="showSettingsDisclaimer = true" class="text-blue-500 cursor-pointer active:opacity-70">用户条约与免责声明</span>
 </div>
 </div></div></transition><transition name="page-slide">
+    <transition name="page-slide">
     <div v-if="settingsPage === 'api-config'" class="absolute inset-0 p-4">
         <div class="space-y-5 pb-10">
             <!-- 主 API 配置 -->
@@ -5092,8 +5150,10 @@
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">反代地址</label><input v-model="apiConfig.baseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API 密钥</label><input v-model="apiConfig.apiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 
-                <button @click="testApiConnection('main')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试主API连接 (消耗少量额度)</button>
-                <button @click="fetchModels('main')" :disabled="isLoadingMain" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isLoadingMain" class="fas fa-spinner fa-spin"></i><span v-else>拉取主模型</span></button>
+                <div class="flex gap-2 mt-2">
+                    <button @click="testApiConnection('main')" class="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-[13px] font-bold active:bg-gray-50 transition flex items-center justify-center gap-2 shadow-sm"><i class="fas fa-plug text-blue-500"></i> 测试连接</button>
+                    <button @click="fetchModels('main')" :disabled="isLoadingMain" class="w-12 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-lg font-bold active:bg-gray-50 transition flex items-center justify-center shadow-sm shrink-0"><i class="fas" :class="isLoadingMain ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i></button>
+                </div>
                 
                 <div v-if="availableModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择主模型</label><div @click="openModelSelect('main')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ apiConfig.selectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
                 <div><div class="flex justify-between mb-1"><label class="text-xs font-bold text-gray-500 ml-1">温度 (创造性): {{ apiConfig.temperature }}</label></div><input type="range" min="0" max="2" step="0.1" v-model.number="apiConfig.temperature" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div>
@@ -5116,8 +5176,12 @@
 
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">副反代地址</label><input v-model="apiConfig.subBaseUrl" placeholder="https://..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">副 API 密钥</label><input v-model="apiConfig.subApiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                <button @click="testApiConnection('sub')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-plug"></i> 测试副API连接</button>
-                <button @click="fetchModels('sub')" :disabled="isLoadingSub" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isLoadingSub" class="fas fa-spinner fa-spin"></i><span v-else>拉取副模型</span></button>
+                
+                <div class="flex gap-2 mt-2">
+                    <button @click="testApiConnection('sub')" class="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-[13px] font-bold active:bg-gray-50 transition flex items-center justify-center gap-2 shadow-sm"><i class="fas fa-plug text-blue-500"></i> 测试连接</button>
+                    <button @click="fetchModels('sub')" :disabled="isLoadingSub" class="w-12 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-lg font-bold active:bg-gray-50 transition flex items-center justify-center shadow-sm shrink-0"><i class="fas" :class="isLoadingSub ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i></button>
+                </div>
+                
                 <div v-if="subAvailableModels && subAvailableModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择副模型</label><div @click="openModelSelect('sub')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ apiConfig.subSelectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
             </div>
 
@@ -5138,9 +5202,16 @@
 
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">生图反代地址</label><input v-model="imageApiConfig.baseUrl" placeholder="https://... " class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                 <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">生图 API 密钥</label><input v-model="imageApiConfig.apiKey" type="password" placeholder="sk-..." class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                <button @click="testApiConnection('image')" class="w-full bg-blue-50 text-blue-600 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-image"></i> 测试生图连接</button>
-                <button @click="fetchModels('image')" :disabled="isLoadingImage" class="w-full bg-gray-100 text-gray-700 py-2.5 rounded-xl text-sm font-bold active:scale-95 transition flex items-center justify-center gap-2"><i v-if="isLoadingImage" class="fas fa-spinner fa-spin"></i><span v-else>拉取生图模型</span></button>
+                
+                <div class="flex gap-2 mt-2">
+                    <button @click="testApiConnection('image')" class="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-[13px] font-bold active:bg-gray-50 transition flex items-center justify-center gap-2 shadow-sm"><i class="fas fa-image text-purple-500"></i> 测试连接</button>
+                    <button @click="fetchModels('image')" :disabled="isLoadingImage" class="w-12 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-lg font-bold active:bg-gray-50 transition flex items-center justify-center shadow-sm shrink-0"><i class="fas" :class="isLoadingImage ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i></button>
+                </div>
+                
                 <div v-if="imageModels && imageModels.length > 0" class="animate-fade-in"><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择生图模型</label><div @click="openModelSelect('image')" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 flex justify-between items-center cursor-pointer"><span>{{ imageApiConfig.selectedModel || '点击选择' }}</span><i class="fas fa-chevron-down text-gray-400 text-xs"></i></div></div>
+                
+                <!-- 新增：生图设定按钮 -->
+                <button @click="globalImageSettings.show = true" class="w-full bg-gray-50 text-gray-700 py-3 rounded-xl text-[13px] font-bold active:bg-gray-100 transition flex items-center justify-center gap-2 border border-gray-200 shadow-sm mt-3"><i class="fas fa-sliders-h"></i> 设定生图尺寸与全局提示词</button>
             </div>
 
             <!-- MiniMax 语音合成 -->
@@ -5166,14 +5237,19 @@
                     <div>
                         <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">接口域节点</label>
                         <div class="flex gap-2">
-                            <button @click="minimaxConfig.region = 'cn'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'cn' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">大陆版</button>
-                            <button @click="minimaxConfig.region = 'intl'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'intl' ? 'bg-black text-white border-black' : 'bg-gray-50 text-gray-500 border-gray-200'">海外版</button>
+                            <button @click="minimaxConfig.region = 'cn'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'cn' ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200'">大陆版</button>
+                            <button @click="minimaxConfig.region = 'intl'; saveData()" class="flex-1 py-2 rounded-xl text-xs font-bold transition border" :class="minimaxConfig.region === 'intl' ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200'">海外版</button>
                         </div>
                     </div>
                     <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">Group ID</label><input v-model="minimaxConfig.groupId" placeholder="输入 Group ID" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                     <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">API Key</label><input v-model="minimaxConfig.apiKey" type="password" placeholder="输入 API Key" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
                     <div><label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">音色 ID (Voice ID)</label><input v-model="minimaxConfig.voiceId" placeholder="如: male-qn-qingse" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-mono border border-gray-200 outline-none"></div>
-                    <button @click="fetchMinimaxModels" :disabled="isLoadingMinimax" class="w-full bg-gray-900 text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition"><i v-if="isLoadingMinimax" class="fas fa-spinner fa-spin"></i><span v-else>获取模型</span></button>
+                    
+                    <div class="flex gap-2 mt-2">
+                        <button @click="testMinimaxConnection" class="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-[13px] font-bold active:bg-gray-50 transition flex items-center justify-center gap-2 shadow-sm"><i class="fas fa-plug text-green-500"></i> 测试连接</button>
+                        <button @click="fetchMinimaxModels" :disabled="isLoadingMinimax" class="w-12 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl text-lg font-bold active:bg-gray-50 transition flex items-center justify-center shadow-sm shrink-0"><i class="fas" :class="isLoadingMinimax ? 'fa-spinner fa-spin' : 'fa-sync-alt'"></i></button>
+                    </div>
+                    
                     <div v-if="minimaxModels.length > 0" class="animate-fade-in">
                         <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">选择模型</label>
                         <select v-model="minimaxConfig.selectedModel" @change="saveData" class="w-full bg-gray-50 p-3 rounded-xl text-sm font-medium border border-gray-200 outline-none cursor-pointer">
@@ -5184,7 +5260,7 @@
                 </div>
             </div>
 
-            <button @click="saveSettings" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition">保存所有配置</button>
+            <button @click="saveSettings" class="w-full bg-black text-white font-bold py-3.5 rounded-2xl shadow-lg active:scale-95 transition">保存所有配置</button>
         </div>
     </div>
 </transition><transition name="page-slide">
@@ -5745,7 +5821,8 @@ const app = createApp({
             apiPresetModal: { show: false, target: '' }, isFullScreen: false, hideStatusBar: false,
             apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [], apiPresets:[],
             imageApiConfig: { baseUrl: '', apiKey: '', selectedModel: '' }, imageModels: [],
-            imagePromptModal: { show: false, appearance: '', style: '' }, 
+            imagePromptModal: { show: false, appearance: '', style: '' },
+            globalImageSettings: { show: false, size: '1024x1024', positivePrompt: '', negativePrompt: '', presets: [] }, 
             minimaxConfig: { enabled: false, region: 'cn', groupId: '', apiKey: '', selectedModel: '', voiceId: 'male-qn-qingse' }, minimaxModels:[],
             notificationConfig: { currentSound: null, currentName: '默认提示音' }, soundPresets:[],
             pushConfig: { enabled: false }, // 新增推送设置
@@ -6243,6 +6320,122 @@ const app = createApp({
                 this.saveData();
                 this.showToast('已删除，退回上一条心声');
             });
+        },
+        testMinimaxConnection() {
+            if (!this.minimaxConfig.groupId || !this.minimaxConfig.apiKey) {
+                return this.showToast('请先填写 Group ID 和 API Key');
+            }
+            this.showToast('正在测试 MiniMax 接口...');
+            // 利用拉取模型接口测试连通性，不消耗配额
+            const baseUrl = this.minimaxConfig.region === 'intl' ? 'https://api.minimaxi.chat/v1' : 'https://api.minimax.chat/v1';
+            fetch(`${baseUrl}/models?GroupId=${this.minimaxConfig.groupId.trim()}`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${this.minimaxConfig.apiKey.trim()}` }
+            }).then(res => {
+                if (res.ok) this.showToast('✅ MiniMax 语音接口连接成功！');
+                else this.showToast('❌ 连接失败，请检查配置');
+            }).catch(e => {
+                this.showToast('❌ 网络错误: ' + e.message);
+            });
+        },
+        saveGlobalImagePreset() {
+            this.showInput('保存生图预设', '', '请输入生图设定预设的名称', (name) => {
+                if (name) {
+                    if (!this.globalImageSettings.presets) this.globalImageSettings.presets = [];
+                    this.globalImageSettings.presets.push({
+                        name: name,
+                        size: this.globalImageSettings.size,
+                        positivePrompt: this.globalImageSettings.positivePrompt,
+                        negativePrompt: this.globalImageSettings.negativePrompt
+                    });
+                    this.saveData();
+                    this.showToast('预设已保存');
+                }
+            });
+        },
+        loadGlobalImagePreset(preset) {
+            this.globalImageSettings.size = preset.size || '1024x1024';
+            this.globalImageSettings.positivePrompt = preset.positivePrompt || '';
+            this.globalImageSettings.negativePrompt = preset.negativePrompt || '';
+            this.saveData();
+            this.showToast(`已加载预设: ${preset.name}`);
+        },
+        deleteGlobalImagePreset(idx) {
+            this.showConfirm('确认删除该生图预设？', () => {
+                this.globalImageSettings.presets.splice(idx, 1);
+                this.saveData();
+            });
+        },
+        async triggerRealImageGeneration(session, aiPrompt, avatar, name, statusObj) {
+            // 给大模型抛出一个【系统消息】占位符，模拟正在画画，避免干等
+            const tempId = 'img_' + Date.now();
+            session.messages.push({
+                id: tempId,
+                type: 'system',
+                content: `[系统提示：${name} 正在拍摄并发送照片，请稍候...]`,
+                time: Date.now()
+            });
+            this.scrollToBottom();
+            
+            try {
+                let url = this.imageApiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+                
+                const globalPos = this.globalImageSettings?.positivePrompt || '';
+                const globalNeg = this.globalImageSettings?.negativePrompt ? ` --no ${this.globalImageSettings.negativePrompt}` : '';
+                const appearance = session.imagePromptAppearance || '';
+                const style = session.imagePromptStyle || '';
+                
+                // 拼接完整 Prompt：正向预设 + 本聊风格 + 本聊外貌 + 角色给出的具体情境/动作 + 负面词
+                let finalPrompt = `${globalPos}, ${style}, ${appearance}, (Action/Context: ${aiPrompt}) ${globalNeg}`.replace(/^,\s*/, '').trim();
+
+                const res = await fetch(`${url}/images/generations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.imageApiConfig.apiKey.trim()}` },
+                    body: JSON.stringify({
+                        model: this.imageApiConfig.selectedModel || 'dall-e-3',
+                        prompt: finalPrompt,
+                        n: 1,
+                        size: this.globalImageSettings?.size || "1024x1024"
+                    })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    const imgUrl = data.data[0].url;
+                    
+                    // 移除系统占位消息
+                    session.messages = session.messages.filter(m => m.id !== tempId);
+                    
+                    if (imgUrl) {
+                        session.messages.push({
+                            type: 'image',
+                            content: imgUrl,
+                            isSelf: false,
+                            time: Date.now(),
+                            avatar: avatar,
+                            name: name,
+                            status: statusObj
+                        });
+                        session.lastMessage = '[图片]';
+                        this.scrollToBottom();
+                        this.saveData();
+                        if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
+                    }
+                } else {
+                    throw new Error('生图API请求失败');
+                }
+            } catch(e) {
+                console.error("AI 真实生图请求失败", e);
+                // 失败回退逻辑：删除占位符并发送失败提示
+                session.messages = session.messages.filter(m => m.id !== tempId);
+                session.messages.push({
+                    type: 'system',
+                    content: `[系统提示] ${name} 尝试发送照片失败了。`,
+                    time: Date.now()
+                });
+                this.scrollToBottom();
+            }
         },
     // ================= API 测试与生图引擎逻辑 =================
         async testApiConnection(type) {
@@ -9891,23 +10084,32 @@ Structure:
                         this.currentStatus = statusObj; 
                     }
 
-                    // === 赋予 AI 发送图片 (fake_image) 和 表情包 (sticker_id) 的能力 ===
+                    // === 赋予 AI 发送图片 (真实生图/伪图) 和 表情包 的能力 ===
                     if (block.fake_image) {
-                        setTimeout(() => {
-                            session.messages.push({
-                                type: 'fake_image',
-                                content: block.fake_image,
-                                isSelf: false,
-                                time: Date.now(),
-                                avatar: speakerAvatar,
-                                name: speakerName,
-                                status: statusObj
-                            });
-                            session.lastMessage = '[图片]';
-                            this.scrollToBottom();
-                            if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
-                        }, delay);
-                        delay += 1500;
+                        // 核心拦截：如果开启了允许主动发图，且配置了生图 API，则屏蔽假文字图片，直接发送请求画出一张真实的图片！
+                        if (session.enableAutoImage && this.imageApiConfig.apiKey && this.imageApiConfig.baseUrl) {
+                            setTimeout(() => {
+                                this.triggerRealImageGeneration(session, block.fake_image, speakerAvatar, speakerName, statusObj);
+                            }, delay);
+                            delay += 1000;
+                        } else {
+                            setTimeout(() => {
+                                session.messages.push({
+                                    type: 'fake_image',
+                                    content: block.fake_image,
+                                    isRevealed: false,
+                                    isSelf: false,
+                                    time: Date.now(),
+                                    avatar: speakerAvatar,
+                                    name: speakerName,
+                                    status: statusObj
+                                });
+                                session.lastMessage = '[图片]';
+                                this.scrollToBottom();
+                                if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
+                            }, delay);
+                            delay += 1500;
+                        }
                     }
 
                     if (block.sticker_id) {
@@ -10037,13 +10239,7 @@ Structure:
                         }, delay);
                         delay += 1000 + Math.random() * 800; 
                     });
-                });
-                // --- 触发角色随机发送自拍/照片生图功能 (15% 概率) ---
-                if (session.enableAutoImage && Math.random() < 0.15) {
-                    setTimeout(() => {
-                        this.generateAutoImage(session);
-                    }, delay + 2500); // 确保在文字发完之后再发图
-                }
+                });               
                 // --- 绝对安全追加：等上面所有文字都发完后，再出音乐卡片和切歌 ---
                 setTimeout(() => {
                     // 1. 解析切歌指令
