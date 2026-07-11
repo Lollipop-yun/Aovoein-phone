@@ -1134,8 +1134,8 @@
                     
                     <div>
                         <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">生成尺寸 (Size / Aspect Ratio)</label>
-                        <div @click="imageSizeModal.show = true" class="w-full bg-white p-3.5 rounded-xl text-sm font-medium border border-gray-200 cursor-pointer flex justify-between items-center shadow-sm active:bg-gray-50 transition">
-                            <span class="text-gray-800">{{ getImageSizeLabel(globalImageSettings.size) }}</span>
+                        <div @click="globalImageSettings.showSizeModal = true" class="w-full bg-white p-3.5 rounded-xl text-[13px] font-bold border border-gray-200 flex justify-between items-center cursor-pointer shadow-sm active:bg-gray-50 transition">
+                            <span class="text-gray-900">{{ getImageSizeLabel(globalImageSettings.size) }}</span>
                             <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
                         </div>
                     </div>
@@ -1174,27 +1174,32 @@
             </div>
         </transition>
         
-        <!-- 选择生图尺寸弹窗 (iOS 灰白风) -->
+        <!-- iOS 风格尺寸选择弹窗 -->
         <transition name="app-slide">
-            <div v-if="imageSizeModal.show" class="fixed inset-0 z-[125000]">
-                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="imageSizeModal.show = false"></div>
-                <div class="ios-list-modal pb-safe">
-                    <div class="ios-list-header">选择生图尺寸 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="imageSizeModal.show = false">取消</button></div>
+            <div v-if="globalImageSettings.showSizeModal" class="fixed inset-0 z-[121000]">
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="globalImageSettings.showSizeModal = false"></div>
+                <div class="ios-list-modal">
+                    <div class="ios-list-header">选择生图尺寸 <button class="absolute right-4 text-gray-500 font-normal text-sm" @click="globalImageSettings.showSizeModal = false">取消</button></div>
                     <div class="ios-list-content p-0 bg-white">
-                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setImageSize('1024x1024')">
-                            <span class="text-gray-900 font-medium">1:1 (正方形 1024x1024)</span><i v-if="globalImageSettings.size === '1024x1024'" class="fas fa-check text-blue-500"></i>
+                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setGlobalImageSize('1024x1024')">
+                            <span class="text-gray-900 font-medium">1:1 (正方形 1024x1024)</span>
+                            <i v-if="globalImageSettings.size === '1024x1024'" class="fas fa-check text-black"></i>
                         </div>
-                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setImageSize('768x1024')">
-                            <span class="text-gray-900 font-medium">3:4 (竖图 768x1024)</span><i v-if="globalImageSettings.size === '768x1024'" class="fas fa-check text-blue-500"></i>
+                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setGlobalImageSize('768x1024')">
+                            <span class="text-gray-900 font-medium">3:4 (竖图 768x1024)</span>
+                            <i v-if="globalImageSettings.size === '768x1024'" class="fas fa-check text-black"></i>
                         </div>
-                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setImageSize('1024x768')">
-                            <span class="text-gray-900 font-medium">4:3 (横图 1024x768)</span><i v-if="globalImageSettings.size === '1024x768'" class="fas fa-check text-blue-500"></i>
+                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setGlobalImageSize('1024x768')">
+                            <span class="text-gray-900 font-medium">4:3 (横图 1024x768)</span>
+                            <i v-if="globalImageSettings.size === '1024x768'" class="fas fa-check text-black"></i>
                         </div>
-                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setImageSize('1024x1792')">
-                            <span class="text-gray-900 font-medium">9:16 (修长竖图 1024x1792)</span><i v-if="globalImageSettings.size === '1024x1792'" class="fas fa-check text-blue-500"></i>
+                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setGlobalImageSize('1024x1792')">
+                            <span class="text-gray-900 font-medium">9:16 (修长竖图 1024x1792)</span>
+                            <i v-if="globalImageSettings.size === '1024x1792'" class="fas fa-check text-black"></i>
                         </div>
-                        <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setImageSize('1792x1024')">
-                            <span class="text-gray-900 font-medium">16:9 (宽屏横图 1792x1024)</span><i v-if="globalImageSettings.size === '1792x1024'" class="fas fa-check text-blue-500"></i>
+                        <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setGlobalImageSize('1792x1024')">
+                            <span class="text-gray-900 font-medium">16:9 (宽屏横图 1792x1024)</span>
+                            <i v-if="globalImageSettings.size === '1792x1024'" class="fas fa-check text-black"></i>
                         </div>
                     </div>
                 </div>
@@ -4174,11 +4179,11 @@
                                 </div>
                             </div>
                             <!-- 模拟 微信底部导航 预览 -->
-                            <div class="wechat-bottom-nav !relative !bottom-0 !left-0 !transform-none !w-full !shadow-sm !border !border-gray-200/40 !h-12 !mt-2 flex items-center justify-around px-2">
-                                <div class="flex items-center justify-center w-10 h-full text-black text-[18px] relative"><i class="fas fa-comment"></i><div class="absolute top-1 -right-0.5 w-2 h-2 bg-red-500 rounded-full border border-white"></div></div>
-                                <div class="flex items-center justify-center w-10 h-full text-gray-400 text-[18px]"><i class="fas fa-address-book"></i></div>
-                                <div class="flex items-center justify-center w-10 h-full text-gray-400 text-[18px]"><i class="far fa-compass"></i></div>
-                                <div class="flex items-center justify-center w-10 h-full text-gray-400 text-[18px]"><i class="far fa-user"></i></div>
+                            <div class="wechat-bottom-nav mt-3 !mb-0 !h-12 flex items-center justify-around w-full !relative shadow-sm border border-gray-100/50 bg-white">
+                                <div class="flex items-center justify-center w-10 h-full text-black text-lg"><i class="fas fa-comment"></i></div>
+                                <div class="flex items-center justify-center w-10 h-full text-gray-400 text-lg"><i class="fas fa-address-book"></i></div>
+                                <div class="flex items-center justify-center w-10 h-full text-gray-400 text-lg"><i class="far fa-compass"></i></div>
+                                <div class="flex items-center justify-center w-10 h-full text-gray-400 text-lg"><i class="far fa-user"></i></div>
                             </div>
                         </div>
                     </div>
@@ -5147,10 +5152,10 @@
         <div class="flex items-center gap-4"><i class="fas fa-eye-slash text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">隐藏状态栏</span></div><input type="checkbox" id="toggle-sb" class="switch-checkbox" v-model="hideStatusBar" @change="saveData"><label for="toggle-sb" class="switch-label"><div class="switch-button"></div></label>
     </div>
     <div class="p-4 flex items-center justify-between active:bg-gray-50">
-        <div class="flex items-center gap-4"><i class="fas fa-music text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
-            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">后台保活 (防断联)</div><div class="text-[11px] text-gray-400 mt-0.5">播放极小无声音频，防止切后台时休眠</div></div>
+        <div class="flex items-center gap-4"><i class="fas fa-heartbeat text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
+            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">后台保活 (防掉线)</div><div class="text-[11px] text-gray-400 mt-0.5">播放无声音频防iOS杀后台</div></div>
         </div>
-        <input type="checkbox" id="toggle-keepalive" class="switch-checkbox" v-model="keepAliveConfig.enabled" @change="toggleKeepAlive">
+        <input type="checkbox" id="toggle-keepalive" class="switch-checkbox" v-model="keepAliveEnabled" @change="toggleKeepAlive">
         <label for="toggle-keepalive" class="switch-label"><div class="switch-button"></div></label>
     </div>
 </div>
@@ -5854,9 +5859,8 @@ const app = createApp({
             apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [], apiPresets:[],
             imageApiConfig: { baseUrl: '', apiKey: '', selectedModel: '' }, imageModels: [],
             imagePromptModal: { show: false, appearance: '', style: '' },
-            globalImageSettings: { show: false, size: '1024x1024', positivePrompt: '', negativePrompt: '', presets: [] },
-            imageSizeModal: { show: false },
-            keepAliveConfig: { enabled: false }, 
+            globalImageSettings: { show: false, showSizeModal: false, size: '1024x1024', positivePrompt: '', negativePrompt: '', presets: [] },
+            keepAliveEnabled: false, 
             minimaxConfig: { enabled: false, region: 'cn', groupId: '', apiKey: '', selectedModel: '', voiceId: 'male-qn-qingse' }, minimaxModels:[],
             notificationConfig: { currentSound: null, currentName: '默认提示音' }, soundPresets:[],
             pushConfig: { enabled: false }, // 新增推送设置
@@ -6218,22 +6222,6 @@ const app = createApp({
         window.attemptActivate = this.attemptActivate;
         window.addEventListener('beforeunload', () => { this.saveDataNow(); }); 
     },
-    // 恢复保活状态：拦截用户的首次点击事件去激活无声音频
-        const resumeKeepAlive = () => {
-            if (this.keepAliveConfig?.enabled) {
-                if (!window._keepAliveAudio) {
-                    window._keepAliveAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
-                    window._keepAliveAudio.loop = true;
-                }
-                // 尝试播放
-                window._keepAliveAudio.play().catch(e => {});
-            }
-            // 触发一次后即可移除监听
-            document.removeEventListener('click', resumeKeepAlive);
-            document.removeEventListener('touchstart', resumeKeepAlive);
-        };
-        document.addEventListener('click', resumeKeepAlive);
-        document.addEventListener('touchstart', resumeKeepAlive);
     unmounted() { clearInterval(this.timer); },
     watch: {
         // 【新增】监听输入框，如果输入了 @ 则弹出群聊人员选择框
@@ -6371,6 +6359,42 @@ const app = createApp({
                 this.showToast('已删除，退回上一条心声');
             });
         },
+        getImageSizeLabel(size) {
+            const map = {
+                '1024x1024': '1:1 (正方形 1024x1024)',
+                '768x1024': '3:4 (竖图 768x1024)',
+                '1024x768': '4:3 (横图 1024x768)',
+                '1024x1792': '9:16 (修长竖图 1024x1792)',
+                '1792x1024': '16:9 (宽屏横图 1792x1024)'
+            };
+            return map[size] || size;
+        },
+        setGlobalImageSize(size) {
+            this.globalImageSettings.size = size;
+            this.globalImageSettings.showSizeModal = false;
+            this.saveData();
+        },
+        toggleKeepAlive() {
+            this.saveData();
+            if (this.keepAliveEnabled) {
+                if (!window._silentAudio) {
+                    // 1秒的极小无声音频 Base64，用于骗过系统休眠
+                    window._silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+                    window._silentAudio.loop = true;
+                }
+                window._silentAudio.play().then(() => {
+                    this.showToast('后台保活已开启，锁屏或切后台不会掉线');
+                }).catch(e => {
+                    this.keepAliveEnabled = false;
+                    this.showToast('需要手动点击屏幕才能开启后台保活');
+                });
+            } else {
+                if (window._silentAudio) {
+                    window._silentAudio.pause();
+                }
+                this.showToast('后台保活已关闭');
+            }
+        },
         testMinimaxConnection() {
             if (!this.minimaxConfig.groupId || !this.minimaxConfig.apiKey) {
                 return this.showToast('请先填写 Group ID 和 API Key');
@@ -6387,44 +6411,6 @@ const app = createApp({
             }).catch(e => {
                 this.showToast('❌ 网络错误: ' + e.message);
             });
-        },
-        getImageSizeLabel(size) {
-            const map = {
-                '1024x1024': '1:1 (正方形 1024x1024)',
-                '768x1024': '3:4 (竖图 768x1024)',
-                '1024x768': '4:3 (横图 1024x768)',
-                '1024x1792': '9:16 (修长竖图 1024x1792)',
-                '1792x1024': '16:9 (宽屏横图 1792x1024)'
-            };
-            return map[size] || '1024x1024';
-        },
-        setImageSize(size) {
-            this.globalImageSettings.size = size;
-            this.imageSizeModal.show = false;
-            this.saveData();
-        },
-        toggleKeepAlive() {
-            this.saveData();
-            if (this.keepAliveConfig.enabled) {
-                if (!window._keepAliveAudio) {
-                    // 一个极短的无声 RIFF WAV 格式音频 Base64
-                    window._keepAliveAudio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
-                    window._keepAliveAudio.loop = true;
-                }
-                window._keepAliveAudio.play().then(() => {
-                    this.showToast('后台保活已开启，切出网页也能收到消息了');
-                }).catch(e => {
-                    this.keepAliveConfig.enabled = false;
-                    this.saveData();
-                    this.showToast('开启失败，部分浏览器可能禁止自动播放');
-                });
-            } else {
-                if (window._keepAliveAudio) {
-                    window._keepAliveAudio.pause();
-                    window._keepAliveAudio = null;
-                }
-                this.showToast('后台保活已关闭');
-            }
         },
         saveGlobalImagePreset() {
             this.showInput('保存生图预设', '', '请输入生图设定预设的名称', (name) => {
@@ -11659,6 +11645,19 @@ Structure:
             this.toast.show = false;
             this.offlineState.show = false; // 修复一进微信就出现线下模式的BUG
             this.closeAllMenus();
+            
+            // 恢复后台保活状态
+            if (this.keepAliveEnabled) {
+                document.body.addEventListener('click', () => {
+                    if (this.keepAliveEnabled && window._silentAudio && window._silentAudio.paused) {
+                        window._silentAudio.play().catch(()=>{});
+                    }
+                }, { once: true });
+                if (!window._silentAudio) {
+                    window._silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+                    window._silentAudio.loop = true;
+                }
+            }
 
             // 恢复系统级数据防清理状态
             if (navigator.storage && navigator.storage.persisted) {
