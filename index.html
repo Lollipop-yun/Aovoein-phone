@@ -6378,8 +6378,8 @@ const app = createApp({
             this.saveData();
             if (this.keepAliveEnabled) {
                 if (!window._silentAudio) {
-                    // 1秒的极小无声音频 Base64，用于骗过系统休眠
-                    window._silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+                    // 【修复】更换为标准无声 MP3，防止系统判定为无效短音效
+                    window._silentAudio = new Audio('data:audio/mpeg;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq');
                     window._silentAudio.loop = true;
                 }
                 window._silentAudio.play().then(() => {
@@ -6390,6 +6390,9 @@ const app = createApp({
                             artist: 'Aovein小手机',
                             artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
                         });
+                        // 【核心修复】强制接管系统的播放/暂停按钮，这样通知栏才会把网页当成真正的音乐播放器显示出来
+                        navigator.mediaSession.setActionHandler('play', () => { window._silentAudio.play(); });
+                        navigator.mediaSession.setActionHandler('pause', () => { window._silentAudio.play(); }); // 拒绝暂停，维持保活
                     }
                 }).catch(e => {
                     this.keepAliveEnabled = false;
@@ -6400,6 +6403,12 @@ const app = createApp({
                     window._silentAudio.pause();
                 }
                 this.showToast('后台保活已关闭');
+                // 关闭时清理掉通知栏卡片
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = null;
+                    navigator.mediaSession.setActionHandler('play', null);
+                    navigator.mediaSession.setActionHandler('pause', null);
+                }
             }
         },
         testMinimaxConnection() {
@@ -11664,12 +11673,14 @@ Structure:
                                     artist: 'Aovein小手机',
                                     artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
                                 });
+                                navigator.mediaSession.setActionHandler('play', () => { window._silentAudio.play(); });
+                                navigator.mediaSession.setActionHandler('pause', () => { window._silentAudio.play(); });
                             }
                         }).catch(()=>{});
                     }
                 }, { once: true });
                 if (!window._silentAudio) {
-                    window._silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+                    window._silentAudio = new Audio('data:audio/mpeg;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq');
                     window._silentAudio.loop = true;
                 }
             }
