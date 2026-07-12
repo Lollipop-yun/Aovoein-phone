@@ -450,7 +450,7 @@
 <input type="file" ref="chatFileInput" accept=".docx,.txt,.pdf" class="hidden" @change="handleChatFileUpload">
 
     <!-- 全局弹窗 (Z-Index 调高) -->
-    <transition name="fade"><div v-if="toast.show" class="fixed inset-0 z-[90000] flex items-center justify-center pointer-events-none"><div class="bg-black/70 text-white px-5 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium">{{ toast.message }}</div></div></transition>
+    <transition name="fade"><div v-if="toast.show" class="fixed inset-0 z-[140000] flex items-center justify-center pointer-events-none"><div class="bg-black/70 text-white px-5 py-3 rounded-xl shadow-lg backdrop-blur-sm text-sm font-medium">{{ toast.message }}</div></div></transition>
     
     <!-- 设置内免责声明弹窗 -->
     <transition name="scale">
@@ -542,7 +542,7 @@
     
     <!-- ==================================================== -->
     <transition name="scale">
-        <div v-if="inputModal.show" class="fixed inset-0 z-[90000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div v-if="inputModal.show" class="fixed inset-0 z-[130000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div class="bg-white w-[80%] max-w-xs rounded-2xl overflow-hidden shadow-2xl transform transition-all">
                 <div class="p-5">
                     <h3 class="text-lg font-bold text-gray-900 mb-1 text-center">{{ inputModal.title }}</h3>
@@ -560,7 +560,7 @@
             </div>
         </div>
     </transition>
-    <transition name="scale"><div v-if="confirmModal.show" class="fixed inset-0 z-[90000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[80%] max-w-xs rounded-2xl overflow-hidden shadow-2xl"><div class="p-6 text-center"><h3 class="text-lg font-bold text-gray-900 mb-2">提示</h3><p class="text-sm text-gray-500">{{ confirmModal.message }}</p></div><div class="flex border-t border-gray-100"><button @click="confirmModal.show = false" class="flex-1 py-3 text-gray-600 text-sm">取消</button><div class="w-px bg-gray-100"></div><button @click="handleConfirm" class="flex-1 py-3 text-blue-600 font-bold text-sm">确定</button></div></div></div></transition>
+    <transition name="scale"><div v-if="confirmModal.show" class="fixed inset-0 z-[130000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[80%] max-w-xs rounded-2xl overflow-hidden shadow-2xl"><div class="p-6 text-center"><h3 class="text-lg font-bold text-gray-900 mb-2">提示</h3><p class="text-sm text-gray-500">{{ confirmModal.message }}</p></div><div class="flex border-t border-gray-100"><button @click="confirmModal.show = false" class="flex-1 py-3 text-gray-600 text-sm">取消</button><div class="w-px bg-gray-100"></div><button @click="handleConfirm" class="flex-1 py-3 text-blue-600 font-bold text-sm">确定</button></div></div></div></transition>
 
     <!-- 写日记弹窗 -->
     <transition name="app-slide">
@@ -5153,7 +5153,7 @@
     </div>
     <div class="p-4 flex items-center justify-between active:bg-gray-50">
         <div class="flex items-center gap-4"><i class="fas fa-heartbeat text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
-            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">后台保活 (防掉线)</div><div class="text-[11px] text-gray-400 mt-0.5">播放无声音频防iOS杀后台</div></div>
+            <span class="font-medium text-[15px] text-gray-900 tracking-wide">后台保活 (防掉线)</span>
         </div>
         <input type="checkbox" id="toggle-keepalive" class="switch-checkbox" v-model="keepAliveEnabled" @change="toggleKeepAlive">
         <label for="toggle-keepalive" class="switch-label"><div class="switch-button"></div></label>
@@ -6384,6 +6384,13 @@ const app = createApp({
                 }
                 window._silentAudio.play().then(() => {
                     this.showToast('后台保活已开启，锁屏或切后台不会掉线');
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.metadata = new MediaMetadata({
+                            title: '正在后台运行中...',
+                            artist: 'Aovein小手机',
+                            artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
+                        });
+                    }
                 }).catch(e => {
                     this.keepAliveEnabled = false;
                     this.showToast('需要手动点击屏幕才能开启后台保活');
@@ -11650,7 +11657,15 @@ Structure:
             if (this.keepAliveEnabled) {
                 document.body.addEventListener('click', () => {
                     if (this.keepAliveEnabled && window._silentAudio && window._silentAudio.paused) {
-                        window._silentAudio.play().catch(()=>{});
+                        window._silentAudio.play().then(() => {
+                            if ('mediaSession' in navigator) {
+                                navigator.mediaSession.metadata = new MediaMetadata({
+                                    title: '正在后台运行中...',
+                                    artist: 'Aovein小手机',
+                                    artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
+                                });
+                            }
+                        }).catch(()=>{});
                     }
                 }, { once: true });
                 if (!window._silentAudio) {
