@@ -5764,6 +5764,9 @@
     <!-- 世界书 App -->
     <transition name="app-slide"><div v-if="currentApp === 'worldbook'" class="absolute inset-0 z-[1000] bg-gray-50 flex flex-col overflow-hidden"><header class="bg-white/80 backdrop-blur h-[90px] pt-10 flex items-center justify-between px-4 border-b border-gray-200 sticky top-0 z-10"><button @click="closeApp" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-times text-sm"></i></button><h1 class="font-bold text-gray-900 text-[17px]">世界书</h1><div class="flex gap-2"><button @click="$refs.worldbookImportInput.click()" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition" title="导入txt/docx"><i class="fas fa-file-import text-sm"></i></button><button @click="openWorldModal('file')" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-plus text-sm"></i></button></div></header><main class="flex-1 overflow-y-auto p-4 space-y-2"><div v-if="folders.length === 0 && rootFiles.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无内容，请点击右上角添加</div><input type="file" ref="worldbookImportInput" accept=".txt,.docx" class="hidden" @change="handleWorldbookImport"><div v-for="folder in folders" :key="folder.id" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm"><div @click="toggleFolder(folder.id)" class="p-4 flex items-center justify-between active:bg-gray-50 transition cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-folder text-yellow-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ folder.name }}</span></div><div class="flex items-center gap-3"><button @click.stop="deleteWorldItem(folder.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button><i class="fas fa-chevron-right text-gray-300 text-xs transition-transform duration-200" :class="{'rotate-90': expandedFolders.includes(folder.id)}"></i></div></div><transition name="expand"><div v-if="expandedFolders.includes(folder.id)" class="bg-gray-50 border-t border-gray-100"><div v-if="getFiles(folder.id).length===0" class="p-3 text-center text-xs text-gray-400">空文件夹</div><div v-for="file in getFiles(folder.id)" :key="file.id" @click="viewFile(file)" class="p-3 pl-10 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-100 cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-blue-400 text-sm"></i><span class="text-sm text-gray-700">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></div></transition></div><div v-for="file in rootFiles" :key="file.id" @click="viewFile(file)" class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between active:scale-[0.98] transition cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-gray-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></main></div></transition>
     <transition name="scale"><div v-if="viewFileModal.show" class="fixed inset-0 z-[9000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[85%] max-h-[70%] rounded-3xl overflow-hidden shadow-2xl flex flex-col"><div class="p-4 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold text-lg">{{ viewFileModal.data.name }}</h3><button @click="saveFileContent" class="text-blue-600 font-bold text-sm">保存</button></div><textarea v-model="viewFileModal.data.content" class="flex-1 p-4 text-sm leading-relaxed outline-none resize-none"></textarea><button @click="viewFileModal.show=false" class="p-4 bg-gray-50 text-gray-500 font-bold text-sm">关闭</button></div></div></transition>
+    
+    <!-- 后台保活静音音频源（物理挂载防杀后台） -->
+    <audio id="aovein-keep-alive-audio" loop playsinline webkit-playsinline src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"></audio>
 
 </div>
 
@@ -6376,60 +6379,42 @@ const app = createApp({
         },
         toggleKeepAlive() {
             this.saveData();
-            
-            // 核心修复：将音频强制作为真实 DOM 元素挂载，骗过系统浏览器判定
-            const setupAudioEl = () => {
-                let audioEl = document.getElementById('aovein-keep-alive-audio');
-                if (!audioEl) {
-                    audioEl = document.createElement('audio');
-                    audioEl.id = 'aovein-keep-alive-audio';
-                    audioEl.loop = true;
-                    audioEl.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-                    document.body.appendChild(audioEl);
-                }
-                return audioEl;
-            };
+            const audioEl = document.getElementById('aovein-keep-alive-audio');
+            if (!audioEl) return;
 
             if (this.keepAliveEnabled) {
-                const audioEl = setupAudioEl();
-                const setupMediaSession = () => {
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.metadata = new MediaMetadata({
-                            title: '后台连线中',
-                            artist: 'Aovein OS',
-                            artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
-                        });
-                        navigator.mediaSession.playbackState = 'playing'; // 强制系统识别为正在播放
-                        navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
-                        navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); }); // 拦截暂停，维持保活
-                    }
-                };
-
-                let playPromise = audioEl.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        setupMediaSession();
-                        this.showToast('后台保活已开启，通知栏卡片已生效');
-                    }).catch(e => {
-                        this.showToast('已开启保活，随意点击屏幕任意位置即可激活卡片');
-                        document.body.addEventListener('click', () => {
-                            if (this.keepAliveEnabled && audioEl.paused) {
-                                audioEl.play().then(setupMediaSession).catch(()=>{});
+                this.showToast('请随便点击屏幕任意位置，以激活系统通知栏驻留');
+                const activate = () => {
+                    if (this.keepAliveEnabled) {
+                        audioEl.play().then(() => {
+                            if ('mediaSession' in navigator) {
+                                navigator.mediaSession.metadata = new MediaMetadata({
+                                    title: '后台连线中',
+                                    artist: 'Aovein OS',
+                                    artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
+                                });
+                                navigator.mediaSession.playbackState = 'playing';
+                                navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
+                                navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); }); // 拦截暂停指令
                             }
-                        }, { once: true });
-                    });
-                }
+                            this.showToast('✅ 通知栏驻留已成功激活！切后台不会掉线');
+                        }).catch(e => console.error(e));
+                    }
+                    document.body.removeEventListener('click', activate);
+                    document.body.removeEventListener('touchstart', activate);
+                };
+                // 强制要求用户触摸屏幕，骗过 iOS 对自动播放的最高级封锁
+                document.body.addEventListener('click', activate);
+                document.body.addEventListener('touchstart', activate);
             } else {
-                let audioEl = document.getElementById('aovein-keep-alive-audio');
-                if (audioEl) audioEl.pause();
-                this.showToast('后台保活已关闭');
-                // 关闭时清理掉通知栏卡片
+                audioEl.pause();
                 if ('mediaSession' in navigator) {
                     navigator.mediaSession.playbackState = 'none';
                     navigator.mediaSession.metadata = null;
                     navigator.mediaSession.setActionHandler('play', null);
                     navigator.mediaSession.setActionHandler('pause', null);
                 }
+                this.showToast('后台保活已关闭');
             }
         },
         testMinimaxConnection() {
@@ -9785,6 +9770,30 @@ const app = createApp({
             }
             // ============================
             
+            // == 【极度严苛的时间流逝与失联感知强化】 ==
+            let timeGapContext = "";
+            if (session.enableTimeSense && session.messages.length > 1) {
+                // 找出AI最近发的一条消息
+                let lastAiMsg = [...session.messages].reverse().find(m => !m.isSelf && m.type !== 'system');
+                if (lastAiMsg) {
+                    const gapMs = Date.now() - lastAiMsg.time;
+                    const gapHours = Math.floor(gapMs / 3600000);
+                    const gapMins = Math.floor((gapMs % 3600000) / 60000);
+                    
+                    // 超过 45 分钟就算有明显的断层
+                    if (gapHours >= 1 || gapMins > 45) {
+                        timeGapContext = `\n【极度重要：时间流逝与失联感知】：
+注意！距离你上一次给我发消息，已经过去了 ${gapHours > 0 ? gapHours + '小时' : ''}${gapMins}分钟！在这段漫长的时间里我一直没有回你。
+现在（我的时间：${formatTzDate(myDate)}），我终于出现并回复你了。
+你的当地时间也已经变成了 ${formatTzDate(aiDate)}。
+你必须在这次的回复中，表现出你对这个“时间跨度”的清晰认知！
+例如：抱怨我消失了这么久才理你、问我这几个小时去忙什么了、或者根据现在的时间（如晚上/深夜）自然地转换话题。
+【绝对禁忌】：绝不能像机器人一样无视时间差，直接顺着几个小时前的话题硬接！必须先对我的“失联和重现”做出自然的人类反应！`;
+                    }
+                }
+            }
+            // ============================
+            
             // == 【真实手机电量感知构建】 ==
             let batteryContext = "";
             if (this.statusBar.batteryLevel !== undefined) {
@@ -9838,6 +9847,7 @@ My (User) Identity: ${mask.name}.${maskExtra} My Bio: ${mask.bio}.
 ${worldContext}
 ${momentContext}
 ${timeContext}
+${timeGapContext}
 ${musicContext}
 ${diaryContext}
 ${stickerContext}
@@ -11699,37 +11709,25 @@ Structure:
             
             // 恢复后台保活状态
             if (this.keepAliveEnabled) {
-                const setupAudioEl = () => {
-                    let audioEl = document.getElementById('aovein-keep-alive-audio');
-                    if (!audioEl) {
-                        audioEl = document.createElement('audio');
-                        audioEl.id = 'aovein-keep-alive-audio';
-                        audioEl.loop = true;
-                        audioEl.src = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-                        document.body.appendChild(audioEl);
-                    }
-                    return audioEl;
-                };
-                
-                const audioEl = setupAudioEl();
-                const setupMediaSession = () => {
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.metadata = new MediaMetadata({
-                            title: '后台连线中',
-                            artist: 'Aovein OS',
-                            artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
-                        });
-                        navigator.mediaSession.playbackState = 'playing';
-                        navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
-                        navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); });
+                const activateOnLoad = () => {
+                    const audioEl = document.getElementById('aovein-keep-alive-audio');
+                    if (this.keepAliveEnabled && audioEl && audioEl.paused) {
+                        audioEl.play().then(() => {
+                            if ('mediaSession' in navigator) {
+                                navigator.mediaSession.metadata = new MediaMetadata({
+                                    title: '后台连线中',
+                                    artist: 'Aovein OS',
+                                    artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
+                                });
+                                navigator.mediaSession.playbackState = 'playing';
+                                navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
+                                navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); });
+                            }
+                        }).catch(()=>{});
                     }
                 };
-                
-                document.body.addEventListener('click', () => {
-                    if (this.keepAliveEnabled && audioEl.paused) {
-                        audioEl.play().then(setupMediaSession).catch(()=>{});
-                    }
-                }, { once: true });
+                document.body.addEventListener('click', activateOnLoad, { once: true });
+                document.body.addEventListener('touchstart', activateOnLoad, { once: true });
             }
 
             // 恢复系统级数据防清理状态
