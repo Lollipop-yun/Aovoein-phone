@@ -1,0 +1,16 @@
+{
+  "data": {
+    "filePath": "https://elysia-tools.91f709ddbda67df0b1f4a753842cceda.r2.cloudflarestorage.com/processing/2026/07/13/b161t8ha-silence_gen_1783927377864.mp3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=8c7731105ddd56bf6dadd2f25582b43c%2F20260713%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260713T072258Z&X-Amz-Expires=21600&X-Amz-Signature=e5f1db6c1dd6e85eb7e05bc785a99aaa282719de8e2e7ea6d45da6b6e6aaac64&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+    "fileName": "silence_gen_1783927377864.mp3",
+    "contentType": "audio/mpeg",
+    "size": 80919,
+    "metadata": {
+      "duration": 5,
+      "sampleRate": 44100,
+      "channels": 2,
+      "outputFormat": "mp3",
+      "processingTime": "2026-07-13T07:22:58.179Z"
+    }
+  },
+  "type": "file"
+}
