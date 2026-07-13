@@ -5625,7 +5625,7 @@
 </div>
 
 <!-- 后台保活静音音频源（物理挂载防杀后台） -->
-    <audio id="aovein-keep-alive-audio" loop playsinline webkit-playsinline></audio>
+    <audio id="aovein-keep-alive-audio" loop playsinline webkit-playsinline style="display:none;"></audio>
 
 </div>
 
@@ -6241,12 +6241,17 @@ const app = createApp({
             const audioEl = document.getElementById('aovein-keep-alive-audio');
             if (!audioEl) return;
 
+            // 核心破解机制：将无声音频转为真实的 Blob URL，骗过 iOS 系统不显示 data: 协议的限制
+            if (!audioEl.src || audioEl.src === window.location.href) {
+                const base64Audio = "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+                const byteCharacters = atob(base64Audio);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'audio/mpeg' });
+                audioEl.src = URL.createObjectURL(blob);
+            }
+
             if (this.keepAliveEnabled) {
-                // 只有初始化时才注入 src，防止重载导致黑屏报错
-                if (!audioEl.src) {
-                    audioEl.src = 'data:audio/mpeg;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-                }
-                
                 this.showToast('请随便点击屏幕任意位置，以激活系统通知栏驻留');
                 const activate = () => {
                     if (this.keepAliveEnabled) {
@@ -6254,15 +6259,15 @@ const app = createApp({
                             if ('mediaSession' in navigator) {
                                 navigator.mediaSession.metadata = new MediaMetadata({
                                     title: '后台连线中',
-                                    artist: 'Aovein OS',
+                                    artist: 'Aovein 小手机',
                                     artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
                                 });
                                 navigator.mediaSession.playbackState = 'playing';
                                 navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
-                                navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); }); // 强行拦截暂停指令
+                                navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); }); // 强行拦截暂停
                             }
                             this.showToast('✅ 通知栏驻留已成功激活！切后台不会掉线');
-                        }).catch(e => console.error(e));
+                        }).catch(e => console.error('播放激活失败:', e));
                     }
                     document.body.removeEventListener('click', activate);
                     document.body.removeEventListener('touchstart', activate);
@@ -11575,15 +11580,22 @@ Structure:
                 const activateOnLoad = () => {
                     const audioEl = document.getElementById('aovein-keep-alive-audio');
                     if (!audioEl) return;
-                    if (!audioEl.src) {
-                        audioEl.src = 'data:audio/mpeg;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+                    
+                    if (!audioEl.src || audioEl.src === window.location.href) {
+                        const base64Audio = "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
+                        const byteCharacters = atob(base64Audio);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'audio/mpeg' });
+                        audioEl.src = URL.createObjectURL(blob);
                     }
+                    
                     if (this.keepAliveEnabled && audioEl.paused) {
                         audioEl.play().then(() => {
                             if ('mediaSession' in navigator) {
                                 navigator.mediaSession.metadata = new MediaMetadata({
                                     title: '后台连线中',
-                                    artist: 'Aovein OS',
+                                    artist: 'Aovein 小手机',
                                     artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
                                 });
                                 navigator.mediaSession.playbackState = 'playing';
