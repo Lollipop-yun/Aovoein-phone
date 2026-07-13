@@ -5624,8 +5624,8 @@
 
 </div>
 
-<!-- 后台保活静音音频源（物理挂载防杀后台） -->
-    <audio id="aovein-keep-alive-audio" loop playsinline webkit-playsinline style="display:none;"></audio>
+<!-- 后台保活静音音频源（物理挂载真实MP3文件） -->
+    <audio id="aovein-keep-alive-audio" loop playsinline webkit-playsinline src="./silent.mp3" style="display:none;"></audio>
 
 </div>
 
@@ -6241,39 +6241,25 @@ const app = createApp({
             const audioEl = document.getElementById('aovein-keep-alive-audio');
             if (!audioEl) return;
 
-            // 核心破解机制：将无声音频转为真实的 Blob URL，骗过 iOS 系统不显示 data: 协议的限制
-            if (!audioEl.src || audioEl.src === window.location.href) {
-                const base64Audio = "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
-                const byteCharacters = atob(base64Audio);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'audio/mpeg' });
-                audioEl.src = URL.createObjectURL(blob);
-            }
-
             if (this.keepAliveEnabled) {
-                this.showToast('请随便点击屏幕任意位置，以激活系统通知栏驻留');
-                const activate = () => {
-                    if (this.keepAliveEnabled) {
-                        audioEl.play().then(() => {
-                            if ('mediaSession' in navigator) {
-                                navigator.mediaSession.metadata = new MediaMetadata({
-                                    title: '后台连线中',
-                                    artist: 'Aovein 小手机',
-                                    artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
-                                });
-                                navigator.mediaSession.playbackState = 'playing';
-                                navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
-                                navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); }); // 强行拦截暂停
-                            }
-                            this.showToast('✅ 通知栏驻留已成功激活！切后台不会掉线');
-                        }).catch(e => console.error('播放激活失败:', e));
+                // 因为用户刚刚点击了开关，这属于合法的“用户交互”，直接播放绝不会被拦截！
+                audioEl.play().then(() => {
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.metadata = new MediaMetadata({
+                            title: '后台连线中',
+                            artist: 'Aovein OS',
+                            artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
+                        });
+                        navigator.mediaSession.playbackState = 'playing';
+                        navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
+                        navigator.mediaSession.setActionHandler('pause', () => { audioEl.play(); }); // 强行拦截暂停指令
                     }
-                    document.body.removeEventListener('click', activate);
-                    document.body.removeEventListener('touchstart', activate);
-                };
-                document.body.addEventListener('click', activate);
-                document.body.addEventListener('touchstart', activate);
+                    this.showToast('✅ 后台连线已开启，通知栏卡片已生效！');
+                }).catch(e => {
+                    console.error("播放被拦截:", e);
+                    this.showToast('自动播放被浏览器拦截，请再点一下屏幕任意位置');
+                    document.body.addEventListener('click', () => audioEl.play(), { once: true });
+                });
             } else {
                 audioEl.pause();
                 if ('mediaSession' in navigator) {
@@ -11575,27 +11561,16 @@ Structure:
             this.offlineState.show = false; // 修复一进微信就出现线下模式的BUG
             this.closeAllMenus();
             
-            // 恢复后台保活状态
+            // 恢复后台保活状态 (网页刚刷新时无用户交互，静默挂载到第一次点击)
             if (this.keepAliveEnabled) {
                 const activateOnLoad = () => {
                     const audioEl = document.getElementById('aovein-keep-alive-audio');
-                    if (!audioEl) return;
-                    
-                    if (!audioEl.src || audioEl.src === window.location.href) {
-                        const base64Audio = "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//MUxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq";
-                        const byteCharacters = atob(base64Audio);
-                        const byteNumbers = new Array(byteCharacters.length);
-                        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
-                        const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'audio/mpeg' });
-                        audioEl.src = URL.createObjectURL(blob);
-                    }
-                    
-                    if (this.keepAliveEnabled && audioEl.paused) {
+                    if (this.keepAliveEnabled && audioEl && audioEl.paused) {
                         audioEl.play().then(() => {
                             if ('mediaSession' in navigator) {
                                 navigator.mediaSession.metadata = new MediaMetadata({
                                     title: '后台连线中',
-                                    artist: 'Aovein 小手机',
+                                    artist: 'Aovein OS',
                                     artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
                                 });
                                 navigator.mediaSession.playbackState = 'playing';
