@@ -15002,5 +15002,22 @@ if ('serviceWorker' in navigator) {
     });
 }
 </script>
+<script>
+// 后台保活 + 通知栏播放器
+document.getElementById('activate-btn').addEventListener('click', function() {
+    const bgAudio = new Audio('./silent.mp3');
+    bgAudio.loop = true;
+    bgAudio.play().catch(err => console.log('播放失败:', err));
+
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+            title: 'Aovein小手机',
+            artist: '正在运行中'
+        });
+        navigator.mediaSession.setActionHandler('play', () => bgAudio.play());
+        navigator.mediaSession.setActionHandler('pause', () => bgAudio.pause());
+    }
+});
+</script>
 </body>
 </html>
