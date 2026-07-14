@@ -1093,6 +1093,22 @@
             <span class="text-xs text-gray-400">现在</span>
         </div>
     </transition>
+    
+    <!-- 聊天列表长按菜单 遮罩层 -->
+    <div v-if="chatListContextMenu.show" class="fixed inset-0 z-[99998] bg-transparent" @click.stop="closeAllMenus"></div>
+    <transition name="fade">
+        <div v-if="chatListContextMenu.show" class="fixed bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl p-2 z-[99999] w-36 border border-gray-100" :style="{top: chatListContextMenu.y + 'px', left: chatListContextMenu.x + 'px'}" @click.stop>
+            <div class="py-3 px-3 hover:bg-gray-50 rounded-xl text-[15px] font-bold cursor-pointer active:scale-95 transition flex items-center" @click="handleChatListMenu('pin')">
+                <i class="fas fa-thumbtack w-6 text-gray-500 text-center"></i>{{ chatListContextMenu.session?.isPinned ? '取消置顶' : '置顶聊天' }}
+            </div>
+            <div v-if="chatListContextMenu.session?.unreadCount === 0" class="py-3 px-3 hover:bg-gray-50 rounded-xl text-[15px] font-bold cursor-pointer active:scale-95 transition flex items-center" @click="handleChatListMenu('unread')">
+                <i class="fas fa-envelope w-6 text-blue-500 text-center"></i>标为未读
+            </div>
+            <div v-else class="py-3 px-3 hover:bg-gray-50 rounded-xl text-[15px] font-bold cursor-pointer active:scale-95 transition flex items-center" @click="handleChatListMenu('read')">
+                <i class="fas fa-envelope-open w-6 text-gray-500 text-center"></i>标为已读
+            </div>
+        </div>
+    </transition>
 
     <!-- 长按菜单 遮罩层 -->
     <div v-if="chatContextMenu.show" class="fixed inset-0 z-[99998] bg-transparent" @click.stop="closeAllMenus"></div>
@@ -1644,6 +1660,8 @@
                 <h1 class="text-[17px] font-bold absolute left-1/2 -translate-x-1/2 w-full text-center pointer-events-none">表情管理</h1>
                 <div class="flex items-center gap-3 z-10">
                     <button @click="triggerStickerUpload" class="text-black"><i class="fas fa-image text-lg"></i></button>
+                    <!-- 导入按钮 (TXT/DOCX/JSON) -->
+                    <button @click="$refs.stickerDocxImportInput.click()" class="text-black"><i class="fas fa-file-import text-lg"></i></button>
                     <button @click="openUrlImportModal" class="text-black"><i class="fas fa-link text-lg"></i></button>
                     <button @click="toggleStickerMultiSelect" :class="isStickerMultiSelect ? 'text-red-500' : 'text-black'"><i class="fas fa-check-square text-lg"></i></button>
                 </div>
@@ -1676,12 +1694,14 @@
                 <div v-if="filteredStickers.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无表情</div>
             </div>
 
-            <!-- 删除底部栏 -->
-            <div v-if="isStickerMultiSelect" class="bg-white border-t border-gray-100 p-4 pb-safe shadow-lg">
-                <button @click="deleteSelectedStickers" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold text-sm">删除所选 ({{selectedStickerIds.length}})</button>
+            <!-- 删除与导出底部栏 -->
+            <div v-if="isStickerMultiSelect" class="bg-white border-t border-gray-100 p-4 pb-safe shadow-lg flex gap-3">
+                <button @click="exportSelectedStickers" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-sm">导出为 JSON</button>
+                <button @click="deleteSelectedStickers" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm">删除所选 ({{selectedStickerIds.length}})</button>
             </div>
 
             <input type="file" ref="stickerUploadInput" accept="image/*" class="hidden" multiple @change="handleStickerUpload">
+            <input type="file" ref="stickerDocxImportInput" accept=".json,.txt,.docx" class="hidden" @change="handleStickerDocxImport">
         </div>
     </transition>
 
@@ -4137,11 +4157,6 @@
                             <input type="checkbox" class="switch-checkbox" id="translate-toggle" v-model="wechatState.activeSession.enableClickTranslate" @change="saveData">
                             <label for="translate-toggle" class="switch-label"><div class="switch-button"></div></label>
                         </div>
-                        <div class="flex justify-between items-center p-4 active:bg-gray-50 transition">
-                            <span class="text-[15px] text-gray-900">置顶聊天</span>
-                            <input type="checkbox" class="switch-checkbox" id="pin-chat-toggle" :checked="wechatState.activeSession?.isPinned" @change="togglePin">
-                            <label for="pin-chat-toggle" class="switch-label"><div class="switch-button"></div></label>
-                        </div>
                         <div v-if="!wechatState.activeSession.isGroup" class="flex justify-between items-center p-4 active:bg-gray-50 transition">
                             <span class="text-[15px] text-gray-900">加入黑名单</span>
                             <input type="checkbox" class="switch-checkbox" id="block-toggle" v-model="wechatState.activeSession.isBlocked" @change="saveData">
@@ -4258,7 +4273,7 @@
                     <!-- 正常视图模式 -->
                     <div v-else>
                         <div v-if="wechatState.sessions.length === 0 && wechatState.activeFilter !== 'All'" class="flex flex-col items-center justify-center h-40 text-gray-300 mt-10"><i class="far fa-comment-dots text-4xl mb-3 opacity-20"></i><p class="text-xs">暂无会话</p></div>
-                        <div v-else><div v-for="session in filteredWechatContacts" :key="session.id" @click="handleSessionClick(session)" class="flex items-center p-4 active:bg-gray-50 transition border-b border-gray-50 last:border-0 relative" :class="{'bg-gray-50': session.isPinned}"><div class="relative shrink-0 mr-3"><div class="w-[50px] h-[50px] rounded-full overflow-hidden wechat-avatar-ring"><div class="w-full h-full rounded-full bg-gray-100 overflow-hidden"><img :src="session.customAvatarTarget || session.avatar" class="w-full h-full object-cover"></div></div></div><div class="flex-1 min-w-0"><div class="flex justify-between items-baseline mb-1"><h3 class="text-[16px] font-semibold text-gray-900 truncate flex items-center gap-1">{{ session.name }} <i v-if="session.isPinned" class="fas fa-thumbtack text-[10px] text-gray-400 rotate-45"></i></h3><span class="text-[11px] text-gray-400 font-normal">{{ formatSessionTime(getSessionLastTime(session)) }}</span></div><div class="flex justify-between items-center"><p class="text-[13px] text-gray-500 truncate max-w-[80%]">{{ getSessionLastMessage(session) }}</p><div v-if="session.unreadCount > 0" class="min-w-[16px] h-4 px-[4px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{{ session.unreadCount > 99 ? '99+' : session.unreadCount }}</div></div></div></div></div>
+                        <div v-else><div v-for="session in filteredWechatContacts" :key="session.id" @click="handleSessionClick(session)" @contextmenu.prevent="showChatListContextMenu($event, session)" @touchstart="startChatListLongPress($event, session)" @touchend="clearChatListLongPress" @touchmove="clearChatListLongPress" class="flex items-center p-4 active:bg-gray-50 transition border-b border-gray-50 last:border-0 relative cursor-pointer" :class="{'bg-gray-50': session.isPinned}"><div class="relative shrink-0 mr-3"><div class="w-[50px] h-[50px] rounded-full overflow-hidden wechat-avatar-ring"><div class="w-full h-full rounded-full bg-gray-100 overflow-hidden"><img :src="session.customAvatarTarget || session.avatar" class="w-full h-full object-cover"></div></div></div><div class="flex-1 min-w-0"><div class="flex justify-between items-baseline mb-1"><h3 class="text-[16px] font-semibold text-gray-900 truncate flex items-center gap-1">{{ session.name }} <i v-if="session.isPinned" class="fas fa-thumbtack text-[10px] text-gray-400 rotate-45"></i></h3><span class="text-[11px] text-gray-400 font-normal">{{ formatSessionTime(getSessionLastTime(session)) }}</span></div><div class="flex justify-between items-center"><p class="text-[13px] text-gray-500 truncate max-w-[80%]">{{ getSessionLastMessage(session) }}</p><div v-if="session.unreadCount > 0" class="min-w-[16px] h-4 px-[4px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{{ session.unreadCount > 99 ? '99+' : session.unreadCount }}</div></div></div></div></div>
                     </div>
                 </div>
             </main>
@@ -5950,6 +5965,8 @@ const app = createApp({
             worldBinderModal: { show: false, expanded:[] },
             modelSelectModal: { show: false }, 
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
+            chatListContextMenu: { show: false, x: 0, y: 0, session: null },
+            longPressTimer: null,
             folderSelectModal: { show: false }, 
             
             // Global Notifications & Status
@@ -8735,100 +8752,47 @@ const app = createApp({
             };
             reader.readAsArrayBuffer(file);
             e.target.value = '';
+        },        
+        // ----------------- 新生长按与设置逻辑 -----------------
+        startChatListLongPress(e, session) {
+            this.clearChatListLongPress();
+            this.longPressTimer = setTimeout(() => {
+                const touch = e.touches[0];
+                this.showChatListContextMenu({ clientX: touch.clientX, clientY: touch.clientY, preventDefault: ()=>{} }, session);
+            }, 500); 
         },
-        async handleSTImport(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            this.showToast('正在解析酒馆数据...');
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                const buffer = ev.target.result;
-                const dataView = new DataView(buffer);
-                let offset = 8;
-                let jsonStr = null;
-                while (offset < dataView.byteLength) {
-                    const length = dataView.getUint32(offset);
-                    const type = String.fromCharCode(dataView.getUint8(offset+4), dataView.getUint8(offset+5), dataView.getUint8(offset+6), dataView.getUint8(offset+7));
-                    if (type === 'tEXt') {
-                        const chunkData = new Uint8Array(buffer, offset+8, length);
-                        let textStr = new TextDecoder('utf-8').decode(chunkData);
-                        if (textStr.startsWith('chara\0')) {
-                            const b64 = textStr.substring(6);
-                            const binStr = atob(b64);
-                            const bytes = new Uint8Array(binStr.length);
-                            for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
-                            jsonStr = new TextDecoder('utf-8').decode(bytes);
-                            break;
-                        }
-                    }
-                    offset += 8 + length + 4;
-                }
-                
-                if (jsonStr) {
-                    try {
-                        const stData = JSON.parse(jsonStr);
-                        const charData = stData.data || stData; 
-                        
-                        let bio = '';
-                        if (charData.description) bio += '描述: ' + charData.description + '\n';
-                        if (charData.personality) bio += '性格: ' + charData.personality + '\n';
-                        if (charData.scenario) bio += '世界观: ' + charData.scenario + '\n';
-                        
-                        let compressedAvatar = 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg';
-                        try {
-                            compressedAvatar = await compressImage(file, 300);
-                        } catch(err) { console.error("头像压缩失败"); }
-                        
-                        let folderId = null;
-                        if (charData.character_book && charData.character_book.entries && charData.character_book.entries.length > 0) {
-                            const folderName = (charData.name || '酒馆角色') + '的专属世界书';
-                            folderId = 'folder_' + Date.now().toString();
-                            this.worldData.push({ id: folderId, type: 'folder', name: folderName, isActive: true });
-                            
-                            charData.character_book.entries.forEach((entry, idx) => {
-                                let entryName = entry.keys && entry.keys.length > 0 ? entry.keys.join(',') : '';
-                                if (!entryName && entry.content) {
-                                    let firstLine = entry.content.trim().split('\n')[0];
-                                    entryName = firstLine.length > 10 ? firstLine.substring(0, 10) + '...' : firstLine;
-                                }
-                                if (!entryName) entryName = '条目' + (idx+1);
+        clearChatListLongPress() {
+            if (this.longPressTimer) {
+                clearTimeout(this.longPressTimer);
+                this.longPressTimer = null;
+            }
+        },
+        showChatListContextMenu(e, session) {
+            e.preventDefault();
+            this.clearChatListLongPress();
+            let x = e.clientX; let y = e.clientY;
+            if (x > window.innerWidth - 150) x = window.innerWidth - 150;
+            if (y > window.innerHeight - 150) y = window.innerHeight - 150;
+            this.chatListContextMenu = { show: true, x, y, session };
+        },
+        handleChatListMenu(action) {
+            const session = this.chatListContextMenu.session;
+            if(!session) return;
+            if (action === 'pin') {
+                session.isPinned = !session.isPinned;
+                this.showToast(session.isPinned ? '已置顶' : '已取消置顶');
+            } else if (action === 'unread') {
+                session.unreadCount = 1;
+                this.showToast('已标记为未读');
+            } else if (action === 'read') {
+                session.unreadCount = 0;
+                this.showToast('已标记为已读');
+            }
+            this.saveData();
+            this.chatListContextMenu.show = false;
+        },
 
-                                this.worldData.push({
-                                    id: Date.now().toString() + '_' + idx,
-                                    type: 'file',
-                                    name: entryName,
-                                    parentId: folderId,
-                                    isActive: true,
-                                    content: entry.content || '',
-                                    isGlobal: false
-                                });
-                            });
-                            this.showToast('已同步导入其包含的世界书，在发起聊天时将自动挂载！');
-                        }
-                        
-                        this.newContact = {
-                            id: null,
-                            name: charData.name || '未知角色',
-                            remark: '', username: '', gender: '女',
-                            height: '', weight: '', age: '', birthday: '',
-                            bio: bio.trim(),
-                            relationship: '', nudge: '', 
-                            signature: charData.first_mes || '',
-                            avatar: compressedAvatar,
-                            boundWorldbookFolderId: folderId
-                        };
-                        this.addContactModal.show = true;
-                        
-                    } catch(err) {
-                        this.showToast('酒馆数据读取损坏');
-                    }
-                } else {
-                    this.showToast('这不是酒馆卡片：未在图片中找到 chara 数据');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-            e.target.value = '';
-        },
+        // ----------------- 更新的解析逻辑 -----------------
         extractContactInfoFromText(text) {
             const extract = (regex) => { const m = text.match(regex); return m ? m[1].trim() : ''; };
             return {
@@ -8838,11 +8802,185 @@ const app = createApp({
                 weight: extract(/(?:体重)[:：\s]+(\d{2,3}(?:kg|斤)?)/i) || '',
                 birthday: extract(/(?:生日)[:：\s]+([^\n\s,，;；。]{2,10})/) || '',
                 gender: extract(/(?:性别)[:：\s]+([男女])/) || '男',
-                bio: text, // 保留全部文档内容作为设定背景，不作任何截断，AI 全量读取
+                bio: text, // 绝对保留文件里的所有文字！
                 remark: '', username: '', relationship: '', nudge: '', signature: '', 
                 avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
             };
         },
+
+        async handleSTImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            this.showToast('正在解析酒馆数据...');
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            const processParsedData = async (charData) => {
+                let bio = '';
+                if (charData.description) bio += '描述: ' + charData.description + '\n';
+                if (charData.personality) bio += '性格: ' + charData.personality + '\n';
+                if (charData.scenario) bio += '世界观: ' + charData.scenario + '\n';
+                
+                let compressedAvatar = 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg';
+                if (ext === 'png') {
+                    try { compressedAvatar = await compressImage(file, 300); } catch(err) { console.error("头像压缩失败"); }
+                }
+                
+                let folderId = null;
+                if (charData.character_book && charData.character_book.entries && charData.character_book.entries.length > 0) {
+                    const folderName = (charData.name || '酒馆角色') + '的专属世界书';
+                    folderId = 'folder_' + Date.now().toString();
+                    this.worldData.push({ id: folderId, type: 'folder', name: folderName, isActive: true });
+                    
+                    charData.character_book.entries.forEach((entry, idx) => {
+                        let entryName = entry.keys && entry.keys.length > 0 ? entry.keys.join(',') : '';
+                        if (!entryName && entry.content) {
+                            let firstLine = entry.content.trim().split('\n')[0];
+                            entryName = firstLine.length > 10 ? firstLine.substring(0, 10) + '...' : firstLine;
+                        }
+                        if (!entryName) entryName = '条目' + (idx+1);
+
+                        this.worldData.push({
+                            id: Date.now().toString() + '_' + idx,
+                            type: 'file',
+                            name: entryName,
+                            parentId: folderId,
+                            isActive: true,
+                            content: entry.content || '',
+                            isGlobal: false
+                        });
+                    });
+                    this.showToast('已同步导入其包含的世界书，在发起聊天时将自动挂载！');
+                }
+                
+                this.newContact = {
+                    id: null, name: charData.name || '未知角色', remark: '', username: '', gender: '女',
+                    height: '', weight: '', age: '', birthday: '', bio: bio.trim(), relationship: '', nudge: '', 
+                    signature: charData.first_mes || '', avatar: compressedAvatar, boundWorldbookFolderId: folderId
+                };
+                this.addContactModal.show = true;
+            };
+
+            if (ext === 'json') {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const stData = JSON.parse(ev.target.result);
+                        const charData = stData.data || stData;
+                        processParsedData(charData);
+                    } catch (err) { this.showToast('JSON 解析失败'); }
+                };
+                reader.readAsText(file);
+            } else if (ext === 'png') {
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    const buffer = ev.target.result;
+                    const dataView = new DataView(buffer);
+                    let offset = 8;
+                    let jsonStr = null;
+                    while (offset < dataView.byteLength) {
+                        const length = dataView.getUint32(offset);
+                        const type = String.fromCharCode(dataView.getUint8(offset+4), dataView.getUint8(offset+5), dataView.getUint8(offset+6), dataView.getUint8(offset+7));
+                        if (type === 'tEXt') {
+                            const chunkData = new Uint8Array(buffer, offset+8, length);
+                            let textStr = new TextDecoder('utf-8').decode(chunkData);
+                            if (textStr.startsWith('chara\0')) {
+                                const b64 = textStr.substring(6);
+                                const binStr = atob(b64);
+                                const bytes = new Uint8Array(binStr.length);
+                                for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+                                jsonStr = new TextDecoder('utf-8').decode(bytes);
+                                break;
+                            }
+                        }
+                        offset += 8 + length + 4;
+                    }
+                    if (jsonStr) {
+                        try { const stData = JSON.parse(jsonStr); processParsedData(stData.data || stData); } catch(err) { this.showToast('数据损坏'); }
+                    } else { this.showToast('未找到 chara 数据'); }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+            e.target.value = '';
+        },
+
+        // ----------------- 表情包导入导出 -----------------
+        exportSelectedStickers() {
+            if (this.selectedStickerIds.length === 0) return this.showToast('未选择表情包');
+            const selected = this.stickers.filter(s => this.selectedStickerIds.includes(s.id));
+            const exportData = { type: "Aovein_Stickers", data: selected.map(s => ({ url: s.url, desc: s.desc })) };
+            const b = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a');
+            a.href = u; a.download = `Aovein_Stickers_${Date.now()}.json`; a.click(); URL.revokeObjectURL(u);
+            this.showToast('导出成功');
+            this.isStickerMultiSelect = false;
+            this.selectedStickerIds = [];
+        },
+        handleStickerDocxImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            this.showToast('正在解析文件...');
+
+            const processText = (text) => {
+                const lines = text.split('\n');
+                let count = 0;
+                lines.forEach(line => {
+                    const parts = line.trim().split(/\s+(.+)/);
+                    if(parts.length >= 1 && parts[0].startsWith('http')) {
+                        this.stickers.unshift({
+                            id: Date.now().toString() + Math.random(),
+                            url: parts[0],
+                            desc: parts[1] || '网络表情',
+                            groupId: this.activeStickerGroupId === 'all' ? 'all' : this.activeStickerGroupId
+                        });
+                        count++;
+                    }
+                });
+                this.saveData();
+                this.showToast(`成功导入 ${count} 个表情包`);
+            };
+
+            if (ext === 'json') {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const parsed = JSON.parse(ev.target.result);
+                        if (parsed.type === 'Aovein_Stickers' && Array.isArray(parsed.data)) {
+                            parsed.data.forEach(s => {
+                                this.stickers.unshift({
+                                    id: Date.now().toString() + Math.random(), url: s.url, desc: s.desc || '未命名',
+                                    groupId: this.activeStickerGroupId === 'all' ? 'all' : this.activeStickerGroupId
+                                });
+                            });
+                            this.saveData();
+                            this.showToast(`成功导入 ${parsed.data.length} 个表情包`);
+                        } else { this.showToast('导入失败：不是有效的表情包 JSON'); }
+                    } catch(err) { this.showToast('JSON 解析失败'); }
+                };
+                reader.readAsText(file);
+            } else if (ext === 'txt') {
+                const reader = new FileReader();
+                reader.onload = (ev) => processText(ev.target.result);
+                reader.readAsText(file);
+            } else if (ext === 'docx') {
+                if (!window.mammoth) {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+                    document.head.appendChild(script);
+                    script.onload = () => {
+                        const r = new FileReader();
+                        r.onload = (event) => mammoth.extractRawText({ arrayBuffer: event.target.result }).then((res) => processText(res.value));
+                        r.readAsArrayBuffer(file);
+                    };
+                } else {
+                    const r = new FileReader();
+                    r.onload = (event) => mammoth.extractRawText({ arrayBuffer: event.target.result }).then((res) => processText(res.value));
+                    r.readAsArrayBuffer(file);
+                }
+            } else { this.showToast('不支持的文件格式'); }
+            e.target.value = '';
+        },        
         handleDocxImport(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -10639,6 +10777,7 @@ Structure:
         },
         
         closeAllMenus() {
+            this.chatListContextMenu.show = false;
             this.chatContextMenu.show = false;
             this.wechatState.showPlusMenu = false;
             this.wechatState.showChatFunctions = false;
