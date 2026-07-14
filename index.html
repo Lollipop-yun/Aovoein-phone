@@ -2079,6 +2079,7 @@
         </div>
                         
         <!-- 文件上传 Inputs -->
+        <input type="file" ref="chatImageInput" accept="image/*" class="hidden" @change="handleImageUploadForChat">
         <input type="file" ref="groupAvatarInput" accept="image/*" class="hidden" @change="handleGroupAvatarChange">
         <input type="file" ref="homeAvatarInput" accept="image/*" class="hidden" @change="handleHomeAvatarChange">
         <input type="file" ref="icityAvatarInput" accept="image/*" class="hidden" @change="handleIcityAvatarChange">
@@ -2232,13 +2233,33 @@
                             <span class="mt-1.5 text-[11px] font-bold text-gray-800 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full shadow-sm">{{ wechatState.activeSession.name }}</span>
                         </div>
 
-                        <!-- 放射状连线 -->
+                        <!-- 关系网连线 (含智能交叉连线) -->
                         <svg class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10;">
+                            <!-- 中心到外围的连线 -->
                             <line v-for="(rel, idx) in wechatState.activeSession.relationships" :key="'line-'+idx"
                                   x1="50%" y1="50%"
                                   :x2="getRelNodePos(idx, wechatState.activeSession.relationships?.length || 0).x + '%'"
                                   :y2="getRelNodePos(idx, wechatState.activeSession.relationships?.length || 0).y + '%'"
                                   stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,4"/>
+                            
+                            <!-- 外围节点之间的交叉连线 -->
+                            <g v-for="(line, lidx) in getCrossRelations()" :key="'cross-'+lidx">
+                                <line :x1="getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + '%'"
+                                      :y1="getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + '%'"
+                                      :x2="getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x + '%'"
+                                      :y2="getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y + '%'"
+                                      stroke="#9ca3af" stroke-width="1" stroke-dasharray="2,2"/>
+                                <!-- 连线上的关系文字背景和文字 -->
+                                <rect :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
+                                      :y="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y)/2) + '%'"
+                                      width="24" height="12" fill="#f9fafb" rx="2"
+                                      style="transform: translate(-12px, -6px);"/>
+                                <text :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
+                                      :y="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y)/2) + '%'"
+                                      fill="#4b5563" font-size="8" font-weight="bold" text-anchor="middle" dominant-baseline="central">
+                                    {{ line.label }}
+                                </text>
+                            </g>
                         </svg>
 
                         <!-- 周边节点 -->
@@ -9607,13 +9628,17 @@ const app = createApp({
             
             const formatTzDate = (d) => {
                 const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-                return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} (24小时制)`;
             };
             
             let timeContext = `\n[系统提示-时间与时区严格感知]:
 我(玩家)当前的当地时间是：${formatTzDate(myDate)}。
 你(角色)当前的当地时间是：${formatTzDate(aiDate)}。
-【最高优先级警告】：你必须严格以【你(角色)当前的当地时间（${formatTzDate(aiDate)}）】作为你生活作息、吃饭、睡觉、打招呼的唯一标准！例如你的时间是深夜，你必须表现出困意或准备睡觉；你的时间是早晨，你应该说早安。绝不能被我的时间带偏！`;
+【绝对时间纪律警告！！！】：你必须且只能以【你当前的当地时间（${formatTzDate(aiDate)}）】作为你此时此刻生活作息、所处环境亮暗、吃饭睡觉的唯一衡量标准！
+- 如果你那里是 00:00~05:00，说明是凌晨/深夜，你应该睡觉或犯困！
+- 如果你那里是 06:00~10:00，说明是早晨，你应该刚醒或吃早饭！
+- 如果你那里是 12:00 左右，说明是正午！
+千万不要被我的时间带偏，绝不能把凌晨当成正午，否则判定严重OOC！`;
             
             // Music Sense Logic (NEW)
             // --- 强化音乐感知与 AI 主动切歌 ---
@@ -12778,7 +12803,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             this.saveData();
         },
         
-        triggerImageUpload() { this.imageUploadInput.click(); },
+        triggerImageUpload() { if(this.$refs.chatImageInput) this.$refs.chatImageInput.click(); },
         async handleImageUploadForChat(e) {
             const f = e.target.files[0]; if(!f) return;
             try {
@@ -15056,6 +15081,40 @@ ${greetingInstruction}`;
                 this.wechatState.activeSession.relationships = [];
             }
             this.relationshipModal.show = true;
+        },
+        inferRelation(r1, r2) {
+            const match = (a, b, w1, w2) => (a.includes(w1) && b.includes(w2)) || (a.includes(w2) && b.includes(w1));
+            // 夫妻
+            if (match(r1, r2, '父', '母') || match(r1, r2, '爸', '妈')) return '夫妻';
+            if (match(r1, r2, '爷', '奶')) return '夫妻';
+            if (match(r1, r2, '外公', '外婆')) return '夫妻';
+            // 父子/父女
+            if (match(r1, r2, '父', '子') || match(r1, r2, '父', '弟') || match(r1, r2, '父', '哥')) return '父子';
+            if (match(r1, r2, '父', '女') || match(r1, r2, '父', '妹') || match(r1, r2, '父', '姐')) return '父女';
+            // 母子/母女
+            if (match(r1, r2, '母', '子') || match(r1, r2, '母', '弟') || match(r1, r2, '母', '哥')) return '母子';
+            if (match(r1, r2, '母', '女') || match(r1, r2, '母', '妹') || match(r1, r2, '母', '姐')) return '母女';
+            // 兄弟姐妹
+            if (match(r1, r2, '哥', '弟') || (r1.includes('弟') && r2.includes('弟')) || (r1.includes('哥') && r2.includes('哥'))) return '兄弟';
+            if (match(r1, r2, '姐', '妹') || (r1.includes('妹') && r2.includes('妹')) || (r1.includes('姐') && r2.includes('姐'))) return '姐妹';
+            if (match(r1, r2, '哥', '妹') || match(r1, r2, '兄', '妹')) return '兄妹';
+            if (match(r1, r2, '姐', '弟')) return '姐弟';
+            return null;
+        },
+        getCrossRelations() {
+            const rels = this.wechatState.activeSession?.relationships || [];
+            const lines = [];
+            for (let i = 0; i < rels.length; i++) {
+                for (let j = i + 1; j < rels.length; j++) {
+                    const r1 = rels[i].relation;
+                    const r2 = rels[j].relation;
+                    let crossName = this.inferRelation(r1, r2);
+                    if (crossName) {
+                        lines.push({ sourceIdx: i, targetIdx: j, label: crossName });
+                    }
+                }
+            }
+            return lines;
         },
         getRelNodePos(idx, total) {
             // 环形算法，将节点均匀分布在当前角色周围
