@@ -3842,6 +3842,17 @@
                             <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                         </div>
                     </div>
+                    
+                    <!-- 卡片 1.5：角色关系网 (仅单聊显示) -->
+                    <div v-if="!wechatState.activeSession.isGroup" class="bg-white rounded-[16px] overflow-hidden shadow-sm">
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openRelationshipNetwork">
+                            <span class="text-[15px] text-gray-900">角色关系网 (NPC/联动)</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[14px] text-gray-500">{{ getRelationshipCount() }} 个节点</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- 卡片 2：搜索与显示排版 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
@@ -4007,6 +4018,112 @@
 
                 </div>
             </div>
+            
+            <!-- ================= 角色关系网 (Relationship Network) ================= -->
+            <transition name="page-slide">
+                <div v-if="wechatState.activeNav === 'relationship-network'" class="flex-1 flex flex-col bg-[#f2f2f6] absolute inset-0 z-[40] font-sans pb-safe">
+                    <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] border-b border-gray-200 z-20 shrink-0 sticky top-0">
+                        <button @click="wechatState.activeNav = 'chat-details'" class="w-8 h-8 flex items-center justify-center active:opacity-50"><i class="fas fa-chevron-left text-[18px] text-gray-800"></i></button>
+                        <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">关系网</h1>
+                        <button @click="openAddRelationshipModal" class="w-8 h-8 flex items-center justify-center active:opacity-50 text-gray-800"><i class="fas fa-plus text-[18px]"></i></button>
+                    </header>
+
+                    <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-[#fdfdfd]">
+                        <!-- 背景 SVG 连线 -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+                            <line v-for="(node, idx) in currentRelationships" :key="'line-'+idx"
+                                  x1="50%" y1="50%"
+                                  :x2="getRelNodePos(idx, currentRelationships.length).x + '%'"
+                                  :y2="getRelNodePos(idx, currentRelationships.length).y + '%'"
+                                  stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5,5" />
+                        </svg>
+
+                        <!-- 中心节点 (当前主角) -->
+                        <div class="absolute z-10 flex flex-col items-center" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                            <div class="w-20 h-20 rounded-full border-[3px] border-white shadow-[0_4px_25px_rgba(0,0,0,0.12)] overflow-hidden bg-gray-100">
+                                <img :src="getCurrentSessionAvatar()" class="w-full h-full object-cover">
+                            </div>
+                            <span class="mt-2 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[13px] font-bold text-gray-900 shadow-sm border border-gray-100">{{ wechatState.activeSession?.name }}</span>
+                        </div>
+
+                        <!-- 环绕的 NPC 节点 -->
+                        <div v-for="(node, idx) in currentRelationships" :key="'node-'+idx" class="absolute z-10 flex flex-col items-center"
+                             :style="{ top: getRelNodePos(idx, currentRelationships.length).y + '%', left: getRelNodePos(idx, currentRelationships.length).x + '%', transform: 'translate(-50%, -50%)' }">
+                            
+                            <!-- 关系便签 -->
+                            <div class="absolute bg-white px-2 py-0.5 rounded-md text-[10px] font-bold text-gray-500 shadow-sm border border-gray-100 whitespace-nowrap cursor-pointer active:scale-95 z-20"
+                                 :style="{ top: '-25px', left: '50%', transform: 'translateX(-50%)' }"
+                                 @click="editRelationship(idx)">
+                                {{ node.relationship }}
+                                <i class="fas fa-edit ml-1 text-gray-300"></i>
+                            </div>
+
+                            <!-- 节点头像 -->
+                            <div class="w-[52px] h-[52px] rounded-full border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.08)] overflow-hidden bg-gradient-to-tr from-gray-200 to-gray-50 flex items-center justify-center cursor-pointer active:scale-95 transition"
+                                 @click="editRelationship(idx)">
+                                <img v-if="node.bindId && getFriendAvatar(node.bindId)" :src="getFriendAvatar(node.bindId)" class="w-full h-full object-cover">
+                                <span v-else class="text-gray-400 font-bold text-lg">{{ node.name.charAt(0) }}</span>
+                            </div>
+                            <!-- 节点名字 -->
+                            <span class="mt-1.5 px-2 py-0.5 bg-white/80 backdrop-blur-sm rounded-md text-[11px] font-medium text-gray-800 shadow-sm whitespace-nowrap max-w-[80px] truncate border border-gray-50">{{ node.bindId ? getFriendName(node.bindId) : node.name }}</span>
+                        </div>
+
+                        <div v-if="currentRelationships.length === 0" class="absolute text-center text-gray-400 z-10">
+                            <div class="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3 border border-gray-100"><i class="fas fa-network-wired text-2xl text-gray-300"></i></div>
+                            <p class="text-sm font-medium">关系网空空如也</p>
+                            <p class="text-[11px] mt-1 text-gray-400">请点击右上角 (+) 按钮添加角色</p>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- 关系网填写弹窗 -->
+            <transition name="scale">
+                <div v-if="relationshipModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div class="bg-[#f9f9f9] w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col font-sans border border-gray-200">
+                        <div class="p-4 bg-white border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="font-bold text-[16px] text-gray-900">{{ relationshipModal.isEditing ? '编辑关系节点' : '新增关系节点' }}</h3>
+                            <button v-if="relationshipModal.isEditing" @click="deleteRelationship" class="text-red-500 text-[11px] font-bold bg-red-50 px-2.5 py-1.5 rounded-lg active:scale-95 border border-red-100">删除节点</button>
+                        </div>
+
+                        <div class="p-5 flex flex-col gap-4">
+                            <!-- 切换栏 (仅新增时显示) -->
+                            <div class="flex bg-gray-200/60 p-1 rounded-[10px] shrink-0" v-if="!relationshipModal.isEditing">
+                                <button @click="relationshipModal.type = 'custom'" class="flex-1 py-1.5 text-[12px] font-bold rounded-md transition" :class="relationshipModal.type === 'custom' ? 'bg-white shadow-sm text-black' : 'text-gray-500'">自定义虚构NPC</button>
+                                <button @click="relationshipModal.type = 'bind'" class="flex-1 py-1.5 text-[12px] font-bold rounded-md transition" :class="relationshipModal.type === 'bind' ? 'bg-white shadow-sm text-black' : 'text-gray-500'">绑定通讯录角色</button>
+                            </div>
+
+                            <div v-if="relationshipModal.type === 'bind'">
+                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">选择要绑定的角色</label>
+                                <select v-model="relationshipModal.bindId" class="w-full bg-white p-3.5 rounded-xl text-[14px] font-medium border border-gray-200 outline-none shadow-sm cursor-pointer" :disabled="relationshipModal.isEditing">
+                                    <option value="" disabled>请选择通讯录中的角色...</option>
+                                    <option v-for="f in availableFriendsForRelation" :key="f.id" :value="f.id">{{ f.remark || f.name }}</option>
+                                </select>
+                            </div>
+
+                            <div v-if="relationshipModal.type === 'custom'">
+                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 名字</label>
+                                <input v-model="relationshipModal.name" placeholder="输入虚构的 NPC 名字" class="w-full bg-white p-3.5 rounded-xl text-[14px] font-medium border border-gray-200 outline-none shadow-sm">
+                            </div>
+
+                            <div>
+                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">设定关系 (例如: 青梅竹马、死敌)</label>
+                                <input v-model="relationshipModal.relationship" placeholder="用简短的词描述他们的关系" class="w-full bg-white p-3.5 rounded-xl text-[14px] font-medium border border-gray-200 outline-none shadow-sm">
+                            </div>
+
+                            <div v-if="relationshipModal.type === 'custom'">
+                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 基础设定与背景</label>
+                                <textarea v-model="relationshipModal.bio" placeholder="一两句话描述这个 NPC 的性格或过去..." class="w-full h-24 bg-white p-3.5 rounded-xl text-[13px] border border-gray-200 outline-none resize-none shadow-sm leading-relaxed"></textarea>
+                            </div>
+
+                            <div class="flex gap-3 mt-2">
+                                <button @click="relationshipModal.show = false" class="flex-1 bg-white border border-gray-200 text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm">取消</button>
+                                <button @click="saveRelationship" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存设定</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
 
             <!-- 红包详情页 (修复多人拼手气渲染) -->
             <div v-if="wechatState.activeNav === 'red-packet-detail'" class="flex-1 flex flex-col red-packet-bg absolute inset-0 z-50">
@@ -5168,9 +5285,6 @@
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50">
                                     <div class="flex items-center gap-4"><i class="fas fa-eye-slash text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">隐藏状态栏</span></div><input type="checkbox" id="toggle-sb" class="switch-checkbox" v-model="hideStatusBar" @change="saveData"><label for="toggle-sb" class="switch-label"><div class="switch-button"></div></label>
                                 </div>
-                                <div class="p-4 flex items-center justify-between active:bg-gray-50">
-                                    <div class="flex items-center gap-4"><i class="fas fa-heartbeat text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">后台保活 (防掉线)</span></div><input type="checkbox" id="toggle-keepalive" class="switch-checkbox" v-model="keepAliveEnabled" @change="toggleKeepAlive"><label for="toggle-keepalive" class="switch-label"><div class="switch-button"></div></label>
-                                </div>
                             </div>
                             <div class="mt-8 mb-10 flex items-center justify-center gap-2 text-[12px] font-medium text-gray-400">
                                 <span>Version 1.0.0</span><span class="mx-1 text-gray-300">|</span><span @click="showSettingsDisclaimer = true" class="text-blue-500 cursor-pointer active:opacity-70">用户条约与免责声明</span>
@@ -5624,11 +5738,6 @@
 
 </div>
 
-<!-- 后台保活静音音频源（已替换为Base64硬编码，防止文件丢失，增加 preload="auto"） -->
-    <audio id="aovein-keep-alive-audio" loop playsinline webkit-playsinline preload="auto" src="data:audio/mpeg;base64,//OExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq" style="display:none;"></audio>
-
-</div>
-
 <script>
 const { createApp } = Vue;
 
@@ -5721,8 +5830,7 @@ const app = createApp({
             apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [], apiPresets:[],
             imageApiConfig: { baseUrl: '', apiKey: '', selectedModel: '' }, imageModels: [],
             imagePromptModal: { show: false, appearance: '', style: '' },
-            globalImageSettings: { show: false, showSizeModal: false, size: '1024x1024', positivePrompt: '', negativePrompt: '', presets: [] },
-            keepAliveEnabled: false, 
+            globalImageSettings: { show: false, showSizeModal: false, size: '1024x1024', positivePrompt: '', negativePrompt: '', presets: [] },             
             minimaxConfig: { enabled: false, region: 'cn', groupId: '', apiKey: '', selectedModel: '', voiceId: 'male-qn-qingse' }, minimaxModels:[],
             notificationConfig: { currentSound: null, currentName: '默认提示音' }, soundPresets:[],
             pushConfig: { enabled: false }, // 新增推送设置
@@ -5960,6 +6068,20 @@ const app = createApp({
         }
     },
     computed: {
+        currentRelationships() {
+            const session = this.wechatState.activeSession;
+            if (!session) return [];
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            return friend && friend.relationships ? friend.relationships : [];
+        },
+        availableFriendsForRelation() {
+            const session = this.wechatState.activeSession;
+            if (!session) return [];
+            const currentRels = this.currentRelationships;
+            const boundIds = currentRels.filter(r => r.bindId).map(r => r.bindId);
+            // 过滤掉自己以及已经被绑定的角色
+            return this.wechatState.friendList.filter(f => f.id !== session.targetId && !boundIds.includes(f.id));
+        },
         totalUnreadCount() {
             return this.wechatState.sessions.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
         },
@@ -6126,6 +6248,88 @@ const app = createApp({
         }
     },
     methods: {
+    // ================= 关系网核心逻辑 =================
+        openRelationshipNetwork() {
+            this.wechatState.activeNav = 'relationship-network';
+        },
+        getRelationshipCount() {
+            return this.currentRelationships.length;
+        },
+        getRelNodePos(idx, total) {
+            // 利用三角函数，围绕中心（50%, 50%）计算周围节点的布局，半径设为 32%
+            const radius = 32; 
+            const angle = (idx / total) * 2 * Math.PI - (Math.PI / 2);
+            return {
+                x: 50 + radius * Math.cos(angle),
+                y: 50 + radius * Math.sin(angle)
+            };
+        },
+        openAddRelationshipModal() {
+            this.relationshipModal = {
+                show: true,
+                isEditing: false,
+                editIndex: -1,
+                type: 'custom',
+                name: '',
+                relationship: '',
+                bio: '',
+                bindId: ''
+            };
+        },
+        editRelationship(idx) {
+            const rel = this.currentRelationships[idx];
+            this.relationshipModal = {
+                show: true,
+                isEditing: true,
+                editIndex: idx,
+                type: rel.bindId ? 'bind' : 'custom',
+                name: rel.name || '',
+                relationship: rel.relationship || '',
+                bio: rel.bio || '',
+                bindId: rel.bindId || ''
+            };
+        },
+        saveRelationship() {
+            if (this.relationshipModal.type === 'custom' && !this.relationshipModal.name.trim()) return this.showToast('请输入NPC名字');
+            if (this.relationshipModal.type === 'bind' && !this.relationshipModal.bindId) return this.showToast('请选择绑定的联系人');
+            if (!this.relationshipModal.relationship.trim()) return this.showToast('请输入与该角色的关系');
+
+            const session = this.wechatState.activeSession;
+            if (!session) return;
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            if (!friend) return;
+
+            if (!friend.relationships) friend.relationships = [];
+
+            const newRel = {
+                bindId: this.relationshipModal.type === 'bind' ? this.relationshipModal.bindId : null,
+                name: this.relationshipModal.type === 'custom' ? this.relationshipModal.name.trim() : '',
+                relationship: this.relationshipModal.relationship.trim(),
+                bio: this.relationshipModal.type === 'custom' ? this.relationshipModal.bio.trim() : ''
+            };
+
+            if (this.relationshipModal.isEditing) {
+                friend.relationships[this.relationshipModal.editIndex] = newRel;
+            } else {
+                friend.relationships.push(newRel);
+            }
+
+            this.saveData();
+            this.relationshipModal.show = false;
+            this.showToast('关系网更新成功');
+        },
+        deleteRelationship() {
+            this.showConfirm('确定删除该关系节点吗？(被绑定的原联系人不受影响)', () => {
+                const session = this.wechatState.activeSession;
+                const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+                if (friend && friend.relationships) {
+                    friend.relationships.splice(this.relationshipModal.editIndex, 1);
+                    this.saveData();
+                    this.relationshipModal.show = false;
+                    this.showToast('节点已删除');
+                }
+            });
+        },
     // ================= 气泡滑动引用交互逻辑 =================
         onBubbleTouchStart(e, index, msg) {
             // 系统消息不参与滑动
@@ -6235,57 +6439,7 @@ const app = createApp({
             this.globalImageSettings.size = size;
             this.globalImageSettings.showSizeModal = false;
             this.saveData();
-        },
-        toggleKeepAlive() {
-            this.saveData();
-            const audioEl = document.getElementById('aovein-keep-alive-audio');
-            if (!audioEl) return;
-
-            // 核心修复：给音频元素自身绑定强制恢复播放机制，绕过系统的后台控制台杀除
-            if (!audioEl._hasKeepAliveListener) {
-                audioEl.addEventListener('pause', () => {
-                    if (this.keepAliveEnabled) {
-                        setTimeout(() => { audioEl.play().catch(()=>{}); }, 10);
-                    }
-                });
-                audioEl._hasKeepAliveListener = true;
-            }
-
-            if (this.keepAliveEnabled) {
-                audioEl.play().then(() => {
-                    if ('mediaSession' in navigator) {
-                        navigator.mediaSession.metadata = new MediaMetadata({
-                            title: 'Aovein 系统后台运行中',
-                            artist: '请勿在此处点击暂停以防断联',
-                            artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
-                        });
-                        navigator.mediaSession.playbackState = 'playing';
-                        navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
-                        // 设为空函数，满足系统 API 规范，真正的防暂停由上方的事件监听处理
-                        navigator.mediaSession.setActionHandler('pause', () => { }); 
-                    }
-                    this.showToast('✅ 后台连线已开启，通知栏卡片已生效！');
-                }).catch(e => {
-                    console.error("播放被拦截:", e);
-                    this.showToast('需获取音频权限，请再点一下屏幕任意位置');
-                    document.body.addEventListener('click', () => { 
-                        if(this.keepAliveEnabled) {
-                            audioEl.play(); 
-                            this.showToast('✅ 权限获取成功，后台保活已开启！');
-                        }
-                    }, { once: true });
-                });
-            } else {
-                audioEl.pause();
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.playbackState = 'none';
-                    navigator.mediaSession.metadata = null;
-                    navigator.mediaSession.setActionHandler('play', null);
-                    navigator.mediaSession.setActionHandler('pause', null);
-                }
-                this.showToast('后台保活已关闭');
-            }
-        },
+        },        
         testMinimaxConnection() {
             if (!this.minimaxConfig.groupId || !this.minimaxConfig.apiKey) {
                 return this.showToast('请先填写 Group ID 和 API Key');
@@ -9698,6 +9852,26 @@ You play ALL the NPC members in this group chat. Choose the most appropriate mem
                 roleIdentity = `Your Identity: ${friend ? friend.name : session.name}.${friendExtra} Your Bio: ${friend ? friend.bio : 'None'}.`;
             }
             // ============================
+            
+            // == 【人际关系网认知与记忆隔离注入】 ==
+            let relationContext = "";
+            if (!session.isGroup && friend) {
+                if (friend.relationships && friend.relationships.length > 0) {
+                    let relDetails = friend.relationships.map(r => {
+                        if (r.bindId) {
+                            let bindF = this.wechatState.friendList.find(x => x.id === r.bindId);
+                            return `- [${bindF ? (bindF.remark || bindF.name) : '未知'}] (你们的关系: ${r.relationship})，设定参考：${bindF ? (bindF.bio || '无') : '无'}`;
+                        } else {
+                            return `- [${r.name}] (你们的关系: ${r.relationship})，设定参考：${r.bio || '无'}`;
+                        }
+                    }).join('\n');
+                    relationContext = `\n【你的人际关系网】：\n除了我（玩家）以外，你明确认识并且了解以下角色：\n${relDetails}\n【绝对禁忌】：你的生活圈子非常封闭，除了上述关系网中的人以及我，你是个没有任何其他社交的人，绝不认识其他任何人！严禁在聊天中莫名其妙提及、虚构或谈论你不认识的角色！`;
+                } else {
+                    // 如果列表为空，执行最严苛的隔离策略
+                    relationContext = `\n【绝对禁忌】：你的生活圈子非常封闭，目前你只认识我（玩家）一个人。绝不认识通讯录里的其他任何人！严禁在聊天中莫名其妙提及、虚构或谈论任何其他人名！`;
+                }
+            }
+            // ============================
 
             let systemPrompt = `[CRITICAL DIRECTIVE: REAL HUMAN SIMULATION & ANTI-CRINGE PROTOCOL]
 You are NO LONGER an AI. You are a real, living person chatting on a modern messaging app (WeChat).
@@ -9713,6 +9887,7 @@ You are NO LONGER an AI. You are a real, living person chatting on a modern mess
 <ENVIRONMENT_CONTEXT>
 ${roleIdentity}
 My (User) Identity: ${mask.name}.${maskExtra} My Bio: ${mask.bio}.
+${relationContext}
 ${worldContext}
 ${momentContext}
 ${timeContext}
@@ -11575,39 +11750,6 @@ Structure:
             this.toast.show = false;
             this.offlineState.show = false; // 修复一进微信就出现线下模式的BUG
             this.closeAllMenus();
-            
-            // 恢复后台保活状态 (网页刚刷新时无用户交互，静默挂载到第一次点击)
-            if (this.keepAliveEnabled) {
-                const activateOnLoad = () => {
-                    const audioEl = document.getElementById('aovein-keep-alive-audio');
-                    if (this.keepAliveEnabled && audioEl && audioEl.paused) {
-                        // 确保刷新后也能挂载防中断事件
-                        if (!audioEl._hasKeepAliveListener) {
-                            audioEl.addEventListener('pause', () => {
-                                if (this.keepAliveEnabled) {
-                                    setTimeout(() => { audioEl.play().catch(()=>{}); }, 10);
-                                }
-                            });
-                            audioEl._hasKeepAliveListener = true;
-                        }
-                        
-                        audioEl.play().then(() => {
-                            if ('mediaSession' in navigator) {
-                                navigator.mediaSession.metadata = new MediaMetadata({
-                                    title: 'Aovein 系统后台运行中',
-                                    artist: '请勿在此处点击暂停以防断联',
-                                    artwork: [{ src: 'https://pic1.imgdb.cn/item/69ba80aab96fa53fd04c3771.png', sizes: '512x512', type: 'image/png' }]
-                                });
-                                navigator.mediaSession.playbackState = 'playing';
-                                navigator.mediaSession.setActionHandler('play', () => { audioEl.play(); });
-                                navigator.mediaSession.setActionHandler('pause', () => { });
-                            }
-                        }).catch(()=>{});
-                    }
-                };
-                document.body.addEventListener('click', activateOnLoad, { once: true });
-                document.body.addEventListener('touchstart', activateOnLoad, { once: true });
-            }
 
             // 恢复系统级数据防清理状态
             if (navigator.storage && navigator.storage.persisted) {
