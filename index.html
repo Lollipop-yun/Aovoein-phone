@@ -2211,6 +2211,126 @@
         </transition>
         <input type="file" ref="groupAvatarInput2" accept="image/*" class="hidden" @change="handleGroupAvatarChange2">
         
+        <!-- 角色人际关系网全屏界面 -->
+        <transition name="page-slide">
+            <div v-if="relationshipModal.show" class="fixed inset-0 z-[116000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] shrink-0 z-50 sticky top-0">
+                    <button @click="relationshipModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
+                    <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">人际关系网</h1>
+                    <button @click="openAddRelationModal" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-plus text-[18px]"></i></button>
+                </header>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人，防止串戏提及毫无瓜葛的联系人。</p>
+
+                    <!-- 关系网可视化区域 -->
+                    <div class="relative w-full h-[320px] bg-white rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
+                        <!-- 中心节点：当前角色 -->
+                        <div class="absolute z-20 flex flex-col items-center">
+                            <div class="w-[60px] h-[60px] rounded-full border-[3px] border-blue-500/30 overflow-hidden shadow-md bg-gray-100">
+                                <img :src="getCurrentSessionAvatar()" class="w-full h-full object-cover">
+                            </div>
+                            <span class="mt-1.5 text-[11px] font-bold text-gray-800 bg-gray-50 border border-gray-200 px-2 py-0.5 rounded-full shadow-sm">{{ wechatState.activeSession.name }}</span>
+                        </div>
+
+                        <!-- 放射状连线 -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10;">
+                            <line v-for="(rel, idx) in wechatState.activeSession.relationships" :key="'line-'+idx"
+                                  x1="50%" y1="50%"
+                                  :x2="getRelNodePos(idx, wechatState.activeSession.relationships?.length || 0).x + '%'"
+                                  :y2="getRelNodePos(idx, wechatState.activeSession.relationships?.length || 0).y + '%'"
+                                  stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,4"/>
+                        </svg>
+
+                        <!-- 周边节点 -->
+                        <div v-for="(rel, idx) in wechatState.activeSession.relationships" :key="'node-'+idx"
+                             class="absolute z-20 flex flex-col items-center cursor-pointer active:scale-95 transition"
+                             :style="{ left: getRelNodePos(idx, wechatState.activeSession.relationships?.length || 0).x + '%', top: getRelNodePos(idx, wechatState.activeSession.relationships?.length || 0).y + '%', transform: 'translate(-50%, -50%)' }"
+                             @click="editRelation(idx)">
+                            <div class="bg-gray-800 text-white text-[9px] px-1.5 py-0.5 rounded mb-1 shadow-sm opacity-90">{{ rel.relation }}</div>
+                            <div class="w-11 h-11 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center overflow-hidden shadow-md">
+                                <img v-if="rel.type === 'contact'" :src="getFriendAvatar(rel.targetId)" class="w-full h-full object-cover">
+                                <i v-else class="fas fa-user text-gray-400 text-lg"></i>
+                            </div>
+                            <span class="mt-1 text-[10px] font-bold text-gray-600 bg-white/80 px-2 py-0.5 rounded-full shadow-sm max-w-[65px] truncate text-center">{{ rel.type === 'contact' ? getFriendName(rel.targetId) : rel.name }}</span>
+                        </div>
+                    </div>
+
+                    <!-- 关系列表 -->
+                    <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-50">
+                        <div v-if="!wechatState.activeSession.relationships || wechatState.activeSession.relationships.length === 0" class="p-6 text-center text-gray-400 text-xs">
+                            关系网为空
+                        </div>
+                        <div v-for="(rel, idx) in wechatState.activeSession.relationships" :key="idx" class="p-4 flex items-center justify-between active:bg-gray-50 transition cursor-pointer" @click="editRelation(idx)">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
+                                    <img v-if="rel.type === 'contact'" :src="getFriendAvatar(rel.targetId)" class="w-full h-full object-cover">
+                                    <i v-else class="fas fa-user flex h-full items-center justify-center text-gray-400 text-sm"></i>
+                                </div>
+                                <div class="flex flex-col min-w-0">
+                                    <span class="font-bold text-[14px] text-gray-900 truncate">{{ rel.type === 'contact' ? getFriendName(rel.targetId) : rel.name }} <span class="text-[9px] bg-gray-100 text-gray-500 px-1 py-0.5 rounded ml-1 font-normal">{{ rel.type === 'contact' ? '绑定联系人' : 'NPC' }}</span></span>
+                                    <span class="text-[11px] text-gray-400 mt-0.5 truncate">关系: {{ rel.relation }}</span>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 添加/编辑关系弹窗 -->
+        <transition name="scale">
+            <div v-if="addRelationModal.show" class="fixed inset-0 z-[117000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                        <h3 class="font-bold text-lg text-gray-900">{{ addRelationModal.isEdit ? '编辑关系' : '添加人物关系' }}</h3>
+                        <button v-if="addRelationModal.isEdit" @click="deleteRelation" class="text-red-500 text-[13px] font-bold active:opacity-50"><i class="fas fa-trash mr-1"></i>删除</button>
+                    </div>
+
+                    <div class="flex border-b border-gray-100 bg-gray-50/50 shrink-0" v-if="!addRelationModal.isEdit">
+                        <button @click="addRelationModal.type = 'contact'" class="flex-1 py-3 text-[14px] font-bold transition" :class="addRelationModal.type === 'contact' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">绑定手机联系人</button>
+                        <button @click="addRelationModal.type = 'npc'" class="flex-1 py-3 text-[14px] font-bold transition" :class="addRelationModal.type === 'npc' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">新建独立 NPC</button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+                        <div v-if="addRelationModal.type === 'contact' && !addRelationModal.isEdit">
+                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">选择通讯录角色</label>
+                            <select v-model="addRelationModal.targetId" class="w-full bg-gray-50 p-3 rounded-xl text-[14px] border border-gray-200 outline-none shadow-sm text-gray-800">
+                                <option value="" disabled>下拉选择...</option>
+                                <option v-for="f in wechatState.friendList" :key="f.id" :value="f.id">{{ f.remark || f.name }}</option>
+                            </select>
+                        </div>
+                        <div v-else-if="addRelationModal.type === 'contact' && addRelationModal.isEdit">
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                <img :src="getFriendAvatar(addRelationModal.targetId)" class="w-10 h-10 rounded-full object-cover">
+                                <span class="font-bold text-gray-800">{{ getFriendName(addRelationModal.targetId) }}</span>
+                            </div>
+                        </div>
+
+                        <div v-if="addRelationModal.type === 'npc'">
+                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 姓名</label>
+                            <input v-model="addRelationModal.name" placeholder="输入该NPC的名字" class="w-full bg-gray-50 p-3 rounded-xl text-[14px] border border-gray-200 outline-none shadow-sm">
+                        </div>
+
+                        <div>
+                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">关系定位</label>
+                            <input v-model="addRelationModal.relation" placeholder="例如: 死对头、亲妹妹、暗恋对象..." class="w-full bg-gray-50 p-3 rounded-xl text-[14px] border border-gray-200 outline-none shadow-sm">
+                        </div>
+
+                        <div v-if="addRelationModal.type === 'npc'">
+                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">基础设定 (给AI了解背景用)</label>
+                            <textarea v-model="addRelationModal.bio" placeholder="选填，例如：是你们共同的青梅竹马，性格火爆..." class="w-full h-24 bg-gray-50 p-3 rounded-xl text-[13px] border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-white border-t border-gray-100 flex gap-3 shrink-0">
+                        <button @click="addRelationModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm active:scale-95 transition">取消</button>
+                        <button @click="saveRelation" class="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition shadow-md">保存</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+        
         <!-- 时区选择弹窗 -->
         <transition name="app-slide">
             <div v-if="timezoneModal.show" class="fixed inset-0 z-[105000]">
@@ -3842,17 +3962,6 @@
                             <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                         </div>
                     </div>
-                    
-                    <!-- 卡片 1.5：角色关系网 (仅单聊显示) -->
-                    <div v-if="!wechatState.activeSession.isGroup" class="bg-white rounded-[16px] overflow-hidden shadow-sm">
-                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openRelationshipNetwork">
-                            <span class="text-[15px] text-gray-900">角色关系网 (NPC/联动)</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[14px] text-gray-500">{{ getRelationshipCount() }} 个节点</span>
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- 卡片 2：搜索与显示排版 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
@@ -3931,6 +4040,13 @@
                             <span class="text-[15px] text-gray-900">群聊记忆互通</span>
                             <div class="flex items-center gap-2">
                                 <span class="text-[14px] text-gray-500">{{ wechatState.activeSession.syncGroupIds?.length ? '已开启' : '未开启' }}</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                            </div>
+                        </div>
+                        <div v-if="!wechatState.activeSession.isGroup" class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openRelationshipModal">
+                            <span class="text-[15px] text-gray-900">关系网 (人际设定)</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[14px] text-gray-500">{{ wechatState.activeSession.relationships?.length || 0 }}个人际关联</span>
                                 <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                             </div>
                         </div>
@@ -4018,112 +4134,6 @@
 
                 </div>
             </div>
-            
-            <!-- ================= 角色关系网 (Relationship Network) ================= -->
-            <transition name="page-slide">
-                <div v-if="wechatState.activeNav === 'relationship-network'" class="flex-1 flex flex-col bg-[#f2f2f6] absolute inset-0 z-[40] font-sans pb-safe">
-                    <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] border-b border-gray-200 z-20 shrink-0 sticky top-0">
-                        <button @click="wechatState.activeNav = 'chat-details'" class="w-8 h-8 flex items-center justify-center active:opacity-50"><i class="fas fa-chevron-left text-[18px] text-gray-800"></i></button>
-                        <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">关系网</h1>
-                        <button @click="openAddRelationshipModal" class="w-8 h-8 flex items-center justify-center active:opacity-50 text-gray-800"><i class="fas fa-plus text-[18px]"></i></button>
-                    </header>
-
-                    <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-[#fdfdfd]">
-                        <!-- 背景 SVG 连线 -->
-                        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
-                            <line v-for="(node, idx) in currentRelationships" :key="'line-'+idx"
-                                  x1="50%" y1="50%"
-                                  :x2="getRelNodePos(idx, currentRelationships.length).x + '%'"
-                                  :y2="getRelNodePos(idx, currentRelationships.length).y + '%'"
-                                  stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5,5" />
-                        </svg>
-
-                        <!-- 中心节点 (当前主角) -->
-                        <div class="absolute z-10 flex flex-col items-center" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                            <div class="w-20 h-20 rounded-full border-[3px] border-white shadow-[0_4px_25px_rgba(0,0,0,0.12)] overflow-hidden bg-gray-100">
-                                <img :src="getCurrentSessionAvatar()" class="w-full h-full object-cover">
-                            </div>
-                            <span class="mt-2 px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[13px] font-bold text-gray-900 shadow-sm border border-gray-100">{{ wechatState.activeSession?.name }}</span>
-                        </div>
-
-                        <!-- 环绕的 NPC 节点 -->
-                        <div v-for="(node, idx) in currentRelationships" :key="'node-'+idx" class="absolute z-10 flex flex-col items-center"
-                             :style="{ top: getRelNodePos(idx, currentRelationships.length).y + '%', left: getRelNodePos(idx, currentRelationships.length).x + '%', transform: 'translate(-50%, -50%)' }">
-                            
-                            <!-- 关系便签 -->
-                            <div class="absolute bg-white px-2 py-0.5 rounded-md text-[10px] font-bold text-gray-500 shadow-sm border border-gray-100 whitespace-nowrap cursor-pointer active:scale-95 z-20"
-                                 :style="{ top: '-25px', left: '50%', transform: 'translateX(-50%)' }"
-                                 @click="editRelationship(idx)">
-                                {{ node.relationship }}
-                                <i class="fas fa-edit ml-1 text-gray-300"></i>
-                            </div>
-
-                            <!-- 节点头像 -->
-                            <div class="w-[52px] h-[52px] rounded-full border-2 border-white shadow-[0_4px_15px_rgba(0,0,0,0.08)] overflow-hidden bg-gradient-to-tr from-gray-200 to-gray-50 flex items-center justify-center cursor-pointer active:scale-95 transition"
-                                 @click="editRelationship(idx)">
-                                <img v-if="node.bindId && getFriendAvatar(node.bindId)" :src="getFriendAvatar(node.bindId)" class="w-full h-full object-cover">
-                                <span v-else class="text-gray-400 font-bold text-lg">{{ node.name.charAt(0) }}</span>
-                            </div>
-                            <!-- 节点名字 -->
-                            <span class="mt-1.5 px-2 py-0.5 bg-white/80 backdrop-blur-sm rounded-md text-[11px] font-medium text-gray-800 shadow-sm whitespace-nowrap max-w-[80px] truncate border border-gray-50">{{ node.bindId ? getFriendName(node.bindId) : node.name }}</span>
-                        </div>
-
-                        <div v-if="currentRelationships.length === 0" class="absolute text-center text-gray-400 z-10">
-                            <div class="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mx-auto mb-3 border border-gray-100"><i class="fas fa-network-wired text-2xl text-gray-300"></i></div>
-                            <p class="text-sm font-medium">关系网空空如也</p>
-                            <p class="text-[11px] mt-1 text-gray-400">请点击右上角 (+) 按钮添加角色</p>
-                        </div>
-                    </div>
-                </div>
-            </transition>
-
-            <!-- 关系网填写弹窗 -->
-            <transition name="scale">
-                <div v-if="relationshipModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div class="bg-[#f9f9f9] w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col font-sans border border-gray-200">
-                        <div class="p-4 bg-white border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-bold text-[16px] text-gray-900">{{ relationshipModal.isEditing ? '编辑关系节点' : '新增关系节点' }}</h3>
-                            <button v-if="relationshipModal.isEditing" @click="deleteRelationship" class="text-red-500 text-[11px] font-bold bg-red-50 px-2.5 py-1.5 rounded-lg active:scale-95 border border-red-100">删除节点</button>
-                        </div>
-
-                        <div class="p-5 flex flex-col gap-4">
-                            <!-- 切换栏 (仅新增时显示) -->
-                            <div class="flex bg-gray-200/60 p-1 rounded-[10px] shrink-0" v-if="!relationshipModal.isEditing">
-                                <button @click="relationshipModal.type = 'custom'" class="flex-1 py-1.5 text-[12px] font-bold rounded-md transition" :class="relationshipModal.type === 'custom' ? 'bg-white shadow-sm text-black' : 'text-gray-500'">自定义虚构NPC</button>
-                                <button @click="relationshipModal.type = 'bind'" class="flex-1 py-1.5 text-[12px] font-bold rounded-md transition" :class="relationshipModal.type === 'bind' ? 'bg-white shadow-sm text-black' : 'text-gray-500'">绑定通讯录角色</button>
-                            </div>
-
-                            <div v-if="relationshipModal.type === 'bind'">
-                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">选择要绑定的角色</label>
-                                <select v-model="relationshipModal.bindId" class="w-full bg-white p-3.5 rounded-xl text-[14px] font-medium border border-gray-200 outline-none shadow-sm cursor-pointer" :disabled="relationshipModal.isEditing">
-                                    <option value="" disabled>请选择通讯录中的角色...</option>
-                                    <option v-for="f in availableFriendsForRelation" :key="f.id" :value="f.id">{{ f.remark || f.name }}</option>
-                                </select>
-                            </div>
-
-                            <div v-if="relationshipModal.type === 'custom'">
-                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 名字</label>
-                                <input v-model="relationshipModal.name" placeholder="输入虚构的 NPC 名字" class="w-full bg-white p-3.5 rounded-xl text-[14px] font-medium border border-gray-200 outline-none shadow-sm">
-                            </div>
-
-                            <div>
-                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">设定关系 (例如: 青梅竹马、死敌)</label>
-                                <input v-model="relationshipModal.relationship" placeholder="用简短的词描述他们的关系" class="w-full bg-white p-3.5 rounded-xl text-[14px] font-medium border border-gray-200 outline-none shadow-sm">
-                            </div>
-
-                            <div v-if="relationshipModal.type === 'custom'">
-                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 基础设定与背景</label>
-                                <textarea v-model="relationshipModal.bio" placeholder="一两句话描述这个 NPC 的性格或过去..." class="w-full h-24 bg-white p-3.5 rounded-xl text-[13px] border border-gray-200 outline-none resize-none shadow-sm leading-relaxed"></textarea>
-                            </div>
-
-                            <div class="flex gap-3 mt-2">
-                                <button @click="relationshipModal.show = false" class="flex-1 bg-white border border-gray-200 text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm">取消</button>
-                                <button @click="saveRelationship" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存设定</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </transition>
 
             <!-- 红包详情页 (修复多人拼手气渲染) -->
             <div v-if="wechatState.activeNav === 'red-packet-detail'" class="flex-1 flex flex-col red-packet-bg absolute inset-0 z-50">
@@ -5907,6 +5917,8 @@ const app = createApp({
             groupAddMemberModal: { show: false, selectedIds:[] },
             sessionMaskModal: { show: false },
             memorySyncModal: { show: false, selectedGroupIds:[] },
+            relationshipModal: { show: false },
+            addRelationModal: { show: false, isEdit: false, editIndex: -1, type: 'contact', targetId: '', name: '', relation: '', bio: '' },
             isEditingSessionMask: false,
             masks: [], showMaskManager: false, maskModal: { show: false }, maskForm: { id: null, name: '', remark: '', username: '', gender: '女', bio: '', nudge: '', signature: '', avatar: '' },
             worldData: [], expandedFolders:[], worldModal: { show: false, type: 'file', name: '', folderName: '', content: '', id: null, isGlobal: false }, viewFileModal: { show: false, data: {} },
@@ -6068,20 +6080,6 @@ const app = createApp({
         }
     },
     computed: {
-        currentRelationships() {
-            const session = this.wechatState.activeSession;
-            if (!session) return [];
-            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-            return friend && friend.relationships ? friend.relationships : [];
-        },
-        availableFriendsForRelation() {
-            const session = this.wechatState.activeSession;
-            if (!session) return [];
-            const currentRels = this.currentRelationships;
-            const boundIds = currentRels.filter(r => r.bindId).map(r => r.bindId);
-            // 过滤掉自己以及已经被绑定的角色
-            return this.wechatState.friendList.filter(f => f.id !== session.targetId && !boundIds.includes(f.id));
-        },
         totalUnreadCount() {
             return this.wechatState.sessions.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
         },
@@ -6248,88 +6246,6 @@ const app = createApp({
         }
     },
     methods: {
-    // ================= 关系网核心逻辑 =================
-        openRelationshipNetwork() {
-            this.wechatState.activeNav = 'relationship-network';
-        },
-        getRelationshipCount() {
-            return this.currentRelationships.length;
-        },
-        getRelNodePos(idx, total) {
-            // 利用三角函数，围绕中心（50%, 50%）计算周围节点的布局，半径设为 32%
-            const radius = 32; 
-            const angle = (idx / total) * 2 * Math.PI - (Math.PI / 2);
-            return {
-                x: 50 + radius * Math.cos(angle),
-                y: 50 + radius * Math.sin(angle)
-            };
-        },
-        openAddRelationshipModal() {
-            this.relationshipModal = {
-                show: true,
-                isEditing: false,
-                editIndex: -1,
-                type: 'custom',
-                name: '',
-                relationship: '',
-                bio: '',
-                bindId: ''
-            };
-        },
-        editRelationship(idx) {
-            const rel = this.currentRelationships[idx];
-            this.relationshipModal = {
-                show: true,
-                isEditing: true,
-                editIndex: idx,
-                type: rel.bindId ? 'bind' : 'custom',
-                name: rel.name || '',
-                relationship: rel.relationship || '',
-                bio: rel.bio || '',
-                bindId: rel.bindId || ''
-            };
-        },
-        saveRelationship() {
-            if (this.relationshipModal.type === 'custom' && !this.relationshipModal.name.trim()) return this.showToast('请输入NPC名字');
-            if (this.relationshipModal.type === 'bind' && !this.relationshipModal.bindId) return this.showToast('请选择绑定的联系人');
-            if (!this.relationshipModal.relationship.trim()) return this.showToast('请输入与该角色的关系');
-
-            const session = this.wechatState.activeSession;
-            if (!session) return;
-            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-            if (!friend) return;
-
-            if (!friend.relationships) friend.relationships = [];
-
-            const newRel = {
-                bindId: this.relationshipModal.type === 'bind' ? this.relationshipModal.bindId : null,
-                name: this.relationshipModal.type === 'custom' ? this.relationshipModal.name.trim() : '',
-                relationship: this.relationshipModal.relationship.trim(),
-                bio: this.relationshipModal.type === 'custom' ? this.relationshipModal.bio.trim() : ''
-            };
-
-            if (this.relationshipModal.isEditing) {
-                friend.relationships[this.relationshipModal.editIndex] = newRel;
-            } else {
-                friend.relationships.push(newRel);
-            }
-
-            this.saveData();
-            this.relationshipModal.show = false;
-            this.showToast('关系网更新成功');
-        },
-        deleteRelationship() {
-            this.showConfirm('确定删除该关系节点吗？(被绑定的原联系人不受影响)', () => {
-                const session = this.wechatState.activeSession;
-                const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-                if (friend && friend.relationships) {
-                    friend.relationships.splice(this.relationshipModal.editIndex, 1);
-                    this.saveData();
-                    this.relationshipModal.show = false;
-                    this.showToast('节点已删除');
-                }
-            });
-        },
     // ================= 气泡滑动引用交互逻辑 =================
         onBubbleTouchStart(e, index, msg) {
             // 系统消息不参与滑动
@@ -9753,6 +9669,23 @@ const app = createApp({
 
             let contextMessages =[];
             
+            // == 【角色人际关系网构建】 ==
+            let relationContext = "";
+            if (session.relationships && session.relationships.length > 0) {
+                const relDetails = session.relationships.map(r => {
+                    if (r.type === 'contact') {
+                        const f = this.wechatState.friendList.find(x => x.id === r.targetId);
+                        return `[角色] ${f ? (f.remark || f.name) : '未知'} - 与你的关系: ${r.relation}`;
+                    } else {
+                        return `[NPC] ${r.name} - 与你的关系: ${r.relation} (设定: ${r.bio || '无'})`;
+                    }
+                }).join('\n');
+                relationContext = `\n【核心人际关系网(极度重要)】：\n你目前**只认识**以下人物：\n${relDetails}\n【严重警告】：除了我(玩家)和上述提到的人物之外，你绝对不认识任何其他的联系人！严禁在对话中莫名其妙提起、谈论或表现出你认识其他毫不相干的人！别人不提，你绝对不能主动提！`;
+            } else {
+                relationContext = `\n【核心人际关系网(极度重要)】：你目前是一个独立的个体，**除了我(玩家)之外，你不认识任何其他人**！严禁在对话中莫名其妙提起或表现出你认识其他毫不相干的联系人！`;
+            }
+            // ============================
+            
             // == 【拉黑状态上帝视角构建】 ==
             let blockContext = "";
             if (session.isBlocked) {
@@ -9852,26 +9785,6 @@ You play ALL the NPC members in this group chat. Choose the most appropriate mem
                 roleIdentity = `Your Identity: ${friend ? friend.name : session.name}.${friendExtra} Your Bio: ${friend ? friend.bio : 'None'}.`;
             }
             // ============================
-            
-            // == 【人际关系网认知与记忆隔离注入】 ==
-            let relationContext = "";
-            if (!session.isGroup && friend) {
-                if (friend.relationships && friend.relationships.length > 0) {
-                    let relDetails = friend.relationships.map(r => {
-                        if (r.bindId) {
-                            let bindF = this.wechatState.friendList.find(x => x.id === r.bindId);
-                            return `- [${bindF ? (bindF.remark || bindF.name) : '未知'}] (你们的关系: ${r.relationship})，设定参考：${bindF ? (bindF.bio || '无') : '无'}`;
-                        } else {
-                            return `- [${r.name}] (你们的关系: ${r.relationship})，设定参考：${r.bio || '无'}`;
-                        }
-                    }).join('\n');
-                    relationContext = `\n【你的人际关系网】：\n除了我（玩家）以外，你明确认识并且了解以下角色：\n${relDetails}\n【绝对禁忌】：你的生活圈子非常封闭，除了上述关系网中的人以及我，你是个没有任何其他社交的人，绝不认识其他任何人！严禁在聊天中莫名其妙提及、虚构或谈论你不认识的角色！`;
-                } else {
-                    // 如果列表为空，执行最严苛的隔离策略
-                    relationContext = `\n【绝对禁忌】：你的生活圈子非常封闭，目前你只认识我（玩家）一个人。绝不认识通讯录里的其他任何人！严禁在聊天中莫名其妙提及、虚构或谈论任何其他人名！`;
-                }
-            }
-            // ============================
 
             let systemPrompt = `[CRITICAL DIRECTIVE: REAL HUMAN SIMULATION & ANTI-CRINGE PROTOCOL]
 You are NO LONGER an AI. You are a real, living person chatting on a modern messaging app (WeChat).
@@ -9887,7 +9800,6 @@ You are NO LONGER an AI. You are a real, living person chatting on a modern mess
 <ENVIRONMENT_CONTEXT>
 ${roleIdentity}
 My (User) Identity: ${mask.name}.${maskExtra} My Bio: ${mask.bio}.
-${relationContext}
 ${worldContext}
 ${momentContext}
 ${timeContext}
@@ -9899,6 +9811,7 @@ ${readContext}
 ${crossChatContext}
 ${batteryContext}
 ${blockContext}
+${relationContext}
 </ENVIRONMENT_CONTEXT>
 
 IMPORTANT: You must output ONLY a valid JSON object. No Markdown. No other text.
@@ -15136,6 +15049,62 @@ ${greetingInstruction}`;
             document.removeEventListener('touchmove', this.doDragVoice);
             document.removeEventListener('mouseup', this.stopDragVoice);
             document.removeEventListener('touchend', this.stopDragVoice);
+        },
+        
+        openRelationshipModal() {
+            if (!this.wechatState.activeSession.relationships) {
+                this.wechatState.activeSession.relationships = [];
+            }
+            this.relationshipModal.show = true;
+        },
+        getRelNodePos(idx, total) {
+            // 环形算法，将节点均匀分布在当前角色周围
+            if (total === 0) return { x: 50, y: 50 };
+            const angle = (idx / total) * 2 * Math.PI - Math.PI / 2;
+            const radius = 35; // 连线半径35%
+            return {
+                x: 50 + radius * Math.cos(angle),
+                y: 50 + radius * Math.sin(angle)
+            };
+        },
+        openAddRelationModal() {
+            this.addRelationModal = { show: true, isEdit: false, editIndex: -1, type: 'contact', targetId: '', name: '', relation: '', bio: '' };
+        },
+        editRelation(idx) {
+            const rel = this.wechatState.activeSession.relationships[idx];
+            this.addRelationModal = { show: true, isEdit: true, editIndex: idx, type: rel.type, targetId: rel.targetId || '', name: rel.name || '', relation: rel.relation || '', bio: rel.bio || '' };
+        },
+        saveRelation() {
+            if (this.addRelationModal.type === 'contact' && !this.addRelationModal.targetId) return this.showToast('请选择要绑定的联系人');
+            if (this.addRelationModal.type === 'npc' && !this.addRelationModal.name.trim()) return this.showToast('请输入 NPC 姓名');
+            if (!this.addRelationModal.relation.trim()) return this.showToast('请输入关系 (如：前任、亲妹妹)');
+
+            const relData = {
+                type: this.addRelationModal.type,
+                targetId: this.addRelationModal.type === 'contact' ? this.addRelationModal.targetId : null,
+                name: this.addRelationModal.type === 'npc' ? this.addRelationModal.name.trim() : '',
+                relation: this.addRelationModal.relation.trim(),
+                bio: this.addRelationModal.type === 'npc' ? this.addRelationModal.bio.trim() : ''
+            };
+
+            if (!this.wechatState.activeSession.relationships) this.wechatState.activeSession.relationships = [];
+
+            if (this.addRelationModal.isEdit) {
+                this.wechatState.activeSession.relationships[this.addRelationModal.editIndex] = relData;
+            } else {
+                this.wechatState.activeSession.relationships.push(relData);
+            }
+            this.saveData();
+            this.addRelationModal.show = false;
+            this.showToast('人际关系网已更新');
+        },
+        deleteRelation() {
+            this.showConfirm('确认删除这条关系吗？', () => {
+                this.wechatState.activeSession.relationships.splice(this.addRelationModal.editIndex, 1);
+                this.saveData();
+                this.addRelationModal.show = false;
+                this.showToast('关系已解除');
+            });
         },
         
         // --- 接受 AI 听歌邀请 ---
