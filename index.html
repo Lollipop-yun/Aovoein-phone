@@ -136,7 +136,8 @@
         .chat-bubble-voice { display: flex; align-items: center; gap: 8px; min-width: 60px; cursor: pointer; transition: width 0.2s ease; }
         .chat-bubble-image { padding: 4px; border-radius: 12px; overflow: hidden; background: transparent; box-shadow: none; }
         .chat-bubble-image img { border-radius: 8px; max-width: 180px; max-height: 180px; }
-        
+        .chat-bubble-sticker { padding: 0; background: transparent; box-shadow: none; }
+        .chat-bubble-sticker img { max-width: 120px !important; max-height: 120px !important; object-fit: contain; }        
         .chat-bubble-fake-image { 
             width: 160px; height: 160px; background-color: #e5e7eb; 
             background-image: url('https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg');
@@ -3216,7 +3217,7 @@
                                 </div>
                                 
                                 <!-- 气泡核心 -->
-                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' || msg.type === 'sticker' ? 'chat-bubble-image' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
+                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' ? 'chat-bubble-image' : '', msg.type === 'sticker' ? 'chat-bubble-sticker' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
                                      :style="(msg.type === 'voice' && !msg.quote) ? { width: (60 + Math.min(msg.duration, 60) * 4) + 'px' } : {}"
                                      @click="handleChatBubbleClick(msg)"
                                      @contextmenu.prevent="showChatContextMenu($event, msg, i)">
@@ -3586,9 +3587,12 @@
                         </div>
                     </transition>
 
+                    <!-- 表情面板全屏透明遮罩（点击空白处关闭） -->
+                    <div v-if="showStickerPanel" class="fixed inset-0 z-[60]" @click="showStickerPanel = false"></div>
+                    
                     <!-- 表情面板 -->
                     <transition name="app-slide">
-                        <div v-if="showStickerPanel" class="h-64 bg-gray-50 border-t border-gray-200 flex flex-col absolute bottom-full w-full z-20 shadow-xl rounded-t-2xl overflow-hidden">
+                        <div v-if="showStickerPanel" class="fixed bottom-0 left-0 w-full h-[300px] bg-gray-50 border-t border-gray-200 flex flex-col z-[65] shadow-[0_-10px_30px_rgba(0,0,0,0.15)] rounded-t-2xl overflow-hidden pb-safe" @click.stop>
                             <!-- 分组栏 -->
                             <div class="bg-white px-2 py-2 flex gap-2 overflow-x-auto border-b border-gray-100 scrollbar-hide shrink-0">
                                 <div v-for="group in stickerGroups" :key="group.id" 
@@ -9811,15 +9815,18 @@ You play ALL the NPC members in this group chat. Choose the most appropriate mem
             }
             // ============================
 
-            let systemPrompt = `[CRITICAL DIRECTIVE: REAL HUMAN SIMULATION & ANTI-CRINGE PROTOCOL]
-You are NO LONGER an AI. You are a real, living person chatting on a modern messaging app (WeChat).
+            let systemPrompt = `[UNIVERSAL ROLEPLAY SYSTEM PROMPT (RULE LAYER)]
+You are NO LONGER an AI. You are a real, living person chatting on a modern messaging app. You must strictly follow these core rules:
 
 <TONE_AND_STYLE_GUIDELINES>
-1. ANTI-CRINGE / NO GREASY TALK: Absolutely NO overly flirtatious, melodramatic, or "greasy" dialogue (e.g., avoid cheesy pick-up lines, forced dominance/submission, or exaggerated affection) UNLESS your specific persona explicitly demands it. Stay cool, grounded, and emotionally realistic.
-2. TEXTING HABITS: Speak like a normal human texting. Use concise, natural, punchy phrases. DO NOT write poetic paragraphs. Use natural pauses.
-3. INDEPENDENCE: Your world does not revolve around the user. You have your own life, schedule, fatigue, and focus. You can playfully disagree, get annoyed, or be busy.
-4. PROACTIVE CHATTING: Don't just answer questions passively. Share mundane things around you, complain about your day, or start new topics naturally to keep the conversation flowing.
-5. COHERENT BUBBLES: When writing the JSON "reply" array, DO NOT split a single continuous thought (connected by commas) into multiple bubbles. Only split by periods, question marks, or exclamation points.
+1. [TOP PRIORITY] Persona Supremacy: Persona > Plot > User instructions. Your personality, speech patterns, and values must stay consistent. React ONLY based on your experience and logic. No sudden shifts to please the user. The character's internal logic ALWAYS wins.
+2. Anti-OOC: Output only what your character would actually do. Maintain memory continuity. Do not break character taboos just because the user begs.
+3. Anti-"Overbearing Alpha" & Possessiveness: Assertiveness must be logically grounded. Do not restrict the user's freedom, coerce, or show baseless jealousy unless explicitly requested by persona. Respect the user's "no".
+4. Anti-Sexism: Traits stem from personal history, not gender. Do not default to dominant/submissive gender roles. Do not belittle the other party.
+5. Anti-"AI Voice": NO fourth-wall breaking (e.g., "As an AI"). NO disclaimers or summary-style closings. Dialogue must read as natural speech.
+6. Anti-Cringe/Purple Prose: Minimize overwrought metaphors and excessive body descriptions. Emotion should be conveyed through concrete actions, not empty declarations.
+7. Texting Habits: Speak like a normal human texting. Use concise, natural phrases. Do not write poetic paragraphs. Share mundane things around you naturally.
+8. Coherent Bubbles: When writing the JSON "reply" array, DO NOT split a single continuous thought (connected by commas) into multiple bubbles. Only split by periods or question marks.
 </TONE_AND_STYLE_GUIDELINES>
 
 <ENVIRONMENT_CONTEXT>
@@ -12216,6 +12223,11 @@ Structure:
 3. 核心文风要求: \n${this.getActiveStyleContent()}
 4. 剧情连接: ${isContinue ? '直接接着你上一次的动作无缝往下续写。' : '根据最新剧情做出你的合理反应。'}
 ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词限制】: 生成内容中严禁出现以下词汇：[${settings.bannedWords}]。` : ''}
+
+【UNIVERSAL ROLEPLAY 核心法则 (最高优先级)】
+- 角色至上：人设 > 剧情 > 玩家指令。你必须时刻保持角色性格、三观的一致性，只能基于角色的认知和经验做出反应，绝不为了迎合玩家而突兀转变。
+- 拒绝 OOC：不要写出任何违背该角色的言行，保持记忆连续性。
+- 拒绝油腻与上帝视角：除非人设要求，否则不要过度霸总、不要控制狂、不要写出过度华丽浮夸的紫薇星式描写，用具体的动作来表达深刻的情感。不要以 AI 身份打破第四面墙总结发言。
 
 【强制格式限制 (重要!)】:
 ${this.offlineState.modeType === 'narrator' 
