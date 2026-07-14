@@ -107,7 +107,7 @@
         .wechat-pill-tab { transition: all 0.2s ease; border-radius: 999px; padding: 6px 16px; font-size: 13px; font-weight: 500; }
         .wechat-pill-active { background-color: #000; color: #fff; }
         .wechat-pill-inactive { background-color: transparent; color: #333; }
-        .wechat-bottom-nav { background: white; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 90%; height: 48px; margin-bottom: 12px; }
+        .wechat-bottom-nav { background: white; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 90%; height: 48px; margin-bottom: 20px; }
         .wechat-avatar-ring { border: 2px solid #ffb6c1; padding: 2px; }
         .vip-badge { background-color: #666; color: white; font-size: 9px; padding: 1px 4px; border-radius: 4px; font-weight: bold; letter-spacing: 0.5px; }
         .wechat-search-input::placeholder { text-align: center; color: #9ca3af; }
@@ -2396,6 +2396,22 @@
             </div>
         </transition>
         
+        <!-- 翻译语言选择弹窗 (iOS 灰白高级) -->
+        <transition name="app-slide">
+            <div v-if="translateLangModal.show" class="fixed inset-0 z-[106000]">
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="translateLangModal.show = false"></div>
+                <div class="ios-list-modal max-h-[85vh]">
+                    <div class="ios-list-header">{{ translateLangModal.type === 'source' ? '选择角色输出语言' : '翻译为' }} <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="translateLangModal.show = false">取消</button></div>
+                    <div class="ios-list-content p-0 bg-white">
+                        <div v-for="lang in getTranslateLangOptions()" :key="lang" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="selectTranslateLang(lang)">
+                            <span class="font-bold text-gray-900 text-[15px]">{{ lang }}</span>
+                            <i v-if="isTranslateLangSelected(lang)" class="fas fa-check text-blue-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+        
         <!-- 时区选择弹窗 -->
         <transition name="app-slide">
             <div v-if="timezoneModal.show" class="fixed inset-0 z-[105000]">
@@ -4193,10 +4209,28 @@
                             <input type="checkbox" class="switch-checkbox" id="time-sense-toggle" v-model="wechatState.activeSession.enableTimeSense" @change="saveData">
                             <label for="time-sense-toggle" class="switch-label"><div class="switch-button"></div></label>
                         </div>
-                        <div class="flex justify-between items-center p-4 active:bg-gray-50 transition">
-                            <span class="text-[15px] text-gray-900">自动翻译气泡(含外语/英文)</span>
-                            <input type="checkbox" class="switch-checkbox" id="translate-toggle" v-model="wechatState.activeSession.enableClickTranslate" @change="saveData">
-                            <label for="translate-toggle" class="switch-label"><div class="switch-button"></div></label>
+                        <div class="flex flex-col border-b border-gray-50">
+                            <div class="flex justify-between items-center p-4 active:bg-gray-50 transition">
+                                <span class="text-[15px] text-gray-900">自动翻译</span>
+                                <input type="checkbox" class="switch-checkbox" id="translate-toggle" v-model="wechatState.activeSession.enableClickTranslate" @change="saveData">
+                                <label for="translate-toggle" class="switch-label"><div class="switch-button"></div></label>
+                            </div>
+                            <!-- 自动翻译二级展开菜单 -->
+                            <div v-if="wechatState.activeSession.enableClickTranslate" class="bg-gray-50 rounded-xl px-3 shadow-inner divide-y divide-gray-200/60 mt-1 mb-4 mx-4 border border-gray-100">
+                                <div class="flex items-center justify-between py-3 cursor-pointer active:opacity-50 transition" @click="openTranslateLangModal('source')">
+                                    <span class="text-[13px] text-gray-700 font-bold">角色输出语言</span>
+                                    <div class="flex items-center gap-1"><span class="text-xs text-gray-500">{{ wechatState.activeSession.transSourceLang || '自动识别' }}</span><i class="fas fa-chevron-right text-gray-300 text-[10px]"></i></div>
+                                </div>
+                                <div class="flex items-center justify-between py-3 cursor-pointer active:opacity-50 transition" @click="openTranslateLangModal('target')">
+                                    <span class="text-[13px] text-gray-700 font-bold">翻译为目标语言</span>
+                                    <div class="flex items-center gap-1"><span class="text-xs text-blue-600 font-bold">{{ wechatState.activeSession.transTargetLang || '简体中文' }}</span><i class="fas fa-chevron-right text-gray-300 text-[10px]"></i></div>
+                                </div>
+                                <div class="flex items-center justify-between py-3">
+                                    <span class="text-[13px] text-gray-700 font-bold">自动展开翻译</span>
+                                    <input type="checkbox" :id="'auto-expand-trans-'+wechatState.activeSession.id" class="switch-checkbox-sm" v-model="wechatState.activeSession.autoExpandTranslate" @change="saveData">
+                                    <label :for="'auto-expand-trans-'+wechatState.activeSession.id" class="switch-label-sm"><div class="switch-button-sm"></div></label>
+                                </div>
+                            </div>
                         </div>
                         <div v-if="!wechatState.activeSession.isGroup" class="flex justify-between items-center p-4 active:bg-gray-50 transition">
                             <span class="text-[15px] text-gray-900">加入黑名单</span>
@@ -5972,6 +6006,8 @@ const app = createApp({
             homeScreenPresets:[],
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
+            translateLangModal: { show: false, type: 'source' },
+            translateLangOptions: ['自动识别', '简体中文 (普通话)', '繁体中文', '粤语', '英语 (English)', '日语 (日本語)', '韩语 (한국어)', '法语 (Français)', '西班牙语 (Español)', '俄语 (Русский)'],
             fileModal: { show: false, tab: 'real', title: '', content: '' }, 
             timezoneModal: { show: false, target: 'user' },
             timezones: [
@@ -7029,7 +7065,29 @@ const app = createApp({
             }
             this.timezoneModal.show = false;
         },
-
+        getTranslateLangOptions() {
+            if (this.translateLangModal.type === 'target') return this.translateLangOptions.filter(l => l !== '自动识别');
+            return this.translateLangOptions;
+        },
+        isTranslateLangSelected(lang) {
+            const session = this.wechatState.activeSession;
+            if (!session) return false;
+            if (this.translateLangModal.type === 'source') return (session.transSourceLang || '自动识别') === lang;
+            return (session.transTargetLang || '简体中文 (普通话)') === lang;
+        },
+        openTranslateLangModal(type) {
+            this.translateLangModal.type = type;
+            this.translateLangModal.show = true;
+        },
+        selectTranslateLang(lang) {
+            const session = this.wechatState.activeSession;
+            if (session) {
+                if (this.translateLangModal.type === 'source') session.transSourceLang = lang;
+                else session.transTargetLang = lang;
+                this.saveData();
+            }
+            this.translateLangModal.show = false;
+        },
         getCurrentChatTitle() {
             if(!this.wechatState.activeSession) return '';
             const friend = this.wechatState.friendList.find(f => f.id === this.wechatState.activeSession.targetId);
@@ -10526,10 +10584,8 @@ Structure:
                                  quote: (msgType === 'voice' || index !== 0) ? null : quoteObj 
                              };
                              session.messages.push(aiMsg);
-                             // 【新增自动翻译检测 fallback】：当设置开启时，如果是纯英文长句且未提供翻译，才自动触发接口（彻底过滤掉中英混合和零星单词）
-                             const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
-                             const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
-                             if (session.enableClickTranslate && !trans && !hasChinese && engWordCount >= 3) {
+                             // 【高级翻译检测】：只要开启了翻译并且原句没有翻译，就触发系统智能翻译流
+                             if (session.enableClickTranslate && !trans) {
                                  setTimeout(() => {
                                      this.translateMessage(aiMsg);
                                  }, 1000);
@@ -13475,16 +13531,20 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         async translateMessage(msg) {
             // 如果已经在翻译，或者已经翻译成功，就不重复请求
             if (msg.isTranslating || (msg.translation && msg.translation !== '翻译失败')) return;
-            
-            // 纯本地拦截：如果原文包含中文字符，直接不请求大模型，不浪费 Token
-            if (/[\u4e00-\u9fa5]/.test(msg.content)) {
-                msg.translation = '原内容为中文，无需翻译';
-                msg.showTranslation = true;
+
+            const session = this.wechatState.activeSession;
+            let source = session?.transSourceLang || '自动识别';
+            let target = session?.transTargetLang || '简体中文 (普通话)';
+
+            // 【高速本地拦截】：如果用户设置了自动识别->简中，且文本明显是中文，省下请求费用不浪费 API
+            if (source === '自动识别' && target === '简体中文 (普通话)' && /[\u4e00-\u9fa5]/.test(msg.content) && (msg.content.match(/[a-zA-Z]+/g) || []).length < 3) {
+                msg.translation = '原文已是中文，无需翻译';
+                msg.showTranslation = false; // 本地兜底不主动展开占空间
                 this.saveData();
                 return;
             }
 
-            if (!this.apiConfig.apiKey) return; // 静默失败，不打扰用户
+            if (!this.apiConfig.apiKey) return;
 
             msg.isTranslating = true;
             this.saveData();
@@ -13499,7 +13559,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     body: JSON.stringify({ 
                         model: this.apiConfig.selectedModel, 
                         messages:[
-                            { role: 'system', content: '你是一个精准的翻译助手。无论用户输入的是英语、日语、韩语等外语，还是粤语、闽南语、文言文等地方语言/古代方言，你都【必须且只能】翻译为【现代标准简体中文】并输出！如果原文已经是纯正的标准简体中文，或者纯符号、纯数字，请直接回复“无需翻译”。除了翻译结果（纯简体中文），绝对不要输出任何英文、拼音、音标或多余的解释！' },
+                            { role: 'system', content: `你是一个极其精准的翻译助手。请将用户输入的【${source}】文本翻译为流畅地道的【${target}】。如果原文已经是纯正的【${target}】语言，或者是纯符号、纯数字，请直接回复“无需翻译”。除了纯粹的翻译结果，绝对不要输出任何其他说明文字、拼音、音标或多余的话！` },
                             { role: 'user', content: msg.content }
                         ],
                         temperature: 0.1 
@@ -13510,13 +13570,13 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 const data = await res.json();
                 let result = data.choices[0].message.content.trim();
                 
-                // 如果 AI 判断无需翻译或翻译和原句一样，直接静默不显示，不要生成白色的翻译框
                 if (result.includes('无需翻译') || result.includes('不需要') || result === msg.content) {
                     msg.translation = null;
                     msg.showTranslation = false;
                 } else {
                     msg.translation = result;
-                    msg.showTranslation = true;
+                    // 【核心】：是否自动展开取决于选项，为 true 则立即弹出白色外框
+                    msg.showTranslation = !!session.autoExpandTranslate;
                 }
             } catch(e) {
                 console.error("翻译失败:", e);
@@ -13526,12 +13586,10 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 this.saveData();
             }
         },
-
         openTransferModal() {
              this.transferModal = { show: true, amount: '', note: '' };
              this.wechatState.showAttachMenu = false;
-        },        
-        
+        },                
         handleFoodPayment(msg, action) {
             if (msg.status !== 'pending') return;
             if (action === 'accept') {
