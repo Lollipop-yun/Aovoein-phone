@@ -5344,19 +5344,40 @@
         <!-- AI 生图提示词设置弹窗 (已提升至全局层级) -->
         <transition name="scale">
             <div v-if="imagePromptModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                <div class="bg-[#f9f9f9] w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col gap-4 font-sans border border-gray-200">
-                    <h3 class="text-center font-bold text-gray-900 text-lg mb-2">生成自拍/照片 设定</h3>
-                    <div>
+                <div class="bg-[#f9f9f9] w-[85%] max-h-[85vh] overflow-y-auto scrollbar-hide rounded-[24px] shadow-2xl p-6 flex flex-col gap-4 font-sans border border-gray-200">
+                    <h3 class="text-center font-bold text-gray-900 text-lg mb-2 shrink-0">生成自拍/照片 设定</h3>
+                    
+                    <div class="shrink-0">
                         <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">角色外貌特征 (Appearance)</label>
-                        <!-- 高度增至 h-32 (128px)，增加 leading-relaxed 提升阅读体验 -->
-                        <textarea v-model="imagePromptModal.appearance" placeholder="例如: 1girl, silver hair, red eyes, white shirt, looking at viewer..." class="w-full h-32 bg-white p-3.5 rounded-[16px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                        <textarea v-model="imagePromptModal.appearance" placeholder="例如: 1girl, silver hair, red eyes, white shirt, looking at viewer..." class="w-full h-28 bg-white p-3.5 rounded-[16px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
                     </div>
-                    <div>
+                    
+                    <div class="shrink-0">
                         <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">画面风格与质量 (Style & Quality)</label>
-                        <!-- 高度增至 h-28 (112px) -->
-                        <textarea v-model="imagePromptModal.style" placeholder="例如: masterpiece, best quality, ultra-detailed, anime style, soft lighting..." class="w-full h-28 bg-white p-3.5 rounded-[16px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                        <textarea v-model="imagePromptModal.style" placeholder="例如: masterpiece, best quality, ultra-detailed, anime style, soft lighting..." class="w-full h-20 bg-white p-3.5 rounded-[16px] text-[13px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
                     </div>
-                    <div class="flex gap-3 mt-3">
+
+                    <!-- 新增：锁脸功能区域 -->
+                    <div class="bg-white border border-gray-200 rounded-[16px] p-4 shadow-sm shrink-0">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-[14px] font-bold text-gray-800">开启锁脸 (Face Lock)</span>
+                            <input type="checkbox" id="facelock-toggle" class="switch-checkbox" v-model="imagePromptModal.faceLockEnabled">
+                            <label for="facelock-toggle" class="switch-label"><div class="switch-button"></div></label>
+                        </div>
+                        <div v-if="imagePromptModal.faceLockEnabled" class="mt-4 space-y-3 border-t border-gray-50 pt-4">
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-500 mb-1 block">参考图链接 (支持 Midjourney --cref)</label>
+                                <input v-model="imagePromptModal.faceLockUrl" placeholder="https://... (人脸参考图URL)" class="w-full bg-gray-50 p-3 rounded-xl text-[13px] border border-gray-200 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] font-bold text-gray-500 mb-1 block">固定种子 Seed (支持 DALL-E / SD)</label>
+                                <input v-model="imagePromptModal.faceLockSeed" type="number" placeholder="例如: 123456789" class="w-full bg-gray-50 p-3 rounded-xl text-[13px] border border-gray-200 outline-none">
+                            </div>
+                            <p class="text-[10px] text-gray-400 leading-relaxed mt-1">注：使用 Midjourney 反代填入链接将自动追加 --cref 参数；使用 DALL-E 将锁定 Seed 强化一致性。</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3 mt-2 shrink-0">
                         <button @click="imagePromptModal.show = false" class="flex-1 bg-white text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200">取消</button>
                         <button @click="saveImagePrompt" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存设定</button>
                     </div>
@@ -5964,7 +5985,7 @@ const app = createApp({
             apiPresetModal: { show: false, target: '' }, isFullScreen: false, hideStatusBar: false,
             apiConfig: { baseUrl: '', apiKey: '', selectedModel: 'gpt-3.5-turbo', temperature: 0.7, subBaseUrl: '', subApiKey: '', subSelectedModel: '' }, availableModels:[], subAvailableModels: [], apiPresets:[],
             imageApiConfig: { baseUrl: '', apiKey: '', selectedModel: '' }, imageModels: [],
-            imagePromptModal: { show: false, appearance: '', style: '' },
+            imagePromptModal: { show: false, appearance: '', style: '', faceLockEnabled: false, faceLockUrl: '', faceLockSeed: '' },
             globalImageSettings: { show: false, showSizeModal: false, size: '1024x1024', positivePrompt: '', negativePrompt: '', presets: [] },             
             minimaxConfig: { enabled: false, region: 'cn', groupId: '', apiKey: '', selectedModel: '', voiceId: 'male-qn-qingse' }, minimaxModels:[],
             notificationConfig: { currentSound: null, currentName: '默认提示音' }, soundPresets:[],
@@ -6554,15 +6575,30 @@ const app = createApp({
                 // 拼接完整 Prompt：正向预设 + 本聊风格 + 本聊外貌 + 角色给出的具体情境/动作 + 负面词
                 let finalPrompt = `${globalPos}, ${style}, ${appearance}, (Action/Context: ${aiPrompt}) ${globalNeg}`.replace(/^,\s*/, '').trim();
 
+                let payload = {
+                    model: this.imageApiConfig.selectedModel || 'dall-e-3',
+                    prompt: finalPrompt,
+                    n: 1,
+                    size: this.globalImageSettings?.size || "1024x1024"
+                };
+
+                // === 锁脸逻辑注入 ===
+                if (session.faceLockEnabled) {
+                    if (session.faceLockUrl) {
+                        // 给 Midjourney 追加参数
+                        payload.prompt += ` --cref ${session.faceLockUrl.trim()} --cw 100`;
+                        // 给 DALL-E 强化指令
+                        payload.prompt = `[The character's facial features MUST strictly match this reference image: ${session.faceLockUrl.trim()}] ` + payload.prompt;
+                    }
+                    if (session.faceLockSeed) {
+                        payload.seed = parseInt(session.faceLockSeed);
+                    }
+                }
+
                 const res = await fetch(`${url}/images/generations`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.imageApiConfig.apiKey.trim()}` },
-                    body: JSON.stringify({
-                        model: this.imageApiConfig.selectedModel || 'dall-e-3',
-                        prompt: finalPrompt,
-                        n: 1,
-                        size: this.globalImageSettings?.size || "1024x1024"
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (res.ok) {
@@ -6649,7 +6685,10 @@ const app = createApp({
             this.imagePromptModal = {
                 show: true,
                 appearance: session.imagePromptAppearance || '',
-                style: session.imagePromptStyle || ''
+                style: session.imagePromptStyle || '',
+                faceLockEnabled: !!session.faceLockEnabled,
+                faceLockUrl: session.faceLockUrl || '',
+                faceLockSeed: session.faceLockSeed || ''
             };
         },
         saveImagePrompt() {
@@ -6657,8 +6696,11 @@ const app = createApp({
             if (session) {
                 session.imagePromptAppearance = this.imagePromptModal.appearance;
                 session.imagePromptStyle = this.imagePromptModal.style;
+                session.faceLockEnabled = this.imagePromptModal.faceLockEnabled;
+                session.faceLockUrl = this.imagePromptModal.faceLockUrl;
+                session.faceLockSeed = this.imagePromptModal.faceLockSeed;
                 this.saveData();
-                this.showToast('生图提示词已保存');
+                this.showToast('生图与锁脸设定已保存');
             }
             this.imagePromptModal.show = false;
         },
