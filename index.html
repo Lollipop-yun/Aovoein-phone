@@ -9091,7 +9091,7 @@ const app = createApp({
             } else { this.showToast('不支持的文件格式'); }
             e.target.value = '';
         },        
-        handleDocxImport(e) {
+       handleDocxImport(e) {
             const file = e.target.files[0];
             if (!file) return;
             const ext = file.name.split('.').pop().toLowerCase();
@@ -9099,11 +9099,12 @@ const app = createApp({
             if (ext === 'txt') {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    const text = event.target.result.trim();
+                    // 统一处理 Windows 和 Mac 的换行符
+                    const text = event.target.result.replace(/\r\n/g, '\n').trim();
                     if (text) {
                         this.newContact = this.extractContactInfoFromText(text); 
                         this.addContactModal.show = true;
-                        this.showToast('TXT 解析成功，已智能提取特征并保留全文本');
+                        this.showToast('TXT 解析成功，已完美保留原文档换行');
                     }
                 };
                 reader.readAsText(file);
@@ -9125,12 +9126,24 @@ const app = createApp({
         processDocxFile(file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-                mammoth.extractRawText({ arrayBuffer: event.target.result }).then((result) => {
-                    const text = result.value.trim();
+                // 改用 convertToHtml，精准捕获 Word 里的真实段落和强制换行符
+                mammoth.convertToHtml({ arrayBuffer: event.target.result }).then((result) => {
+                    let html = result.value;
+                    // 将 Word 的段落结束和换行标签转换为真正的 \n
+                    let text = html
+                        .replace(/<\/p>\s*<p>/gi, '\n')
+                        .replace(/<br\s*\/?>/gi, '\n')
+                        .replace(/<[^>]+>/g, '') // 剥离其余无用的 HTML 标签
+                        .replace(/&nbsp;/g, ' ')
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&amp;/g, '&')
+                        .trim();
+                        
                     if (text) {
                         this.newContact = this.extractContactInfoFromText(text); 
                         this.addContactModal.show = true;
-                        this.showToast('文档解析成功，已智能提取特征并保留全文本');
+                        this.showToast('文档解析成功，已完美保留原文档换行');
                     } else { this.showToast('未能提取到内容'); }
                 }).catch((err) => { this.showToast('文档解析失败'); });
             };
