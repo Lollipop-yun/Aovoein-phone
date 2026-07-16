@@ -452,8 +452,8 @@
     </div>
 </div>
 
-<div id="app" v-cloak class="max-w-md mx-auto absolute inset-0 w-full bg-[#f3f4f6] flex flex-col overflow-hidden shadow-2xl border-x border-gray-200" style="display: none;" @click="closeAllMenus"
-     :style="{ '--custom-font': themeConfig.fontFamily ? themeConfig.fontFamily : 'inherit', 'color': themeConfig.fontColor || '#000000', 'font-size': (themeConfig.fontSize || 1) + 'em' }">
+<div id="app" v-cloak class="max-w-md mx-auto absolute inset-0 w-full bg-[#f3f4f6] flex flex-col overflow-hidden shadow-2xl border-x border-gray-200" :class="{'dark-mode-app': themeConfig.isDarkMode}" style="display: none;" @click="closeAllMenus"
+     :style="{ '--custom-font': themeConfig.fontFamily ? themeConfig.fontFamily : 'inherit', 'color': themeConfig.isDarkMode ? '#e5e7eb' : (themeConfig.fontColor || '#000000'), 'font-size': (themeConfig.fontSize || 1) + 'em' }">
      
      <input type="file" ref="docxImportInput" accept=".txt,.docx" class="hidden" @change="handleDocxImport">
 <input type="file" ref="aoveinImportInput" accept=".json,.png" class="hidden" @change="handleAoveinImport">
@@ -5436,6 +5436,9 @@
                                     <div class="flex items-center gap-4"><i class="fas fa-layer-group text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">系统推送</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                                 </div>
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50">
+                                    <div class="flex items-center gap-4"><i class="fas fa-moon text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">夜间模式 (Dark Mode)</span></div><input type="checkbox" id="toggle-darkmode" class="switch-checkbox" v-model="themeConfig.isDarkMode" @change="toggleDarkMode"><label for="toggle-darkmode" class="switch-label"><div class="switch-button"></div></label>
+                                </div>
+                                <div class="p-4 flex items-center justify-between active:bg-gray-50">
                                     <div class="flex items-center gap-4"><i class="fas fa-expand text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">全屏模式</span></div><input type="checkbox" id="toggle-fs" class="switch-checkbox" v-model="isFullScreen" @change="toggleFullScreen"><label for="toggle-fs" class="switch-label"><div class="switch-button"></div></label>
                                 </div>
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50">
@@ -6394,7 +6397,10 @@ const app = createApp({
         },
         'beautifyConfig.currentTab'() {
             this.beautifyConfig.tempCode = '';
-        }
+        },
+        'themeConfig.isDarkMode'() { 
+            this.updateDynamicStyles(); 
+        }        
     },
     methods: {
     // ================= 气泡滑动引用交互逻辑 =================
@@ -8421,7 +8427,36 @@ const app = createApp({
                 const statusCss = this.statusBeautifyConfig?.activeCSS || '';
                 const chatlistCss = this.chatlistBeautifyConfig?.activeCSS || '';
                 const notifCss = this.notificationBeautifyConfig?.activeCSS || '';
-                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss + '\n' + statusCss + '\n' + chatlistCss + '\n' + notifCss;
+                
+                let darkModeCss = '';
+                if (this.themeConfig && this.themeConfig.isDarkMode) {
+                    darkModeCss = `
+                    .dark-mode-app { background-color: #000000 !important; color: #e5e7eb !important; }
+                    .dark-mode-app .bg-white, .dark-mode-app .bg-\\[\\#fdfdfd\\], .dark-mode-app .bg-\\[\\#f9f9f9\\], .dark-mode-app .bg-\\[\\#f7f7f7\\], .dark-mode-app .bg-\\[\\#f4f4f6\\], .dark-mode-app .bg-\\[\\#f2f2f6\\], .dark-mode-app .bg-\\[\\#f3f4f6\\], .dark-mode-app .bg-gray-50, .dark-mode-app .bg-gray-100 { background-color: #121212 !important; }
+                    .dark-mode-app .border-gray-50, .dark-mode-app .border-gray-100, .dark-mode-app .border-gray-200 { border-color: #2c2c2e !important; }
+                    .dark-mode-app .text-gray-900, .dark-mode-app .text-gray-800, .dark-mode-app .text-black { color: #f3f4f6 !important; }
+                    .dark-mode-app .text-gray-700, .dark-mode-app .text-gray-600 { color: #d1d5db !important; }
+                    .dark-mode-app .text-gray-500, .dark-mode-app .text-gray-400 { color: #9ca3af !important; }
+                    .dark-mode-app .chat-bubble-ai { background-color: #2c2c2e !important; color: #e5e7eb !important; border: 1px solid rgba(255,255,255,0.05) !important; }
+                    .dark-mode-app .chat-bubble-user { background-color: #07c160 !important; color: #ffffff !important; }
+                    .dark-mode-app .wechat-bottom-nav, .dark-mode-app .dock-container { background: rgba(25, 25, 25, 0.85) !important; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important; }
+                    .dark-mode-app header { background-color: rgba(18, 18, 18, 0.95) !important; border-bottom: 1px solid #2c2c2e !important; }
+                    .dark-mode-app input, .dark-mode-app textarea, .dark-mode-app select { background-color: #1e1e1e !important; color: #e5e7eb !important; border-color: #333 !important; }
+                    .dark-mode-app .forward-card, .dark-mode-app .location-header { background-color: #2c2c2e !important; }
+                    .dark-mode-app .ios-list-modal, .dark-mode-app .ios-list-header { background-color: #1c1c1e !important; border-color: #2c2c2e !important; }
+                    .dark-mode-app .divide-gray-50 > :not([hidden]) ~ :not([hidden]), .dark-mode-app .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #2c2c2e !important; }
+                    .dark-mode-app .shadow-sm, .dark-mode-app .shadow-md, .dark-mode-app .shadow-lg, .dark-mode-app .shadow-xl, .dark-mode-app .shadow-2xl { box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important; }
+                    .dark-mode-app button.bg-black { background-color: #e5e7eb !important; color: #121212 !important; }
+                    .dark-mode-app button.bg-gray-100 { background-color: #2c2c2e !important; color: #d1d5db !important; }
+                    .dark-mode-app .wechat-pill-active { background-color: #e5e7eb !important; color: #121212 !important; }
+                    .dark-mode-app .wechat-pill-inactive { color: #9ca3af !important; }
+                    .dark-mode-app .bg-gray-200 { background-color: #2c2c2e !important; }
+                    .dark-mode-app .bg-\\[\\#07c160\\] { background-color: #07c160 !important; color: #ffffff !important; }
+                    .dark-mode-app .text-\\[\\#07c160\\] { color: #07c160 !important; }
+                    `;
+                }
+
+                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss + '\n' + statusCss + '\n' + chatlistCss + '\n' + notifCss + '\n' + darkModeCss;
             }
         },
         resetBeautify(type) {
@@ -8561,6 +8596,11 @@ const app = createApp({
         navigateSettings(t) { if (t === 'back') { if (this.settingsPage === 'main') this.closeApp(); else this.settingsPage = 'main'; } else { this.settingsPage = t; } },
         navigateThemes(t) { if (t === 'back') { if (this.themesPage === 'main') this.closeApp(); else this.themesPage = 'main'; } else { this.themesPage = t; } },
         toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => { this.showToast("全屏失败: " + e.message); this.isFullScreen = false; }); } else { if (document.exitFullscreen) document.exitFullscreen(); } },
+        toggleDarkMode() {
+            this.saveData();
+            this.updateDynamicStyles();
+            this.showToast(this.themeConfig.isDarkMode ? '夜间模式已开启' : '夜间模式已关闭');
+        },
 
         // 分组功能相关逻辑
         createNewGroup() {
