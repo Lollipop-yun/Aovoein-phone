@@ -395,29 +395,6 @@
     
     <!-- 动态美化样式 -->
     <style id="dynamic-beautify-style"></style>
-    
-    <!-- 全局夜间模式核心样式 (物理级隔离，防失效) -->
-    <style id="aovein-dark-mode-style">
-        body.aovein-dark, body.aovein-dark #app { background-color: #000000 !important; color: #e5e7eb !important; }
-        body.aovein-dark .bg-white, body.aovein-dark .bg-gray-50, body.aovein-dark .bg-\[\#fdfdfd\], body.aovein-dark .bg-\[\#f9f9f9\], body.aovein-dark .bg-\[\#f7f7f7\], body.aovein-dark .bg-\[\#f4f4f6\], body.aovein-dark .bg-\[\#f2f2f6\], body.aovein-dark .bg-\[\#f3f4f6\] { background-color: #121212 !important; color: #e5e7eb !important; }
-        body.aovein-dark .bg-gray-100, body.aovein-dark .bg-gray-200 { background-color: #1c1c1e !important; }
-        body.aovein-dark .text-gray-900, body.aovein-dark .text-gray-800, body.aovein-dark .text-black { color: #ffffff !important; }
-        body.aovein-dark .text-gray-700, body.aovein-dark .text-gray-600 { color: #d1d5db !important; }
-        body.aovein-dark .text-gray-500, body.aovein-dark .text-gray-400 { color: #9ca3af !important; }
-        body.aovein-dark .border-gray-50, body.aovein-dark .border-gray-100, body.aovein-dark .border-gray-200 { border-color: #2c2c2e !important; }
-        body.aovein-dark .divide-gray-50 > :not([hidden]) ~ :not([hidden]), body.aovein-dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #2c2c2e !important; }
-        body.aovein-dark .chat-bubble-ai { background-color: #2c2c2e !important; color: #e5e7eb !important; border: 1px solid rgba(255,255,255,0.05) !important; }
-        body.aovein-dark .chat-bubble-user { background-color: #07c160 !important; color: #ffffff !important; }
-        body.aovein-dark .wechat-bottom-nav, body.aovein-dark .dock-container { background: rgba(25, 25, 25, 0.85) !important; border: 1px solid rgba(255,255,255,0.1) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important; }
-        body.aovein-dark header, body.aovein-dark .sticky.top-0 { background-color: rgba(18, 18, 18, 0.95) !important; border-bottom: 1px solid #2c2c2e !important; }
-        body.aovein-dark input, body.aovein-dark textarea, body.aovein-dark select { background-color: #1c1c1e !important; color: #ffffff !important; border-color: #333 !important; }
-        body.aovein-dark .ios-list-modal, body.aovein-dark .ios-list-header { background-color: #1c1c1e !important; border-color: #2c2c2e !important; }
-        body.aovein-dark button.bg-black { background-color: #ffffff !important; color: #000000 !important; }
-        body.aovein-dark button.bg-white, body.aovein-dark button.bg-gray-50, body.aovein-dark button.bg-gray-100 { background-color: #2c2c2e !important; color: #ffffff !important; border-color: #333 !important; }
-        body.aovein-dark .shadow-sm, body.aovein-dark .shadow-md, body.aovein-dark .shadow-lg, body.aovein-dark .shadow-xl, body.aovein-dark .shadow-2xl { box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important; }
-        body.aovein-dark .wechat-pill-active { background-color: #ffffff !important; color: #000000 !important; }
-        body.aovein-dark .skin-text-container h2, body.aovein-dark .skin-text-container p, body.aovein-dark .skin-text-container span, body.aovein-dark .skin-text-container div { color: #f3f4f6 !important; }
-    </style>
 </head>
 <body>
 
@@ -2429,6 +2406,107 @@
             </div>
         </transition>
         
+        <!-- 记忆与上下文管理全屏界面 (iOS 灰白高级风) -->
+        <transition name="page-slide">
+            <div v-if="memoryModal.show" class="fixed inset-0 z-[116000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0">
+                    <button @click="memoryModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
+                    <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">记忆与上下文</h1>
+                    <button @click="memoryModal.statsShow = true" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chart-bar text-[18px]"></i></button>
+                </header>
+                <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                    
+                    <div class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-50 flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="text-[15px] font-bold text-gray-900">短期记忆 (上下文条数)</span>
+                            <span class="text-[11px] text-gray-400 mt-0.5">每次聊天AI最多回顾最近多少条消息</span>
+                        </div>
+                        <input type="number" v-model.number="memoryModal.tempSettings.contextCount" class="w-16 bg-gray-50 p-2 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
+                    </div>
+
+                    <div class="bg-white rounded-[16px] overflow-hidden shadow-sm border border-gray-50">
+                        <div class="flex justify-between items-center p-4">
+                            <div class="flex flex-col">
+                                <span class="text-[15px] font-bold text-gray-900">自动总结长线记忆</span>
+                                <span class="text-[11px] text-gray-400 mt-0.5">开启后超长聊天将自动压缩成日记记忆</span>
+                            </div>
+                            <input type="checkbox" id="auto-summary-toggle" class="switch-checkbox" v-model="memoryModal.tempSettings.autoSummarize">
+                            <label for="auto-summary-toggle" class="switch-label"><div class="switch-button"></div></label>
+                        </div>
+
+                        <div v-if="memoryModal.tempSettings.autoSummarize" class="px-4 pb-4 space-y-4 border-t border-gray-50 pt-4 bg-gray-50/30">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[13px] font-bold text-gray-700">自动总结触发条数</span>
+                                <input type="number" v-model.number="memoryModal.tempSettings.summarizeThreshold" class="w-16 bg-white p-1.5 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[13px] font-bold text-gray-700">总结目标字数</span>
+                                <input type="text" v-model="memoryModal.tempSettings.wordCount" placeholder="如: 150-300" class="w-24 bg-white p-1.5 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[13px] font-bold text-gray-700">AI 日记总结提示词</span>
+                                    <button @click="resetMemoryPrompt" class="text-[10px] text-red-500 font-bold active:opacity-50">恢复默认</button>
+                                </div>
+                                <textarea v-model="memoryModal.tempSettings.prompt" class="w-full h-48 bg-white p-3 rounded-xl text-[12px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                                <div class="flex gap-2 mt-1">
+                                    <button @click="saveMemoryPreset" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-[11px] font-bold active:scale-95 transition">保存为预设</button>
+                                    <button @click="memoryModal.presetShow = true" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-[11px] font-bold active:scale-95 transition">读取预设</button>
+                                    <button @click="setAsGlobalMemoryPrompt" class="flex-1 bg-blue-50 text-blue-600 border border-blue-100 py-2 rounded-lg text-[11px] font-bold active:scale-95 transition">设为全局默认</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button @click="saveMemorySettings" class="w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold text-[15px] shadow-md active:scale-95 transition mt-2">保存设置</button>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 聊天数据统计弹窗 -->
+        <transition name="scale">
+            <div v-if="memoryModal.statsShow" class="fixed inset-0 z-[117000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="memoryModal.statsShow = false">
+                <div class="bg-white w-[75%] rounded-[24px] p-6 flex flex-col items-center shadow-2xl" @click.stop>
+                    <div class="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl mb-4 border border-blue-100"><i class="fas fa-chart-pie"></i></div>
+                    <h3 class="text-[17px] font-bold text-gray-900 mb-6">对话数据统计</h3>
+                    <div class="w-full space-y-3">
+                        <div class="flex justify-between items-center bg-gray-50 p-3.5 rounded-xl border border-gray-100 shadow-sm">
+                            <span class="text-[13px] font-bold text-gray-500">总共聊了多少条</span>
+                            <span class="text-[16px] font-bold text-gray-900 font-mono">{{ wechatState.activeSession?.messages?.length || 0 }} 条</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-gray-50 p-3.5 rounded-xl border border-gray-100 shadow-sm">
+                            <span class="text-[13px] font-bold text-gray-500">预估花费 Tokens</span>
+                            <span class="text-[16px] font-bold text-gray-900 font-mono">{{ estimateChatTokens(wechatState.activeSession) }} T</span>
+                        </div>
+                    </div>
+                    <button @click="memoryModal.statsShow = false" class="w-full mt-6 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm">关闭</button>
+                </div>
+            </div>
+        </transition>
+        
+        <!-- 记忆预设库弹窗 -->
+        <transition name="app-slide">
+            <div v-if="memoryModal.presetShow" class="fixed inset-0 z-[117000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0">
+                    <button @click="memoryModal.presetShow = false" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left"></i></button>
+                    <h1 class="font-bold text-[16px] text-gray-900">记忆提示词预设</h1>
+                    <div class="w-8"></div>
+                </header>
+                <div class="flex-1 overflow-y-auto p-4">
+                    <div v-if="!memoryPresets || memoryPresets.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无保存的预设</div>
+                    <div class="space-y-3">
+                        <div v-for="(p, idx) in memoryPresets" :key="idx" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 cursor-pointer active:bg-gray-50" @click="loadMemoryPreset(p)">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-sm text-gray-900">{{ p.name }}</span>
+                                <i class="fas fa-trash-alt text-gray-300 hover:text-red-500 text-xs" @click.stop="deleteMemoryPreset(idx)"></i>
+                            </div>
+                            <p class="text-[11px] text-gray-500 line-clamp-3 leading-relaxed">{{ p.prompt }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+        
         <!-- 翻译语言选择弹窗 (iOS 灰白高级) -->
         <transition name="app-slide">
             <div v-if="translateLangModal.show" class="fixed inset-0 z-[106000]">
@@ -3649,7 +3727,7 @@
                             </div><span class="attach-label">红包</span></div>
                             <div class="attach-item" @click="openFileModal"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
                             <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
-                            <div class="attach-item" @click="showToast('敬请期待')"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
+                            <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
                             <div class="attach-item" @click="openReadTogetherSelect"><div class="attach-icon-box"><i class="fas fa-book-open text-gray-600"></i></div><span class="attach-label">一起读</span></div>
                             <!-- 线下模式 (灰色咖啡杯) -->
@@ -5459,9 +5537,6 @@
                                     <div class="flex items-center gap-4"><i class="fas fa-layer-group text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">系统推送</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                                 </div>
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50">
-                                    <div class="flex items-center gap-4"><i class="fas fa-moon text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">夜间模式 (Dark Mode)</span></div><input type="checkbox" id="toggle-darkmode" class="switch-checkbox" v-model="themeConfig.isDarkMode" @change="toggleDarkMode"><label for="toggle-darkmode" class="switch-label"><div class="switch-button"></div></label>
-                                </div>
-                                <div class="p-4 flex items-center justify-between active:bg-gray-50">
                                     <div class="flex items-center gap-4"><i class="fas fa-expand text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">全屏模式</span></div><input type="checkbox" id="toggle-fs" class="switch-checkbox" v-model="isFullScreen" @change="toggleFullScreen"><label for="toggle-fs" class="switch-label"><div class="switch-button"></div></label>
                                 </div>
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50">
@@ -6100,6 +6175,9 @@ const app = createApp({
             worldBinderModal: { show: false, expanded:[] },
             modelSelectModal: { show: false }, 
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
+            memoryModal: { show: false, statsShow: false, presetShow: false, tempSettings: {} },
+            memoryPresets: [],
+            globalMemoryPrompt: '', // 全局默认提示词
             chatListContextMenu: { show: false, x: 0, y: 0, session: null },
             longPressTimer: null,
             folderSelectModal: { show: false }, 
@@ -6420,10 +6498,7 @@ const app = createApp({
         },
         'beautifyConfig.currentTab'() {
             this.beautifyConfig.tempCode = '';
-        },
-        'themeConfig.isDarkMode'() { 
-            this.updateDynamicStyles(); 
-        }        
+        }
     },
     methods: {
     // ================= 气泡滑动引用交互逻辑 =================
@@ -8590,15 +8665,6 @@ const app = createApp({
         navigateSettings(t) { if (t === 'back') { if (this.settingsPage === 'main') this.closeApp(); else this.settingsPage = 'main'; } else { this.settingsPage = t; } },
         navigateThemes(t) { if (t === 'back') { if (this.themesPage === 'main') this.closeApp(); else this.themesPage = 'main'; } else { this.themesPage = t; } },
         toggleFullScreen() { if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(e => { this.showToast("全屏失败: " + e.message); this.isFullScreen = false; }); } else { if (document.exitFullscreen) document.exitFullscreen(); } },
-        toggleDarkMode() {
-            this.saveData();
-            if (this.themeConfig.isDarkMode) {
-                document.body.classList.add('aovein-dark');
-            } else {
-                document.body.classList.remove('aovein-dark');
-            }
-            this.showToast(this.themeConfig.isDarkMode ? '夜间模式已开启' : '夜间模式已关闭');
-        },
 
         // 分组功能相关逻辑
         createNewGroup() {
@@ -8980,6 +9046,144 @@ const app = createApp({
             }
             this.saveData();
             this.chatListContextMenu.show = false;
+        },
+        
+        // ----------------- 记忆与上下文管理系统 -----------------
+        getDefaultMemoryPrompt() {
+            return `你现在正在以私人日记的形式，回顾并总结最近与我（玩家）的这段聊天互动。
+请严格按照以下要求进行总结：
+1. 格式首行：必须写明当前总结的精准时间，格式为【YYYY年MM月DD日 HH:mm 星期X】。
+2. 视角：必须完全代入你的角色身份，使用第一人称（我）进行主观且私密的记叙。
+3. 核心要素：
+   - 详细梳理这段时间内发生的事情的起因、经过、结果。
+   - 深度剖析你在此过程中的内心波动与真实心情。
+   - 重点评估我们俩之间的关系与情感是否发生了微妙的改变（升温、降温、或者产生隔阂）。
+   - 明确列出我们之间是否达成了某些承诺、约定或计划。
+4. 字数与文风：字数要求在 {wordCount} 左右（一般不少于400字）。感情必须真挚细腻，严禁写成流水账或冰冷的机器报告，必须像一篇带有强烈个人情感的真人日记。`;
+        },
+        getMemorySettings(session) {
+            if (!session.memorySettings) {
+                session.memorySettings = {
+                    contextCount: 20,
+                    autoSummarize: false,
+                    summarizeThreshold: 100,
+                    wordCount: '150-300',
+                    prompt: this.globalMemoryPrompt || this.getDefaultMemoryPrompt()
+                };
+            }
+            return session.memorySettings;
+        },
+        openMemoryModal() {
+            const session = this.wechatState.activeSession;
+            if (!session) return;
+            this.wechatState.showAttachMenu = false;
+            // 深拷贝当前设定供弹窗修改
+            this.memoryModal.tempSettings = JSON.parse(JSON.stringify(this.getMemorySettings(session)));
+            this.memoryModal.show = true;
+        },
+        closeMemoryModal() {
+            this.memoryModal.show = false;
+        },
+        saveMemorySettings() {
+            const session = this.wechatState.activeSession;
+            if (this.memoryModal.tempSettings.contextCount < 1) this.memoryModal.tempSettings.contextCount = 1;
+            if (this.memoryModal.tempSettings.summarizeThreshold < 10) this.memoryModal.tempSettings.summarizeThreshold = 10;
+            
+            session.memorySettings = JSON.parse(JSON.stringify(this.memoryModal.tempSettings));
+            this.saveData();
+            this.memoryModal.show = false;
+            this.showToast('记忆上下文设置已保存');
+        },
+        resetMemoryPrompt() {
+            this.memoryModal.tempSettings.prompt = this.globalMemoryPrompt || this.getDefaultMemoryPrompt();
+            this.showToast('已恢复默认提示词');
+        },
+        setAsGlobalMemoryPrompt() {
+            this.globalMemoryPrompt = this.memoryModal.tempSettings.prompt;
+            this.saveData();
+            this.showToast('已设为全局默认提示词，后续新角色将默认使用此设定');
+        },
+        saveMemoryPreset() {
+            if (!this.memoryModal.tempSettings.prompt) return this.showToast('提示词不能为空');
+            this.showInput('保存记忆预设', '', '给这个提示词起个名字', (name) => {
+                if(name) {
+                    if(!this.memoryPresets) this.memoryPresets = [];
+                    this.memoryPresets.push({ name: name, prompt: this.memoryModal.tempSettings.prompt });
+                    this.saveData();
+                    this.showToast('预设已保存');
+                }
+            });
+        },
+        loadMemoryPreset(preset) {
+            this.memoryModal.tempSettings.prompt = preset.prompt;
+            this.memoryModal.presetShow = false;
+            this.showToast(`已加载预设: ${preset.name}`);
+        },
+        deleteMemoryPreset(idx) {
+            this.showConfirm('确定删除此预设吗？', () => {
+                this.memoryPresets.splice(idx, 1);
+                this.saveData();
+            });
+        },
+        estimateChatTokens(session) {
+            if (!session || !session.messages) return 0;
+            // 粗略估算算法：中文字符约占 1.5 token，英文约 0.5 token，加上结构损耗
+            const str = JSON.stringify(session.messages);
+            return Math.floor(str.length * 0.85);
+        },
+        
+        async checkAutoSummarize(session) {
+            const settings = this.getMemorySettings(session);
+            if (!settings.autoSummarize || !this.apiConfig.apiKey) return;
+            if (!session.messages || session.messages.length === 0) return;
+            
+            const lastCount = session.lastSummarizeMsgCount || 0;
+            const currentCount = session.messages.length;
+            
+            // 如果新增的消息数量达到了设定的阈值，触发总结
+            if (currentCount - lastCount >= settings.summarizeThreshold) {
+                const startIdx = lastCount;
+                const endIdx = currentCount;
+                const msgsToSummarize = session.messages.slice(startIdx, endIdx);
+                const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+                const mask = this.getMaskById(session.maskId);
+                
+                const chatLog = msgsToSummarize.map(m => `[${m.isSelf ? mask.name : (friend?friend.name:session.name)}]: ${m.content}`).join('\n');
+                const now = new Date();
+                const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+                const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${weekDays[now.getDay()]}`;
+                
+                let prompt = settings.prompt.replace('{wordCount}', settings.wordCount);
+                let fullPrompt = `【任务说明】\n${prompt}\n\n【当前时间】\n${dateStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接输出日记正文：`;
+
+                try {
+                    let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                    if (!url.endsWith('/v1')) url += '/v1';
+                    
+                    // 异步调用，不在主线程阻塞，也不抛出前台等待 UI
+                    fetch(`${url}/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                        body: JSON.stringify({ 
+                            model: this.apiConfig.selectedModel, 
+                            messages: [{ role: 'user', content: fullPrompt }],
+                            temperature: 0.6 
+                        })
+                    }).then(res => res.json()).then(data => {
+                        let summary = data.choices[0].message.content.trim();
+                        // 累加旧日记与新日记
+                        if (session.memorySummary) {
+                            session.memorySummary += '\n\n' + summary;
+                        } else {
+                            session.memorySummary = summary;
+                        }
+                        session.lastSummarizeMsgCount = endIdx; // 推进指针
+                        this.saveData();
+                    }).catch(e => console.error("Auto summarize API failed", e));
+                } catch (e) {
+                    console.error("Auto summarize request failed", e);
+                }
+            }
         },
 
         // ----------------- 更新的解析逻辑 -----------------
@@ -10285,7 +10489,17 @@ Structure:
                 offlineMemoryContext = `\n[跨次元线下记忆]: 你们最近曾在线下见面并发生过以下互动，请保持记忆连贯，如果合理可以顺势提及线下发生的事或暧昧氛围：\n${recentOffline}\n`;
                 systemPrompt += offlineMemoryContext; // 强行注入大模型大脑
             }
-            const recentMsgs = session.messages.slice(-12); // 稍微增加一点回忆广度
+            
+            // == 【长线日记记忆构建 (Auto Summarize)】 ==
+            if (session.memorySummary) {
+                let summaryContext = `\n【核心长期记忆回顾(极度重要)】：\n以下是你之前在后台写下的个人情感日记，总结了你们更早之前的互动与情感状态。请你务必牢记这些前情提要，保持情感的连贯性：\n"${session.memorySummary}"\n`;
+                systemPrompt += summaryContext;
+            }
+            // ============================
+
+            // 动态读取设置的短期记忆条数
+            const ctxCount = this.getMemorySettings(session).contextCount;
+            const recentMsgs = session.messages.slice(-ctxCount);
             
             recentMsgs.forEach(m => {
                 if(!m.isRecalled) {
@@ -10724,6 +10938,12 @@ Structure:
                                      }, 3000 + Math.random() * 2000); // 3-5秒后撤回
                                  }
                                  this.saveData();
+                             }
+                             if (index === segments.length - 1) {
+                                 // ... 原有的撤回等逻辑 ...
+                                 this.saveData();
+                                 // 【触发自动总结检测】
+                                 this.checkAutoSummarize(session);
                              }
                              
                              if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
@@ -12102,13 +12322,6 @@ Structure:
                 navigator.storage.persisted().then(persisted => {
                     this.dataProtection = persisted;
                 });
-            }
-            
-            // 恢复夜间模式状态
-            if (this.themeConfig && this.themeConfig.isDarkMode) {
-                document.body.classList.add('aovein-dark');
-            } else {
-                document.body.classList.remove('aovein-dark');
             }
         },
         async toggleDataProtection() {
