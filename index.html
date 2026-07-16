@@ -2406,59 +2406,98 @@
             </div>
         </transition>
         
-        <!-- 记忆与上下文管理全屏界面 (iOS 灰白高级风) -->
+        <!-- 记忆与上下文管理 - 主界面 (长期记忆日记流) -->
         <transition name="page-slide">
             <div v-if="memoryModal.show" class="fixed inset-0 z-[116000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
                 <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0">
-                    <button @click="memoryModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
-                    <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">记忆与上下文</h1>
-                    <button @click="memoryModal.statsShow = true" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chart-bar text-[18px]"></i></button>
+                    <button @click="closeMemoryModal" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
+                    <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">长期记忆</h1>
+                    <div class="flex items-center gap-2">
+                        <button @click="memoryModal.statsShow = true" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chart-pie text-[18px]"></i></button>
+                        <button @click="openMemorySettings" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-cog text-[18px]"></i></button>
+                    </div>
                 </header>
-                <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-                    
-                    <div class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-50 flex justify-between items-center">
-                        <div class="flex flex-col">
-                            <span class="text-[15px] font-bold text-gray-900">短期记忆 (上下文条数)</span>
-                            <span class="text-[11px] text-gray-400 mt-0.5">每次聊天AI最多回顾最近多少条消息</span>
-                        </div>
-                        <input type="number" v-model.number="memoryModal.tempSettings.contextCount" class="w-16 bg-gray-50 p-2 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
-                    </div>
+                
+                <div class="px-4 py-2 flex justify-end shrink-0 bg-[#f2f2f6] z-10">
+                    <button @click="toggleMemoryMultiSelect" class="text-[13px] font-bold transition active:opacity-50" :class="memoryModal.isMultiSelect ? 'text-red-500' : 'text-blue-500'">{{ memoryModal.isMultiSelect ? '取消多选' : '多选管理' }}</button>
+                </div>
 
-                    <div class="bg-white rounded-[16px] overflow-hidden shadow-sm border border-gray-50">
-                        <div class="flex justify-between items-center p-4">
+                <div class="flex-1 overflow-y-auto px-4 pb-24 space-y-4">
+                    <div v-if="!wechatState.activeSession?.memorySummaries || wechatState.activeSession.memorySummaries.length === 0" class="text-center text-gray-400 mt-32 text-xs flex flex-col items-center">
+                        <i class="fas fa-book-open text-4xl mb-4 opacity-20"></i>
+                        暂无长期记忆。<br>进入右上方设置开启自动总结，AI 将自动书写记忆日记。
+                    </div>
+                    <div v-for="mem in wechatState.activeSession?.memorySummaries" :key="mem.id" class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-50 relative overflow-hidden transition" @click="memoryModal.isMultiSelect ? selectMemoryItem(mem.id) : null">
+                        <!-- 多选蒙层 -->
+                        <div v-if="memoryModal.isMultiSelect" class="absolute top-4 right-4 w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition" :class="{'bg-blue-500 border-blue-500': memoryModal.selectedIds.includes(mem.id)}">
+                            <i v-if="memoryModal.selectedIds.includes(mem.id)" class="fas fa-check text-white text-[10px]"></i>
+                        </div>
+                        <div class="text-[11px] text-gray-400 font-mono mb-3 border-b border-gray-50 pb-2">{{ formatChatTime(mem.time) }}</div>
+                        <div class="text-[14px] leading-relaxed text-gray-800 whitespace-pre-wrap text-justify">{{ mem.content }}</div>
+                    </div>
+                </div>
+
+                <!-- 底部操作栏 -->
+                <transition name="app-slide">
+                    <div v-if="memoryModal.isMultiSelect" class="absolute bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-100 p-4 pb-safe flex justify-around shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-30">
+                        <button @click="favoriteSelectedMemories" class="flex flex-col items-center text-yellow-500 active:scale-90 transition"><i class="fas fa-star text-[20px]"></i><span class="text-[10px] mt-1.5 font-bold">收藏</span></button>
+                        <button @click="mergeSelectedMemories" class="flex flex-col items-center text-blue-500 active:scale-90 transition"><i class="fas fa-compress-arrows-alt text-[20px]"></i><span class="text-[10px] mt-1.5 font-bold">合并选中</span></button>
+                        <button @click="deleteSelectedMemories" class="flex flex-col items-center text-red-500 active:scale-90 transition"><i class="fas fa-trash-alt text-[20px]"></i><span class="text-[10px] mt-1.5 font-bold">删除</span></button>
+                    </div>
+                </transition>
+            </div>
+        </transition>
+
+        <!-- 记忆设置弹窗 -->
+        <transition name="scale">
+            <div v-if="memoryModal.settingsShow" class="fixed inset-0 z-[117000] flex items-center justify-center bg-black/50 backdrop-blur-sm" @click="memoryModal.settingsShow = false">
+                <div class="bg-[#f2f2f6] w-[90%] max-h-[85vh] rounded-[24px] overflow-hidden shadow-2xl flex flex-col font-sans border border-white/20" @click.stop>
+                    <div class="p-4 border-b border-gray-100 bg-white flex justify-between items-center sticky top-0 z-10">
+                        <h3 class="font-bold text-[16px] text-gray-900">上下文与总结设置</h3>
+                        <button @click="saveMemorySettings" class="text-blue-600 font-bold text-[14px] active:opacity-50">保存</button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-50 flex justify-between items-center">
                             <div class="flex flex-col">
-                                <span class="text-[15px] font-bold text-gray-900">自动总结长线记忆</span>
-                                <span class="text-[11px] text-gray-400 mt-0.5">开启后超长聊天将自动压缩成日记记忆</span>
+                                <span class="text-[15px] font-bold text-gray-900">短期记忆 (上下文条数)</span>
+                                <span class="text-[11px] text-gray-400 mt-0.5">每次聊天最多回顾的最近消息数</span>
                             </div>
-                            <input type="checkbox" id="auto-summary-toggle" class="switch-checkbox" v-model="memoryModal.tempSettings.autoSummarize">
-                            <label for="auto-summary-toggle" class="switch-label"><div class="switch-button"></div></label>
+                            <input type="number" v-model.number="memoryModal.tempSettings.contextCount" class="w-16 bg-gray-50 p-2 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
                         </div>
 
-                        <div v-if="memoryModal.tempSettings.autoSummarize" class="px-4 pb-4 space-y-4 border-t border-gray-50 pt-4 bg-gray-50/30">
-                            <div class="flex justify-between items-center">
-                                <span class="text-[13px] font-bold text-gray-700">自动总结触发条数</span>
-                                <input type="number" v-model.number="memoryModal.tempSettings.summarizeThreshold" class="w-16 bg-white p-1.5 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-[13px] font-bold text-gray-700">总结目标字数</span>
-                                <input type="text" v-model="memoryModal.tempSettings.wordCount" placeholder="如: 150-300" class="w-24 bg-white p-1.5 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
-                            </div>
-                            <div class="flex flex-col gap-2">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-[13px] font-bold text-gray-700">AI 日记总结提示词</span>
-                                    <button @click="resetMemoryPrompt" class="text-[10px] text-red-500 font-bold active:opacity-50">恢复默认</button>
+                        <div class="bg-white rounded-[16px] overflow-hidden shadow-sm border border-gray-50">
+                            <div class="flex justify-between items-center p-4">
+                                <div class="flex flex-col">
+                                    <span class="text-[15px] font-bold text-gray-900">自动总结长线记忆</span>
+                                    <span class="text-[11px] text-gray-400 mt-0.5">自动压缩超长聊天为长期记忆日记</span>
                                 </div>
-                                <textarea v-model="memoryModal.tempSettings.prompt" class="w-full h-48 bg-white p-3 rounded-xl text-[12px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
-                                <div class="flex gap-2 mt-1">
-                                    <button @click="saveMemoryPreset" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-[11px] font-bold active:scale-95 transition">保存为预设</button>
-                                    <button @click="memoryModal.presetShow = true" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg text-[11px] font-bold active:scale-95 transition">读取预设</button>
-                                    <button @click="setAsGlobalMemoryPrompt" class="flex-1 bg-blue-50 text-blue-600 border border-blue-100 py-2 rounded-lg text-[11px] font-bold active:scale-95 transition">设为全局默认</button>
+                                <input type="checkbox" id="auto-summary-toggle" class="switch-checkbox" v-model="memoryModal.tempSettings.autoSummarize">
+                                <label for="auto-summary-toggle" class="switch-label"><div class="switch-button"></div></label>
+                            </div>
+
+                            <div v-if="memoryModal.tempSettings.autoSummarize" class="px-4 pb-4 space-y-4 border-t border-gray-50 pt-4 bg-gray-50/30">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[13px] font-bold text-gray-700">自动总结触发条数</span>
+                                    <input type="number" v-model.number="memoryModal.tempSettings.summarizeThreshold" class="w-16 bg-white p-1.5 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[13px] font-bold text-gray-700">总结目标字数</span>
+                                    <input type="text" v-model="memoryModal.tempSettings.wordCount" placeholder="150-300" class="w-24 bg-white p-1.5 rounded-lg text-center text-sm font-bold border border-gray-200 outline-none text-gray-700">
+                                </div>
+                                <div class="flex flex-col gap-2 pt-2 border-t border-gray-100">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[13px] font-bold text-gray-700">自定义提示词 (底层生效)</span>
+                                        <button @click="memoryModal.presetShow = true" class="text-[11px] text-blue-500 font-bold active:opacity-50">读取预设</button>
+                                    </div>
+                                    <textarea v-model="memoryModal.tempSettings.prompt" placeholder="留空则自动使用内置【高分日记体】指令。如需覆盖，请在此输入特定的总结要求或视角..." class="w-full h-32 bg-white p-3 rounded-xl text-[12px] leading-relaxed border border-gray-200 outline-none resize-none shadow-sm"></textarea>
+                                    <div class="flex gap-2 mt-1">
+                                        <button @click="saveMemoryPreset" class="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-lg text-[11px] font-bold active:bg-gray-50 transition shadow-sm">保存预设</button>
+                                        <button @click="setAsGlobalMemoryPrompt" class="flex-1 bg-gray-900 text-white py-2.5 rounded-lg text-[11px] font-bold active:scale-95 transition shadow-sm">设为全局默认</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <button @click="saveMemorySettings" class="w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold text-[15px] shadow-md active:scale-95 transition mt-2">保存设置</button>
                 </div>
             </div>
         </transition>
@@ -2486,9 +2525,9 @@
         
         <!-- 记忆预设库弹窗 -->
         <transition name="app-slide">
-            <div v-if="memoryModal.presetShow" class="fixed inset-0 z-[117000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+            <div v-if="memoryModal.presetShow" class="fixed inset-0 z-[118000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
                 <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0">
-                    <button @click="memoryModal.presetShow = false" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left"></i></button>
+                    <button @click="memoryModal.presetShow = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left"></i></button>
                     <h1 class="font-bold text-[16px] text-gray-900">记忆提示词预设</h1>
                     <div class="w-8"></div>
                 </header>
@@ -6175,7 +6214,7 @@ const app = createApp({
             worldBinderModal: { show: false, expanded:[] },
             modelSelectModal: { show: false }, 
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
-            memoryModal: { show: false, statsShow: false, presetShow: false, tempSettings: {} },
+            memoryModal: { show: false, settingsShow: false, statsShow: false, presetShow: false, tempSettings: {}, isMultiSelect: false, selectedIds: [] },
             memoryPresets: [],
             globalMemoryPrompt: '', // 全局默认提示词
             chatListContextMenu: { show: false, x: 0, y: 0, session: null },
@@ -9050,16 +9089,17 @@ const app = createApp({
         
         // ----------------- 记忆与上下文管理系统 -----------------
         getDefaultMemoryPrompt() {
-            return `你现在正在以私人日记的形式，回顾并总结最近与我（玩家）的这段聊天互动。
-请严格按照以下要求进行总结：
-1. 格式首行：必须写明当前总结的精准时间，格式为【YYYY年MM月DD日 HH:mm 星期X】。
-2. 视角：必须完全代入你的角色身份，使用第一人称（我）进行主观且私密的记叙。
-3. 核心要素：
-   - 详细梳理这段时间内发生的事情的起因、经过、结果。
-   - 深度剖析你在此过程中的内心波动与真实心情。
-   - 重点评估我们俩之间的关系与情感是否发生了微妙的改变（升温、降温、或者产生隔阂）。
-   - 明确列出我们之间是否达成了某些承诺、约定或计划。
-4. 字数与文风：字数要求在 {wordCount} 左右（一般不少于400字）。感情必须真挚细腻，严禁写成流水账或冰冷的机器报告，必须像一篇带有强烈个人情感的真人日记。`;
+            // 这是深度润色过的高分内置日记体提示词
+            return `你现在正在以【私人日记】的绝对第一人称视角，回顾并记录最近与我（玩家）的这段聊天与剧情互动。
+请严格遵循以下要求进行日记总结：
+1. 【日记抬头】：首行必须清晰写明当前系统提供的时间，格式为：[YYYY年MM月DD日 HH:mm 星期X]
+2. 【视角约束】：彻底代入你的角色身份。使用“我”称呼你自己，使用对方的名字或特定称谓称呼玩家。
+3. 【核心骨架】：
+   - 客观复盘：我们刚才经历了什么？（起因、经过、结果）
+   - 情感波动：我在这个过程中的真实心情是什么？（比如吃醋、感动、愤怒、无奈）
+   - 关系羁绊：我们俩的感情或关系是否发生了微妙的变化？
+   - 未来羁绊：我们之间是否有未完成的承诺、计划或者约定？
+4. 【文风与字数】：字数要求在 {wordCount} 左右（一般不少于400字）。请抛弃机械冷冰冰的汇报式总结，文笔要细腻真挚，充满私人情绪，就像你真的在深夜写下一篇隐秘的日记一样。`;
         },
         getMemorySettings(session) {
             if (!session.memorySettings) {
@@ -9068,7 +9108,7 @@ const app = createApp({
                     autoSummarize: false,
                     summarizeThreshold: 100,
                     wordCount: '150-300',
-                    prompt: this.globalMemoryPrompt || this.getDefaultMemoryPrompt()
+                    prompt: '' // 默认留空，隐藏显示
                 };
             }
             return session.memorySettings;
@@ -9077,9 +9117,28 @@ const app = createApp({
             const session = this.wechatState.activeSession;
             if (!session) return;
             this.wechatState.showAttachMenu = false;
-            // 深拷贝当前设定供弹窗修改
-            this.memoryModal.tempSettings = JSON.parse(JSON.stringify(this.getMemorySettings(session)));
+            
+            // 数据迁移兼容：将旧的单文本字符串 memorySummary 转为数组 memorySummaries
+            if (session.memorySummary && !session.memorySummaries) {
+                session.memorySummaries = [{
+                    id: Date.now().toString(),
+                    time: Date.now(),
+                    content: session.memorySummary
+                }];
+                delete session.memorySummary; // 弃用旧字段
+                this.saveData();
+            } else if (!session.memorySummaries) {
+                session.memorySummaries = [];
+            }
+            
+            this.memoryModal.isMultiSelect = false;
+            this.memoryModal.selectedIds = [];
             this.memoryModal.show = true;
+        },
+        openMemorySettings() {
+            const session = this.wechatState.activeSession;
+            this.memoryModal.tempSettings = JSON.parse(JSON.stringify(this.getMemorySettings(session)));
+            this.memoryModal.settingsShow = true;
         },
         closeMemoryModal() {
             this.memoryModal.show = false;
@@ -9091,17 +9150,13 @@ const app = createApp({
             
             session.memorySettings = JSON.parse(JSON.stringify(this.memoryModal.tempSettings));
             this.saveData();
-            this.memoryModal.show = false;
-            this.showToast('记忆上下文设置已保存');
-        },
-        resetMemoryPrompt() {
-            this.memoryModal.tempSettings.prompt = this.globalMemoryPrompt || this.getDefaultMemoryPrompt();
-            this.showToast('已恢复默认提示词');
+            this.memoryModal.settingsShow = false;
+            this.showToast('设置已保存');
         },
         setAsGlobalMemoryPrompt() {
             this.globalMemoryPrompt = this.memoryModal.tempSettings.prompt;
             this.saveData();
-            this.showToast('已设为全局默认提示词，后续新角色将默认使用此设定');
+            this.showToast('已设为全局默认提示词');
         },
         saveMemoryPreset() {
             if (!this.memoryModal.tempSettings.prompt) return this.showToast('提示词不能为空');
@@ -9127,11 +9182,70 @@ const app = createApp({
         },
         estimateChatTokens(session) {
             if (!session || !session.messages) return 0;
-            // 粗略估算算法：中文字符约占 1.5 token，英文约 0.5 token，加上结构损耗
             const str = JSON.stringify(session.messages);
             return Math.floor(str.length * 0.85);
         },
         
+        // --- 长期记忆多选管理逻辑 ---
+        toggleMemoryMultiSelect() {
+            this.memoryModal.isMultiSelect = !this.memoryModal.isMultiSelect;
+            this.memoryModal.selectedIds = [];
+        },
+        selectMemoryItem(id) {
+            const idx = this.memoryModal.selectedIds.indexOf(id);
+            if (idx > -1) this.memoryModal.selectedIds.splice(idx, 1);
+            else this.memoryModal.selectedIds.push(id);
+        },
+        deleteSelectedMemories() {
+            if (this.memoryModal.selectedIds.length === 0) return this.showToast('未选择任何日记');
+            this.showConfirm('确认删除选中的日记记忆吗？', () => {
+                const session = this.wechatState.activeSession;
+                session.memorySummaries = session.memorySummaries.filter(m => !this.memoryModal.selectedIds.includes(m.id));
+                this.memoryModal.isMultiSelect = false;
+                this.memoryModal.selectedIds = [];
+                this.saveData();
+                this.showToast('删除成功');
+            });
+        },
+        favoriteSelectedMemories() {
+            if (this.memoryModal.selectedIds.length === 0) return this.showToast('未选择任何日记');
+            const session = this.wechatState.activeSession;
+            session.memorySummaries.forEach(m => {
+                if (this.memoryModal.selectedIds.includes(m.id)) {
+                    this.addToFavorites(m.content, 'memory', `${session.name} 的记忆日记`);
+                }
+            });
+            this.memoryModal.isMultiSelect = false;
+            this.memoryModal.selectedIds = [];
+            this.showToast('已保存到全局收藏夹');
+        },
+        mergeSelectedMemories() {
+            if (this.memoryModal.selectedIds.length < 2) return this.showToast('请至少选择两篇日记合并');
+            this.showConfirm('合并后这些日记将拼接成一篇长日记，确定合并吗？', () => {
+                const session = this.wechatState.activeSession;
+                // 获取选中的所有条目并按时间排序
+                const selectedItems = session.memorySummaries.filter(m => this.memoryModal.selectedIds.includes(m.id));
+                selectedItems.sort((a, b) => a.time - b.time);
+                
+                const mergedContent = selectedItems.map(m => m.content).join('\n\n---\n\n');
+                const mergedMemory = {
+                    id: Date.now().toString(),
+                    time: selectedItems[selectedItems.length - 1].time, // 取最新的时间作为基准
+                    content: mergedContent
+                };
+                
+                // 移除旧的
+                session.memorySummaries = session.memorySummaries.filter(m => !this.memoryModal.selectedIds.includes(m.id));
+                // 插入新的
+                session.memorySummaries.push(mergedMemory);
+                
+                this.memoryModal.isMultiSelect = false;
+                this.memoryModal.selectedIds = [];
+                this.saveData();
+                this.showToast('合并成功');
+            });
+        },
+
         async checkAutoSummarize(session) {
             const settings = this.getMemorySettings(session);
             if (!settings.autoSummarize || !this.apiConfig.apiKey) return;
@@ -9140,7 +9254,6 @@ const app = createApp({
             const lastCount = session.lastSummarizeMsgCount || 0;
             const currentCount = session.messages.length;
             
-            // 如果新增的消息数量达到了设定的阈值，触发总结
             if (currentCount - lastCount >= settings.summarizeThreshold) {
                 const startIdx = lastCount;
                 const endIdx = currentCount;
@@ -9153,14 +9266,16 @@ const app = createApp({
                 const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
                 const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${weekDays[now.getDay()]}`;
                 
-                let prompt = settings.prompt.replace('{wordCount}', settings.wordCount);
-                let fullPrompt = `【任务说明】\n${prompt}\n\n【当前时间】\n${dateStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接输出日记正文：`;
+                // 判断提示词：如果用户输入框有内容则用用户的，如果没有则找全局默认，最后兜底用内置
+                const actualPrompt = settings.prompt.trim() || this.globalMemoryPrompt || this.getDefaultMemoryPrompt();
+                let promptStr = actualPrompt.replace('{wordCount}', settings.wordCount || '150-300');
+                
+                let fullPrompt = `【任务说明】\n${promptStr}\n\n【当前时间】\n${dateStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接输出日记正文：`;
 
                 try {
                     let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                     if (!url.endsWith('/v1')) url += '/v1';
                     
-                    // 异步调用，不在主线程阻塞，也不抛出前台等待 UI
                     fetch(`${url}/chat/completions`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
@@ -9171,13 +9286,14 @@ const app = createApp({
                         })
                     }).then(res => res.json()).then(data => {
                         let summary = data.choices[0].message.content.trim();
-                        // 累加旧日记与新日记
-                        if (session.memorySummary) {
-                            session.memorySummary += '\n\n' + summary;
-                        } else {
-                            session.memorySummary = summary;
-                        }
-                        session.lastSummarizeMsgCount = endIdx; // 推进指针
+                        // 加入到长线记忆数组
+                        if (!session.memorySummaries) session.memorySummaries = [];
+                        session.memorySummaries.push({
+                            id: Date.now().toString() + Math.random(),
+                            time: Date.now(),
+                            content: summary
+                        });
+                        session.lastSummarizeMsgCount = endIdx; 
                         this.saveData();
                     }).catch(e => console.error("Auto summarize API failed", e));
                 } catch (e) {
@@ -10491,9 +10607,10 @@ Structure:
             }
             
             // == 【长线日记记忆构建 (Auto Summarize)】 ==
-            if (session.memorySummary) {
-                let summaryContext = `\n【核心长期记忆回顾(极度重要)】：\n以下是你之前在后台写下的个人情感日记，总结了你们更早之前的互动与情感状态。请你务必牢记这些前情提要，保持情感的连贯性：\n"${session.memorySummary}"\n`;
-                systemPrompt += summaryContext;
+            if (session.memorySummaries && session.memorySummaries.length > 0) {
+                let summaryContext = `\n【核心长期记忆回顾(极度重要)】：\n以下是你之前在后台写下的个人情感日记，记录了你们长期的互动与情感变化。请你务必牢记这些前情提要，保持剧情连贯与情感羁绊：\n`;
+                summaryContext += session.memorySummaries.map(m => `[日记记忆]:\n${m.content}`).join('\n\n');
+                systemPrompt += summaryContext + '\n';
             }
             // ============================
 
