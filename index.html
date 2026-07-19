@@ -2427,13 +2427,13 @@
                         <i class="fas fa-book-open text-4xl mb-4 opacity-20"></i>
                         暂无长期记忆。<br>进入右上方设置开启自动总结，AI 将自动书写记忆日记。
                     </div>
-                    <div v-for="mem in wechatState.activeSession?.memorySummaries" :key="mem.id" class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-50 relative overflow-hidden transition" @click="memoryModal.isMultiSelect ? selectMemoryItem(mem.id) : null">
+                    <div v-for="mem in wechatState.activeSession?.memorySummaries" :key="mem.id" class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-50 relative overflow-hidden transition cursor-pointer active:scale-[0.98]" @click="memoryModal.isMultiSelect ? selectMemoryItem(mem.id) : openMemoryDetail(mem)">
                         <!-- 多选蒙层 -->
                         <div v-if="memoryModal.isMultiSelect" class="absolute top-4 right-4 w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition" :class="{'bg-blue-500 border-blue-500': memoryModal.selectedIds.includes(mem.id)}">
                             <i v-if="memoryModal.selectedIds.includes(mem.id)" class="fas fa-check text-white text-[10px]"></i>
                         </div>
-                        <div class="text-[11px] text-gray-400 font-mono mb-3 border-b border-gray-50 pb-2">{{ formatChatTime(mem.time) }}</div>
-                        <div class="text-[14px] leading-relaxed text-gray-800 whitespace-pre-wrap text-justify">{{ mem.content }}</div>
+                        <div class="text-[15px] font-bold text-gray-900 mb-2 border-b border-gray-50 pb-2 pr-6 truncate">{{ mem.title || formatChatTime(mem.time) }}</div>
+                        <div class="text-[13px] leading-relaxed text-gray-500 text-justify line-clamp-3">{{ mem.content }}</div>
                     </div>
                 </div>
 
@@ -2518,7 +2518,29 @@
                             <span class="text-[16px] font-bold text-gray-900 font-mono">{{ estimateChatTokens(wechatState.activeSession) }} T</span>
                         </div>
                     </div>
-                    <button @click="memoryModal.statsShow = false" class="w-full mt-6 bg-gray-100 text-gray-700 py-3 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm">关闭</button>
+                    <div class="w-full flex gap-3 mt-6">
+                        <button @click="memoryModal.statsShow = false" class="flex-1 bg-gray-100 text-gray-700 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm">关闭</button>
+                        <button @click="triggerManualSummarize" class="flex-[1.5] bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md flex items-center justify-center gap-2"><i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 记忆详情阅读界面 (手写体风格) -->
+        <transition name="page-slide">
+            <div v-if="memoryDetailModal.show" class="fixed inset-0 z-[118000] bg-[#fdfdfd] flex flex-col pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white/90 backdrop-blur-md border-b border-gray-100 shrink-0 z-10 sticky top-0 font-sans">
+                    <button @click="memoryDetailModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
+                    <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">私密日记</h1>
+                    <div class="w-8"></div>
+                </header>
+                <!-- 仿纸张质感背景 -->
+                <div class="flex-1 overflow-y-auto p-6" style="background-image: url('https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png'); background-size: cover; background-blend-mode: multiply; background-color: #fdfdfd;">
+                    <!-- 标题和内容使用各大平台的原生楷体/手写体降级支持 -->
+                    <div class="text-center font-bold text-[22px] mb-6 text-gray-900" style="font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'KaiTi_GB2312', cursive;">
+                        {{ memoryDetailModal.memory?.title }}
+                    </div>
+                    <div class="text-[18px] leading-[2.2] text-gray-800 whitespace-pre-wrap text-justify tracking-widest" style="font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'KaiTi_GB2312', cursive;">{{ memoryDetailModal.memory?.content }}</div>
                 </div>
             </div>
         </transition>
@@ -6215,6 +6237,7 @@ const app = createApp({
             modelSelectModal: { show: false }, 
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
             memoryModal: { show: false, settingsShow: false, statsShow: false, presetShow: false, tempSettings: {}, isMultiSelect: false, selectedIds: [] },
+            memoryDetailModal: { show: false, memory: null },
             memoryPresets: [],
             globalMemoryPrompt: '', // 全局默认提示词
             chatListContextMenu: { show: false, x: 0, y: 0, session: null },
@@ -9089,27 +9112,20 @@ const app = createApp({
         
         // ----------------- 记忆与上下文管理系统 -----------------
         getDefaultMemoryPrompt() {
-            // 这是深度润色过的高分内置日记体提示词
-            return `你现在正在以【私人日记】的绝对第一人称视角，回顾并记录最近与我（玩家）的这段聊天与剧情互动。
+            return `你现在正在以【私人日记】的绝对第一人称视角，回顾并总结最近与我（玩家）的这段聊天与剧情互动。
 请严格遵循以下要求进行日记总结：
-1. 【日记抬头】：首行必须清晰写明当前系统提供的时间，格式为：[YYYY年MM月DD日 HH:mm 星期X]
-2. 【视角约束】：彻底代入你的角色身份。使用“我”称呼你自己，使用对方的名字或特定称谓称呼玩家。
-3. 【核心骨架】：
+1. 【视角约束】：彻底代入你的角色身份。使用“我”称呼你自己，使用对方的名字或特定称谓称呼玩家。
+2. 【核心骨架】：
    - 客观复盘：我们刚才经历了什么？（起因、经过、结果）
    - 情感波动：我在这个过程中的真实心情是什么？（比如吃醋、感动、愤怒、无奈）
    - 关系羁绊：我们俩的感情或关系是否发生了微妙的变化？
    - 未来羁绊：我们之间是否有未完成的承诺、计划或者约定？
-4. 【文风与字数】：字数要求在 {wordCount} 左右（一般不少于400字）。请抛弃机械冷冰冰的汇报式总结，文笔要细腻真挚，充满私人情绪，就像你真的在深夜写下一篇隐秘的日记一样。`;
+3. 【文风与字数】：字数要求在 {wordCount} 左右（一般不少于400字）。感情必须真挚细腻，严禁写成流水账或冰冷的机器报告，必须像一篇带有强烈个人情感的真人日记。
+4. 【极其重要的输出格式】：请直接输出日记的【正文内容】，绝不要在开头自己写日期或星期几（系统会自动加上标题）！绝不要包含任何多余的机器解释或首尾客套话！`;
         },
         getMemorySettings(session) {
             if (!session.memorySettings) {
-                session.memorySettings = {
-                    contextCount: 20,
-                    autoSummarize: false,
-                    summarizeThreshold: 100,
-                    wordCount: '150-300',
-                    prompt: '' // 默认留空，隐藏显示
-                };
+                session.memorySettings = { contextCount: 20, autoSummarize: false, summarizeThreshold: 100, wordCount: '150-300', prompt: '' };
             }
             return session.memorySettings;
         },
@@ -9118,36 +9134,30 @@ const app = createApp({
             if (!session) return;
             this.wechatState.showAttachMenu = false;
             
-            // 数据迁移兼容：将旧的单文本字符串 memorySummary 转为数组 memorySummaries
             if (session.memorySummary && !session.memorySummaries) {
-                session.memorySummaries = [{
-                    id: Date.now().toString(),
-                    time: Date.now(),
-                    content: session.memorySummary
-                }];
-                delete session.memorySummary; // 弃用旧字段
+                session.memorySummaries = [{ id: Date.now().toString(), time: Date.now(), title: '', content: session.memorySummary }];
+                delete session.memorySummary; 
                 this.saveData();
-            } else if (!session.memorySummaries) {
-                session.memorySummaries = [];
-            }
+            } else if (!session.memorySummaries) { session.memorySummaries = []; }
             
             this.memoryModal.isMultiSelect = false;
             this.memoryModal.selectedIds = [];
             this.memoryModal.show = true;
+        },
+        openMemoryDetail(mem) {
+            this.memoryDetailModal.memory = mem;
+            this.memoryDetailModal.show = true;
         },
         openMemorySettings() {
             const session = this.wechatState.activeSession;
             this.memoryModal.tempSettings = JSON.parse(JSON.stringify(this.getMemorySettings(session)));
             this.memoryModal.settingsShow = true;
         },
-        closeMemoryModal() {
-            this.memoryModal.show = false;
-        },
+        closeMemoryModal() { this.memoryModal.show = false; },
         saveMemorySettings() {
             const session = this.wechatState.activeSession;
             if (this.memoryModal.tempSettings.contextCount < 1) this.memoryModal.tempSettings.contextCount = 1;
             if (this.memoryModal.tempSettings.summarizeThreshold < 10) this.memoryModal.tempSettings.summarizeThreshold = 10;
-            
             session.memorySettings = JSON.parse(JSON.stringify(this.memoryModal.tempSettings));
             this.saveData();
             this.memoryModal.settingsShow = false;
@@ -9175,22 +9185,47 @@ const app = createApp({
             this.showToast(`已加载预设: ${preset.name}`);
         },
         deleteMemoryPreset(idx) {
-            this.showConfirm('确定删除此预设吗？', () => {
-                this.memoryPresets.splice(idx, 1);
-                this.saveData();
-            });
+            this.showConfirm('确定删除此预设吗？', () => { this.memoryPresets.splice(idx, 1); this.saveData(); });
         },
+        
+        // 核心修改：极其精准的 API Token 消耗估算
         estimateChatTokens(session) {
-            if (!session || !session.messages) return 0;
-            const str = JSON.stringify(session.messages);
-            return Math.floor(str.length * 0.85);
+            if (!session) return 0;
+            let payloadStr = '';
+            
+            // 1. 世界书挂载量
+            let folderIds = session.boundWorldbookFolderIds || [];
+            let fileIds = session.boundWorldbookFileIds || [];
+            if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
+            const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
+            payloadStr += files.map(f => f.content).join('');
+            
+            // 2. 关系网
+            if (session.relationships) payloadStr += session.relationships.map(r => r.relation + (r.bio||'')).join('');
+            
+            // 3. 人设资料
+            const mask = this.getMaskById(session.maskId);
+            payloadStr += mask.bio || '';
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            if(friend) payloadStr += friend.bio || '';
+            
+            // 4. 长期记忆日记
+            if (session.memorySummaries) payloadStr += session.memorySummaries.map(m => m.content).join('');
+
+            // 5. 短期聊天记录(依照设定的范围)
+            const ctxCount = this.getMemorySettings(session).contextCount || 20;
+            const msgs = session.messages ? session.messages.slice(-ctxCount) : [];
+            payloadStr += msgs.map(m => (m.content || '') + (m.desc || '')).join('');
+
+            // AI 计算比率：中文约占 1.5 token，英文约 0.4 token，外加 200 token 系统提示词基础开销
+            const zhMatch = payloadStr.match(/[\u4e00-\u9fa5]/g);
+            const zhCount = zhMatch ? zhMatch.length : 0;
+            const enCount = payloadStr.length - zhCount;
+            return Math.floor(zhCount * 1.5 + enCount * 0.4 + 200);
         },
         
         // --- 长期记忆多选管理逻辑 ---
-        toggleMemoryMultiSelect() {
-            this.memoryModal.isMultiSelect = !this.memoryModal.isMultiSelect;
-            this.memoryModal.selectedIds = [];
-        },
+        toggleMemoryMultiSelect() { this.memoryModal.isMultiSelect = !this.memoryModal.isMultiSelect; this.memoryModal.selectedIds = []; },
         selectMemoryItem(id) {
             const idx = this.memoryModal.selectedIds.indexOf(id);
             if (idx > -1) this.memoryModal.selectedIds.splice(idx, 1);
@@ -9211,34 +9246,29 @@ const app = createApp({
             if (this.memoryModal.selectedIds.length === 0) return this.showToast('未选择任何日记');
             const session = this.wechatState.activeSession;
             session.memorySummaries.forEach(m => {
-                if (this.memoryModal.selectedIds.includes(m.id)) {
-                    this.addToFavorites(m.content, 'memory', `${session.name} 的记忆日记`);
-                }
+                if (this.memoryModal.selectedIds.includes(m.id)) this.addToFavorites(m.content, 'memory', `${session.name} 的日记`);
             });
             this.memoryModal.isMultiSelect = false;
             this.memoryModal.selectedIds = [];
-            this.showToast('已保存到全局收藏夹');
+            this.showToast('已保存到收藏夹');
         },
         mergeSelectedMemories() {
-            if (this.memoryModal.selectedIds.length < 2) return this.showToast('请至少选择两篇日记合并');
-            this.showConfirm('合并后这些日记将拼接成一篇长日记，确定合并吗？', () => {
+            if (this.memoryModal.selectedIds.length < 2) return this.showToast('请至少选择两篇合并');
+            this.showConfirm('选中的日记将拼接成一篇长日记，确定合并吗？', () => {
                 const session = this.wechatState.activeSession;
-                // 获取选中的所有条目并按时间排序
                 const selectedItems = session.memorySummaries.filter(m => this.memoryModal.selectedIds.includes(m.id));
                 selectedItems.sort((a, b) => a.time - b.time);
                 
                 const mergedContent = selectedItems.map(m => m.content).join('\n\n---\n\n');
                 const mergedMemory = {
                     id: Date.now().toString(),
-                    time: selectedItems[selectedItems.length - 1].time, // 取最新的时间作为基准
+                    time: selectedItems[selectedItems.length - 1].time,
+                    title: selectedItems[selectedItems.length - 1].title || '合并记忆',
                     content: mergedContent
                 };
                 
-                // 移除旧的
                 session.memorySummaries = session.memorySummaries.filter(m => !this.memoryModal.selectedIds.includes(m.id));
-                // 插入新的
                 session.memorySummaries.push(mergedMemory);
-                
                 this.memoryModal.isMultiSelect = false;
                 this.memoryModal.selectedIds = [];
                 this.saveData();
@@ -9246,7 +9276,77 @@ const app = createApp({
             });
         },
 
-        async checkAutoSummarize(session) {
+        // --- 核心：手动/自动触发 API 总结日记 ---
+        triggerManualSummarize() {
+            this.showInput("立即提取记忆", "20", "请输入想要总结最近的多少条聊天记录？", (val) => {
+                const count = parseInt(val);
+                if (isNaN(count) || count <= 0) return this.showToast("请输入有效的数字");
+                this.executeSummarize(this.wechatState.activeSession, count, true);
+                this.memoryModal.statsShow = false;
+            }, "number");
+        },
+        async executeSummarize(session, count, isManual = false) {
+            const settings = this.getMemorySettings(session);
+            if (!this.apiConfig.apiKey) return isManual && this.showToast('请先配置 API Key');
+            
+            const msgsToSummarize = session.messages.slice(-count);
+            if (msgsToSummarize.length === 0) return isManual && this.showToast('没有足够的聊天记录');
+            
+            if (isManual) this.showToast('AI 正在翻阅回忆整理日记，请稍候...');
+            
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            const mask = this.getMaskById(session.maskId);
+            const chatLog = msgsToSummarize.map(m => `[${m.isSelf ? mask.name : (friend?friend.name:session.name)}]: ${m.content}`).join('\n');
+            
+            const actualPrompt = settings.prompt.trim() || this.globalMemoryPrompt || this.getDefaultMemoryPrompt();
+            let promptStr = actualPrompt.replace('{wordCount}', settings.wordCount || '150-300');
+            let fullPrompt = `【任务说明】\n${promptStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接开始正文书写：`;
+
+            // 我们在本地剥离生成标准化的精美日期标题
+            const now = new Date();
+            const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            const dateTitle = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${weekDays[now.getDay()]}`;
+
+            try {
+                let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+                
+                const response = fetch(`${url}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                    body: JSON.stringify({ 
+                        model: this.apiConfig.selectedModel, 
+                        messages: [{ role: 'user', content: fullPrompt }],
+                        temperature: 0.6 
+                    })
+                });
+
+                if (isManual) {
+                    const res = await response;
+                    if (!res.ok) throw new Error('API failed');
+                    const data = await res.json();
+                    let summary = data.choices[0].message.content.trim();
+                    
+                    if (!session.memorySummaries) session.memorySummaries = [];
+                    session.memorySummaries.unshift({ id: Date.now().toString(), time: Date.now(), title: dateTitle, content: summary });
+                    this.saveData();
+                    this.showToast('✨ 提取完成！已收入长期记忆日记流中。');
+                } else {
+                    // 后台静默处理，不阻塞
+                    response.then(res => res.json()).then(data => {
+                        let summary = data.choices[0].message.content.trim();
+                        if (!session.memorySummaries) session.memorySummaries = [];
+                        session.memorySummaries.unshift({ id: Date.now().toString(), time: Date.now(), title: dateTitle, content: summary });
+                        session.lastSummarizeMsgCount = session.messages.length; 
+                        this.saveData();
+                    }).catch(e => console.error("Auto summarize API failed", e));
+                }
+            } catch (e) {
+                console.error(e);
+                if (isManual) this.showToast('总结失败: ' + e.message);
+            }
+        },
+        checkAutoSummarize(session) {
             const settings = this.getMemorySettings(session);
             if (!settings.autoSummarize || !this.apiConfig.apiKey) return;
             if (!session.messages || session.messages.length === 0) return;
@@ -9255,50 +9355,8 @@ const app = createApp({
             const currentCount = session.messages.length;
             
             if (currentCount - lastCount >= settings.summarizeThreshold) {
-                const startIdx = lastCount;
-                const endIdx = currentCount;
-                const msgsToSummarize = session.messages.slice(startIdx, endIdx);
-                const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-                const mask = this.getMaskById(session.maskId);
-                
-                const chatLog = msgsToSummarize.map(m => `[${m.isSelf ? mask.name : (friend?friend.name:session.name)}]: ${m.content}`).join('\n');
-                const now = new Date();
-                const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-                const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${weekDays[now.getDay()]}`;
-                
-                // 判断提示词：如果用户输入框有内容则用用户的，如果没有则找全局默认，最后兜底用内置
-                const actualPrompt = settings.prompt.trim() || this.globalMemoryPrompt || this.getDefaultMemoryPrompt();
-                let promptStr = actualPrompt.replace('{wordCount}', settings.wordCount || '150-300');
-                
-                let fullPrompt = `【任务说明】\n${promptStr}\n\n【当前时间】\n${dateStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接输出日记正文：`;
-
-                try {
-                    let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
-                    if (!url.endsWith('/v1')) url += '/v1';
-                    
-                    fetch(`${url}/chat/completions`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
-                        body: JSON.stringify({ 
-                            model: this.apiConfig.selectedModel, 
-                            messages: [{ role: 'user', content: fullPrompt }],
-                            temperature: 0.6 
-                        })
-                    }).then(res => res.json()).then(data => {
-                        let summary = data.choices[0].message.content.trim();
-                        // 加入到长线记忆数组
-                        if (!session.memorySummaries) session.memorySummaries = [];
-                        session.memorySummaries.push({
-                            id: Date.now().toString() + Math.random(),
-                            time: Date.now(),
-                            content: summary
-                        });
-                        session.lastSummarizeMsgCount = endIdx; 
-                        this.saveData();
-                    }).catch(e => console.error("Auto summarize API failed", e));
-                } catch (e) {
-                    console.error("Auto summarize request failed", e);
-                }
+                // 将最新积累的这些消息送去后台总结
+                this.executeSummarize(session, currentCount - lastCount, false);
             }
         },
 
