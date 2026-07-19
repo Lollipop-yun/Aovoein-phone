@@ -24,6 +24,20 @@
     <script src="./activation.js"></script>
     
     <style>
+    /* 注入专属手写字体 */
+        @font-face {
+            font-family: 'YSTFont';
+            src: url('https://nos.netease.com/ysf/2e19007268c0c586b9166a1b5f243511.ttf') format('truetype');
+            font-display: swap;
+        }
+
+        /* 高级横线信纸背景 */
+        .lined-paper-bg {
+            background-color: #fcfcfc;
+            background-image: repeating-linear-gradient(transparent, transparent 31px, #e5e7eb 31px, #e5e7eb 32px);
+            background-attachment: local;
+            background-position: 0 4px; /* 微调以对齐字体 */
+        }
         /* ==================== 全局配置 ==================== */
         body { 
             background-color: #000; 
@@ -2505,8 +2519,10 @@
         <!-- 聊天数据统计弹窗 (高级 Dashboard 版) -->
         <transition name="scale">
             <div v-if="memoryModal.statsShow" class="fixed inset-0 z-[117000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="memoryModal.statsShow = false">
-                <div class="bg-[#f4f4f6] w-[85%] rounded-[30px] p-6 flex flex-col shadow-2xl border border-white" @click.stop>
-                    <div class="flex items-center gap-3 mb-6">
+                <div class="bg-[#f4f4f6] w-[85%] rounded-[30px] p-6 flex flex-col shadow-2xl border border-white relative" @click.stop>
+                    <button @click="memoryModal.statsShow = false" class="absolute top-5 right-5 w-8 h-8 bg-gray-200/80 text-gray-500 rounded-full flex items-center justify-center active:scale-95 transition"><i class="fas fa-times"></i></button>
+                    
+                    <div class="flex items-center gap-3 mb-6 pr-8">
                         <div class="w-11 h-11 rounded-full bg-black text-white flex items-center justify-center text-lg shadow-md"><i class="fas fa-chart-bar"></i></div>
                         <div>
                             <h3 class="text-[18px] font-bold text-gray-900 leading-tight">数据面板</h3>
@@ -2514,7 +2530,7 @@
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-3 w-full mb-6">
+                    <div class="grid grid-cols-2 gap-3 w-full mb-2">
                         <!-- 消息数卡片 -->
                         <div class="bg-white rounded-[24px] p-5 flex flex-col justify-between shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 relative overflow-hidden min-h-[110px]">
                             <div class="absolute -right-3 -top-3 text-gray-50 opacity-80 text-6xl pointer-events-none"><i class="fas fa-comment-dots"></i></div>
@@ -2535,30 +2551,38 @@
                         </div>
                     </div>
                     
-                    <div class="w-full flex gap-3">
-                        <button @click="memoryModal.statsShow = false" class="w-14 h-[52px] bg-white text-gray-600 rounded-[18px] font-bold text-[16px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center shrink-0"><i class="fas fa-times"></i></button>
-                        <button @click="triggerManualSummarize" class="flex-1 bg-white text-gray-900 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center gap-2"><i class="fas fa-bolt text-yellow-500"></i> 立即提取并总结</button>
-                    </div>
+                    <button @click="triggerManualSummarize" class="w-full mt-4 bg-gray-900 text-white py-4 rounded-[22px] font-bold text-[15px] active:scale-95 transition shadow-lg shadow-black/10 flex items-center justify-center gap-2 tracking-wide">
+                        <i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆碎片
+                    </button>
                 </div>
             </div>
         </transition>
 
-        <!-- 记忆详情阅读界面 (白净手写体风格) -->
+        <!-- 记忆详情阅读界面 (信纸手写体风格) -->
         <transition name="page-slide">
-            <div v-if="memoryDetailModal.show" class="fixed inset-0 z-[118000] bg-white flex flex-col pb-safe">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0 font-sans shadow-sm">
-                    <button @click="memoryDetailModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
-                    <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">记忆阅读</h1>
+            <div v-if="memoryDetailModal.show" class="fixed inset-0 z-[118000] bg-[#fcfcfc] flex flex-col pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#fcfcfc] border-b border-gray-100 shrink-0 z-20 sticky top-0 font-sans shadow-sm">
+                    <button @click="memoryDetailModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-arrow-left text-[18px]"></i></button>
+                    <div class="flex flex-col items-center">
+                        <h1 class="font-bold text-[16px] text-gray-900">私密日记</h1>
+                        <span class="text-[10px] text-gray-400 font-mono">{{ wechatState.activeSession?.name }}</span>
+                    </div>
                     <div class="w-8"></div>
                 </header>
-                <!-- 纯白背景 -->
-                <div class="flex-1 overflow-y-auto p-6 bg-white">
-                    <!-- 标题：年月日星期几等，字号更大 24px，加底部分割线 -->
-                    <div class="text-center font-bold text-[24px] mb-6 text-gray-900 border-b border-gray-100 pb-5" style="font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'KaiTi_GB2312', cursive;">
-                        {{ memoryDetailModal.memory?.title }}
+                <!-- 横线信纸背景 -->
+                <div class="flex-1 overflow-y-auto px-6 pt-6 pb-12 lined-paper-bg">
+                    <div class="flex flex-col mb-4">
+                        <!-- 标题 -->
+                        <div class="font-bold text-[24px] text-gray-900" style="font-family: 'YSTFont', 'Kaiti SC', cursive; line-height: 32px;">
+                            {{ memoryDetailModal.memory?.title || '无题' }}
+                        </div>
+                        <!-- 日期 (字号较小，置于标题下方) -->
+                        <div class="text-[14px] text-gray-400 font-bold" style="font-family: 'YSTFont', 'Kaiti SC', cursive; line-height: 32px;">
+                            {{ formatFullDate(memoryDetailModal.memory?.time) }}
+                        </div>
                     </div>
-                    <!-- 正文内容：字号 17px，行距宽阔舒适 -->
-                    <div class="text-[17px] leading-[2.2] text-gray-800 whitespace-pre-wrap text-justify tracking-widest" style="font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', 'KaiTi_GB2312', cursive;">{{ memoryDetailModal.memory?.content }}</div>
+                    <!-- 正文内容：行高对齐 32px 以匹配信纸线条 -->
+                    <div class="text-[18px] text-gray-800 whitespace-pre-wrap text-justify tracking-wide" style="font-family: 'YSTFont', 'Kaiti SC', cursive; line-height: 32px;">{{ memoryDetailModal.memory?.content }}</div>
                 </div>
             </div>
         </transition>
@@ -9129,17 +9153,24 @@ const app = createApp({
         },
         
         // ----------------- 记忆与上下文管理系统 -----------------
+        formatFullDate(ts) {
+            if(!ts) return '';
+            const d = new Date(ts);
+            const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+            return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} ${weekDays[d.getDay()]}`;
+        },
         getDefaultMemoryPrompt() {
             return `你现在正在以【私人日记】的绝对第一人称视角，回顾并总结最近与我（玩家）的这段聊天与剧情互动。
 请严格遵循以下要求进行日记总结：
-1. 【视角约束】：彻底代入你的角色身份。使用“我”称呼你自己，使用对方的名字或特定称谓称呼玩家。
-2. 【核心骨架】：
+1. 【标题要求】：你的第一句话必须是一个日记标题（10个字以内，提炼核心事件或情绪），不要带“标题：”等字眼。换行后开始写正文。
+2. 【视角约束】：彻底代入你的角色身份。使用“我”称呼你自己，使用对方的名字或特定称谓称呼玩家。
+3. 【核心骨架】：
    - 客观复盘：我们刚才经历了什么？（起因、经过、结果）
    - 情感波动：我在这个过程中的真实心情是什么？（比如吃醋、感动、愤怒、无奈）
    - 关系羁绊：我们俩的感情或关系是否发生了微妙的变化？
    - 未来羁绊：我们之间是否有未完成的承诺、计划或者约定？
-3. 【文风与字数】：字数要求在 {wordCount} 左右（一般不少于400字）。感情必须真挚细腻，严禁写成流水账或冰冷的机器报告，必须像一篇带有强烈个人情感的真人日记。
-4. 【极其重要的输出格式】：请直接输出日记的【正文内容】，绝不要在开头自己写日期或星期几（系统会自动加上标题）！绝不要包含任何多余的机器解释或首尾客套话！`;
+4. 【文风与字数】：字数要求在 {wordCount} 左右（一般不少于400字）。感情必须真挚细腻，严禁写成流水账或冰冷的机器报告，必须像一篇带有强烈个人情感的真人手写日记。
+5. 【极其重要的输出格式】：直接输出标题和正文，绝不要在开头自己写日期或星期几！绝不要包含任何多余的机器解释或首尾客套话！`;
         },
         getMemorySettings(session) {
             if (!session.memorySettings) {
@@ -9153,7 +9184,7 @@ const app = createApp({
             this.wechatState.showAttachMenu = false;
             
             if (session.memorySummary && !session.memorySummaries) {
-                session.memorySummaries = [{ id: Date.now().toString(), time: Date.now(), title: '', content: session.memorySummary }];
+                session.memorySummaries = [{ id: Date.now().toString(), time: Date.now(), title: '记忆碎片', content: session.memorySummary }];
                 delete session.memorySummary; 
                 this.saveData();
             } else if (!session.memorySummaries) { session.memorySummaries = []; }
@@ -9206,43 +9237,35 @@ const app = createApp({
             this.showConfirm('确定删除此预设吗？', () => { this.memoryPresets.splice(idx, 1); this.saveData(); });
         },
         
-        // 核心修改：极其精准的 API Token 消耗估算
         estimateChatTokens(session) {
             if (!session) return 0;
             let payloadStr = '';
             
-            // 1. 世界书挂载量
             let folderIds = session.boundWorldbookFolderIds || [];
             let fileIds = session.boundWorldbookFileIds || [];
             if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
             const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
             payloadStr += files.map(f => f.content).join('');
             
-            // 2. 关系网
             if (session.relationships) payloadStr += session.relationships.map(r => r.relation + (r.bio||'')).join('');
             
-            // 3. 人设资料
             const mask = this.getMaskById(session.maskId);
             payloadStr += mask.bio || '';
             const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
             if(friend) payloadStr += friend.bio || '';
             
-            // 4. 长期记忆日记
             if (session.memorySummaries) payloadStr += session.memorySummaries.map(m => m.content).join('');
 
-            // 5. 短期聊天记录(依照设定的范围)
             const ctxCount = this.getMemorySettings(session).contextCount || 20;
             const msgs = session.messages ? session.messages.slice(-ctxCount) : [];
             payloadStr += msgs.map(m => (m.content || '') + (m.desc || '')).join('');
 
-            // AI 计算比率：中文约占 1.5 token，英文约 0.4 token，外加 200 token 系统提示词基础开销
             const zhMatch = payloadStr.match(/[\u4e00-\u9fa5]/g);
             const zhCount = zhMatch ? zhMatch.length : 0;
             const enCount = payloadStr.length - zhCount;
             return Math.floor(zhCount * 1.5 + enCount * 0.4 + 200);
         },
         
-        // --- 长期记忆多选管理逻辑 ---
         toggleMemoryMultiSelect() { this.memoryModal.isMultiSelect = !this.memoryModal.isMultiSelect; this.memoryModal.selectedIds = []; },
         selectMemoryItem(id) {
             const idx = this.memoryModal.selectedIds.indexOf(id);
@@ -9294,9 +9317,21 @@ const app = createApp({
             });
         },
 
-        // --- 核心：手动/自动触发 API 总结日记 ---
+        parseDiaryResponse(rawContent) {
+            let lines = rawContent.split('\n');
+            let title = lines[0].trim();
+            let content = lines.slice(1).join('\n').trim();
+            
+            // 容错：如果标题超过15个字，或者没有换行，说明AI没按格式输出，整体作为正文
+            if (title.length > 15 || !content) {
+                content = rawContent;
+                title = '记忆碎片';
+            }
+            return { title, content };
+        },
+
         triggerManualSummarize() {
-            this.showInput("立即提取记忆", "20", "请输入想要总结最近的多少条聊天记录？", (val) => {
+            this.showInput("提取记忆", "20", "请输入想要总结最近的多少条聊天记录？", (val) => {
                 const count = parseInt(val);
                 if (isNaN(count) || count <= 0) return this.showToast("请输入有效的数字");
                 this.executeSummarize(this.wechatState.activeSession, count, true);
@@ -9320,11 +9355,6 @@ const app = createApp({
             let promptStr = actualPrompt.replace('{wordCount}', settings.wordCount || '150-300');
             let fullPrompt = `【任务说明】\n${promptStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接开始正文书写：`;
 
-            // 我们在本地剥离生成标准化的精美日期标题
-            const now = new Date();
-            const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-            const dateTitle = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${weekDays[now.getDay()]}`;
-
             try {
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
@@ -9343,18 +9373,17 @@ const app = createApp({
                     const res = await response;
                     if (!res.ok) throw new Error('API failed');
                     const data = await res.json();
-                    let summary = data.choices[0].message.content.trim();
+                    let { title, content } = this.parseDiaryResponse(data.choices[0].message.content.trim());
                     
                     if (!session.memorySummaries) session.memorySummaries = [];
-                    session.memorySummaries.unshift({ id: Date.now().toString(), time: Date.now(), title: dateTitle, content: summary });
+                    session.memorySummaries.unshift({ id: Date.now().toString(), time: Date.now(), title: title, content: content });
                     this.saveData();
                     this.showToast('✨ 提取完成！已收入长期记忆日记流中。');
                 } else {
-                    // 后台静默处理，不阻塞
                     response.then(res => res.json()).then(data => {
-                        let summary = data.choices[0].message.content.trim();
+                        let { title, content } = this.parseDiaryResponse(data.choices[0].message.content.trim());
                         if (!session.memorySummaries) session.memorySummaries = [];
-                        session.memorySummaries.unshift({ id: Date.now().toString(), time: Date.now(), title: dateTitle, content: summary });
+                        session.memorySummaries.unshift({ id: Date.now().toString(), time: Date.now(), title: title, content: content });
                         session.lastSummarizeMsgCount = session.messages.length; 
                         this.saveData();
                     }).catch(e => console.error("Auto summarize API failed", e));
@@ -9373,7 +9402,6 @@ const app = createApp({
             const currentCount = session.messages.length;
             
             if (currentCount - lastCount >= settings.summarizeThreshold) {
-                // 将最新积累的这些消息送去后台总结
                 this.executeSummarize(session, currentCount - lastCount, false);
             }
         },
