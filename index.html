@@ -2046,13 +2046,13 @@
     </div>
     <span class="text-[10px] font-bold text-gray-500">{{ getAppName('sms') }}</span>
 </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph2')}">
-                                 <img v-if="hasCustomIcon('ph2')" :src="getAppIcon('ph2')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-ghost text-gray-300 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph2') }}</span>
-                         </div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="openApp('jinjiang')">
+    <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
+        <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
+        <i v-else class="fas fa-book-reader text-green-500 text-xl"></i>
+    </div>
+    <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
+</div>
                      </div>
                  </div>
 
@@ -2150,7 +2150,6 @@
         <!-- 文件上传 Inputs -->
         <input type="file" ref="chatImageInput" accept="image/*" class="hidden" @change="handleImageUploadForChat">
         <input type="file" ref="groupAvatarInput" accept="image/*" class="hidden" @change="handleGroupAvatarChange">
-        <input type="file" ref="txtImportInput" accept=".txt" class="hidden" @change="handleTxtImport">
         <input type="file" ref="homeAvatarInput" accept="image/*" class="hidden" @change="handleHomeAvatarChange">
         <input type="file" ref="icityAvatarInput" accept="image/*" class="hidden" @change="handleIcityAvatarChange">
         <input type="file" ref="cardAvatarInput" accept="image/*" class="hidden" @change="handleCardAvatarChange">
@@ -2552,13 +2551,23 @@
                             </div>
                         </div>
                     </div>
-                                        
-                    <!-- 新增：独立的设置字体按钮 -->
-                    <button @click="openDiaryFontModal" class="absolute top-5 right-16 w-8 h-8 bg-gray-200/80 text-gray-500 rounded-full flex items-center justify-center active:scale-95 transition z-10" title="设置日记字体"><i class="fas fa-font"></i></button>
-
-                    <button @click="triggerManualSummarize" class="w-full mt-4 bg-gray-900 text-white py-4 rounded-[22px] font-bold text-[15px] active:scale-95 transition shadow-lg shadow-black/10 flex items-center justify-center gap-2 tracking-wide">
-                        <i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆碎片
-                    </button>
+                    
+<div class="w-full mt-4 flex flex-col gap-3">
+                        <button @click="triggerManualSummarize" class="w-full bg-gray-900 text-white py-4 rounded-[22px] font-bold text-[15px] active:scale-95 transition shadow-lg shadow-black/10 flex items-center justify-center gap-2 tracking-wide">
+                            <i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆碎片
+                        </button>
+                        <!-- 单开的设置字体入口 -->
+                        <div @click="openDiaryFontModal" class="bg-white border border-gray-200 rounded-[20px] p-4 flex justify-between items-center cursor-pointer active:scale-95 transition shadow-sm mt-1">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"><i class="fas fa-pen-nib"></i></div>
+                                <div class="flex flex-col">
+                                    <span class="text-[14px] font-bold text-gray-800">设置专属日记字体</span>
+                                    <span class="text-[11px] text-gray-400">定制私密手写体风格</span>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </transition>
@@ -3870,7 +3879,7 @@
                             <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                             <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
-                            <div class="attach-item" @click="openFavorites(); wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
+                            <div class="attach-item" @click="wechatState.showAttachMenu = false; favoritesModal.show = true;"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
                             <!-- 线下模式 (灰色咖啡杯) -->
                             <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
                         </div>
@@ -4775,7 +4784,27 @@
                 <div class="mt-4 bg-white divide-y divide-gray-100">
                     <!-- Removed Scan/Search Items as requested -->
                 </div>
-            </main>            
+            </main>                       
+
+            <!-- 编辑书籍弹窗 -->
+            <transition name="scale">
+                <div v-if="bookshelfState.showEdit" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div class="bg-white w-[85%] rounded-2xl p-5 flex flex-col gap-4">
+                        <h3 class="text-lg font-bold text-center">编辑书籍信息</h3>
+                        <div><label class="text-xs text-gray-500 ml-1">书名</label><input v-model="bookshelfState.editingBook.title" class="w-full bg-gray-50 p-2 rounded-lg text-sm border border-gray-200 outline-none"></div>
+                        <div><label class="text-xs text-gray-500 ml-1">作者</label><input v-model="bookshelfState.editingBook.author" class="w-full bg-gray-50 p-2 rounded-lg text-sm border border-gray-200 outline-none"></div>
+                        <div><label class="text-xs text-gray-500 ml-1">封面 URL</label><input v-model="bookshelfState.editingBook.cover" placeholder="选填 (图片链接)" class="w-full bg-gray-50 p-2 rounded-lg text-sm border border-gray-200 outline-none"></div>
+                        <div class="flex gap-4">
+                            <div class="flex-1"><label class="text-xs text-gray-500 ml-1">字体大小(px)</label><input type="number" v-model.number="bookshelfState.editingBook.fontSize" class="w-full bg-gray-50 p-2 rounded-lg text-sm border border-gray-200 outline-none"></div>
+                            <div class="flex-1"><label class="text-xs text-gray-500 ml-1">翻页方式</label><select v-model="bookshelfState.editingBook.readMode" class="w-full bg-gray-50 p-2 rounded-lg text-sm border border-gray-200 outline-none"><option value="scroll">上下滑动</option><option value="page">左右翻页</option></select></div>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <button @click="bookshelfState.showEdit = false" class="flex-1 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-bold">取消</button>
+                            <button @click="saveBookEdit" class="flex-1 py-2 bg-black text-white rounded-lg text-sm font-bold">保存</button>
+                        </div>
+                    </div>
+                </div>
+            </transition>            
             
             <!-- 我 -->
             <main v-if="wechatState.activeNav === 'me'" class="flex-1 overflow-y-auto bg-[#f4f4f6] relative font-mono pb-24">
@@ -5573,16 +5602,15 @@
         @scroll-to-bottom="scrollToBottom">
     </taobao-app>
     
-    <!-- 晋江 App (外部组件) -->
+    <!-- 晋江 App -->
     <jinjiang-app v-if="currentApp === 'jinjiang'" 
         :bookshelf="bookshelf" 
-        :bookshelf-state="bookshelfState" 
         @close="closeApp" 
-        @toast="showToast" 
-        @save-data="saveData" 
-        @trigger-import="$refs.txtImportInput.click()" 
-        @read-book="startReading">
+        @open-reader="startReadTogether" 
+        @import-book="$refs.txtImportInput.click()">
     </jinjiang-app>
+    <!-- txt导入输入框 -->
+    <input type="file" ref="txtImportInput" accept=".txt" class="hidden" @change="handleTxtImport">
 
     <!-- 设置 App -->
     <transition name="app-slide">
@@ -6115,7 +6143,7 @@ const DEFAULT_APPS = {
     'couple_space': { name: '情侣空间', iconClass: 'fas fa-heart' },
     'game_center': { name: '游戏大厅', iconClass: 'fas fa-gamepad' },
     'sms': { name: '短信', iconClass: 'fas fa-comment-sms' },
-    'jinjiang': { name: '晋江小说阅读', iconClass: 'fas fa-book-reader' },
+    'jinjiang': { name: '晋江小说', iconClass: 'fas fa-book-reader' },
     'ph3': { name: '占位', iconClass: 'fas fa-star' },
     'ph4': { name: '占位', iconClass: 'fas fa-moon' },
     'ph5': { name: '占位', iconClass: 'fas fa-cloud' },
@@ -11897,16 +11925,6 @@ Structure:
         toggleFileActive(file) { file.isActive = file.isActive === false ? true : false; this.saveData(); },
         handleAppClick(id) { if(id==='themes'||id==='worldbook'||id==='settings'||id==='wechat')this.openApp(id); else this.showToast('仅作为展示'); },
         getAppName(id) { return (this.appCustomization[id] && this.appCustomization[id].name) ? this.appCustomization[id].name : DEFAULT_APPS[id].name; },
-        startReading(book) {
-            if (!this.readTogetherState.drag) {
-                this.readTogetherState.drag = { x: 20, y: 100, width: 130, height: 180, isDragging: false, isResizing: false, startX: 0, startY: 0, startW: 0, startH: 0 };
-            }
-            this.readTogetherState.activeBookId = book.id;
-            this.readTogetherState.currentPage = 0;
-            this.readTogetherState.isMinimized = false; // 直接全屏开启阅读
-            this.readTogetherState.show = true;
-            this.saveData();
-        },
         hasCustomIcon(id) { return this.appCustomization[id] && this.appCustomization[id].icon; },
         getAppIcon(id) { return this.appCustomization[id] ? this.appCustomization[id].icon : ''; },
         getDefaultIconClass(id) { return DEFAULT_APPS[id].iconClass; },
