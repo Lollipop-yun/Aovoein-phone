@@ -2028,31 +2028,31 @@
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('情侣空间')">
                              <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('couple_space')}">
                                  <img v-if="hasCustomIcon('couple_space')" :src="getAppIcon('couple_space')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-heart text-gray-300 text-2xl"></i>
+                                 <i v-else class="fas fa-heart text-gray-400 text-2xl"></i>
                              </div>
                              <span class="text-[10px] font-bold text-gray-500">{{ getAppName('couple_space') }}</span>
                          </div>
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('游戏大厅')">
                              <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('game_center')}">
                                  <img v-if="hasCustomIcon('game_center')" :src="getAppIcon('game_center')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-gamepad text-gray-300 text-xl"></i>
+                                 <i v-else class="fas fa-gamepad text-gray-400 text-xl"></i>
                              </div>
                              <span class="text-[10px] font-bold text-gray-500">{{ getAppName('game_center') }}</span>
                          </div>
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('短信功能待接入')">
-    <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('sms')}">
-        <img v-if="hasCustomIcon('sms')" :src="getAppIcon('sms')" class="w-full h-full object-cover">
-        <i v-else class="fas fa-comment-sms text-gray-300 text-xl"></i>
-    </div>
-    <span class="text-[10px] font-bold text-gray-500">{{ getAppName('sms') }}</span>
-</div>
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('sms')}">
+                                 <img v-if="hasCustomIcon('sms')" :src="getAppIcon('sms')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-comment-sms text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('sms') }}</span>
+                         </div>
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="openApp('jinjiang')">
-    <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
-        <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
-           <i v-else class="fas fa-book-reader text-gray-400 text-xl"></i>
-    </div>
-    <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
-</div>
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
+                                 <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-book-reader text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
+                         </div>
                      </div>
                  </div>
 
@@ -2062,28 +2062,28 @@
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
                              <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph3')}">
                                  <img v-if="hasCustomIcon('ph3')" :src="getAppIcon('ph3')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-star text-gray-300 text-xl"></i>
+                                 <i v-else class="fas fa-star text-gray-400 text-xl"></i>
                              </div>
                              <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph3') }}</span>
                          </div>
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
                              <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph4')}">
                                  <img v-if="hasCustomIcon('ph4')" :src="getAppIcon('ph4')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-moon text-gray-300 text-xl"></i>
+                                 <i v-else class="fas fa-moon text-gray-400 text-xl"></i>
                              </div>
                              <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph4') }}</span>
                          </div>
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
                              <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph5')}">
                                  <img v-if="hasCustomIcon('ph5')" :src="getAppIcon('ph5')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-cloud text-gray-300 text-xl"></i>
+                                 <i v-else class="fas fa-cloud text-gray-400 text-xl"></i>
                              </div>
                              <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph5') }}</span>
                          </div>
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
                              <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph6')}">
                                  <img v-if="hasCustomIcon('ph6')" :src="getAppIcon('ph6')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-leaf text-gray-300 text-xl"></i>
+                                 <i v-else class="fas fa-leaf text-gray-400 text-xl"></i>
                              </div>
                              <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph6') }}</span>
                          </div>
@@ -2658,8 +2658,7 @@
                             {{ fav.content }}
                         </div>
                         <!-- 角色的心里话 -->
-                        <div class="text-[15px] text-gray-800 leading-relaxed text-justify font-medium">
-                            <i class="fas fa-quote-left text-gray-300 text-xs mr-1 align-top"></i>
+                        <div class="text-[15px] text-gray-800 leading-relaxed text-justify font-medium mt-1">
                             {{ fav.reason }}
                         </div>
                     </div>
@@ -10765,7 +10764,7 @@ Structure:
   "quote_user_message": "OPTIONAL: 填入你想引用的我说过的话的原文内容(针对性回复时使用)",
   "change_remark": "OPTIONAL: 强行修改玩家手机里【对你(AI自身)的备注名】（即玩家的微信里怎么称呼你）。例如你如果是男主，可以把自己在玩家手机里的备注改成'老公'、'哥哥'等。绝对不能改成你对玩家的称呼（如改成'老婆'、'妹妹'等是严重错误）！",
   "change_relation": "OPTIONAL: 如果随着聊天发展，你对我的看法或关系发生了实质性改变，请填入你眼里我们最新的关系（如：从'陌生人'变成'暗恋'）。若无改变请勿输出。",
-  "favorite_user_content": { "content": "我的消息或朋友圈原文", "source": "聊天消息/朋友圈", "reason": "为什么想收藏" }, // OPTIONAL: 如果你觉得玩家刚才发的某句话/某张图非常戳中你，让你心动、想笑或是深思，你想偷偷收藏保留下来，请填写此字段。reason 必须使用极其自然、随性的第一人称口吻（就像是在脑子里碎碎念或者对自己说话），严禁使用“因为...因为...”的死板句式！如果不戳你，请勿输出此字段。
+  "favorite_user_content": { "content": "你想收藏的那【唯一一条】特定消息原文", "source": "聊天消息/朋友圈", "reason": "为什么想收藏" }, // OPTIONAL: 如果玩家刚才发的【某一条特定的消息】(绝对不要把多轮对话全存下来，只选最戳你的一句话)非常戳中你，你想偷偷收藏保留下来，请填写此字段。reason 必须使用极其自然、随性的第一人称口吻（就像是在脑子里碎碎念），严禁使用“因为...因为...”！如果不戳你，请勿输出此字段。
   "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
   "recall": true OR false, // OPTIONAL: 若你发出这句话后立刻觉得后悔、不妥、怕对方生气，想要迅速撤回刚才那句话时设为 true
