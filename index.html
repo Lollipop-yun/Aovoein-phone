@@ -2049,7 +2049,7 @@
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="openApp('jinjiang')">
     <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
         <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
-        <i v-else class="fas fa-book-reader text-green-500 text-xl"></i>
+           <i v-else class="fas fa-book-reader text-gray-400 text-xl"></i>
     </div>
     <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
 </div>
@@ -2472,6 +2472,15 @@
                         <button @click="saveMemorySettings" class="text-blue-600 font-bold text-[14px] active:opacity-50">保存</button>
                     </div>
                     <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                        <!-- 移入的独立字体设置入口 -->
+                        <div class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-50 flex justify-between items-center cursor-pointer active:bg-gray-50 transition" @click="openDiaryFontModal">
+                            <div class="flex flex-col">
+                                <span class="text-[15px] font-bold text-gray-900">设置专属日记字体</span>
+                                <span class="text-[11px] text-gray-400 mt-0.5">定制此角色的私密手写体风格</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                        </div>
+
                         <div class="bg-white rounded-[16px] p-4 shadow-sm border border-gray-50 flex justify-between items-center">
                             <div class="flex flex-col">
                                 <span class="text-[15px] font-bold text-gray-900">短期记忆 (上下文条数)</span>
@@ -2552,21 +2561,9 @@
                         </div>
                     </div>
                     
-<div class="w-full mt-4 flex flex-col gap-3">
-                        <button @click="triggerManualSummarize" class="w-full bg-gray-900 text-white py-4 rounded-[22px] font-bold text-[15px] active:scale-95 transition shadow-lg shadow-black/10 flex items-center justify-center gap-2 tracking-wide">
-                            <i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆碎片
-                        </button>
-                        <!-- 单开的设置字体入口 -->
-                        <div @click="openDiaryFontModal" class="bg-white border border-gray-200 rounded-[20px] p-4 flex justify-between items-center cursor-pointer active:scale-95 transition shadow-sm mt-1">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"><i class="fas fa-pen-nib"></i></div>
-                                <div class="flex flex-col">
-                                    <span class="text-[14px] font-bold text-gray-800">设置专属日记字体</span>
-                                    <span class="text-[11px] text-gray-400">定制私密手写体风格</span>
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                        </div>
+<div class="w-full mt-4 flex gap-3">
+                        <button @click="memoryModal.statsShow = false" class="w-14 h-[52px] bg-white text-gray-600 rounded-[18px] font-bold text-[16px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center shrink-0"><i class="fas fa-times"></i></button>
+                        <button @click="triggerManualSummarize" class="flex-1 bg-white text-gray-900 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center gap-2 tracking-wide"><i class="fas fa-bolt text-yellow-500"></i> 立即提取并总结</button>
                     </div>
                 </div>
             </div>
@@ -2630,6 +2627,42 @@
                     </div>
                     <!-- 正文内容：字号放大至 20px，行高强制对齐 32px 以匹配信纸线条 -->
                     <div class="text-[20px] text-gray-800 whitespace-pre-wrap text-justify tracking-wide" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">{{ memoryDetailModal.memory?.content }}</div>
+                </div>
+            </div>
+        </transition>
+        
+        <!-- 角色的私密收藏界面 (iOS 灰白高级风) -->
+        <transition name="page-slide">
+            <div v-if="charFavoritesModal.show" class="fixed inset-0 z-[118000] bg-[#f2f2f6] flex flex-col pb-safe font-sans">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0 shadow-sm">
+                    <button @click="charFavoritesModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
+                    <div class="flex flex-col items-center">
+                        <h1 class="font-bold text-[16px] text-gray-900">私密收藏夹</h1>
+                        <span class="text-[10px] text-gray-400 font-mono">{{ wechatState.activeSession?.name }}</span>
+                    </div>
+                    <div class="w-8"></div>
+                </header>
+                <div class="flex-1 overflow-y-auto px-4 pt-6 pb-12 space-y-4">
+                    <div v-if="!wechatState.activeSession?.characterFavorites || wechatState.activeSession.characterFavorites.length === 0" class="text-center text-gray-400 mt-32 text-xs flex flex-col items-center">
+                        <i class="fas fa-box-open text-4xl mb-4 opacity-20"></i>
+                        TA 还没有收藏过你的任何消息。<br>当你的发言戳中 TA 时，TA 会悄悄保存在这里。
+                    </div>
+                    
+                    <div v-for="fav in wechatState.activeSession?.characterFavorites" :key="fav.id" class="bg-white rounded-[20px] p-5 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-50 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-1 rounded-md font-bold">{{ fav.source }}</span>
+                            <span class="text-[10px] text-gray-400 font-mono">{{ formatChatTime(fav.time) }}</span>
+                        </div>
+                        <!-- 收藏的原内容块 -->
+                        <div class="bg-[#f8f9fa] rounded-xl p-3.5 mb-4 text-[13px] text-gray-500 border-l-4 border-gray-300">
+                            {{ fav.content }}
+                        </div>
+                        <!-- 角色的心里话 -->
+                        <div class="text-[15px] text-gray-800 leading-relaxed text-justify font-medium">
+                            <i class="fas fa-quote-left text-gray-300 text-xs mr-1 align-top"></i>
+                            {{ fav.reason }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </transition>
@@ -3879,7 +3912,7 @@
                             <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                             <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
-                            <div class="attach-item" @click="wechatState.showAttachMenu = false; favoritesModal.show = true;"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
+                            <div class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
                             <!-- 线下模式 (灰色咖啡杯) -->
                             <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
                         </div>
@@ -6288,6 +6321,7 @@ const app = createApp({
             memoryModal: { show: false, settingsShow: false, statsShow: false, presetShow: false, tempSettings: {}, isMultiSelect: false, selectedIds: [] },
             memoryDetailModal: { show: false, memory: null },
             diaryFontModal: { show: false },
+            charFavoritesModal: { show: false },
             memoryPresets: [],
             globalMemoryPrompt: '', // 全局默认提示词
             chatListContextMenu: { show: false, x: 0, y: 0, session: null },
@@ -9212,6 +9246,13 @@ const app = createApp({
         openDiaryFontModal() {
             this.diaryFontModal.show = true;
         },
+        openCharFavorites() {
+            const session = this.wechatState.activeSession;
+            if (!session) return;
+            this.wechatState.showAttachMenu = false;
+            if (!session.characterFavorites) session.characterFavorites = [];
+            this.charFavoritesModal.show = true;
+        },
         applyDiaryFontPreset(preset) {
             const session = this.wechatState.activeSession;
             if (session) {
@@ -10724,6 +10765,7 @@ Structure:
   "quote_user_message": "OPTIONAL: 填入你想引用的我说过的话的原文内容(针对性回复时使用)",
   "change_remark": "OPTIONAL: 强行修改玩家手机里【对你(AI自身)的备注名】（即玩家的微信里怎么称呼你）。例如你如果是男主，可以把自己在玩家手机里的备注改成'老公'、'哥哥'等。绝对不能改成你对玩家的称呼（如改成'老婆'、'妹妹'等是严重错误）！",
   "change_relation": "OPTIONAL: 如果随着聊天发展，你对我的看法或关系发生了实质性改变，请填入你眼里我们最新的关系（如：从'陌生人'变成'暗恋'）。若无改变请勿输出。",
+  "favorite_user_content": { "content": "我的消息或朋友圈原文", "source": "聊天消息/朋友圈", "reason": "为什么想收藏" }, // OPTIONAL: 如果你觉得玩家刚才发的某句话/某张图非常戳中你，让你心动、想笑或是深思，你想偷偷收藏保留下来，请填写此字段。reason 必须使用极其自然、随性的第一人称口吻（就像是在脑子里碎碎念或者对自己说话），严禁使用“因为...因为...”的死板句式！如果不戳你，请勿输出此字段。
   "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
   "recall": true OR false, // OPTIONAL: 若你发出这句话后立刻觉得后悔、不妥、怕对方生气，想要迅速撤回刚才那句话时设为 true
@@ -10994,6 +11036,19 @@ Structure:
                                 time: Date.now()
                             });
                         }
+                    }
+                    // === 处理角色的私密收藏 ===
+                    if (block.favorite_user_content) {
+                        if (!session.characterFavorites) session.characterFavorites = [];
+                        session.characterFavorites.unshift({
+                            id: Date.now().toString() + Math.random(),
+                            content: block.favorite_user_content.content,
+                            source: block.favorite_user_content.source || '聊天消息',
+                            reason: block.favorite_user_content.reason,
+                            time: Date.now()
+                        });
+                        this.saveData();
+                        // （此操作是静默的，玩家只能通过点击附件菜单的“收藏”自己去发现）
                     }
                     // === 处理单聊 AI 引用消息 ===
                     let quoteObj = null;
