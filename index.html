@@ -2551,9 +2551,48 @@
                         </div>
                     </div>
                     
-                    <button @click="triggerManualSummarize" class="w-full mt-4 bg-gray-900 text-white py-4 rounded-[22px] font-bold text-[15px] active:scale-95 transition shadow-lg shadow-black/10 flex items-center justify-center gap-2 tracking-wide">
-                        <i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆碎片
-                    </button>
+                    <div class="w-full flex flex-col gap-3 mt-4">
+                        <button @click="triggerManualSummarize" class="w-full bg-gray-900 text-white py-4 rounded-[22px] font-bold text-[15px] active:scale-95 transition shadow-lg shadow-black/10 flex items-center justify-center gap-2 tracking-wide">
+                            <i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆碎片
+                        </button>
+                        <div class="flex gap-3">
+                            <button @click="openDiaryFontModal" class="flex-1 bg-white text-gray-700 py-3 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center gap-2"><i class="fas fa-pen-nib"></i> 设置日记字体</button>
+                            <button @click="memoryModal.statsShow = false" class="w-[80px] bg-gray-100 text-gray-600 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center shrink-0">关闭</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 专属日记字体弹窗 -->
+        <transition name="app-slide">
+            <div v-if="diaryFontModal.show" class="fixed inset-0 z-[118000] bg-[#f4f4f6] flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0">
+                    <button @click="diaryFontModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left"></i></button>
+                    <h1 class="font-bold text-[16px] text-gray-900">角色专属日记字体</h1>
+                    <div class="w-8"></div>
+                </header>
+                <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <div class="bg-gray-100 rounded-2xl p-6 text-center border border-gray-200" :style="{ fontFamily: getDiaryFont() }">
+                        <div class="text-2xl font-bold mb-2">手写测试</div>
+                        <div class="text-sm opacity-60">如果未设置，将使用系统自带默认手写体</div>
+                    </div>
+                    
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                        <div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                            <span class="font-bold text-gray-800 text-sm">选择预设字体 (与主题商店互通)</span>
+                        </div>
+                        <div v-if="fontPresets.length === 0" class="p-6 text-center text-gray-400 text-xs">暂无字体预设，请先在主题APP中添加</div>
+                        <div v-else class="divide-y divide-gray-50">
+                            <div v-for="(fp, idx) in fontPresets" :key="idx" class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="applyDiaryFontPreset(fp)">
+                                <div class="flex-1 min-w-0 mr-2">
+                                    <div class="font-bold text-gray-800 text-[15px] truncate" :style="{fontFamily: fp.fontFamily}">{{ fp.name }}</div>
+                                </div>
+                                <i v-if="getMemorySettings(wechatState.activeSession).diaryFontFamily === fp.fontFamily" class="fas fa-check text-blue-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="resetDiaryFont" class="w-full bg-white text-red-500 py-3.5 rounded-[18px] font-bold text-[14px] border border-gray-200 shadow-sm active:bg-gray-50 transition mt-2">清除专属字体 (恢复默认)</button>
                 </div>
             </div>
         </transition>
@@ -2569,20 +2608,20 @@
                     </div>
                     <div class="w-8"></div>
                 </header>
-                <!-- 横线信纸背景 -->
-                <div class="flex-1 overflow-y-auto px-6 pt-6 pb-12 lined-paper-bg">
-                    <div class="flex flex-col mb-4">
-                        <!-- 标题 -->
-                        <div class="font-bold text-[24px] text-gray-900" style="font-family: 'YSTFont', 'Kaiti SC', cursive; line-height: 32px;">
+                <!-- 横线信纸背景：行高 32px，通过 pt-[4px] 完美对准信纸划线 -->
+                <div class="flex-1 overflow-y-auto px-6 pt-[4px] pb-12 lined-paper-bg">
+                    <div class="flex flex-col mt-[32px] mb-[32px]">
+                        <!-- 标题：字号放大至 28px，完美贴合单行或双行 32px -->
+                        <div class="font-bold text-[28px] text-gray-900" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
                             {{ memoryDetailModal.memory?.title || '无题' }}
                         </div>
-                        <!-- 日期 (字号较小，置于标题下方) -->
-                        <div class="text-[14px] text-gray-400 font-bold" style="font-family: 'YSTFont', 'Kaiti SC', cursive; line-height: 32px;">
+                        <!-- 日期：保留 14px，位于标题下方 -->
+                        <div class="text-[14px] text-gray-400 font-bold" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
                             {{ formatFullDate(memoryDetailModal.memory?.time) }}
                         </div>
                     </div>
-                    <!-- 正文内容：行高对齐 32px 以匹配信纸线条 -->
-                    <div class="text-[18px] text-gray-800 whitespace-pre-wrap text-justify tracking-wide" style="font-family: 'YSTFont', 'Kaiti SC', cursive; line-height: 32px;">{{ memoryDetailModal.memory?.content }}</div>
+                    <!-- 正文内容：字号放大至 20px，行高强制对齐 32px 以匹配信纸线条 -->
+                    <div class="text-[20px] text-gray-800 whitespace-pre-wrap text-justify tracking-wide" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">{{ memoryDetailModal.memory?.content }}</div>
                 </div>
             </div>
         </transition>
@@ -4201,19 +4240,21 @@
                     <div v-if="!offlineStyleModal.isEditing" class="flex-1 overflow-y-auto p-4 space-y-3">
                         <div v-if="offlineStylePresets.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无文风预设，请点击右上角 "+" 添加</div>
                         <div v-for="(style, idx) in offlineStylePresets" :key="style.id" class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm relative group cursor-pointer active:bg-gray-50" @click="toggleOfflineStyle(style.id)">
-                            <div class="flex justify-between items-start mb-2">
+                            <div class="flex justify-between items-center mb-2">
                                 <div class="flex items-center gap-2">
                                     <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition" :class="{'bg-black border-black': (getOfflineSettings().styleIds ||[]).includes(style.id)}">
                                         <i v-if="(getOfflineSettings().styleIds ||[]).includes(style.id)" class="fas fa-check text-white text-[10px]"></i>
                                     </div>
                                     <h3 class="font-bold text-gray-900 text-sm">{{ style.title }}</h3>
                                 </div>
-                                <div class="flex gap-3 text-gray-400">
-                                    <i class="fas fa-edit hover:text-blue-500 transition" @click.stop="editOfflineStyle(style)"></i>
-                                    <i class="fas fa-trash-alt hover:text-red-500 transition" @click.stop="deleteOfflineStyle(idx)"></i>
+                                <div class="flex gap-3 text-gray-400 items-center">
+                                    <i v-if="!style.isBuiltIn" class="fas fa-edit hover:text-blue-500 transition" @click.stop="editOfflineStyle(style)"></i>
+                                    <i v-if="!style.isBuiltIn" class="fas fa-trash-alt hover:text-red-500 transition" @click.stop="deleteOfflineStyle(idx)"></i>
+                                    <i v-if="style.isBuiltIn" class="fas fa-lock text-gray-300 text-xs"></i>
                                 </div>
                             </div>
-                            <p class="text-xs text-gray-500 leading-relaxed line-clamp-2 pl-7">{{ style.content }}</p>
+                            <p v-if="!style.isBuiltIn" class="text-xs text-gray-500 leading-relaxed line-clamp-2 pl-7">{{ style.content }}</p>
+                            <p v-else class="text-[10px] text-gray-400 italic pl-7">系统内置核心文风预设</p>
                         </div>
                     </div>
 
@@ -6280,6 +6321,7 @@ const app = createApp({
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
             memoryModal: { show: false, settingsShow: false, statsShow: false, presetShow: false, tempSettings: {}, isMultiSelect: false, selectedIds: [] },
             memoryDetailModal: { show: false, memory: null },
+            diaryFontModal: { show: false },
             memoryPresets: [],
             globalMemoryPrompt: '', // 全局默认提示词
             chatListContextMenu: { show: false, x: 0, y: 0, session: null },
@@ -9194,8 +9236,53 @@ const app = createApp({
             this.memoryModal.show = true;
         },
         openMemoryDetail(mem) {
+            const session = this.wechatState.activeSession;
+            if (session && session.memorySettings && session.memorySettings.diaryFontUrl) {
+                this.loadDiaryFont(session.memorySettings.diaryFontUrl, session.memorySettings.diaryFontFamily);
+            }
             this.memoryDetailModal.memory = mem;
             this.memoryDetailModal.show = true;
+        },
+        openDiaryFontModal() {
+            this.diaryFontModal.show = true;
+        },
+        applyDiaryFontPreset(preset) {
+            const session = this.wechatState.activeSession;
+            if (session) {
+                if (!session.memorySettings) session.memorySettings = this.getMemorySettings(session);
+                session.memorySettings.diaryFontFamily = preset.fontFamily;
+                session.memorySettings.diaryFontUrl = preset.fontUrl;
+                this.saveData();
+                this.diaryFontModal.show = false;
+                this.showToast(`已应用专属字体: ${preset.name}`);
+            }
+        },
+        resetDiaryFont() {
+            const session = this.wechatState.activeSession;
+            if (session && session.memorySettings) {
+                session.memorySettings.diaryFontFamily = '';
+                session.memorySettings.diaryFontUrl = '';
+                this.saveData();
+                this.diaryFontModal.show = false;
+                this.showToast('已清除专属字体，恢复系统默认');
+            }
+        },
+        getDiaryFont() {
+            const session = this.wechatState.activeSession;
+            if (session && session.memorySettings && session.memorySettings.diaryFontFamily) {
+                return `"${session.memorySettings.diaryFontFamily}", 'YSTFont', 'Kaiti SC', 'STKaiti', 'KaiTi', 'KaiTi_GB2312', cursive`;
+            }
+            // 回退到内置手写体 YSTFont
+            return `'YSTFont', 'Kaiti SC', 'STKaiti', 'KaiTi', 'KaiTi_GB2312', cursive`;
+        },
+        loadDiaryFont(url, family) {
+            let style = document.getElementById('diary-custom-font-style');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'diary-custom-font-style';
+                document.head.appendChild(style);
+            }
+            style.innerHTML = `@font-face { font-family: "${family}"; src: url("${url}"); font-display: swap; }`;
         },
         openMemorySettings() {
             const session = this.wechatState.activeSession;
@@ -12875,46 +12962,14 @@ Structure:
             // 自动注入神级预设矩阵 (仅在列表为空且未注入过时触发)
             if (this.offlineStylePresets.length === 0 && !this.offlineState.hasInjectedDefaultStyle) {
                 this.offlineStylePresets.push(
-                    {
-                        id: 'style_yinren',
-                        title: '隐忍酸涩文风',
-                        content: '核心文风指令\n请严格遵循酸涩文文风进行内容生成，整体基调克制、细腻、带轻微钝痛感，情绪内敛不外放，文字清淡却藏着未说尽的委屈、遗憾与怅然，氛围偏安静、隐忍、微苦，不激烈、不狗血、不直白宣泄情绪。\n\n细节文风正则\n1. 情感基调\n以微涩、轻怅、淡憾为核心，情绪点到即止，不嘶吼、不崩溃、不浓烈煽情，保留心底未宣之于口的在意与落空，温柔中带一点凉，甜里裹一丝苦。\n2. 叙事节奏\n节奏舒缓平缓，侧重心理留白与细节暗示，多用环境、小动作、眼神映射内心，少直白心理描写，不堆砌辞藻，语言干净克制。\n3. 人物互动\n互动克制疏离又暗藏拉扯，话不说满、意不挑明，常有欲言又止、擦肩而过、默默注视、轻声试探后收回的举动，情感细腻敏感，带着小心翼翼的在意。\n4. 结局适配\n结局不强制BE，可平淡收尾、开放式留白、轻和解或浅圆满，但始终保留一丝未尽的酸涩余韵，不彻底甜腻、不强行圆满，留有淡淡余味。\n5. 语言风格\n文字简洁细腻，偏口语化但不粗俗，温柔清浅，带点文艺感，避免华丽浮夸、激烈冲突、狗血误会、直白告白，整体偏向安静、柔软、微苦的氛围感。'
-                    },
-                    {
-                        id: 'style_qingchun',
-                        title: '青春校园文风',
-                        content: '核心文风指令\n严格遵循青春校园文风，整体干净明亮，带着少年少女独有的青涩、鲜活与温柔，氛围轻松纯粹，充满校园日常感，情绪直白又柔软，不压抑、不狗血、不复杂。\n\n细节文风正则\n1. 情感基调\n以青涩、明亮、悸动、温柔为主，自带少年气，有懵懂心动、细碎欢喜、小别扭小在意，情绪简单直白，温暖治愈，偶尔带点无伤大雅的小失落与小遗憾。\n2. 叙事节奏\n节奏轻快自然，以校园日常碎片为主，贴近真实校园生活，不拖沓、不压抑，多描写细碎小事，画面感强，充满烟火气与少年感。\n3. 人物互动\n互动自然青涩，充满少年少女的小小心思：课间打闹、偷偷注视、不经意的肢体触碰、口是心非的关心、笨拙的靠近与试探，相处轻松舒服，不虐心、不拉扯过度。\n4. 场景特征\n围绕教室、操场、走廊、放学路、小卖部、梧桐道、校服、试卷、晚霞、晚风等经典校园元素展开，氛围感清新干净。\n5. 语言风格\n文字简单清爽，偏口语化，温柔轻快，不堆砌华丽辞藻，不深沉晦涩，充满少年少女的鲜活感，整体阳光治愈，贴近真实校园氛围。'
-                    },
-                    {
-                        id: 'style_wenrou',
-                        title: '温柔细腻文风',
-                        content: '核心文风指令\n严格遵循温柔细腻文风，整体氛围柔软舒缓，情绪轻缓克制，文字干净熨帖，像轻声说话一样，不尖锐、不浓烈，自带安抚感，细腻捕捉微小情绪与细节。\n\n细节文风正则\n1. 情感基调\n以温柔、柔软、平和、细腻为主，情绪轻浅绵长，不激烈、不狗血、不直白宣泄，多是含蓄的在意、安静的关怀、淡淡的暖意，自带治愈感。\n2. 叙事节奏\n节奏缓慢柔和，注重细节与心境描写，不赶情节、不制造冲突，多用慢镜头式的细腻刻画，氛围安静松弛。\n3. 人物互动\n互动温和有礼、体贴柔软，多轻声对话、默默陪伴、细微照顾、小心翼翼的靠近，语气柔和，相处松弛舒服，无尖锐矛盾。\n4. 描写特点\n侧重环境、神态、小动作、触感、光影等微小细节，用细腻画面传递情绪，少大段直白心理，文字温润有质感。\n5. 语言风格\n文字轻柔干净，不华丽、不犀利、不生硬，语句舒缓流畅，读起来熨帖舒服，整体温柔治愈，细腻入心。'
-                    },
-                    {
-                        id: 'style_dushi',
-                        title: '现代都市文风',
-                        content: '核心文风指令\n严格遵循现代都市文风，背景设定在当代城市生活，氛围真实接地气，带点烟火气与成年人的克制温柔，贴近现实生活节奏，不悬浮、不狗血、不脱离日常。\n\n细节文风正则\n1. 情感基调\n以成熟、内敛、平淡、微暖为主，自带成年人的清醒与温柔，少有激烈外放的情绪，多是细水长流的陪伴、 安静地心动与恰到好处的在意，可带一点现实的轻疲惫，但整体温暖舒展。\n2. 叙事节奏\n节奏平稳贴近现实，以都市日常碎片为主，不刻意制造强冲突，叙事自然流畅，注重心境与生活细节，氛围感真实松弛。\n3. 人物互动\n相处方式成熟得体，分寸感清晰，对话自然生活化，有成年人的试探、体贴、默契与温柔，不幼稚、不扭捏、不强行拉扯。\n4. 场景特征\n围绕公寓、地铁、写字楼、便利店、雨夜、路灯、咖啡、晚风、城市夜景、下班路等现代都市元素展开，充满城市生活气息。\n5. 语言风格\n文字简洁平实，偏生活化口语，细腻不矫情，干净不华丽，贴合现代都市语境，真实又温柔。'
-                    },
-                    {
-                        id: 'style_gaogan',
-                        title: '高干清冷文风',
-                        content: '核心文风指令\n严格遵循高干清冷文风，人物自带家世背景与沉稳气场，情感克制内敛，疏离中藏深情，文字干净大气，自带体面与距离感，不市井、不浮夸、不直白浓烈。\n\n细节文风正则\n1. 情感基调\n以隐忍、克制、深情、清冷为主，身份与环境自带分寸感，爱意深沉不外露，多是不动声色的偏爱、身不由己的拉扯、暗地周全的守护，情绪点到即止，张力十足。\n2. 叙事节奏\n节奏稳重大气，叙事克制疏淡，不纠结小情小爱，暗含现实与身份的羁绊，整体偏成熟向，暗潮涌动多于表面冲突。\n3. 人物互动\n言行得体有教养，自带矜贵气场，对话简练有度，多眼神流转、轻声提点、暗中庇护、克制触碰，相处疏离又亲密，不幼稚、不狗血、不市井化。\n4. 场景特征\n围绕大院、四合院落、军政商圈、中式庭院、低调居所、城市高端场所等展开，自带阶层与时代氛围感。\n5. 语言风格\n文字简练大气，清冷有质感，不花哨轻浮，不口语化过度，语句沉稳熨帖，自带高干文独有的体面与宿命感。'
-                    },
-                    {
-                        id: 'style_guyan',
-                        title: '古言雅致文风',
-                        content: '核心文风指令\n严格遵循古言雅致文风，背景为古代，氛围温婉含蓄、意境悠远，行文自带古韵，情感细腻克制，不直白、不现代、不浮夸。\n\n细节文风正则\n1. 情感基调\n以含蓄、温婉、怅然、克制为主，情意藏于眉眼举止间，不直白告白，多是心事暗涌、欲语还休，可带轻愁与宿命感，整体古典韵味浓厚。\n2. 叙事节奏\n节奏舒缓雅致，重意境与心境，轻情节冲突，多用景物烘托心绪，行文如流水，留白充足，氛围感沉静悠远。\n3. 人物互动\n言行守礼有度，举止温婉端方，对话简练合古风，多眉目传情、袖中轻触、遥相望、暗相护，相处克制有礼，暗生情愫不外露。\n4. 场景特征\n围绕亭台楼阁、庭院深院、江南烟雨、红墙宫阙、月下花前、琴棋书画、窗棂烛火等古典意象展开，古韵十足。\n5. 语言风格\n文字清丽雅致，用词古典含蓄，句式舒缓工整，不口语化、不现代、不粗俗，自带古典美感与淡淡书卷气。'
-                    },
-                    {
-                        id: 'style_minguo',
-                        title: '民国旧梦文风',
-                        content: '核心文风指令\n严格遵循民国旧梦文风，时代感鲜明，氛围苍凉又温柔，自带乱世浮沉的宿命感，文字细腻有年代质感，克制含蓄，不浮夸、不现代、不狗血。\n\n细节文风正则\n1. 情感基调\n以怅惘、隐忍、克制、深情为主，乱世之中身不由己，爱意深沉却难宣之于口，多是身隔山海、默默守护、遗憾错过，温柔中带着乱世的酸涩与悲凉。\n2. 叙事节奏\n节奏舒缓沉郁，重氛围与心境，轻激烈冲突，自带岁月斑驳感，多留白与意难平，氛围感浓郁绵长。\n3. 人物互动\n言行克制有礼，自带风骨与教养，对话含蓄婉转，多遥遥相望、暗中托付、短暂相逢、匆匆别离，相处疏离又牵挂，张力十足。\n4. 场景特征\n围绕老上海弄堂、租界洋房、北平胡同、黄包车、旗袍西装、烽火家书、梧桐落叶、雨夜街巷、旧报纸、留声机等民国意象展开。\n5. 语言风格\n文字温润雅致，略带沧桑感，不口语轻浮，不现代跳脱，句式舒缓有韵味，自带乱世浮生的怀旧与怅然。'
-                    },
-                    {
-                        id: 'style_xianxia',
-                        title: '仙侠武侠文风',
-                        content: '核心文风指令\n严格遵循仙侠武侠文风，意境开阔洒脱，兼具江湖侠气与仙门清冷，情感克制重情义，文字大气疏朗，不矫情、不现代、不拖沓。\n\n细节文风正则\n1. 情感基调\n以洒脱、侠义、清冷、执念为主，重家国大义、师门情谊、江湖恩仇，情爱多为隐忍克制、相伴相护或求而不得，有侠骨也有柔情，不沉溺小情小爱。\n2. 叙事节奏\n节奏张弛有度，既有江湖快意、御剑乘风的开阔，也有月下对饮、静悟修行的舒缓，意境悠远，自带江湖气与仙气。\n3. 人物互动\n相处重风骨、守道义，对话利落坦荡，多仗剑同行、过招试探、默默守护、一诺千金，亦有仙门疏离、正邪对峙、宿命相杀，张力十足。\n4. 场景特征\n围绕仙山云海、江湖客栈、竹林月下、门派道场、塞外大漠、刀剑琴箫、御剑飞行、红尘俗世等意象展开。\n5. 语言风格\n文字大气简练，自带古韵风骨，不口语化，不细碎矫情，句式疏朗有气势，兼具江湖豪情与修仙清冷感。'
-                    }
+                    { id: 'style_yinren', title: '隐忍酸涩文风', isBuiltIn: true, content: '核心文风指令\n请严格遵循酸涩文文风进行内容生成，整体基调克制、细腻、带轻微钝痛感，情绪内敛不外放，文字清淡却藏着未说尽的委屈、遗憾与怅然，氛围偏安静、隐忍、微苦，不激烈、不狗血、不直白宣泄情绪。' },
+                    { id: 'style_qingchun', title: '青春校园文风', isBuiltIn: true, content: '核心文风指令\n严格遵循青春校园文风，整体干净明亮，带着少年少女独有的青涩、鲜活与温柔，氛围轻松纯粹，充满校园日常感，情绪直白又柔软，不压抑、不狗血、不复杂。' },
+                    { id: 'style_wenrou', title: '温柔细腻文风', isBuiltIn: true, content: '核心文风指令\n严格遵循温柔细腻文风，整体氛围柔软舒缓，情绪轻缓克制，文字干净熨帖，像轻声说话一样，不尖锐、不浓烈，自带安抚感，细腻捕捉微小情绪与细节。' },
+                    { id: 'style_dushi', title: '现代都市文风', isBuiltIn: true, content: '核心文风指令\n严格遵循现代都市文风，背景设定在当代城市生活，氛围真实接地气，带点烟火气与成年人的克制温柔，贴近现实生活节奏，不悬浮、不狗血、不脱离日常。' },
+                    { id: 'style_gaogan', title: '高干清冷文风', isBuiltIn: true, content: '核心文风指令\n严格遵循高干清冷文风，人物自带家世背景与沉稳气场，情感克制内敛，疏离中藏深情，文字干净大气，自带体面与距离感，不市井、不浮夸、不直白浓烈。' },
+                    { id: 'style_guyan', title: '古言雅致文风', isBuiltIn: true, content: '核心文风指令\n严格遵循古言雅致文风，背景为古代，氛围温婉含蓄、意境悠远，行文自带古韵，情感细腻克制，不直白、不现代、不浮夸。' },
+                    { id: 'style_minguo', title: '民国旧梦文风', isBuiltIn: true, content: '核心文风指令\n严格遵循民国旧梦文风，时代感鲜明，氛围苍凉又温柔，自带乱世浮沉的宿命感，文字细腻有年代质感，克制含蓄，不浮夸、不现代、不狗血。' },
+                    { id: 'style_xianxia', title: '仙侠武侠文风', isBuiltIn: true, content: '核心文风指令\n严格遵循仙侠武侠文风，意境开阔洒脱，兼具江湖侠气与仙门清冷，情感克制重情义，文字大气疏朗，不矫情、不现代、不拖沓。' }
                 );
                 this.offlineState.hasInjectedDefaultStyle = true;
                 this.saveData();
