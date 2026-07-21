@@ -1350,7 +1350,7 @@
                         <!-- 展开的文件列表 -->
                         <div v-show="(worldBinderModal.expanded ||[]).includes(folder.id)" class="bg-gray-50/50 border-t border-gray-50">
                             <div v-if="getFiles(folder.id).length===0" class="p-3 text-center text-xs text-gray-400">该文件夹为空</div>
-                            <div v-for="file in getFiles(folder.id)" :key="file.id" class="p-3 pl-10 border-b border-gray-50 last:border-0 flex items-center justify-between cursor-pointer active:bg-gray-100 transition" @click="toggleWorldFileBinding(file.id)">
+                            <div v-for="file in getFilteredFiles(folder.id)" :key="file.id" class="p-3 pl-10 border-b border-gray-50 last:border-0 flex items-center justify-between cursor-pointer active:bg-gray-100 transition" @click="toggleWorldFileBinding(file.id)">
                                 <div class="flex items-center gap-2 min-w-0"><i class="fas fa-file-alt text-gray-400 text-xs shrink-0"></i><span class="text-xs text-gray-700 truncate">{{ file.name }}</span></div>
                                 <div class="w-4 h-4 rounded-[4px] border border-gray-300 flex items-center justify-center transition shrink-0" :class="isFileBound(file.id) ? 'bg-black border-black' : 'bg-white'">
                                     <i v-if="isFileBound(file.id)" class="fas fa-check text-white text-[8px]"></i>
@@ -1776,6 +1776,19 @@
                     </div>
                     <input type="checkbox" id="wb-global-toggle" class="switch-checkbox" v-model="worldModal.isGlobal">
                     <label for="wb-global-toggle" class="switch-label shrink-0"><div class="switch-button"></div></label>
+                </div>
+
+                <!-- 新增：世界书位置选项 -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 px-4 py-3.5">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[15px] font-medium text-gray-800">世界书位置</span>
+                        <span class="text-[11px] text-gray-400 font-mono">优先读取顺序：前 > 中 > 后</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button @click="worldModal.position='前'" class="flex-1 py-1.5 rounded-lg text-sm font-bold transition border" :class="worldModal.position==='前'?'bg-blue-50 text-blue-600 border-blue-200 shadow-sm':'bg-gray-50 text-gray-500 border-gray-200'">前置</button>
+                        <button @click="worldModal.position='中'" class="flex-1 py-1.5 rounded-lg text-sm font-bold transition border" :class="worldModal.position==='中'?'bg-blue-50 text-blue-600 border-blue-200 shadow-sm':'bg-gray-50 text-gray-500 border-gray-200'">中置</button>
+                        <button @click="worldModal.position='后'" class="flex-1 py-1.5 rounded-lg text-sm font-bold transition border" :class="worldModal.position==='后'?'bg-blue-50 text-blue-600 border-blue-200 shadow-sm':'bg-gray-50 text-gray-500 border-gray-200'">后置</button>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col flex-1 min-h-[350px]">
@@ -6061,7 +6074,7 @@
                 </div>
             </transition>
 
-    <transition name="page-slide"><div v-if="themesPage === 'wallpaper'" class="absolute inset-0 p-4 space-y-6"><div class="w-full aspect-[9/16] bg-gray-200 rounded-3xl overflow-hidden shadow-lg relative mx-auto max-w-[240px] border-4 border-white"><img v-if="themeConfig.wallpaper" :src="themeConfig.wallpaper" class="w-full h-full object-cover"><div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-100"><i class="fas fa-image text-3xl mb-2"></i><span class="text-xs">默认壁纸</span></div></div><div class="flex flex-col gap-3"><button @click="triggerWallpaperUpload" class="w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold active:scale-95 transition shadow-lg">从相册选择</button><button @click="resetWallpaper" class="w-full bg-white text-gray-600 py-3.5 rounded-2xl font-bold border border-gray-200 active:bg-gray-50 transition">恢复默认</button></div><input type="file" ref="wallpaperInput" accept="image/*" class="hidden" @change="handleWallpaperUpload"></div></transition><transition name="page-slide"><div v-if="themesPage === 'font'" class="absolute inset-0 p-4 pb-20"><div class="space-y-6"><div class="bg-gray-100 rounded-2xl p-6 text-center border border-gray-200" :style="{fontFamily: previewFontFamily || themeConfig.fontFamily}"><div class="text-2xl font-bold mb-2" :style="{color: themeConfig.fontColor}">12:30</div><div class="text-lg" :style="{color: themeConfig.fontColor}">Hello World</div><div class="text-sm opacity-60" :style="{color: themeConfig.fontColor}">预览字体效果</div></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3"><label class="text-xs font-bold text-gray-500 ml-1">字体 URL</label><div class="flex gap-2"><input v-model="fontInputUrl" placeholder="https://..." class="w-2/3 bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none"><button @click="previewFontFromUrl" :disabled="isLoading" class="flex-1 bg-gray-100 text-gray-600 px-2 rounded-xl font-bold text-xs active:scale-95 transition"><span v-if="!isLoading">预览</span><i v-else class="fas fa-spinner fa-spin"></i></button><button @click="applyFontFromUrl" class="flex-1 bg-black text-white px-2 rounded-xl font-bold text-xs active:scale-95 transition">应用</button></div><button @click="resetFont" class="w-full bg-white text-red-500 py-2 rounded-xl font-bold text-xs border border-gray-100 active:bg-gray-50">恢复默认字体</button></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4"><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">大小</span><span class="text-xs text-gray-400">{{ (themeConfig.fontSize * 100).toFixed(0) }}%</span></div><input type="range" min="0.8" max="1.2" step="0.05" v-model.number="themeConfig.fontSize" @change="saveData" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">色号</span></div><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full border border-gray-200 shadow-sm shrink-0" :style="{backgroundColor: themeConfig.fontColor}"></div><input type="text" v-model="themeConfig.fontColor" @change="saveData" placeholder="#000000" class="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-sm border border-gray-200 font-mono outline-none uppercase"></div></div></div><div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"><div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50"><span class="font-bold text-gray-800 text-sm">预设</span><button @click="saveFontPreset" class="text-blue-600 text-xs font-bold px-3 py-1 bg-blue-50 rounded-lg active:bg-blue-100">保存</button></div><div v-if="fontPresets.length === 0" class="p-6 text-center text-gray-400 text-xs">无预设</div><div v-else class="divide-y divide-gray-50"><div v-for="(fp, idx) in fontPresets" :key="idx" class="p-4 flex items-center justify-between"><div class="flex-1 min-w-0 mr-2"><div class="font-bold text-gray-800 text-sm truncate" :style="{fontFamily: fp.fontFamily}">{{ fp.name }}</div></div><div class="flex items-center gap-2"><button @click="applyFontPreset(fp)" class="w-7 h-7 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fas fa-check text-[10px]"></i></button><button @click="deleteFontPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button></div></div></div></div></div></div></transition><transition name="page-slide"><div v-if="themesPage === 'icons'" class="absolute inset-0 p-4 pb-20"><div class="space-y-4"><div class="flex justify-end"><button @click="resetAllIcons" class="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded-lg active:bg-red-100">重置所有</button></div><div class="space-y-3"><div v-for="appId in appList" :key="appId" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0 home-icon-custom"><img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i></div><div class="flex-1"><label class="text-[10px] font-bold text-gray-400 mb-1 block">应用名称</label><input :value="getAppName(appId)" @input="(e)=>setAppName(appId, e.target.value)" class="w-full bg-gray-50 px-2 py-1.5 rounded-lg text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2"><input v-model="tempIconUrls[appId]" placeholder="图标 URL" class="flex-1 bg-gray-50 px-3 py-2 rounded-lg text-xs border border-gray-200 outline-none"><button @click="setAppIcon(appId, tempIconUrls[appId])" class="px-3 bg-black text-white rounded-lg text-xs font-bold">确定</button><button @click="triggerIconUpload(appId)" class="px-3 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold active:bg-gray-200"><i class="fas fa-image"></i></button><button @click="resetApp(appId)" class="px-3 bg-red-50 text-red-500 rounded-lg text-xs active:bg-red-100"><i class="fas fa-undo"></i></button></div></div></div><input type="file" ref="iconUploadInput" accept="image/*" class="hidden" @change="handleIconFile"></div></div></transition>
+    <transition name="page-slide"><div v-if="themesPage === 'wallpaper'" class="absolute inset-0 p-4 space-y-6"><div class="w-full aspect-[9/16] bg-gray-200 rounded-3xl overflow-hidden shadow-lg relative mx-auto max-w-[240px] border-4 border-white"><img v-if="themeConfig.wallpaper" :src="themeConfig.wallpaper" class="w-full h-full object-cover"><div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-100"><i class="fas fa-image text-3xl mb-2"></i><span class="text-xs">默认壁纸</span></div></div><div class="flex flex-col gap-3"><button @click="triggerWallpaperUpload" class="w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold active:scale-95 transition shadow-lg">从相册选择</button><button @click="resetWallpaper" class="w-full bg-white text-gray-600 py-3.5 rounded-2xl font-bold border border-gray-200 active:bg-gray-50 transition">恢复默认</button></div><input type="file" ref="wallpaperInput" accept="image/*" class="hidden" @change="handleWallpaperUpload"></div></transition><transition name="page-slide"><div v-if="themesPage === 'font'" class="absolute inset-0 p-4 pb-20"><div class="space-y-6"><div class="bg-gray-100 rounded-2xl p-6 text-center border border-gray-200" :style="{fontFamily: previewFontFamily || themeConfig.fontFamily}"><div class="text-2xl font-bold mb-2" :style="{color: themeConfig.fontColor}">12:30</div><div class="text-lg" :style="{color: themeConfig.fontColor}">Hello World</div><div class="text-sm opacity-60" :style="{color: themeConfig.fontColor}">预览字体效果</div></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3"><label class="text-xs font-bold text-gray-500 ml-1">字体 URL</label><div class="flex gap-2"><input v-model="fontInputUrl" placeholder="https://..." class="w-2/3 bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none"><button @click="previewFontFromUrl" :disabled="isLoading" class="flex-1 bg-gray-100 text-gray-600 px-2 rounded-xl font-bold text-xs active:scale-95 transition"><span v-if="!isLoading">预览</span><i v-else class="fas fa-spinner fa-spin"></i></button><button @click="applyFontFromUrl" class="flex-1 bg-black text-white px-2 rounded-xl font-bold text-xs active:scale-95 transition">应用</button></div><button @click="resetFont" class="w-full bg-white text-red-500 py-2 rounded-xl font-bold text-xs border border-gray-100 active:bg-gray-50">恢复默认字体</button></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4"><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">大小</span><span class="text-xs text-gray-400">{{ (themeConfig.fontSize * 100).toFixed(0) }}%</span></div><input type="range" min="0.8" max="1.2" step="0.05" v-model.number="themeConfig.fontSize" @change="saveData" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">色号</span></div><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full border border-gray-200 shadow-sm shrink-0" :style="{backgroundColor: themeConfig.fontColor}"></div><input type="text" v-model="themeConfig.fontColor" @change="saveData" placeholder="#000000" class="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-sm border border-gray-200 font-mono outline-none uppercase"></div></div></div><div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"><div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50"><span class="font-bold text-gray-800 text-sm">预设</span><button @click="saveFontPreset" class="text-blue-600 text-xs font-bold px-3 py-1 bg-blue-50 rounded-lg active:bg-blue-100">保存</button></div><div v-if="fontPresets.length === 0" class="p-6 text-center text-gray-400 text-xs">无预设</div><div v-else class="divide-y divide-gray-50"><div v-for="(fp, idx) in fontPresets" :key="idx" class="p-4 flex items-center justify-between"><div class="flex-1 min-w-0 mr-2"><div class="font-bold text-gray-800 text-sm truncate" :style="{fontFamily: fp.fontFamily}">{{ fp.name }}</div></div><div class="flex items-center gap-2"><button @click="applyFontPreset(fp)" class="w-7 h-7 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fas fa-check text-[10px]"></i></button><button @click="deleteFontPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button></div></div></div></div></div></div></transition><transition name="page-slide"><div v-if="themesPage === 'icons'" class="absolute inset-0 p-4 pb-20"><div class="space-y-4"><div class="flex justify-end"><button @click="resetAllIcons" class="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded-lg active:bg-red-100">重置所有</button></div><div class="space-y-3"><div v-for="appId in appList" :key="appId" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0 home-icon-custom"><img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i></div><div class="flex-1"><label class="text-[10px] font-bold text-gray-400 mb-1 block">应用名称</label><input :value="getAppName(appId)" @input="(e)=>setAppName(appId, e.target.value)" class="w-full bg-gray-50 px-2 py-1.5 rounded-lg text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2 w-full"><input v-model="tempIconUrls[appId]" placeholder="图标 URL" class="flex-1 min-w-0 bg-gray-50 px-3 py-2 rounded-lg text-xs border border-gray-200 outline-none"><button @click="setAppIcon(appId, tempIconUrls[appId])" class="w-10 h-[34px] bg-black text-white rounded-lg text-sm font-bold shrink-0 shadow-sm active:scale-95 transition"><i class="fas fa-check"></i></button><button @click="triggerIconUpload(appId)" class="w-10 h-[34px] bg-gray-100 text-gray-600 rounded-lg text-sm font-bold active:bg-gray-200 shrink-0 border border-gray-200"><i class="fas fa-image"></i></button><button @click="resetApp(appId)" class="w-10 h-[34px] bg-red-50 text-red-500 rounded-lg text-sm active:bg-red-100 shrink-0 border border-red-100"><i class="fas fa-undo"></i></button></div></div></div><input type="file" ref="iconUploadInput" accept="image/*" class="hidden" @change="handleIconFile"></div></div></transition>
     
     <!-- 这是你刚才丢失导致白屏的 NPC 头像库页面，必须紧贴在图标设置的下面，</main>的上面！ -->
     <transition name="page-slide">
@@ -6132,7 +6145,14 @@
 </main></div></transition>
     
     <!-- 世界书 App -->
-    <transition name="app-slide"><div v-if="currentApp === 'worldbook'" class="absolute inset-0 z-[1000] bg-gray-50 flex flex-col overflow-hidden"><header class="bg-white/80 backdrop-blur h-[90px] pt-10 flex items-center justify-between px-4 border-b border-gray-200 sticky top-0 z-10"><button @click="closeApp" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-times text-sm"></i></button><h1 class="font-bold text-gray-900 text-[17px]">世界书</h1><div class="flex gap-2"><button @click="$refs.worldbookImportInput.click()" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition" title="导入txt/docx"><i class="fas fa-file-import text-sm"></i></button><button @click="openWorldModal('file')" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-plus text-sm"></i></button></div></header><main class="flex-1 overflow-y-auto p-4 space-y-2"><div v-if="folders.length === 0 && rootFiles.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无内容，请点击右上角添加</div><input type="file" ref="worldbookImportInput" accept=".txt,.docx" class="hidden" @change="handleWorldbookImport"><div v-for="folder in folders" :key="folder.id" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm"><div @click="toggleFolder(folder.id)" class="p-4 flex items-center justify-between active:bg-gray-50 transition cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-folder text-yellow-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ folder.name }}</span></div><div class="flex items-center gap-3"><button @click.stop="deleteWorldItem(folder.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button><i class="fas fa-chevron-right text-gray-300 text-xs transition-transform duration-200" :class="{'rotate-90': expandedFolders.includes(folder.id)}"></i></div></div><transition name="expand"><div v-if="expandedFolders.includes(folder.id)" class="bg-gray-50 border-t border-gray-100"><div v-if="getFiles(folder.id).length===0" class="p-3 text-center text-xs text-gray-400">空文件夹</div><div v-for="file in getFiles(folder.id)" :key="file.id" @click="viewFile(file)" class="p-3 pl-10 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-100 cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-blue-400 text-sm"></i><span class="text-sm text-gray-700">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></div></transition></div><div v-for="file in rootFiles" :key="file.id" @click="viewFile(file)" class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between active:scale-[0.98] transition cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-gray-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></main></div></transition>
+    <transition name="app-slide"><div v-if="currentApp === 'worldbook'" class="absolute inset-0 z-[1000] bg-gray-50 flex flex-col overflow-hidden"><header class="bg-white/80 backdrop-blur h-[90px] pt-10 flex items-center justify-between px-4 border-b border-gray-200 sticky top-0 z-10"><button @click="closeApp" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-times text-sm"></i></button><h1 class="font-bold text-gray-900 text-[17px]">世界书</h1><div class="flex gap-2"><button @click="$refs.worldbookImportInput.click()" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition" title="导入txt/docx"><i class="fas fa-file-import text-sm"></i></button><button @click="openWorldModal('file')" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i class="fas fa-plus text-sm"></i></button></div></header>
+    <!-- 分类 Tab -->
+    <div class="flex bg-gray-200 p-1 rounded-xl mx-4 mt-4 shrink-0">
+        <button @click="worldbookTab='all'" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition" :class="worldbookTab==='all'?'bg-white shadow-sm text-black':'text-gray-500'">全部世界书</button>
+        <button @click="worldbookTab='global'" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition" :class="worldbookTab==='global'?'bg-white shadow-sm text-black':'text-gray-500'">全局世界书</button>
+        <button @click="worldbookTab='local'" class="flex-1 py-1.5 text-xs font-bold rounded-lg transition" :class="worldbookTab==='local'?'bg-white shadow-sm text-black':'text-gray-500'">局部世界书</button>
+    </div>
+    <main class="flex-1 overflow-y-auto p-4 space-y-2"><div v-if="folders.length === 0 && rootFiles.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无内容，请点击右上角添加</div><input type="file" ref="worldbookImportInput" accept=".txt,.docx" class="hidden" @change="handleWorldbookImport"><div v-for="folder in folders" :key="folder.id" class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm"><div @click="toggleFolder(folder.id)" class="p-4 flex items-center justify-between active:bg-gray-50 transition cursor-pointer"><div class="flex items-center gap-3"><i class="fas fa-folder text-yellow-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ folder.name }}</span></div><div class="flex items-center gap-3"><button @click.stop="deleteWorldItem(folder.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button><i class="fas fa-chevron-right text-gray-300 text-xs transition-transform duration-200" :class="{'rotate-90': expandedFolders.includes(folder.id)}"></i></div></div><transition name="expand"><div v-if="expandedFolders.includes(folder.id)" class="bg-gray-50 border-t border-gray-100"><div v-if="getFiles(folder.id).length===0" class="p-3 text-center text-xs text-gray-400">空文件夹</div><div v-for="file in getFilteredFiles(folder.id)" :key="file.id" @click="viewFile(file)" class="p-3 pl-10 border-b border-gray-100 last:border-0 flex items-center justify-between active:bg-gray-100 cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-blue-400 text-sm"></i><span class="text-sm text-gray-700">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></div></transition></div><div v-for="file in rootFiles" :key="file.id" @click="viewFile(file)" class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between active:scale-[0.98] transition cursor-pointer"><div class="flex items-center gap-2"><i class="fas fa-file-alt text-gray-400 text-lg"></i><span class="font-bold text-gray-800 text-sm">{{ file.name }}</span><i v-if="file.isGlobal" class="fas fa-globe text-blue-500 text-[10px] ml-1"></i></div><div class="flex items-center gap-3"><div @click.stop class="flex items-center"><input type="checkbox" class="switch-checkbox-sm" :id="'wf-'+file.id" :checked="file.isActive !== false" @change="toggleFileActive(file)"><label :for="'wf-'+file.id" class="switch-label-sm"><div class="switch-button-sm"></div></label></div><button @click.stop="deleteWorldItem(file.id)" class="text-gray-300 hover:text-red-500"><i class="fas fa-trash text-xs"></i></button></div></div></main></div></transition>
     <transition name="scale"><div v-if="viewFileModal.show" class="fixed inset-0 z-[9000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[85%] max-h-[70%] rounded-3xl overflow-hidden shadow-2xl flex flex-col"><div class="p-4 border-b border-gray-100 flex justify-between items-center"><h3 class="font-bold text-lg">{{ viewFileModal.data.name }}</h3><button @click="saveFileContent" class="text-blue-600 font-bold text-sm">保存</button></div><textarea v-model="viewFileModal.data.content" class="flex-1 p-4 text-sm leading-relaxed outline-none resize-none"></textarea><button @click="viewFileModal.show=false" class="p-4 bg-gray-50 text-gray-500 font-bold text-sm">关闭</button></div></div></transition>        
 
 </div>
@@ -6313,7 +6333,8 @@ const app = createApp({
             addRelationModal: { show: false, isEdit: false, editIndex: -1, type: 'contact', targetId: '', name: '', relation: '', bio: '' },
             isEditingSessionMask: false,
             masks: [], showMaskManager: false, maskModal: { show: false }, maskForm: { id: null, name: '', remark: '', username: '', gender: '女', bio: '', nudge: '', signature: '', avatar: '' },
-            worldData: [], expandedFolders:[], worldModal: { show: false, type: 'file', name: '', folderName: '', content: '', id: null, isGlobal: false }, viewFileModal: { show: false, data: {} },
+            worldData: [], expandedFolders:[], worldModal: { show: false, type: 'file', name: '', folderName: '', content: '', id: null, isGlobal: false, position: '中' }, viewFileModal: { show: false, data: {} },
+            worldbookTab: 'all',
             worldBinderModal: { show: false, expanded:[] },
             modelSelectModal: { show: false }, 
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
@@ -6486,7 +6507,12 @@ const app = createApp({
         settingsTitle() { if (this.settingsPage === 'api-config') return 'API 配置'; if (this.settingsPage === 'data-manage') return '数据管理'; if (this.settingsPage === 'notification') return '消息提示音'; return '系统设置'; },
         themesTitle() { if (this.themesPage === 'wallpaper') return '壁纸设置'; if (this.themesPage === 'font') return '字体设置'; if (this.themesPage === 'icons') return '图标设置'; if (this.themesPage === 'beautify') return '美化设置'; if (this.themesPage === 'home_preset') return '主屏预设'; if (this.themesPage === 'notification_beautify') return '通知栏美化'; if (this.themesPage === 'npc_avatars') return 'NPC 形象库'; return '主题商店'; },
         folders() { return this.worldData.filter(i => i.type === 'folder'); },
-        rootFiles() { return this.worldData.filter(i => i.type === 'file' && !i.parentId); },
+        rootFiles() { 
+            let files = this.worldData.filter(i => i.type === 'file' && !i.parentId); 
+            if (this.worldbookTab === 'global') return files.filter(f => f.isGlobal);
+            if (this.worldbookTab === 'local') return files.filter(f => !f.isGlobal);
+            return files;
+        },
         filteredWechatContacts() {
             let sessions = [...this.wechatState.sessions];
             
@@ -10482,10 +10508,15 @@ const app = createApp({
 
             // 只要有绑定的，或者是带有 isGlobal 的，全部查出来
             if (folderIds.length > 0 || fileIds.length > 0 || this.worldData.some(i => i.isGlobal && i.isActive !== false)) {
-                const files = this.worldData.filter(i => 
+                let files = this.worldData.filter(i => 
                     i.type === 'file' && i.isActive !== false && 
                     (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal)
                 );
+                
+                // --- 核心逻辑：按照 世界书位置 排序 (前 > 中 > 后) ---
+                const posScore = { '前': 1, '中': 2, '后': 3 };
+                files.sort((a, b) => (posScore[a.position || '中'] - posScore[b.position || '中']));
+
                 if (files.length > 0) {
                     worldContext = "\n【世界书 / 背景设定百科(极度重要)】:\n" + files.map(f => `[${f.name}]: ${f.content}`).join("\n") + "\n【重要指令】：上面是你背景资料和世界书中的设定内容（包含可能认识的NPC、地点、历史等）。请在回复前务必仔细阅读！并在聊天时自然地引用或提及这些信息，绝不要表现出你是刚刚读到的！";
                 }
@@ -11908,8 +11939,14 @@ Structure:
                 this.showToast('已删除');
             });
         },
+        getFilteredFiles(fid) { 
+            let files = this.worldData.filter(i => i.type === 'file' && i.parentId === fid);
+            if (this.worldbookTab === 'global') return files.filter(f => f.isGlobal);
+            if (this.worldbookTab === 'local') return files.filter(f => !f.isGlobal);
+            return files;
+        },
         openWorldModal(type) { 
-            this.worldModal = { show: true, type: 'file', name: '', folderName: '', content: '', parentId: '', id: null, isGlobal: false }; 
+            this.worldModal = { show: true, type: 'file', name: '', folderName: '', content: '', parentId: '', id: null, isGlobal: false, position: '中' }; 
         },
         editWorldItem(item) { 
             let fName = '';
@@ -11917,23 +11954,17 @@ Structure:
                 const f = this.folders.find(x => x.id === item.parentId);
                 if (f) fName = f.name;
             }
-            this.worldModal = { ...item, show: true, folderName: fName, isGlobal: !!item.isGlobal }; 
+            this.worldModal = { ...item, show: true, folderName: fName, isGlobal: !!item.isGlobal, position: item.position || '中' }; 
         },
         saveWorldItem() { 
             if(!this.worldModal.name) return this.showToast('请输入名称'); 
             
             let targetFolderId = null;
             let targetFolderName = (this.worldModal.folderName || '').trim();
-            
-            // 智能检索或创建文件夹
             if (targetFolderName) {
                 let existingFolder = this.folders.find(f => f.name === targetFolderName);
-                if (existingFolder) {
-                    targetFolderId = existingFolder.id;
-                } else {
-                    targetFolderId = 'folder_' + Date.now().toString();
-                    this.worldData.push({ id: targetFolderId, type: 'folder', name: targetFolderName, isActive: true });
-                }
+                if (existingFolder) targetFolderId = existingFolder.id;
+                else { targetFolderId = 'folder_' + Date.now().toString(); this.worldData.push({ id: targetFolderId, type: 'folder', name: targetFolderName, isActive: true }); }
             }
 
             if (this.worldModal.id) { 
@@ -11944,7 +11975,8 @@ Structure:
                         name: this.worldModal.name, 
                         content: this.worldModal.content, 
                         parentId: targetFolderId,
-                        isGlobal: !!this.worldModal.isGlobal
+                        isGlobal: !!this.worldModal.isGlobal,
+                        position: this.worldModal.position || '中'
                     }; 
                 } 
             } else { 
@@ -11955,23 +11987,21 @@ Structure:
                     parentId: targetFolderId, 
                     isActive: true,
                     content: this.worldModal.content,
-                    isGlobal: !!this.worldModal.isGlobal
+                    isGlobal: !!this.worldModal.isGlobal,
+                    position: this.worldModal.position || '中'
                 }; 
                 this.worldData.push(item); 
             } 
             
-            // 自动清理没有任何子文件的空文件夹
             const usedFolderIds = new Set(this.worldData.filter(i => i.type === 'file' && i.parentId).map(i => i.parentId));
             this.worldData = this.worldData.filter(i => {
                 if (i.type === 'folder' && !usedFolderIds.has(i.id)) return false; 
                 return true;
             });
-
             this.saveData(); this.worldModal.show = false; 
         },
         deleteWorldItem(id) { this.showConfirm('确定删除？', () => { this.worldData = this.worldData.filter(i => i.id !== id && i.parentId !== id); this.saveData(); }); },
         toggleFolder(id) { const i = this.expandedFolders.indexOf(id); if (i > -1) this.expandedFolders.splice(i, 1); else this.expandedFolders.push(id); },
-        getFiles(fid) { return this.worldData.filter(i => i.type === 'file' && i.parentId === fid); },
         viewFile(file) { this.editWorldItem(file); }, 
         getFolderName(id) { if(!id) return '未归类'; const f=this.folders.find(x=>x.id===id); return f?f.name:'未归类'; },
         selectWorldFolder(id) { this.worldModal.parentId = id; this.folderSelectModal.show = false; },
