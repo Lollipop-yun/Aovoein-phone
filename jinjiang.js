@@ -12,9 +12,10 @@ const JinjiangApp = {
         
         <!-- 顶部导航栏 -->
         <header v-if="activeTab === 'bookshelf'" class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white shrink-0 z-10 sticky top-0">
-            <div class="flex items-baseline gap-2">
+            <div class="flex items-baseline gap-2 cursor-pointer active:opacity-50" @click="$emit('close')">
+                <i class="fas fa-arrow-left text-[20px] text-gray-800 mr-1 self-center"></i>
                 <span class="text-[24px] font-bold text-[#356fcc] tracking-wide">书架</span>
-                <span class="text-[13px] text-gray-400 font-medium">{{ bookshelf.length }}本</span>
+                <span class="text-[13px] text-gray-400 font-medium ml-1">{{ bookshelf.length }}本</span>
             </div>
             <div class="flex items-center gap-4 text-gray-500">
                 <div class="flex items-center gap-1 cursor-pointer active:opacity-50" @click="$emit('import-book')">
