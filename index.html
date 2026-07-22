@@ -2563,9 +2563,9 @@
                             </div>
                         </div>
                         <!-- Tokens 卡片 -->
-                        <div class="bg-gradient-to-br from-gray-900 to-black rounded-[24px] p-5 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[110px] cursor-pointer active:scale-[0.97] transition" @click="openTokenBreakdown">
+                        <div class="bg-gradient-to-br from-gray-900 to-black rounded-[24px] p-5 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[110px] cursor-pointer active:scale-[0.98] transition" @click="openTokenDetailModal">
                             <div class="absolute -right-3 -top-3 text-white/5 text-6xl pointer-events-none"><i class="fas fa-microchip"></i></div>
-                            <span class="text-[12px] font-bold text-gray-300 mb-2 z-10 tracking-widest flex items-center justify-between">消耗 TOKENS <i class="fas fa-chevron-right text-[10px] opacity-50"></i></span>
+                            <span class="text-[12px] font-bold text-gray-300 mb-2 z-10 tracking-widest flex items-center justify-between">消耗 TOKENS <i class="fas fa-chevron-right text-[10px] text-gray-500"></i></span>
                             <div class="flex items-baseline gap-1.5 z-10 mt-auto">
                                 <span class="text-[32px] leading-none font-bold text-white font-mono tracking-tighter">{{ estimateChatTokens(wechatState.activeSession) }}</span>
                                 <span class="text-[11px] text-gray-400 font-bold">T</span>
@@ -2573,70 +2573,37 @@
                         </div>
                     </div>
                     
-                    <div class="w-full mt-4 flex flex-col gap-3">
-                        <button @click="triggerManualSummarize" class="w-full bg-gray-900 text-white py-4 rounded-[22px] font-bold text-[15px] active:scale-95 transition shadow-lg shadow-black/10 flex items-center justify-center gap-2 tracking-wide">
-                            <i class="fas fa-bolt text-yellow-400"></i> 立即提取记忆碎片
-                        </button>
-                        <!-- 单开的设置字体入口 -->
-                        <div @click="openDiaryFontModal" class="bg-white border border-gray-200 rounded-[20px] p-4 flex justify-between items-center cursor-pointer active:scale-95 transition shadow-sm mt-1">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center"><i class="fas fa-pen-nib"></i></div>
-                                <div class="flex flex-col">
-                                    <span class="text-[14px] font-bold text-gray-800">设置专属日记字体</span>
-                                    <span class="text-[11px] text-gray-400">定制私密手写体风格</span>
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
-        <!-- Token 分布详情界面 (iOS 灰白风) -->
-        <transition name="page-slide">
-            <div v-if="memoryModal.tokenBreakdownShow" class="fixed inset-0 z-[118000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0 shadow-sm">
-                    <button @click="memoryModal.tokenBreakdownShow = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
-                    <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">Token 分布</h1>
-                    <div class="w-8"></div>
-                </header>
-                <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                    <div class="bg-white rounded-[24px] p-6 shadow-sm border border-gray-50 flex flex-col items-center">
-                        <span class="text-[13px] font-bold text-gray-500 mb-2">本次对话预估总消耗</span>
-                        <div class="flex items-baseline gap-1 mb-6">
-                            <span class="text-[40px] leading-none font-bold text-gray-900 font-mono tracking-tighter">{{ memoryModal.tokenDetails?.total || 0 }}</span>
-                            <span class="text-[14px] text-gray-400 font-bold">Tokens</span>
-                        </div>
-                        
-                        <!-- 彩色成分进度条 -->
-                        <div class="w-full h-3 rounded-full flex overflow-hidden gap-[2px] bg-gray-100 mb-6">
-                            <div v-for="(item, idx) in memoryModal.tokenDetails?.items" :key="'bar-'+idx" class="h-full transition-all" :class="item.color" :style="{ width: item.percent + '%' }"></div>
-                        </div>
-                        
-                        <!-- 分项列表 -->
-                        <div class="w-full space-y-3">
-                            <div v-for="(item, idx) in memoryModal.tokenDetails?.items" :key="'list-'+idx" class="flex items-center justify-between p-3.5 bg-gray-50 rounded-[16px] border border-gray-100">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-3 h-3 rounded-full shadow-sm" :class="item.color"></div>
-                                    <span class="text-[14px] font-bold text-gray-800">{{ item.name }}</span>
-                                </div>
-                                <div class="flex flex-col items-end">
-                                    <span class="text-[15px] font-bold text-gray-900 font-mono">{{ item.tokens }} <span class="text-[10px] text-gray-400">T</span></span>
-                                    <span class="text-[10px] text-gray-400">{{ item.percent }}%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </transition>
-                    </div>
-                    
 <div class="w-full mt-4 flex gap-3">
                         <button @click="memoryModal.statsShow = false" class="w-14 h-[52px] bg-white text-gray-600 rounded-[18px] font-bold text-[16px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center shrink-0"><i class="fas fa-times"></i></button>
                         <button @click="triggerManualSummarize" class="flex-1 bg-white text-gray-900 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center gap-2 tracking-wide"><i class="fas fa-bolt text-yellow-500"></i> 立即提取并总结</button>
                     </div>
+                </div>
+            </div>
+        </transition>
+        
+        <!-- Token 消耗分布详情界面 (iOS 高级黑白风) -->
+        <transition name="page-slide">
+            <div v-if="tokenDetailModal.show" class="fixed inset-0 z-[118000] bg-[#f4f4f6] flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-10 sticky top-0 shadow-sm">
+                    <button @click="tokenDetailModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left text-[18px]"></i></button>
+                    <h1 class="font-bold text-[17px] text-gray-900">API 消耗与上下文分布</h1>
+                    <div class="w-8"></div>
+                </header>
+                <div class="flex-1 overflow-y-auto p-5 space-y-4">
+                    <div class="bg-gradient-to-br from-gray-900 to-black rounded-[24px] p-6 text-white shadow-lg mb-4 flex flex-col items-center justify-center">
+                        <span class="text-[12px] text-gray-400 font-bold tracking-widest mb-2 uppercase">总计预估 (Tokens)</span>
+                        <span class="text-[44px] font-mono font-bold tracking-tighter">{{ tokenDetailModal.total }}</span>
+                    </div>
+                    <div class="bg-white rounded-[20px] overflow-hidden shadow-sm border border-gray-100">
+                        <div v-for="(item, idx) in tokenDetailModal.distribution" :key="idx" class="p-4 border-b border-gray-50 flex justify-between items-center last:border-0">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" :class="item.color"><i :class="item.icon"></i></div>
+                                <span class="font-bold text-[14px] text-gray-800">{{ item.name }}</span>
+                            </div>
+                            <span class="font-mono font-bold text-[15px] text-gray-900">{{ item.tokens }} <span class="text-[10px] text-gray-400">T</span></span>
+                        </div>
+                    </div>
+                    <p class="text-center text-[10px] text-gray-400 mt-4 leading-relaxed px-4">注：此为基于字符和权重的精准预估值，包含所有激活设定的总开销。发送包含图片的视觉请求时，开销将大幅增加。</p>
                 </div>
             </div>
         </transition>
@@ -6467,8 +6434,10 @@ const app = createApp({
             worldPositionModal: { show: false },
             modelSelectModal: { show: false }, 
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
-            memoryModal: { show: false, settingsShow: false, statsShow: false, presetShow: false, tokenBreakdownShow: false, tokenDetails: null, tempSettings: {}, isMultiSelect: false, selectedIds: [] },
+            memoryModal: { show: false, settingsShow: false, statsShow: false, presetShow: false, tempSettings: {}, isMultiSelect: false, selectedIds: [] },
             memoryDetailModal: { show: false, memory: null },
+            tokenDetailModal: { show: false, total: 0, distribution: [] },
+            memoryPresets: [],
             diaryFontModal: { show: false },
             charFavoritesModal: { show: false },
             memoryPresets: [],
@@ -9478,91 +9447,104 @@ const app = createApp({
         },
         deleteMemoryPreset(idx) {
             this.showConfirm('确定删除此预设吗？', () => { this.memoryPresets.splice(idx, 1); this.saveData(); });
-        },       
+        },
+        
+        getTokenCountStr(str) {
+            if (!str) return 0;
+            const zhMatch = str.match(/[\u4e00-\u9fa5]/g);
+            const zhCount = zhMatch ? zhMatch.length : 0;
+            const enCount = str.length - zhCount;
+            return Math.floor(zhCount * 1.5 + enCount * 0.4);
+        },
         estimateChatTokens(session) {
             if (!session) return 0;
-            // 统一调用分布计算器，获取总和，防止数据不一致
-            return this.calculateTokenDistribution(session).total;
-        },
-        openTokenBreakdown() {
-            this.memoryModal.tokenDetails = this.calculateTokenDistribution(this.wechatState.activeSession);
-            this.memoryModal.tokenBreakdownShow = true;
-        },
-        calculateTokenDistribution(session) {
-            if (!session) return { total: 0, items: [] };
+            let total = 300; // 系统核心规则预估
+            let payloadStr = '';
             
-            const calc = (str) => {
-                const s = str || '';
-                const zhMatch = s.match(/[\u4e00-\u9fa5]/g);
-                const zhCount = zhMatch ? zhMatch.length : 0;
-                const enCount = s.length - zhCount;
-                return Math.floor(zhCount * 1.5 + enCount * 0.4);
-            };
-
-            // 1. 世界书挂载
             let folderIds = session.boundWorldbookFolderIds || [];
             let fileIds = session.boundWorldbookFileIds || [];
             if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
             const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
-            let wbTokens = calc(files.map(f => f.content).join(''));
-
-            // 2. 关系网
-            let relTokens = calc(session.relationships ? session.relationships.map(r => r.relation + (r.bio||'')).join('') : '');
-
-            // 3. 人设资料
+            payloadStr += files.map(f => f.content).join('');
+            
+            if (session.relationships) payloadStr += session.relationships.map(r => r.relation + (r.bio||'')).join('');
+            
             const mask = this.getMaskById(session.maskId);
+            payloadStr += mask.bio || '';
             const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-            let personaTokens = calc((mask.bio || '') + (friend?.bio || ''));
+            if(friend) payloadStr += friend.bio || '';
+            
+            if (session.memorySummaries) payloadStr += session.memorySummaries.map(m => m.content).join('');
 
-            // 4. 长期日记记忆
-            let diaryTokens = calc(session.memorySummaries ? session.memorySummaries.map(m => m.content).join('') : '');
-
-            // 5. 短期聊天记录上下文 (精细化拆解)
             const ctxCount = this.getMemorySettings(session).contextCount || 20;
             const msgs = session.messages ? session.messages.slice(-ctxCount) : [];
+            payloadStr += msgs.map(m => (m.content || '') + (m.desc || '')).join('');
             
-            let msgTokens = 0;      // 纯文字消息
-            let imageTokens = 0;    // 视觉图片处理耗费 (相册/生图/拍摄伪图)
-            let stickerTokens = 0;  // 表情包文字转译耗费
-
             msgs.forEach(m => {
-                if (m.type === 'sticker') {
-                    // 提取表情包底层描述消耗
-                    stickerTokens += calc(m.desc || '动画表情');
-                } else if (m.type === 'image') {
-                    // 大模型处理一张中低分辨率图片平均消耗约 200 Tokens
-                    imageTokens += 200; 
-                } else if (m.type === 'fake_image') {
-                    // 拍摄(伪图)是靠文字描述进行情境模拟的
-                    imageTokens += calc(m.content || '');
-                } else {
-                    // 常规文本消息、系统消息、各类其他卡片等
-                    msgTokens += calc(m.content || '');
+                if (m.type === 'image' || m.type === 'fake_image') total += 85; 
+            });
+
+            return total + this.getTokenCountStr(payloadStr);
+        },
+        openTokenDetailModal() {
+            const session = this.wechatState.activeSession;
+            if (!session) return;
+            let dist = [];
+            let total = 0;
+
+            const addDist = (name, icon, color, str) => {
+                const tk = this.getTokenCountStr(str);
+                if (tk > 0) {
+                    dist.push({ name, icon, color, tokens: tk });
+                    total += tk;
                 }
+            };
+
+            const baseTokens = 300;
+            dist.push({ name: '系统核心规则框架', icon: 'fas fa-cogs', color: 'bg-gray-100 text-gray-600', tokens: baseTokens });
+            total += baseTokens;
+
+            const mask = this.getMaskById(session.maskId);
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            addDist('人物档案与背景人设', 'fas fa-user-tag', 'bg-blue-50 text-blue-500', (mask.bio||'') + (friend?.bio||''));
+
+            if (session.relationships && session.relationships.length > 0) {
+                addDist('关系网 (人际关联)', 'fas fa-project-diagram', 'bg-purple-50 text-purple-500', session.relationships.map(r => r.relation + (r.bio||'')).join(''));
+            }
+
+            let folderIds = session.boundWorldbookFolderIds || [];
+            let fileIds = session.boundWorldbookFileIds || [];
+            if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
+            const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
+            if (files.length > 0) addDist('世界书 (场景百科)', 'fas fa-book-atlas', 'bg-green-50 text-green-500', files.map(f => f.content).join(''));
+
+            if (session.memorySummaries && session.memorySummaries.length > 0) {
+                addDist('长期记忆 (日记档案)', 'fas fa-brain', 'bg-yellow-50 text-yellow-600', session.memorySummaries.map(m => m.content).join(''));
+            }
+
+            const ctxCount = this.getMemorySettings(session).contextCount || 20;
+            const msgs = session.messages ? session.messages.slice(-ctxCount) : [];
+            let chatStr = msgs.map(m => (m.content || '') + (m.desc || '')).join('');
+            if (chatStr) addDist('短期聊天上下文', 'fas fa-comments', 'bg-pink-50 text-pink-500', chatStr);
+
+            let imgTokens = 0;
+            msgs.forEach(m => {
+                if (m.type === 'image' || m.type === 'fake_image') imgTokens += 85;
             });
+            if (imgTokens > 0) {
+                dist.push({ name: '视觉识别 (图片预估)', icon: 'fas fa-image', color: 'bg-orange-50 text-orange-500', tokens: imgTokens });
+                total += imgTokens;
+            }
 
-            // 6. 系统底层基础提示词 (固定底噪)
-            let sysTokens = 200;
+            dist.sort((a,b) => b.tokens - a.tokens);
 
-            let total = wbTokens + relTokens + personaTokens + diaryTokens + msgTokens + imageTokens + stickerTokens + sysTokens;
-            
-            let items = [
-                { name: '世界书全量挂载', tokens: wbTokens, color: 'bg-green-500' },
-                { name: '角色背景人设', tokens: personaTokens, color: 'bg-blue-500' },
-                { name: '近期文字聊天上下文', tokens: msgTokens, color: 'bg-purple-500' },
-                { name: '聊天视觉图片', tokens: imageTokens, color: 'bg-teal-400' },
-                { name: '表情包文字转换', tokens: stickerTokens, color: 'bg-orange-400' },
-                { name: '长线记忆日记流', tokens: diaryTokens, color: 'bg-yellow-500' },
-                { name: '人际关系网', tokens: relTokens, color: 'bg-pink-500' },
-                { name: '系统级基础提示词', tokens: sysTokens, color: 'bg-gray-300' }
-            ].filter(i => i.tokens > 0).sort((a,b) => b.tokens - a.tokens);
-
-            items.forEach(i => {
-                i.percent = total > 0 ? ((i.tokens / total) * 100).toFixed(1) : 0;
-            });
-
-            return { total, items };
-        },       
+            this.tokenDetailModal = {
+                show: true,
+                total: total,
+                distribution: dist
+            };
+        },
+        
         toggleMemoryMultiSelect() { this.memoryModal.isMultiSelect = !this.memoryModal.isMultiSelect; this.memoryModal.selectedIds = []; },
         selectMemoryItem(id) {
             const idx = this.memoryModal.selectedIds.indexOf(id);
@@ -10691,11 +10673,14 @@ const app = createApp({
                     (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal)
                 );
                 if (files.length > 0) {
-                    // 按照 前(1) > 中(2) > 后(3) 排序（越往后的，在大模型提示词里越贴近底部，权重越强）
+                    // 按照 前(1) > 中(2) > 后(3) 排序。并且动态生成标记。
                     const posWeight = { '前': 1, '中': 2, '后': 3 };
                     files.sort((a, b) => (posWeight[a.position || '中'] - posWeight[b.position || '中']));
                     
-                    worldContext = "\n【世界书 / 背景设定百科(极度重要)】:\n" + files.map(f => `[${f.name}]: ${f.content}`).join("\n") + "\n【重要指令】：上面是你背景资料和世界书中的设定内容（包含可能认识的NPC、地点、历史等）。请在回复前务必仔细阅读！并在聊天时自然地引用或提及这些信息，绝不要表现出你是刚刚读到的！";
+                    worldContext = "\n【世界书 / 背景设定百科(极度重要)】:\n" + files.map(f => {
+                        let prefix = f.position === '前' ? '[最高优先级核心设定]' : (f.position === '后' ? '[补充设定]' : '[常规设定]');
+                        return `${prefix} [${f.name}]: ${f.content}`;
+                    }).join("\n") + "\n【绝对指令】：上面是你背景资料和世界书中的设定。请在回复前仔细阅读，特别是标有【最高优先级核心设定】的内容，它的存在感和约束力高于其他所有常规设定！请在聊天时自然展现，绝不能表现出你是刚刚读到的！";
                 }
             }
             
