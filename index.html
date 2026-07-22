@@ -1799,7 +1799,7 @@
     </transition>
     <transition name="scale"><div v-if="addContactModal.show" class="fixed inset-0 z-[55000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[90%] max-h-[85vh] rounded-[24px] overflow-hidden shadow-2xl flex flex-col animate-scale-in"><div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10"><button @click="addContactModal.show = false" class="text-gray-500 font-medium text-sm">取消</button><h3 class="font-bold text-lg text-gray-900">{{ newContact.id ? '编辑朋友' : '添加朋友' }}</h3><button @click="saveNewContact" class="text-black font-bold text-sm bg-gray-100 px-3 py-1 rounded-lg">完成</button></div><div class="flex-1 overflow-y-auto p-6 space-y-5"><div class="flex flex-col items-center gap-2"><div class="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative cursor-pointer active:opacity-70 transition" @click="triggerAddContactAvatar"><img v-if="newContact.avatar" :src="newContact.avatar" class="w-full h-full object-cover"><div v-else class="flex flex-col items-center text-gray-400"><i class="fas fa-camera text-2xl mb-1"></i><span class="text-[10px]">上传头像</span></div></div></div><div class="space-y-4"><div><label class="text-xs text-gray-500 ml-1 mb-1 block">姓名</label><input v-model="newContact.name" placeholder="输入姓名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">备注</label><input v-model="newContact.remark" placeholder="输入备注名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">网络昵称 (网名)</label><button @click="autoFillProfile('username')" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="newContact.username" placeholder="输入网名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
-<div><label class="text-xs text-gray-500 ml-1 mb-1 block">微信号 (ID)</label><input v-model="newContact.wechatId" placeholder="输入微信号/游戏ID" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
+<div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">微信号 (ID)</label><button @click="autoFillProfile('wechatId')" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="newContact.wechatId" placeholder="输入微信号/游戏ID" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><label class="text-xs text-gray-500 ml-1 mb-1 block">性别</label><div @click="openGenderSelect('contact')" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition"><span class="text-gray-800">{{ newContact.gender || '男' }}</span><i class="fas fa-chevron-right text-gray-300 text-xs"></i></div></div>
 <div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">身高(cm)</label><input v-model="newContact.height" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">体重(kg)</label><input v-model="newContact.weight" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div>
 <div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">年龄</label><input v-model="newContact.age" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">生日</label><input v-model="newContact.birthday" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">拍一拍</label><input v-model="newContact.nudge" placeholder="拍一拍后缀" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">个性签名</label><button @click="autoFillProfile('signature')" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="newContact.signature" placeholder="输入个性签名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
@@ -1815,7 +1815,7 @@
     <!-- 面具编辑/添加弹窗 -->
     <transition name="scale"><div v-if="maskModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm"><div class="bg-white w-[90%] max-h-[85vh] rounded-[24px] overflow-hidden shadow-2xl flex flex-col animate-scale-in"><div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10"><button @click="maskModal.show = false" class="text-gray-500 font-medium text-sm">取消</button><h3 class="font-bold text-lg text-gray-900">{{ maskForm.id ? '编辑面具' : '添加面具' }}</h3><button @click="saveMask" class="text-black font-bold text-sm bg-gray-100 px-3 py-1 rounded-lg">保存</button></div><div class="flex-1 overflow-y-auto p-6 space-y-5"><div class="flex flex-col items-center gap-2"><div class="w-24 h-24 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative cursor-pointer active:opacity-70 transition" @click="triggerMaskAvatar"><img v-if="maskForm.avatar" :src="maskForm.avatar" class="w-full h-full object-cover"><div v-else class="flex flex-col items-center text-gray-400"><i class="fas fa-camera text-2xl mb-1"></i><span class="text-[10px]">上传头像</span></div></div></div><div class="space-y-4"><div><label class="text-xs text-gray-500 ml-1 mb-1 block">名字</label><input v-model="maskForm.name" placeholder="输入名字" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><label class="text-xs text-gray-500 ml-1 mb-1 block">网络昵称 (网名)</label><input v-model="maskForm.username" placeholder="输入网名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
-<div><label class="text-xs text-gray-500 ml-1 mb-1 block">微信号 (ID)</label><input v-model="maskForm.wechatId" placeholder="输入微信号/游戏ID" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
+<div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">微信号 (ID)</label><button @click="autoFillProfile('wechatId', true)" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="maskForm.wechatId" placeholder="输入微信号/游戏ID" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><label class="text-xs text-gray-500 ml-1 mb-1 block">性别</label><div @click="openGenderSelect('mask')" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition"><span class="text-gray-800">{{ maskForm.gender || '男' }}</span><i class="fas fa-chevron-right text-gray-300 text-xs"></i></div></div>
 <div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">身高(cm)</label><input v-model="maskForm.height" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">体重(kg)</label><input v-model="maskForm.weight" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">年龄</label><input v-model="maskForm.age" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">生日</label><input v-model="maskForm.birthday" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">拍一拍</label><input v-model="maskForm.nudge" placeholder="拍一拍后缀" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">个性签名</label><input v-model="maskForm.signature" placeholder="输入个性签名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">背景资料 (Bio)</label><textarea v-model="maskForm.bio" placeholder="输入这个面具的人设背景..." class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none h-24 resize-none"></textarea></div><div v-if="maskForm.id" class="pt-4"><button @click="deleteMask(maskForm.id)" class="w-full py-3 bg-white text-red-500 border border-gray-200 rounded-xl font-bold text-sm">删除此面具</button></div></div></div><input type="file" ref="maskAvatarInput" accept="image/*" class="hidden" @change="handleMaskAvatar"></div></div></transition>    
     <transition name="app-slide">
@@ -6693,28 +6693,20 @@ const app = createApp({
         setInterval(() => {
             if (!this.apiConfig.apiKey) return;
             this.wechatState.sessions.forEach(session => {
-                // 1. 检查离线恢复
-                if (session.onlineStatus === 'offline' && session.offlineUntil) {
-                    if (Date.now() >= session.offlineUntil) {
-                        session.onlineStatus = 'online';
-                        session.statusText = '手机在线';
-                        session.offlineUntil = 0;
-                        session.autoReplyCache = '';
-                        session.messages.push({ type: 'system', content: `[系统提示] ${session.name} 处理完了事情，已自动恢复为在线状态`, time: Date.now() });
-                        this.saveData();
-                    }
-                }
-                // 2. 检查后台活动 (封装为独立函数)
+                this.checkOfflineRecovery(session);
                 this.checkBackgroundActivity(session);
             });
         }, 60000);
         
-        // 【核心修复：时间补偿机制】刚进页面时，做一次瞬间检测，模拟关掉网页时的后台活动！
+        // 【核心修复：时间补偿机制】刚进页面时，做一次瞬间检测，模拟关掉网页时的后台活动与状态恢复！
         setTimeout(() => {
             if (this.apiConfig.apiKey) {
-                this.wechatState.sessions.forEach(s => this.checkBackgroundActivity(s));
+                this.wechatState.sessions.forEach(s => {
+                    this.checkOfflineRecovery(s);
+                    this.checkBackgroundActivity(s);
+                });
             }
-        }, 3000);
+        }, 1500); // 提前到页面加载后 1.5 秒立刻执行
         document.addEventListener("fullscreenchange", () => { this.isFullScreen = !!document.fullscreenElement; });
         if(this.themeConfig.fontUrl && this.themeConfig.fontFamily) { 
             this.loadFont(this.themeConfig.fontUrl, this.themeConfig.fontFamily); 
@@ -9687,20 +9679,19 @@ const app = createApp({
 
         // ----------------- 更新的解析逻辑 -----------------
         extractContactInfoFromText(text) {
-            const extract = (regex) => { const m = text.match(regex); return m ? m[1].trim() : ''; };
+            const extract = (regex) => { const m = text.match(regex); return m ? m[1].replace(/^[\]】]+|[\[【]+$/g, '').trim() : ''; };
             return {
-                name: extract(/(?:姓名|名字|角色名)[:：\s]+([^\n\s,，;；。]{1,10})/) || '',
-                age: extract(/(?:年龄)[:：\s]+(\d{1,3})/) || '',
-                height: extract(/(?:身高)[:：\s]+(\d{2,3}(?:cm)?)/i) || '',
-                weight: extract(/(?:体重)[:：\s]+(\d{2,3}(?:kg|斤)?)/i) || '',
-                birthday: extract(/(?:生日)[:：\s]+([^\n\s,，;；。]{2,10})/) || '',
-                gender: extract(/(?:性别)[:：\s]+([男女])/) || '男',
+                name: extract(/(?:姓名|名字|角色名|Name)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,15})/) || '',
+                age: extract(/(?:年龄|Age)[\]】:：\s]*(\d{1,3})/) || '',
+                height: extract(/(?:身高|Height)[\]】:：\s]*(\d{2,3}(?:cm|CM)?)/) || '',
+                weight: extract(/(?:体重|Weight)[\]】:：\s]*(\d{2,3}(?:kg|KG|斤)?)/) || '',
+                birthday: extract(/(?:生日|Birthday)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{2,15})/) || '',
+                gender: extract(/(?:性别|Gender)[\]】:：\s]*([男女])/) || '男',
                 bio: text, // 绝对保留文件里的所有文字！
-                remark: '', username: '', relationship: '', nudge: '', signature: '', 
+                remark: '', username: '', wechatId: '', relationship: '', nudge: '', signature: '', 
                 avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
             };
         },
-
         async handleSTImport(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -10271,6 +10262,19 @@ const app = createApp({
                 }
             });
         },
+        checkOfflineRecovery(session) {
+            // 每次打开网页或者轮询，检查是否有离线到期的角色
+            if (session.onlineStatus === 'offline' && session.offlineUntil) {
+                if (Date.now() >= session.offlineUntil) {
+                    session.onlineStatus = 'online';
+                    session.statusText = '手机在线';
+                    session.offlineUntil = 0;
+                    session.autoReplyCache = '';
+                    session.messages.push({ type: 'system', content: `[系统提示] ${session.name} 结束了离线，已自动恢复为在线状态`, time: Date.now() });
+                    this.saveData();
+                }
+            }
+        },
         // --- 全新高逼格后台活动逻辑引擎 ---
         checkBackgroundActivity(session) {
             if (!this.apiConfig.apiKey || !session.enableBackgroundActivity || session.isGroup) return;
@@ -10427,10 +10431,17 @@ const app = createApp({
             this.saveData();
             this.editStatusModal.show = false;
             
+            let displayStatus = session.statusText;
+            if (!displayStatus || displayStatus.trim() === '') {
+                if (session.onlineStatus === 'online') displayStatus = '在线';
+                else if (session.onlineStatus === 'busy') displayStatus = '忙碌';
+                else if (session.onlineStatus === 'offline') displayStatus = '离线';
+            }
+            
             // 产生一条系统旁白
             session.messages.push({
                 type: 'system',
-                content: `[系统提示] ${session.name} 的状态已手动更改为: ${session.statusText}`,
+                content: `[系统提示] ${session.name} 的状态已手动更改为: ${displayStatus}`,
                 time: Date.now()
             });
             this.scrollToBottom();
@@ -11934,9 +11945,14 @@ Structure:
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
                 
-                let prompt = field === 'username' 
-                    ? `你现在的身份是：${name}。背景设定(仅供参考)：${bio}。请完全代入你的人设，为自己起一个符合现代年轻人习惯的微信网名。要求：稍微文艺、有氛围感或抽象一点，千万不要大白话，绝不能直接从背景资料里抄原句或抄名字。长度在1到8个字符，不加标点。只输出网名本身，绝不要解释。`
-                    : `你现在的身份是：${name}。背景设定(仅供参考)：${bio}。请完全代入你的人设，写一句微信个性签名。要求：风格文艺、有格调、内敛或者符合人设的抽象，不要大白话，绝不能直接把背景资料里的句子摘抄过来。长度在5到25个字。只输出签名本身，不要双引号，绝不要解释。`;
+                let prompt = '';
+                if (field === 'username') {
+                    prompt = `你现在的身份是：${name}。背景设定(仅供参考)：${bio}。请完全代入你的人设，为自己起一个符合现代年轻人习惯的微信网名。要求：稍微文艺、有氛围感或抽象一点，千万不要大白话，绝不能直接从背景资料里抄原句或抄名字。长度在1到8个字符，不加标点。只输出网名本身，绝不要解释。`;
+                } else if (field === 'wechatId') {
+                    prompt = `你现在的身份是：${name}。背景设定(仅供参考)：${bio}。请为自己起一个符合人设特征的微信号(ID)。要求：只能使用英文小写字母、数字，部分可以带下划线，通常和自己的名字全拼、缩写、生日或爱好相关。长度在5到15个字符之间。只输出微信号本身，不要带任何引号，绝不要解释。`;
+                } else {
+                    prompt = `你现在的身份是：${name}。背景设定(仅供参考)：${bio}。请完全代入你的人设，写一句微信个性签名。要求：风格文艺、有格调、内敛或者符合人设的抽象，不要大白话，绝不能直接把背景资料里的句子摘抄过来。长度在5到25个字。只输出签名本身，不要双引号，绝不要解释。`;
+                }
                     
                 const res = await fetch(`${url}/chat/completions`, {
                     method: 'POST',
@@ -11956,6 +11972,7 @@ Structure:
                 const result = data.choices[0].message.content.trim().replace(/['"「」]/g, '').split('\n')[0];
                 
                 if(field === 'username') targetData.username = result;
+                if(field === 'wechatId') targetData.wechatId = result;
                 if(field === 'signature') targetData.signature = result;
                 this.showToast('✨ 填充成功');
             } catch(e) {
