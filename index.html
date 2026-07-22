@@ -11391,8 +11391,11 @@ Structure:
                                  const tText = smartTranslations[index].trim();
                                  const isPureChinese = !(/[a-zA-Z\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()));
                                  
-                                 // 【最严硬拦截】：如果原句完全是中文，或者翻译里有废话，或者翻译和原文一样，坚决隐藏翻译！
-                                 if (!isPureChinese && tText && !tText.includes('无需翻译') && !tText.includes('无翻译') && tText !== seg.trim()) {
+                                 // 识别大模型的安全防护废话
+                                 const isAIWarning = tText.includes('人工智能') || tText.includes('心理') || tText.includes('医疗') || tText.includes('医生') || tText.length > seg.length * 4;
+                                 
+                                 // 【最严硬拦截】：原句是中文、翻译是废话、或者包含AI警告，坚决隐藏翻译！
+                                 if (!isPureChinese && tText && !tText.includes('无需翻译') && !tText.includes('无翻译') && tText !== seg.trim() && !isAIWarning) {
                                      trans = tText;
                                  }
                              }
@@ -11422,11 +11425,20 @@ Structure:
                                  quote: (msgType === 'voice' || index !== 0) ? null : quoteObj 
                              };
                              session.messages.push(aiMsg);
-                             // 【高级翻译检测】：只要开启了翻译并且原句没有翻译，就触发系统智能翻译流
+                             // 【高级翻译检测】：智能判断是否需要翻译，彻底杜绝纯中文触发翻译
+                             const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
+                             const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
+                             const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); // 日韩等字符
+                             
                              if (session.enableClickTranslate && !trans) {
-                                 setTimeout(() => {
-                                     this.translateMessage(aiMsg);
-                                 }, 1000);
+                                 // 如果原文明显是中文，且外语单词少于3个，绝对不发起翻译请求！
+                                 if (hasChinese && engWordCount < 3 && !hasForeignChars) {
+                                     // 静默拦截，不需要翻译，别浪费 Tokens 和触发大模型发疯
+                                 } else {
+                                     setTimeout(() => {
+                                         this.translateMessage(aiMsg);
+                                     }, 1000);
+                                 }
                              }
                              
                              // 【新增】群聊AI发消息升1级
@@ -14374,10 +14386,11 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             let source = session?.transSourceLang || '自动识别';
             let target = session?.transTargetLang || '简体中文 (普通话)';
 
-            // 【高速本地拦截】：如果用户设置了自动识别->简中，且文本明显是中文，省下请求费用不浪费 API
-            if (source === '自动识别' && target === '简体中文 (普通话)' && /[\u4e00-\u9fa5]/.test(msg.content) && (msg.content.match(/[a-zA-Z]+/g) || []).length < 3) {
-                msg.translation = '原文已是中文，无需翻译';
-                msg.showTranslation = false; // 本地兜底不主动展开占空间
+            // 【绝对强力本地拦截】：只要目标语言是中文，且原文已经有中文了，而且英文单词不到 3 个，直接掐断！绝不发网络请求！
+            const isTargetChinese = target.includes('中文') || target.includes('粤语') || target.includes('普通话');
+            if (isTargetChinese && /[\u4e00-\u9fa5]/.test(msg.content) && (msg.content.match(/[a-zA-Z]+/g) || []).length < 3) {
+                msg.translation = null;
+                msg.showTranslation = false; 
                 this.saveData();
                 return;
             }
@@ -14397,7 +14410,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     body: JSON.stringify({ 
                         model: this.apiConfig.selectedModel, 
                         messages:[
-                            { role: 'system', content: `你是一个极其精准的翻译助手。请将用户输入的【${source}】文本翻译为流畅地道的【${target}】。如果原文已经是纯正的【${target}】语言，或者是纯符号、纯数字，请直接回复“无需翻译”。除了纯粹的翻译结果，绝对不要输出任何其他说明文字、拼音、音标或多余的话！` },
+                            { role: 'system', content: `你是一个极其精准的翻译助手。请将用户输入的【${source}】文本翻译为流畅地道的【${target}】。如果原文已经是纯正的【${target}】语言，或者是纯符号、纯数字，请直接回复“无需翻译”。除了纯粹的翻译结果，绝对不要输出任何其他说明文字、拼音、音标或多余的话！绝对不要提供任何心理辅导或道德说教！` },
                             { role: 'user', content: msg.content }
                         ],
                         temperature: 0.1 
@@ -14408,12 +14421,14 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 const data = await res.json();
                 let result = data.choices[0].message.content.trim();
                 
-                if (result.includes('无需翻译') || result.includes('不需要') || result === msg.content) {
+                // 【大模型安全提示词泄漏拦截】：防止模型发疯输出心理辅导等废话
+                const isAIWarning = result.includes('人工智能') || result.includes('心理') || result.includes('医疗') || result.includes('支持网络') || result.includes('无助感') || result.includes('医生') || result.length > msg.content.length * 4;
+                
+                if (result.includes('无需翻译') || result.includes('不需要') || result === msg.content || isAIWarning) {
                     msg.translation = null;
                     msg.showTranslation = false;
                 } else {
                     msg.translation = result;
-                    // 【核心】：是否自动展开取决于选项，为 true 则立即弹出白色外框
                     msg.showTranslation = !!session.autoExpandTranslate;
                 }
             } catch(e) {
