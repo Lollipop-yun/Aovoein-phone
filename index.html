@@ -1134,49 +1134,6 @@
             </div>
         </div>
     </transition>
-    
-    <!-- 高级消息编辑器全屏界面 (iOS 灰白高级) -->
-        <transition name="scale">
-            <div v-if="chatEditModal.show" class="fixed inset-0 z-[135000] flex items-center justify-center bg-black/50 backdrop-blur-sm" @click="chatEditModal.show = false">
-                <div class="bg-[#f4f4f6] w-[92%] h-[85vh] rounded-[24px] overflow-hidden shadow-2xl flex flex-col font-sans" @click.stop>
-                    <div class="p-4 bg-white flex justify-between items-center border-b border-gray-100 shrink-0">
-                        <h3 class="font-bold text-[16px] text-gray-900">消息参数修复与编辑</h3>
-                        <button @click="chatEditModal.show = false" class="w-7 h-7 bg-gray-100 text-gray-500 rounded-full flex items-center justify-center active:scale-95"><i class="fas fa-times text-xs"></i></button>
-                    </div>
-                    
-                    <!-- 格式模板按钮栏 -->
-                    <div class="p-3 bg-white border-b border-gray-100 flex gap-2 overflow-x-auto scrollbar-hide shrink-0 items-center">
-                        <span class="text-[11px] font-bold text-gray-400 shrink-0 mr-1">模板</span>
-                        <button @click="injectChatTemplate('text')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">文字</button>
-                        <button @click="injectChatTemplate('quote')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">引用</button>
-                        <button @click="injectChatTemplate('voice')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">语音</button>
-                        <button @click="injectChatTemplate('image')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">图片</button>
-                        <button @click="injectChatTemplate('location')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">位置</button>
-                        <button @click="injectChatTemplate('red_packet')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">红包</button>
-                        <button @click="injectChatTemplate('transfer')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">转账</button>
-                        <button @click="injectChatTemplate('system')" class="px-3 py-1.5 bg-gray-50 text-gray-700 rounded-lg text-[12px] font-bold active:scale-95 transition border border-gray-200 shrink-0">旁白</button>
-                    </div>
-
-                    <!-- 文本框 -->
-                    <div class="flex-1 p-4 flex flex-col overflow-hidden">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-[11px] text-gray-500 font-bold tracking-widest uppercase">底层对象参数 (JSON)</span>
-                        </div>
-                        <!-- 高度自动填满剩余空间 -->
-                        <textarea v-model="chatEditModal.content" class="flex-1 w-full bg-white p-4 rounded-xl text-[13px] font-mono leading-relaxed border border-gray-200 outline-none resize-none shadow-inner text-gray-800"></textarea>
-                    </div>
-
-                    <!-- 底部按钮 -->
-                    <div class="p-4 bg-white border-t border-gray-100 shrink-0 flex flex-col gap-3">
-                        <div class="flex gap-3">
-                            <button @click="insertChatBubble('above')" class="flex-1 bg-gray-50 border border-gray-200 text-gray-700 py-3 rounded-xl text-[13px] font-bold active:scale-95 transition shadow-sm"><i class="fas fa-arrow-up mr-1 text-gray-400"></i> 上方插入</button>
-                            <button @click="insertChatBubble('below')" class="flex-1 bg-gray-50 border border-gray-200 text-gray-700 py-3 rounded-xl text-[13px] font-bold active:scale-95 transition shadow-sm"><i class="fas fa-arrow-down mr-1 text-gray-400"></i> 下方插入</button>
-                        </div>
-                        <button @click="saveChatEdit" class="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存并应用修改</button>
-                    </div>
-                </div>
-            </div>
-        </transition>
 
     <!-- 长按菜单 遮罩层 -->
     <div v-if="chatContextMenu.show" class="fixed inset-0 z-[99998] bg-transparent" @click.stop="closeAllMenus"></div>
@@ -3551,8 +3508,8 @@
                         
                         <!-- 左侧排版模式 -->
                         <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'left'" class="flex items-center gap-2 pl-2 flex-1 min-w-0">
-                            <!-- 只有点击头像才弹出心声 -->
-                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80" @click.stop="openStatusModal()">
+                            <!-- 只有点击头像才弹出心声 (群聊屏蔽顶部点击) -->
+                            <div class="w-[38px] h-[38px] rounded-full overflow-hidden shrink-0 border border-gray-100 cursor-pointer active:opacity-80" @click.stop="!wechatState.activeSession.isGroup && openStatusModal()">
                                 <img :src="wechatState.activeSession.isGroup ? wechatState.activeSession.avatar : getCurrentSessionAvatar()" class="w-full h-full object-cover">
                             </div>
                             <div class="flex flex-col flex-1 min-w-0">
@@ -3571,8 +3528,8 @@
 
                     <!-- 中间排版模式 -->
                     <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'center'" class="flex flex-col items-center absolute left-1/2 -translate-x-1/2 w-[60%]">
-                        <!-- 点击名字跳出心声 -->
-                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 w-full cursor-pointer active:opacity-50" @click.stop="openStatusModal()">
+                        <!-- 点击名字跳出心声 (群聊屏蔽顶部点击) -->
+                        <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 w-full cursor-pointer active:opacity-50" @click.stop="!wechatState.activeSession.isGroup && openStatusModal()">
                             <span v-if="isTyping" class="whitespace-nowrap text-center">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                             <span v-else class="truncate w-full text-center">{{ getCurrentChatTitle() }}</span>
                         </h1>
@@ -3993,7 +3950,8 @@
                             <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                             <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
-                            <div class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
+                            <div v-if="!wechatState.activeSession?.isGroup" class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
+                            <div v-else class="attach-item" @click="showToast('群活动功能开发中')"><div class="attach-icon-box"><i class="fas fa-flag text-gray-600"></i></div><span class="attach-label">群活动</span></div>
                             <!-- 线下模式 (灰色咖啡杯) -->
                             <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
                         </div>
@@ -6477,7 +6435,6 @@ const app = createApp({
             worldPositionModal: { show: false },
             modelSelectModal: { show: false }, 
             chatContextMenu: { show: false, x: 0, y: 0, msg: null, index: -1, isSelf: false },
-            chatEditModal: { show: false, index: -1, content: '' },
             memoryModal: { show: false, settingsShow: false, statsShow: false, presetShow: false, tempSettings: {}, isMultiSelect: false, selectedIds: [] },
             memoryDetailModal: { show: false, memory: null },
             tokenDetailModal: { show: false, total: 0, distribution: [] },
@@ -6679,11 +6636,11 @@ const app = createApp({
                 return timeB - timeA;
             });
 
-            // 过滤逻辑：Likes(仅置顶), Chats(仅单聊)
+            // 过滤逻辑：Likes(仅置顶), Chats(显示所有真实对话，不论单聊群聊)
             if (this.wechatState.activeFilter === 'Likes') {
                 sessions = sessions.filter(s => s.isPinned);
             } else if (this.wechatState.activeFilter === 'Chats') {
-                sessions = sessions.filter(s => !s.isGroup);
+                sessions = sessions.filter(s => !s.isVirtual);
             }
             
             if (this.wechatState.searchQuery) {
@@ -10991,7 +10948,8 @@ Structure:
       "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
-      "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)"
+      "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
+      "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" } // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
     }
   ],
   "fake_image": "OPTIONAL: description...",
@@ -11286,16 +11244,40 @@ Structure:
                     }
                     // === 处理角色的私密收藏 ===
                     if (block.favorite_user_content) {
-                        if (!session.characterFavorites) session.characterFavorites = [];
-                        session.characterFavorites.unshift({
-                            id: Date.now().toString() + Math.random(),
-                            content: block.favorite_user_content.content,
-                            source: block.favorite_user_content.source || '聊天消息',
-                            reason: block.favorite_user_content.reason,
-                            time: Date.now()
-                        });
-                        this.saveData();
-                        // （此操作是静默的，玩家只能通过点击附件菜单的“收藏”自己去发现）
+                        let targetSession = session;
+                        // 如果是在群聊中触发收藏，自动将这条收藏存入该角色与玩家的【单聊窗口】里
+                        if (session.isGroup && speakerId) {
+                            targetSession = this.wechatState.sessions.find(s => s.targetId === speakerId && !s.isGroup);
+                            // 如果单聊还没建立，静默创建单聊
+                            if (!targetSession) {
+                                const friendInfo = this.wechatState.friendList.find(f => f.id === speakerId);
+                                if (friendInfo) {
+                                    const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
+                                    if (myMaskId) {
+                                        this.createSession(friendInfo, this.getMaskById(myMaskId));
+                                        // 恢复当前焦点，防止切错
+                                        this.wechatState.activeSession = session;
+                                        targetSession = this.wechatState.sessions.find(s => s.targetId === speakerId && !s.isGroup);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (targetSession) {
+                            if (!targetSession.characterFavorites) targetSession.characterFavorites = [];
+                            let sourceText = block.favorite_user_content.source || '聊天消息';
+                            if (session.isGroup) {
+                                sourceText = `群聊: ${session.remark || session.name}`;
+                            }
+                            targetSession.characterFavorites.unshift({
+                                id: Date.now().toString() + Math.random(),
+                                content: block.favorite_user_content.content,
+                                source: sourceText,
+                                reason: block.favorite_user_content.reason,
+                                time: Date.now()
+                            });
+                            this.saveData();
+                        }
                     }
                     // === 处理单聊 AI 引用消息 ===
                     let quoteObj = null;
@@ -11775,13 +11757,7 @@ Structure:
                 this.isMultiSelectMode = true; 
                 if(!this.selectedMessageIds.includes(msg)) this.selectedMessageIds.push(msg); // 拦截重复添加修复Bug
             }
-            else if (action === 'edit') { 
-                this.chatEditModal = {
-                    show: true,
-                    index: index,
-                    content: JSON.stringify(msg, null, 2)
-                };
-            }
+            else if (action === 'edit') { this.showInput("编辑", msg.content, "", (v) => { if(v){msg.content=v; this.saveData();} }); }
             else if (action === 'favorite') { this.addToFavorites(msg.content, 'message', session.name); this.showToast('已收藏'); }
             else if (action === 'regenerate') {
                 this.chatContextMenu.show = false;
@@ -11790,81 +11766,6 @@ Structure:
             }
             else { this.showToast('功能开发中'); }
             this.chatContextMenu.show = false;
-        },
-        // --- 高级消息编辑器控制 ---
-        saveChatEdit() {
-            try {
-                const parsedMsg = JSON.parse(this.chatEditModal.content);
-                const session = this.wechatState.activeSession;
-                if (session && this.chatEditModal.index !== -1) {
-                    session.messages[this.chatEditModal.index] = parsedMsg;
-                    this.saveData();
-                    this.chatEditModal.show = false;
-                    this.showToast('修改已保存');
-                }
-            } catch (e) {
-                this.showToast('JSON 格式有误，请检查语法是否缺少引号或逗号');
-            }
-        },
-        injectChatTemplate(type) {
-            try {
-                let msg = JSON.parse(this.chatEditModal.content);
-                msg.type = type;
-                if (type === 'text') {
-                    msg.content = msg.content || "文本内容";
-                    delete msg.quote; delete msg.amount; delete msg.duration; delete msg.note;
-                } else if (type === 'quote') {
-                    msg.type = 'text';
-                    msg.content = msg.content || "回复内容";
-                    msg.quote = { name: "对方名字", content: "被引用的原始文本" };
-                } else if (type === 'voice') {
-                    msg.content = msg.content || "语音转文字";
-                    msg.duration = 5;
-                } else if (type === 'image') {
-                    msg.content = "https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg"; // 示例图片
-                } else if (type === 'location') {
-                    msg.name = "地点名称";
-                    msg.address = "详细地址";
-                } else if (type === 'red_packet') {
-                    msg.amount = "8.88";
-                    msg.count = 1;
-                    msg.note = "恭喜发财";
-                } else if (type === 'transfer') {
-                    msg.amount = "52.00";
-                    msg.note = "转账给你";
-                } else if (type === 'system') {
-                    msg.content = "[系统提示] 旁白内容";
-                }
-                this.chatEditModal.content = JSON.stringify(msg, null, 2);
-            } catch (e) {
-                this.showToast('代码格式损坏，请先恢复合法的 JSON 格式后再应用模板');
-            }
-        },
-        insertChatBubble(position) {
-            const session = this.wechatState.activeSession;
-            if (!session) return;
-            const targetIndex = this.chatEditModal.index;
-            if (targetIndex === -1) return;
-            
-            const baseMsg = session.messages[targetIndex];
-            
-            let newMsg = {
-                type: 'text',
-                content: '新插入的一条气泡',
-                isSelf: baseMsg.isSelf,
-                time: position === 'above' ? baseMsg.time - 100 : baseMsg.time + 100,
-                avatar: baseMsg.avatar,
-                name: baseMsg.name
-            };
-            
-            if (position === 'above') {
-                session.messages.splice(targetIndex, 0, newMsg);
-                this.chatEditModal.index++; // 原消息位置下移，更新指针！
-            } else {
-                session.messages.splice(targetIndex + 1, 0, newMsg);
-            }
-            this.saveData();
-            this.showToast(position === 'above' ? '已在上方插入新气泡' : '已在下方插入新气泡');
         },
         // 【新增】获取要 @ 的对象
         getFriendForMention(memId) {
