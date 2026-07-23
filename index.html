@@ -2907,7 +2907,7 @@
             </div>
         </transition>
         
-        <!-- 全新重构：安全版群管理界面 -->
+        <!-- 安全极简版群管理界面 -->
         <transition name="page-slide">
             <div v-if="groupManageModal.show && wechatState.activeSession" class="fixed inset-0 z-[115000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
                 <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] shrink-0 z-50 sticky top-0">
@@ -2915,7 +2915,7 @@
                     <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">管理群</h1>
                     <div class="w-8"></div>
                 </header>
-                <div class="flex-1 overflow-y-auto px-4 pb-12 space-y-6">
+                <div class="flex-1 overflow-y-auto px-4 pb-12 space-y-6 pt-2">
                     <div>
                         <div class="text-[13px] text-gray-500 mb-2 ml-1">基础管理</div>
                         <div class="bg-white rounded-[12px] overflow-hidden shadow-sm divide-y divide-gray-100">
@@ -2931,29 +2931,8 @@
                         </div>
                     </div>
                     <div>
-                        <div class="text-[13px] text-gray-500 mb-2 ml-1">加群管理</div>
-                        <div class="bg-white rounded-[12px] overflow-hidden shadow-sm divide-y divide-gray-100">
-                            <div class="flex justify-between items-center p-4 active:bg-gray-50 cursor-pointer transition">
-                                <span class="text-[16px] text-gray-900">加群方式</span>
-                                <div class="flex items-center gap-2"><span class="text-[14px] text-gray-400">不允许任何人加群</span><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
-                            </div>
-                            <div class="flex justify-between items-center p-4 active:bg-gray-50 cursor-pointer transition">
-                                <span class="text-[16px] text-gray-900">群搜索方式</span>
-                                <div class="flex items-center gap-2"><span class="text-[14px] text-gray-400">不允许被搜索</span><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
                         <div class="text-[13px] text-gray-500 mb-2 ml-1">成员管理</div>
                         <div class="bg-white rounded-[12px] overflow-hidden shadow-sm divide-y divide-gray-100">
-                            <div class="flex justify-between items-center p-4 active:bg-gray-50 cursor-pointer transition">
-                                <span class="text-[16px] text-gray-900">成员数据</span>
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                            </div>
-                            <div class="flex justify-between items-center p-4 active:bg-gray-50 cursor-pointer transition">
-                                <span class="text-[16px] text-gray-900">群黑名单管理</span>
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                            </div>
                             <div class="flex justify-between items-center p-4 active:bg-gray-50 cursor-pointer transition" @click="openGroupAdminModal">
                                 <span class="text-[16px] text-gray-900">设置管理员</span>
                                 <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
@@ -2963,9 +2942,9 @@
                     <div>
                         <div class="text-[13px] text-gray-500 mb-2 ml-1">发言管理</div>
                         <div class="bg-white rounded-[12px] overflow-hidden shadow-sm divide-y divide-gray-100">
-                            <div class="flex justify-between items-center p-4 active:bg-gray-50 cursor-pointer transition">
+                            <div class="flex justify-between items-center p-4 active:bg-gray-50 cursor-pointer transition" @click="groupMuteModal.show = true">
                                 <span class="text-[16px] text-gray-900">群内禁言</span>
-                                <div class="flex items-center gap-2"><span class="text-[14px] text-gray-400">未开启禁言</span><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
+                                <div class="flex items-center gap-2"><span class="text-[14px] text-gray-400">{{ getGroupMuteStatusText() }}</span><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
                             </div>
                         </div>
                     </div>
@@ -2976,6 +2955,88 @@
                                 <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+        
+        <!-- 群内禁言主面板 (1:1 UI) -->
+        <transition name="page-slide">
+            <div v-if="groupMuteModal.show" class="fixed inset-0 z-[116000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] shrink-0 z-50 sticky top-0">
+                    <button @click="groupMuteModal.show = false" class="w-8 h-8 flex items-center justify-start text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[22px] font-light"></i></button>
+                    <h1 class="font-medium text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">群内禁言</h1>
+                    <div class="w-8"></div>
+                </header>
+                <div class="flex-1 overflow-y-auto px-4 pb-12 pt-2">
+                    <div class="text-[13px] text-gray-500 mb-2 ml-1">设置禁言类型</div>
+                    <div class="bg-white rounded-[12px] overflow-hidden shadow-sm divide-y divide-gray-50 mb-2">
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="setGroupMuteType('none')">
+                            <span class="text-[16px] text-gray-900">未开启禁言</span>
+                            <i v-if="(wechatState.activeSession?.muteType || 'none') === 'none'" class="fas fa-check text-blue-500 text-lg"></i>
+                        </div>
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="setGroupMuteType('all')">
+                            <span class="text-[16px] text-gray-900">始终禁言</span>
+                            <i v-if="wechatState.activeSession?.muteType === 'all'" class="fas fa-check text-blue-500 text-lg"></i>
+                        </div>
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="openMuteScheduleModal">
+                            <span class="text-[16px] text-gray-900">定时禁言</span>
+                            <i v-if="wechatState.activeSession?.muteType === 'schedule'" class="fas fa-check text-blue-500 text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="text-[12px] text-gray-400 mb-8 ml-1">禁言后，只允许群主和管理员发言</div>
+
+                    <div class="text-[13px] text-gray-500 mb-2 ml-1">设置单独禁言群成员</div>
+                    <div class="bg-white rounded-[12px] overflow-hidden shadow-sm mb-2">
+                        <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="muteMemberModal.show = true">
+                            <span class="text-[16px] text-gray-900">单独禁言群成员</span>
+                            <div class="flex items-center gap-1 text-gray-400 text-[14px]">
+                                <span>{{ getMutedMembersCount() > 0 ? getMutedMembersCount() + '人' : '未设置' }}</span>
+                                <i class="fas fa-chevron-right text-[12px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-[12px] text-gray-400 ml-1">未开启禁言时，设置单独禁言群成员仍生效</div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 单独禁言选择列表 -->
+        <transition name="app-slide">
+            <div v-if="muteMemberModal.show" class="fixed inset-0 z-[117000] bg-gray-50 flex flex-col pb-safe font-sans">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0 z-50 sticky top-0">
+                    <button @click="muteMemberModal.show = false" class="text-gray-600 font-medium text-[16px]">取消</button>
+                    <h1 class="font-bold text-[17px] text-gray-900">选择要禁言的成员</h1>
+                    <div class="w-10"></div>
+                </header>
+                <div class="flex-1 overflow-y-auto p-4 bg-white divide-y divide-gray-50">
+                    <div v-for="memId in wechatState.activeSession?.members" :key="memId" @click="promptMuteDuration(memId)" class="flex items-center justify-between p-3 cursor-pointer active:bg-gray-50 transition">
+                        <div class="flex items-center gap-3">
+                            <img :src="getFriendAvatar(memId)" class="w-10 h-10 rounded-lg object-cover bg-gray-100 border border-gray-100">
+                            <span class="font-medium text-[16px] text-gray-900">{{ getFriendName(memId) }}</span>
+                        </div>
+                        <div v-if="isIndividuallyMuted(memId)" class="text-[11px] text-red-500 bg-red-50 px-2 py-1 rounded font-bold">已禁言</div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 定时禁言时钟弹窗 -->
+        <transition name="scale">
+            <div v-if="muteScheduleModal.show" class="fixed inset-0 z-[117000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div class="bg-white w-[80%] rounded-[20px] p-6 flex flex-col shadow-2xl font-sans">
+                    <h3 class="text-center font-bold text-[17px] mb-6 text-gray-900">设置定时禁言</h3>
+                    <div class="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="text-[14px] font-medium text-gray-700">开始时间</span>
+                        <input type="time" v-model="muteScheduleModal.start" class="bg-transparent outline-none font-bold text-[15px]">
+                    </div>
+                    <div class="flex items-center justify-between mb-6 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="text-[14px] font-medium text-gray-700">结束时间</span>
+                        <input type="time" v-model="muteScheduleModal.end" class="bg-transparent outline-none font-bold text-[15px]">
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="muteScheduleModal.show = false" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-[12px] font-bold text-[14px] active:scale-95 transition">取消</button>
+                        <button @click="saveMuteSchedule" class="flex-1 bg-[#07c160] text-white py-3 rounded-[12px] font-bold text-[14px] active:scale-95 transition shadow-md">确定</button>
                     </div>
                 </div>
             </div>
@@ -6371,6 +6432,9 @@ const app = createApp({
              // 群管理弹窗
             groupTitleModal: { show: false },
             editTitleModal: { show: false, targetId: '', level: 1, customTitle: '' },
+            groupMuteModal: { show: false },
+            muteMemberModal: { show: false },
+            muteScheduleModal: { show: false, start: '23:00', end: '08:00' },
             chatSearchModal: { show: false, keyword: '', results:[] },
             globalSearchModal: { show: false, keyword: '', contacts: [], groups: [], histories:[] },
             themeConfig: { wallpaper: '', fontFamily: '', fontUrl: '', fontSize: 1.0, fontColor: '#000000', isDarkMode: false }, fontPresets:[], fontInputUrl: '',
@@ -8709,9 +8773,91 @@ const app = createApp({
             const session = this.wechatState.activeSession;
             return session && session.admins && session.admins.includes(memId);
         },
-        isGroupMuted(memId) {
+        getGroupMuteStatusText() {
+            const type = this.wechatState.activeSession?.muteType || 'none';
+            if (type === 'all') return '始终禁言';
+            if (type === 'schedule') return '定时禁言';
+            return '未开启禁言';
+        },
+        setGroupMuteType(type) {
             const session = this.wechatState.activeSession;
-            return session && session.muted && session.muted.includes(memId);
+            if (!session) return;
+            session.muteType = type;
+            this.saveData();
+        },
+        openMuteScheduleModal() {
+            const session = this.wechatState.activeSession;
+            this.muteScheduleModal.start = session.muteStartTime || '23:00';
+            this.muteScheduleModal.end = session.muteEndTime || '08:00';
+            this.muteScheduleModal.show = true;
+        },
+        saveMuteSchedule() {
+            const session = this.wechatState.activeSession;
+            session.muteType = 'schedule';
+            session.muteStartTime = this.muteScheduleModal.start;
+            session.muteEndTime = this.muteScheduleModal.end;
+            this.saveData();
+            this.muteScheduleModal.show = false;
+        },
+        promptMuteDuration(memId) {
+            if (this.isIndividuallyMuted(memId)) {
+                this.showConfirm('该成员已被禁言，是否解除禁言？', () => {
+                    const session = this.wechatState.activeSession;
+                    if (session.mutedObj && session.mutedObj[memId]) delete session.mutedObj[memId];
+                    // 兼容清理旧的禁言数组
+                    if (session.muted && Array.isArray(session.muted)) session.muted = session.muted.filter(i => i !== memId);
+                    this.saveData();
+                    this.showToast('已解除禁言');
+                });
+                return;
+            }
+            this.showInput('禁言时长', '10', '请输入禁言分钟数', (val) => {
+                const mins = parseInt(val);
+                if (isNaN(mins) || mins <= 0) return this.showToast('无效的分钟数');
+                const session = this.wechatState.activeSession;
+                if (!session.mutedObj) session.mutedObj = {};
+                session.mutedObj[memId] = Date.now() + mins * 60000;
+                this.saveData();
+                this.showToast(`已禁言 ${mins} 分钟`);
+            }, 'number');
+        },
+        getMutedMembersCount() {
+            const session = this.wechatState.activeSession;
+            if (!session) return 0;
+            let count = 0;
+            const now = Date.now();
+            if (session.mutedObj) {
+                for (const key in session.mutedObj) {
+                    if (session.mutedObj[key] > now) count++;
+                }
+            }
+            if (session.muted && Array.isArray(session.muted)) count += session.muted.length;
+            return count;
+        },
+        isIndividuallyMuted(memId) {
+            const session = this.wechatState.activeSession;
+            if (!session) return false;
+            if (session.mutedObj && session.mutedObj[memId] && session.mutedObj[memId] > Date.now()) return true;
+            if (session.muted && Array.isArray(session.muted) && session.muted.includes(memId)) return true;
+            return false;
+        },
+        checkIsMuted(session, memId) {
+            if (memId === 'mine') return false; // 我是上帝/群主，永不禁言
+            if (this.isIndividuallyMuted(memId)) return true; // 单独禁言直接生效（最高优先级，管理员也能被单禁）
+            if (session.admins && session.admins.includes(memId)) return false; // 管理员不受全员禁言限制
+
+            // 全体禁言判断
+            if (session.muteType === 'all') return true;
+            if (session.muteType === 'schedule' && session.muteStartTime && session.muteEndTime) {
+                const now = new Date();
+                const currentMins = now.getHours() * 60 + now.getMinutes();
+                const parseTime = (tStr) => { const parts = tStr.split(':'); return parseInt(parts[0])*60 + parseInt(parts[1]); };
+                const sMins = parseTime(session.muteStartTime);
+                const eMins = parseTime(session.muteEndTime);
+                if (sMins < eMins) return (currentMins >= sMins && currentMins <= eMins);
+                else return (currentMins >= sMins || currentMins <= eMins); // 跨零点判定
+            }
+            return false;
         },
         toggleGroupAdmin(memId) {
             const session = this.wechatState.activeSession;
@@ -10883,7 +11029,7 @@ const app = createApp({
                     const m = this.wechatState.friendList.find(f => f.id === id);
                     if(!m) return '';
                     const isAdm = session.admins && session.admins.includes(id) ? 'YES' : 'NO';
-                    const isMut = session.muted && session.muted.includes(id) ? 'YES' : 'NO';
+                    const isMut = this.checkIsMuted(session, id) ? 'YES' : 'NO';
                     return `[Name: ${m.name} | ID: @${m.username} | Admin: ${isAdm} | Muted: ${isMut} | Bio: ${m.bio || 'None'}]`;
                 }).filter(Boolean).join('\n');
                 
@@ -11336,11 +11482,9 @@ Structure:
                             if (block.mute_member) {
                                 const target = this.wechatState.friendList.find(f => (f.remark === block.mute_member || f.name === block.mute_member) && session.members.includes(f.id));
                                 if (target) {
-                                    if (!session.muted) session.muted =[];
-                                    if (!session.muted.includes(target.id)) {
-                                        session.muted.push(target.id);
-                                        session.messages.push({ type: 'system', content: `管理员 "${block.speaker}" 将 "${target.remark || target.name}" 禁言了`, time: Date.now() });
-                                    }
+                                    if (!session.mutedObj) session.mutedObj = {};
+                                    session.mutedObj[target.id] = Date.now() + 60 * 60000; // AI自动禁言一小时
+                                    session.messages.push({ type: 'system', content: `管理员 "${block.speaker}" 将 "${target.remark || target.name}" 禁言了`, time: Date.now() });
                                 }
                             }
                         }
@@ -15773,7 +15917,15 @@ ${greetingInstruction}
                         let speakerAvatar = session.avatar;
                         
                         if (session.isGroup) {
-                            const friend = this.wechatState.friendList.find(f => f.name === r.speaker || f.remark === r.speaker);
+                            // 【修复群聊马甲串戏】：严格将 speaker 限定为存在于群聊里的角色，加入部分匹配兜底
+                            let friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (f.name === r.speaker || f.remark === r.speaker));
+                            if (!friend) {
+                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && ((f.remark||f.name).includes(r.speaker) || r.speaker.includes(f.remark||f.name)));
+                            }
+                            // 如果大模型发神经填了不存在的名字，强制分配给第一个群成员，绝对不套壳群名！
+                            if (!friend && session.members && session.members.length > 0) {
+                                friend = this.wechatState.friendList.find(f => f.id === session.members[0]);
+                            }
                             if (friend) {
                                 speakerId = friend.id;
                                 speakerName = friend.remark || friend.name;
@@ -16144,7 +16296,15 @@ ${greetingInstruction}`;
                         let speakerAvatar = session.avatar;
                         
                         if (session.isGroup) {
-                            const friend = this.wechatState.friendList.find(f => f.name === r.speaker || f.remark === r.speaker);
+                            // 【修复群聊马甲串戏】：严格将 speaker 限定为存在于群聊里的角色，加入部分匹配兜底
+                            let friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (f.name === r.speaker || f.remark === r.speaker));
+                            if (!friend) {
+                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && ((f.remark||f.name).includes(r.speaker) || r.speaker.includes(f.remark||f.name)));
+                            }
+                            // 如果大模型发神经填了不存在的名字，强制分配给第一个群成员，绝对不套壳群名！
+                            if (!friend && session.members && session.members.length > 0) {
+                                friend = this.wechatState.friendList.find(f => f.id === session.members[0]);
+                            }
                             if (friend) {
                                 speakerId = friend.id;
                                 speakerName = friend.remark || friend.name;
