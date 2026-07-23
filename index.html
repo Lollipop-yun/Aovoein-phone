@@ -271,7 +271,17 @@
         .context-item:active { background: rgba(255,255,255,0.15); }
         .context-item i { font-size: 20px; }
 
-        .top-notification-banner { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 380px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); z-index: 100000; display: flex; align-items: center; gap: 12px; cursor: pointer; animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .top-notification-banner { 
+            position: fixed; top: 10px; left: 50%; transform: translateX(-50%); 
+            width: 92%; max-width: 380px; 
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); 
+            border-radius: 16px; padding: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+            z-index: 150000 !important; /* 强制覆盖所有面板 */
+            display: flex; align-items: center; gap: 12px; 
+            cursor: pointer; 
+            animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
         @keyframes slideDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 
         /* 开关按钮 */
@@ -11127,10 +11137,10 @@ const app = createApp({
                 }).filter(Boolean).join('\n');
                 
                 roleIdentity = `<GROUP_CHAT_RULES>
-You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply based on the context. NEVER speak as "${session.name}" (the group name).
+You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).
 - YOU ARE THE GROUP OWNER. Members marked as "Muted: YES" MUST NOT speak in this round!
 - Members marked as "Admin: YES" can kick or mute other NPCs.
-- If the user says "@All", multiple relevant characters should reply. If the user mentions a specific Name or @ID, that character MUST reply first!
+【严重防串戏警告】：如果你决定让某个人说话，你必须一字不差地将他的 Name 填入 speaker 字段！千万不能张冠李戴（比如写着A的话却套了B的名字）！如果有多个人要说话，请在 group_replies 里独立输出多个对象，每个人一个对象！
 <GROUP_MEMBERS_LIST>\n${membersInfo}\n</GROUP_MEMBERS_LIST>
 </GROUP_CHAT_RULES>`;
             } else {
@@ -16016,15 +16026,40 @@ ${greetingInstruction}
                         let speakerAvatar = session.avatar;
                         
                         if (session.isGroup) {
-                            // 【修复群聊马甲串戏】：严格将 speaker 限定为存在于群聊里的角色，加入部分匹配兜底
-                            let friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (f.name === r.speaker || f.remark === r.speaker));
-                            if (!friend) {
-                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && ((f.remark||f.name).includes(r.speaker) || r.speaker.includes(f.remark||f.name)));
+                            let friend = null;
+                            const rawSpeaker = String(r.speaker || '').trim();
+                            
+                            if (rawSpeaker) {
+                                // 1. 精确匹配
+                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (f.name === rawSpeaker || f.remark === rawSpeaker));
+                                // 2. 去除空格和大小写的模糊匹配
+                                if (!friend) {
+                                    const cleanSpk = rawSpeaker.replace(/\s+/g, '').toLowerCase();
+                                    friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (
+                                        (f.name||'').replace(/\s+/g, '').toLowerCase() === cleanSpk || 
+                                        (f.remark||'').replace(/\s+/g, '').toLowerCase() === cleanSpk
+                                    ));
+                                }
+                                // 3. 包含匹配
+                                if (!friend) {
+                                    friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (
+                                        (f.name && rawSpeaker.includes(f.name)) || (f.remark && rawSpeaker.includes(f.remark)) ||
+                                        (f.name && f.name.includes(rawSpeaker)) || (f.remark && f.remark.includes(rawSpeaker))
+                                    ));
+                                }
                             }
-                            // 如果大模型发神经填了不存在的名字，强制分配给第一个群成员，绝对不套壳群名！
+                            
+                            // 4. 如果大模型写错了名字，通过它发的这句话的内容，逆向推导这句话最可能是谁说的！
+                            if (!friend) {
+                                const contentStr = JSON.stringify(r.reply || []);
+                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (contentStr.includes(f.name) || (f.remark && contentStr.includes(f.remark))));
+                            }
+                            
+                            // 5. 终极兜底
                             if (!friend && session.members && session.members.length > 0) {
                                 friend = this.wechatState.friendList.find(f => f.id === session.members[0]);
                             }
+
                             if (friend) {
                                 speakerId = friend.id;
                                 speakerName = friend.remark || friend.name;
@@ -16395,15 +16430,40 @@ ${greetingInstruction}`;
                         let speakerAvatar = session.avatar;
                         
                         if (session.isGroup) {
-                            // 【修复群聊马甲串戏】：严格将 speaker 限定为存在于群聊里的角色，加入部分匹配兜底
-                            let friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (f.name === r.speaker || f.remark === r.speaker));
-                            if (!friend) {
-                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && ((f.remark||f.name).includes(r.speaker) || r.speaker.includes(f.remark||f.name)));
+                            let friend = null;
+                            const rawSpeaker = String(r.speaker || '').trim();
+                            
+                            if (rawSpeaker) {
+                                // 1. 精确匹配
+                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (f.name === rawSpeaker || f.remark === rawSpeaker));
+                                // 2. 去除空格和大小写的模糊匹配
+                                if (!friend) {
+                                    const cleanSpk = rawSpeaker.replace(/\s+/g, '').toLowerCase();
+                                    friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (
+                                        (f.name||'').replace(/\s+/g, '').toLowerCase() === cleanSpk || 
+                                        (f.remark||'').replace(/\s+/g, '').toLowerCase() === cleanSpk
+                                    ));
+                                }
+                                // 3. 包含匹配
+                                if (!friend) {
+                                    friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (
+                                        (f.name && rawSpeaker.includes(f.name)) || (f.remark && rawSpeaker.includes(f.remark)) ||
+                                        (f.name && f.name.includes(rawSpeaker)) || (f.remark && f.remark.includes(rawSpeaker))
+                                    ));
+                                }
                             }
-                            // 如果大模型发神经填了不存在的名字，强制分配给第一个群成员，绝对不套壳群名！
+                            
+                            // 4. 如果大模型写错了名字，通过它发的这句话的内容，逆向推导这句话最可能是谁说的！
+                            if (!friend) {
+                                const contentStr = JSON.stringify(r.reply || []);
+                                friend = this.wechatState.friendList.find(f => session.members.includes(f.id) && (contentStr.includes(f.name) || (f.remark && contentStr.includes(f.remark))));
+                            }
+                            
+                            // 5. 终极兜底
                             if (!friend && session.members && session.members.length > 0) {
                                 friend = this.wechatState.friendList.find(f => f.id === session.members[0]);
                             }
+
                             if (friend) {
                                 speakerId = friend.id;
                                 speakerName = friend.remark || friend.name;
