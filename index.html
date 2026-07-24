@@ -11198,7 +11198,9 @@ Structure:
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
-      "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" } // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
+      "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
+      "food_payment": { "item": "物品名", "amount": "金额" }, // OPTIONAL: 如果你想让玩家替你付外卖代付，发这个请求
+      "food_delivery": { "item": "物品名", "amount": "金额", "eta": "预计送达时间", "remark": "备注" } // OPTIONAL: 如果你给玩家点了外卖，发这个订单卡片
     }
   ],
   "fake_image": "OPTIONAL: description...",
@@ -11226,6 +11228,8 @@ Structure:
   "fake_image": "OPTIONAL: description...",
   "red_packet": { "amount": "8.88", "count": 3, "note": "Happy Day" }, // OPTIONAL: 发红包。群聊时请必须加上 count (红包个数)
   "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。群聊时请必须用 target_user 明确指出这笔钱是转给谁的(可填'我'或某个NPC名)
+  "food_payment": { "item": "冰美式", "amount": "20.00" }, // OPTIONAL: 如果你想让玩家替你付外卖代付，发这个请求
+  "food_delivery": { "item": "全家桶", "amount": "88.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 如果你给玩家点了外卖，发这个订单卡片
   "location": { "name": "Place Name", "address": "Detailed Address" },
   "qinmi_reply": "accept" OR "reject",
   "music_control": "next" OR "prev" OR "stop",
@@ -11461,6 +11465,38 @@ Structure:
                         };
                         session.messages.push(tfMsg);
                         session.lastMessage = '[微信转账]';
+                    }
+
+                    // === 处理外卖代付与已点外卖 ===
+                    if (block.food_payment) {
+                        const fpMsg = {
+                            type: 'food_payment',
+                            item: block.food_payment.item || "外卖订单",
+                            amount: block.food_payment.amount || "20.00",
+                            status: 'pending',
+                            isSelf: false,
+                            time: Date.now(),
+                            avatar: speakerAvatar,
+                            name: speakerName
+                        };
+                        session.messages.push(fpMsg);
+                        session.lastMessage = '[代付请求]';
+                    }
+                    
+                    if (block.food_delivery) {
+                        const fdMsg = {
+                            type: 'food_delivery',
+                            item: block.food_delivery.item || "爱心外卖",
+                            amount: block.food_delivery.amount || "0.00",
+                            eta: block.food_delivery.eta || "尽快送达",
+                            remark: block.food_delivery.remark || "",
+                            isSelf: false,
+                            time: Date.now(),
+                            avatar: speakerAvatar,
+                            name: speakerName
+                        };
+                        session.messages.push(fdMsg);
+                        session.lastMessage = '[购物订单]';
                     }
 
                     // 清理过滤多余垃圾字符
