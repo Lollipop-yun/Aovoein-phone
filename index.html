@@ -2191,10 +2191,10 @@
                     <h1 class="font-medium text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">群资料管理</h1>
                 </header>
 
-                <div class="flex-1 overflow-y-auto px-4 pb-12 space-y-6 pt-6">
-
+                <div class="flex-1 overflow-y-auto px-4 pb-12 space-y-6 pt-2">
+                    
                     <!-- 居中群头像区域 -->
-                    <div class="flex flex-col items-center justify-center">
+                    <div class="flex flex-col items-center justify-center mt-6">
                         <div class="w-20 h-20 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shadow-sm cursor-pointer" @click="$refs.groupAvatarInput2.click()">
                             <img :src="groupProfileModal.avatar" class="w-full h-full object-cover">
                         </div>
@@ -2219,19 +2219,18 @@
 
                     <!-- 详细资料卡片 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-50 px-4">
-                        <div class="flex flex-col py-4 cursor-pointer relative" @click="showInput('修改群介绍', groupProfileModal.bio, '在这里，发现更多~', (v) => { if(v){ groupProfileModal.bio=v; saveGroupProfile(); } }, 'textarea')">
+                        <div class="flex flex-col py-4 cursor-pointer relative" @click="showInput('修改群介绍', groupProfileModal.bio, '在这里，发现更多~', (v) => { if(v){ groupProfileModal.bio=v; saveGroupProfile(); } })">
                             <span class="text-[16px] text-gray-900 mb-1">群介绍</span>
                             <span class="text-[14px] text-gray-400 truncate w-[90%]">{{ groupProfileModal.bio || '在这里，发现更多~' }}</span>
                             <i class="fas fa-chevron-right text-gray-300 text-sm absolute right-0 top-1/2 -translate-y-1/2"></i>
                         </div>
-
-                        <!-- 新增群公告入口 -->
-                        <div class="flex flex-col py-4 cursor-pointer relative" @click="showInput('群公告', wechatState.activeSession?.groupNotice, '请输入需要置顶显示的群公告内容', (v) => { if(v !== undefined && wechatState.activeSession){ wechatState.activeSession.groupNotice=v; saveData(); } }, 'textarea')">
-                            <span class="text-[16px] text-gray-900 mb-1">群公告</span>
-                            <span class="text-[14px] text-gray-400 truncate w-[90%]">{{ wechatState.activeSession?.groupNotice || '未设置' }}</span>
-                            <i class="fas fa-chevron-right text-gray-300 text-sm absolute right-0 top-1/2 -translate-y-1/2"></i>
+                        <div class="flex justify-between items-center py-4 cursor-pointer" @click="editGroupAnnouncement">
+                            <span class="text-[16px] text-gray-900">群公告</span>
+                            <div class="flex items-center gap-2 max-w-[50%]">
+                                <span class="text-[14px] text-gray-400 truncate">{{ wechatState.activeSession?.announcement || '未设置' }}</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                            </div>
                         </div>
-
                         <div class="flex justify-between items-center py-4 cursor-pointer">
                             <span class="text-[16px] text-gray-900">群分类</span>
                             <div class="flex items-center gap-2">
@@ -3616,18 +3615,12 @@
                     </div>
                 </header>                               
                 
-                <!-- 群公告横幅 (仅群聊且有公告时显示) -->
-                <div v-if="wechatState.activeSession.isGroup && wechatState.activeSession.groupNotice" class="px-3 py-2.5 bg-[#fdfdfd] z-20 shrink-0 flex justify-center w-full border-b border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-                    <div class="w-[98%] bg-gray-50/90 rounded-[10px] px-3 py-2 flex items-center justify-between border border-gray-200/60 shadow-[inset_0_1px_3px_rgba(0,0,0,0.02)] relative">
-                        <div class="flex-1 min-w-0 flex items-center text-[13px] text-gray-700 font-medium">
-                            <span class="text-orange-400 font-bold shrink-0 mr-2.5">群公告</span>
-                            <span class="text-gray-300 mr-2.5 font-light">|</span>
-                            <span class="truncate flex-1">{{ wechatState.activeSession.groupNotice }}</span>
-                        </div>
-                        <i class="fas fa-times text-gray-400 p-1 cursor-pointer active:scale-95 shrink-0 ml-2" @click="wechatState.activeSession.groupNotice = ''; saveData();"></i>
-                    </div>
+                <!-- 群公告 Banner (iOS 简约灰白风，仅群聊显示) -->
+                <div v-if="wechatState.activeSession?.isGroup && wechatState.activeSession?.announcement" class="bg-white border border-gray-100 px-3 py-2 flex items-center justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-20 shrink-0 mx-3 mt-3 mb-1 rounded-[12px]">
+                    <span class="text-[13px] text-gray-700 font-medium truncate flex-1">群公告 | {{ wechatState.activeSession.announcement }}</span>
+                    <i class="fas fa-times text-gray-300 ml-3 cursor-pointer text-sm p-1 active:scale-90 transition" @click="wechatState.activeSession.announcement = ''; saveData();"></i>
                 </div>
-
+                               
                 <!-- 聊天容器：支持自定义背景图 -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-2 bg-[#fdfdfd] bg-cover bg-center" ref="chatContainer" @click="closeChatMenus"
                      :style="{ backgroundImage: wechatState.activeSession.wallpaper ? 'url(' + wechatState.activeSession.wallpaper + ')' : '' }">
@@ -8685,6 +8678,23 @@ const app = createApp({
             }
             this.groupProfileModal.show = false;
         },
+        editGroupAnnouncement() {
+            const session = this.wechatState.activeSession;
+            if(!session) return;
+            this.showInput('群公告', session.announcement || '', '请输入群待办或公告事项...', (val) => {
+                session.announcement = val;
+                if (val) {
+                    session.messages.push({
+                        type: 'system',
+                        content: `[系统提示] 群主更新了群公告: ${val}`,
+                        time: Date.now()
+                    });
+                    this.scrollToBottom();
+                }
+                this.saveData();
+                this.showToast('群公告已更新');
+            }, 'textarea');
+        },
         confirmDismissGroup() {
             this.showConfirm('确定解散并退出群聊吗？聊天记录将被永久清除。', () => {
                 const sid = this.wechatState.activeSession.id;
@@ -9390,9 +9400,8 @@ const app = createApp({
                 if (!currentSession.membersInfo['mine']) currentSession.membersInfo['mine'] = { level: 1, customTitle: '', lastLevelDate: '' };
                 const today = new Date().toLocaleDateString();
                 if (currentSession.membersInfo['mine'].lastLevelDate !== today) {
-                    if (currentSession.membersInfo['mine'].lastLevelDate) { // 如果不是创建以来的第一天说话，才允许升1级
-                        if (currentSession.membersInfo['mine'].level < 100) currentSession.membersInfo['mine'].level++;
-                    }
+                    currentSession.membersInfo['mine'].level = (currentSession.membersInfo['mine'].level || 1) + 1;
+                    if (currentSession.membersInfo['mine'].level > 100) currentSession.membersInfo['mine'].level = 100;
                     currentSession.membersInfo['mine'].lastLevelDate = today;
                 }
             }
@@ -11159,29 +11168,27 @@ const app = createApp({
 You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).
 - YOU ARE THE GROUP OWNER. Members marked as "Muted: YES" MUST NOT speak in this round!
 - Members marked as "Admin: YES" can kick or mute other NPCs.
-- 【极度重要：群聊高强度互动】：不要只围着我（玩家）一个人说话！群里的角色和角色之间也必须经常互相开玩笑、互怼、八卦！你们可以互相艾特对方（例如在句子里说 "@XXX 别闹了"），展现出一个真实活跃的朋友圈子！
-【防串皮绝对禁止指令】：每个人只能以自己的身份说话！绝对禁止角色A顶着角色B的名字发言，绝对禁止在 reply 中混入其他角色的语气，绝对禁止输出列表中不存在的名字！谁说话，speaker 就是谁的名字。
+- 【极度重要：群内高强度羁绊与互动】：绝对不要只围着我（玩家）一个人说话！群里的角色和角色之间也必须经常互相开玩笑、互怼、八卦！如果其他角色说话了，你可以对他的话做出反应并用 "@名字" 艾特他！请展现出一个真实活跃的小圈子！
+- 【身份扮演防夺舍铁律】：你现在同时接管群里的所有NPC大脑。每次发消息时，必须确保你的言论和 speaker 字段里的角色名字【绝对一一对应】！绝不允许出现A用B的名字发言，或者A模仿B说话！如果有多个人要说话，请在 group_replies 里独立输出多个对象，每个人一个对象！
 <GROUP_MEMBERS_LIST>\n${membersInfo}\n</GROUP_MEMBERS_LIST>
 </GROUP_CHAT_RULES>`;
             } else {
                 roleIdentity = `Your Identity: ${friend ? friend.name : session.name}.${friendExtra} Your Bio: ${friend ? friend.bio : 'None'}.`;
             }
             // ============================
-
-            let groupNoticeContext = "";
-            if (session.isGroup && session.groupNotice) {
-                groupNoticeContext = `\n【当前群公告】：“${session.groupNotice}”。群公告是置顶的，所有群成员都能看到，你们可以在聊天中自然地提起、讨论或回应群公告的内容。`;
+            
+            // == 【群公告感知构建】 ==
+            let announcementContext = "";
+            if (session.isGroup && session.announcement) {
+                announcementContext = `\n【重要群公告】：当前群聊置顶了一条群公告：“${session.announcement}”。群内所有的角色都可以看到这个公告，请在接下来的聊天中根据人设自然地讨论、调侃或对这个公告做出反应！`;
             }
+            // ============================
 
-            // 覆盖原有的时间上下文提示，强化时差感知
-            timeContext = `\n[系统提示-时间与时区严格感知]:
+            let timeContext = `\n[系统提示-时间与时区严格感知]:
 我(玩家)当前的当地时间是：${formatTzDate(myDate)}。
 你(角色)当前的当地时间是：${formatTzDate(aiDate)}。
-【绝对时间纪律警告！！！】：你必须且只能以【你当前的当地时间（${formatTzDate(aiDate)}）】作为你此时此刻生活作息、所处环境亮暗、吃饭睡觉的唯一衡量标准！
-- 如果你那里是 00:00~05:00，说明是凌晨/深夜，你应该睡觉或犯困！
-- 如果你那里是 06:00~10:00，说明是早晨，你应该刚醒或吃早饭！
-- 如果你那里是 12:00 左右，说明是正午！
-千万不要被我的时间带偏，不要主动提时差问题，自然地基于【你当前的当地时间】做出反应，绝对不能把凌晨当成正午，否则判定严重OOC！`;
+【跨国/异地时区绝对强制约束】：请深呼吸，仔细看清楚你的时间是 ${formatTzDate(aiDate)}！你必须且只能以【你当前的当地时间】作为你此时此刻生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
+绝不能被我(玩家)的时间带偏！即使我这边是白天，只要你那边是半夜，你就必须处于半夜的状态！如果违背此时区设定将受到严重惩罚！`;
 
             let systemPrompt = `[UNIVERSAL ROLEPLAY SYSTEM PROMPT (RULE LAYER)]
 You are NO LONGER an AI. You are a real, living person chatting on a modern messaging app. You must strictly follow these core rules:
@@ -11203,8 +11210,8 @@ ${roleIdentity}
 My (User) Identity: ${mask.name}.${maskExtra} My Bio: ${mask.bio}.
 ${worldContext}
 ${momentContext}
+${announcementContext}
 ${timeContext}
-${groupNoticeContext}
 ${timeGapContext}
 ${musicContext}
 ${diaryContext}
@@ -11214,7 +11221,7 @@ ${crossChatContext}
 ${batteryContext}
 ${blockContext}
 ${relationContext}
-</ENVIRONMENT_CONTEXT>`;
+</ENVIRONMENT_CONTEXT>
 
 IMPORTANT: You must output ONLY a valid JSON object. No Markdown. No other text.
 ${session.isGroup ? `
@@ -11803,15 +11810,14 @@ Structure:
                                  }
                              }
                              
-                             // 【新增】群聊AI发消息升1级 (隔天发消息才升)
+                             // 【新增】群聊AI发消息升1级
                              if (session.isGroup && speakerId) {
                                  if (!session.membersInfo) session.membersInfo = {};
                                  if (!session.membersInfo[speakerId]) session.membersInfo[speakerId] = { level: 1, customTitle: '', lastLevelDate: '' };
                                  const today = new Date().toLocaleDateString();
                                  if (session.membersInfo[speakerId].lastLevelDate !== today) {
-                                     if (session.membersInfo[speakerId].lastLevelDate) { // 非首日发言才升级
-                                         if (session.membersInfo[speakerId].level < 100) session.membersInfo[speakerId].level++;
-                                     }
+                                     session.membersInfo[speakerId].level = (session.membersInfo[speakerId].level || 1) + 1;
+                                     if (session.membersInfo[speakerId].level > 100) session.membersInfo[speakerId].level = 100;
                                      session.membersInfo[speakerId].lastLevelDate = today;
                                  }
                              }
