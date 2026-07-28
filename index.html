@@ -41,7 +41,7 @@
         }
         /* ==================== 全局配置 ==================== */
         body { 
-            background-color: #000; 
+            background-color: #ffffff; /* 修改为白色，解决从桌面打开时底部的黑边问题 */
             color: #000; 
             font-family: var(--custom-font, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif);
             -webkit-tap-highlight-color: transparent; 
@@ -69,27 +69,28 @@
 
         .splash-english {
             position: absolute;
-            top: 38%;
+            top: 35%; /* 稍微往上提一点点，给下方留足空间 */
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 90%;
+            width: 95%;
             font-family: 'SplashEnglish', sans-serif;
-            font-size: clamp(22px, 6.5vw, 34px);
+            font-size: clamp(28px, 8.5vw, 42px); /* 明显放大英文字体 */
             color: #111;
             opacity: 0;
             animation: splashFadeIn 2.5s ease-out 0.5s forwards;
             text-align: center;
-            line-height: 1.6;
+            line-height: 1.8; /* 调整行高适应大字体 */
         }
 
         .splash-chinese {
             position: absolute;
-            top: 58%;
+            top: 72%; /* 将中文大幅下移，处于屏幕下半部分 */
             left: 50%;
             transform: translate(-50%, -50%);
             width: 90%;
-            font-family: 'YSTFont', 'Kaiti SC', serif;
-            font-size: clamp(14px, 4vw, 18px);
+            /* 删除了手写字体设定，让其默认使用苹果/安卓系统原生UI字体 */
+            font-size: clamp(16px, 4.5vw, 22px); /* 放大中文字体 */
+            font-weight: 500;
             color: #666;
             letter-spacing: 4px;
             opacity: 0;
@@ -513,14 +514,14 @@
 <div id="loading-screen">
     <div class="splash-english" id="splash-sentence">
         <div>
+            <!-- 第一行：Charate bonds override -->
             <span class="word"><span>C</span><span>h</span><span class="target-l">a</span><span>r</span><span>a</span><span>t</span><span>e</span></span>&nbsp;
-            <span class="word"><span>b</span><span class="target-l">o</span><span>n</span><span>d</span><span>s</span></span>
+            <span class="word"><span>b</span><span class="target-l">o</span><span>n</span><span>d</span><span>s</span></span>&nbsp;
+            <span class="word"><span>o</span><span class="target-l">v</span><span>e</span><span>r</span><span>r</span><span>i</span><span>d</span><span>e</span></span>
         </div>
-        <div style="margin-top: 6px;">
-            <span class="word"><span>o</span><span class="target-l">v</span><span>e</span><span>r</span><span>r</span><span>i</span><span>d</span><span>e</span></span>&nbsp;
-            <span class="word"><span>r</span><span class="target-l">e</span><span>a</span><span>l</span><span>m</span></span>
-        </div>
-        <div style="margin-top: 6px;">
+        <div style="margin-top: 16px;">
+            <!-- 第二行：realm lines bound -->
+            <span class="word"><span>r</span><span class="target-l">e</span><span>a</span><span>l</span><span>m</span></span>&nbsp;
             <span class="word"><span>l</span><span class="target-l">i</span><span>n</span><span>e</span><span>s</span></span>&nbsp;
             <span class="word"><span>b</span><span>o</span><span>u</span><span class="target-l">n</span><span>d</span></span>
         </div>
