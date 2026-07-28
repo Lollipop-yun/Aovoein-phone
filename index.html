@@ -53,86 +53,52 @@
         }
         [v-cloak] { display: none !important; }
 
-        /* ==================== Aovein 高级开屏动画 ==================== */
+        /* ==================== Aovein 加载页 ==================== */
+        @font-face {
+            font-family: 'AoveinIntroFont';
+            src: url('https://nos.netease.com/ysf/9f37324606bc54823be012ccb48f7b5d.ttf') format('truetype');
+            font-display: swap;
+        }
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #ffffff; z-index: 999999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.8s ease-out, visibility 0.8s;
-            font-family: var(--custom-font, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif);
         }
-
         .intro-container {
-            position: relative;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 200px;
+            position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; text-align: center;
         }
-
-        .intro-sentence {
-            font-size: 13px;
-            font-weight: 500;
+        .intro-en {
+            font-family: 'AoveinIntroFont', serif;
+            font-size: 32px;
             color: #111;
-            letter-spacing: 0.5px;
+            line-height: 1.3;
+            margin-bottom: 24px;
             opacity: 0;
-            animation: introFadeIn 1.2s ease-out 0.2s forwards, blurOutToCenter 1.2s cubic-bezier(0.4, 0, 0.2, 1) 3.2s forwards;
-            position: absolute;
-            white-space: nowrap;
+            animation: introFadeIn 1.5s ease-out forwards;
         }
-
+        .intro-en span {
+            display: inline-block; /* 极其重要：支持脱离文档流产生移动动画 */
+            transition: opacity 1.2s ease, color 1.2s ease;
+        }
         .intro-zh {
-            font-size: 11px;
-            color: #888;
+            font-family: 'YSTFont', 'Kaiti SC', serif;
+            font-size: 16px;
+            color: #666;
             letter-spacing: 3px;
-            margin-top: 50px;
             opacity: 0;
-            animation: introFadeIn 1.2s ease-out 1.2s forwards, introFadeOut 0.6s ease-in 2.6s forwards;
-            position: absolute;
-            white-space: nowrap;
+            animation: introFadeIn 1.5s ease-out 0.8s forwards;
+            transition: opacity 1s ease;
         }
-
-        .f-out, .f-space {
-            display: inline-block;
-            opacity: 1;
-            animation: introFadeOut 0.6s ease-in-out 2.6s forwards;
+        @keyframes introFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        .f-stay {
-            display: inline-block;
-            color: #000;
-            font-weight: bold;
-            transition: all 0.5s;
-        }
-
-        /* 控制六个核心字母向屏幕中心点聚拢的位移微调 */
-        .stay-a { animation: moveCenterA 0.8s cubic-bezier(0.4, 0, 0.2, 1) 2.8s forwards; }
-        .stay-o { animation: moveCenterO 0.8s cubic-bezier(0.4, 0, 0.2, 1) 2.8s forwards; }
-        .stay-v { animation: moveCenterV 0.8s cubic-bezier(0.4, 0, 0.2, 1) 2.8s forwards; }
-        .stay-e { animation: moveCenterE 0.8s cubic-bezier(0.4, 0, 0.2, 1) 2.8s forwards; }
-        .stay-i { animation: moveCenterI 0.8s cubic-bezier(0.4, 0, 0.2, 1) 2.8s forwards; }
-        .stay-n { animation: moveCenterN 0.8s cubic-bezier(0.4, 0, 0.2, 1) 2.8s forwards; }
-
-        @keyframes moveCenterA { to { transform: translateX(85px); } }
-        @keyframes moveCenterO { to { transform: translateX(45px); } }
-        @keyframes moveCenterV { to { transform: translateX(15px); } }
-        @keyframes moveCenterE { to { transform: translateX(-15px); } }
-        @keyframes moveCenterI { to { transform: translateX(-45px); } }
-        @keyframes moveCenterN { to { transform: translateX(-85px); } }
-
-        .final-aovein {
-            font-size: 42px;
-            font-weight: 300;
-            color: #000;
-            letter-spacing: 4px;
-            position: absolute;
-            opacity: 0;
-            transform: scale(0.9);
-            filter: blur(10px);
-            animation: finalLogoReveal 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 3.5s forwards;
-        }
+        .highlight-letter { font-weight: bold; color: #000; }
+        .fade-letter { color: #555; }
+        .progress-container { display: none; } /* 弃用旧版进度条 */
+        .progress-bar { display: none; }
 
         /* ==================== 激活界面 ==================== */
         #activation-screen {
@@ -157,11 +123,9 @@
         .hidden-screen { opacity: 0; pointer-events: none; visibility: hidden; }
 
         /* ==================== 动画与通用 ==================== */
-        @keyframes introFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes introFadeOut { from { opacity: 1; } to { opacity: 0; } }
-        @keyframes blurOutToCenter { 0% { opacity: 1; filter: blur(0px); transform: scale(1); } 100% { opacity: 0; filter: blur(8px); transform: scale(1.1); } }
-        @keyframes finalLogoReveal { 0% { opacity: 0; transform: scale(0.95); filter: blur(10px); } 100% { opacity: 1; transform: scale(1); filter: blur(0px); } }
-        @keyframes fadeInDisclaimer { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInTitle { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInBar { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes progressFill { 0% { width: 0%; } 100% { width: 100%; } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
         @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-3px); } }
         .typing-dot { display: inline-block; animation: typing-bounce 1.4s infinite ease-in-out both; margin: 0 1px; }
@@ -497,27 +461,84 @@
 
 <!-- Aovein 启动加载页 -->
 <div id="loading-screen">
-    <div class="intro-container">
-        <!-- 英文句子，拆分需要提取的字母 -->
-        <div class="intro-sentence">
-            <span class="w-group"><span class="f-out">Ch</span><span class="f-stay stay-a">a</span><span class="f-out">rate</span></span><span class="f-space">&nbsp;</span>
-            <span class="w-group"><span class="f-out">b</span><span class="f-stay stay-o">o</span><span class="f-out">nds</span></span><span class="f-space">&nbsp;</span>
-            <span class="w-group"><span class="f-out">o</span><span class="f-stay stay-v">v</span><span class="f-out">erride</span></span><span class="f-space">&nbsp;</span>
-            <span class="w-group"><span class="f-out">r</span><span class="f-stay stay-e">e</span><span class="f-out">alm</span></span><span class="f-space">&nbsp;</span>
-            <span class="w-group"><span class="f-out">l</span><span class="f-stay stay-i">i</span><span class="f-out">nes</span></span><span class="f-space">&nbsp;</span>
-            <span class="w-group"><span class="f-out">bou</span><span class="f-stay stay-n">n</span><span class="f-out">d</span></span>
-        </div>
-        <!-- 中文翻译 -->
-        <div class="intro-zh">真挚情意缔结的羁绊，跨越次元界限</div>
-        <!-- 最终成型的 Logo -->
-        <div class="final-aovein">Aovein</div>
+    <!-- 聚拢动画目标的隐形定位锚点 -->
+    <div id="target-aovein" style="position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); font-family: 'AoveinIntroFont', serif; font-size: 60px; color: transparent; pointer-events: none; white-space: nowrap; display: flex; gap: 0px; z-index: -1;">
+        <span id="t-0">A</span><span id="t-1">o</span><span id="t-2">v</span><span id="t-3">e</span><span id="t-4">i</span><span id="t-5">n</span>
     </div>
-    <!-- 版权及免责声明 -->
-    <div style="position: absolute; bottom: 50px; text-align: center; color: #999; font-size: 12px; line-height: 1.8; width: 100%; padding: 0 20px; box-sizing: border-box; animation: fadeInDisclaimer 1s ease-out 3.5s forwards; opacity: 0;">
+
+    <!-- 句子展示区 -->
+    <div class="intro-container" id="intro-container">
+        <div class="intro-en" id="intro-en">
+            <span class="fade-letter">C</span><span class="fade-letter">h</span><span class="highlight-letter">a</span><span class="fade-letter">r</span><span class="fade-letter">a</span><span class="fade-letter">t</span><span class="fade-letter">e</span><span class="fade-letter">&nbsp;</span>
+            <span class="fade-letter">b</span><span class="highlight-letter">o</span><span class="fade-letter">n</span><span class="fade-letter">d</span><span class="fade-letter">s</span><span class="fade-letter">&nbsp;</span>
+            <span class="fade-letter">o</span><span class="highlight-letter">v</span><span class="fade-letter">e</span><span class="fade-letter">r</span><span class="fade-letter">r</span><span class="fade-letter">i</span><span class="fade-letter">d</span><span class="fade-letter">e</span><span class="fade-letter">&nbsp;</span>
+            <span class="fade-letter">r</span><span class="highlight-letter">e</span><span class="fade-letter">a</span><span class="fade-letter">l</span><span class="fade-letter">m</span><span class="fade-letter">&nbsp;</span>
+            <span class="fade-letter">l</span><span class="highlight-letter">i</span><span class="fade-letter">n</span><span class="fade-letter">e</span><span class="fade-letter">s</span><span class="fade-letter">&nbsp;</span>
+            <span class="fade-letter">b</span><span class="fade-letter">o</span><span class="fade-letter">u</span><span class="highlight-letter">n</span><span class="fade-letter">d</span>
+        </div>
+        <div class="intro-zh" id="intro-zh">真挚情意缔结的羁绊，跨越次元界限</div>
+    </div>
+    
+    <div style="position: absolute; bottom: 50px; text-align: center; color: #999; font-size: 12px; line-height: 1.8; width: 100%; padding: 0 20px; box-sizing: border-box; animation: fadeInBar 1s ease-out 0.5s forwards; opacity: 0;">
         <p>原作者小红书：@檩因冬信</p>
         <p style="font-size: 10px; margin-top: 6px; color: #aaa;">免责声明：使用者需自行承担使用本产品后的一切后果，<br>使用者做出的一切行为与原作者无关。</p>
     </div>
 </div>
+
+<!-- 开屏聚拢动画核心引擎 -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // 等待 2.5 秒让人阅读，然后触发聚变
+        setTimeout(() => {
+            const enContainer = document.getElementById('intro-en');
+            const zhText = document.getElementById('intro-zh');
+            const highlights = document.querySelectorAll('.highlight-letter');
+            const fadeLetters = document.querySelectorAll('.fade-letter');
+            
+            if (!enContainer) return;
+
+            // 1. 尘埃落定：淡出中文和不相关的英文字母
+            zhText.style.opacity = '0';
+            fadeLetters.forEach(el => el.style.opacity = '0');
+
+            // 2. 坐标锁定：锁定这6个字母当前的绝对物理坐标
+            const startRects = Array.from(highlights).map(el => el.getBoundingClientRect());
+            
+            // 3. 防塌陷：固定父容器宽高，防止非关键字母消失后文字因为流式布局乱跳
+            enContainer.style.width = enContainer.offsetWidth + 'px';
+            enContainer.style.height = enContainer.offsetHeight + 'px';
+
+            // 4. 获取终点坐标：读取我们预埋在正中间隐形的 "Aovein" 每一个字母的坐标
+            const targets = [];
+            for(let i = 0; i < 6; i++) {
+                targets.push(document.getElementById('t-' + i).getBoundingClientRect());
+            }
+
+            // 5. 灵魂剥离：将6个关键字母脱离文档流，定在它们此刻所在的屏幕位置
+            highlights.forEach((el, i) => {
+                el.style.position = 'fixed';
+                el.style.left = startRects[i].left + 'px';
+                el.style.top = startRects[i].top + 'px';
+                el.style.margin = '0';
+                
+                // 首字母蜕变为大写
+                if (i === 0) el.innerText = 'A';
+
+                // 赋予优雅的贝塞尔曲线弹射动画
+                el.style.transition = 'all 1.4s cubic-bezier(0.25, 1, 0.3, 1)';
+                
+                // 6. 万象归一：触发下一帧，命令它们向终点坐标飞去！
+                requestAnimationFrame(() => {
+                    el.style.left = targets[i].left + 'px';
+                    el.style.top = targets[i].top + 'px';
+                    el.style.fontSize = (window.innerWidth > 400 ? 60 : 54) + 'px'; // 最终变大的字号
+                    el.style.color = '#000';
+                    el.style.textShadow = '0 6px 20px rgba(0,0,0,0.15)'; // 增加高级落地阴影
+                });
+            });
+        }, 2800); // 留给用户 2.8 秒时间的阅读期
+    });
+</script>
 
 <!-- 全新激活界面 -->
 <div id="activation-screen" class="hidden-screen">
@@ -6847,20 +6868,20 @@ const app = createApp({
         
         this.imageUploadInput = document.createElement('input');
         this.imageUploadInput.type = 'file';
-            this.imageUploadInput.accept = 'image/*';
-            this.imageUploadInput.onchange = this.handleImageUploadForChat;
-            
-            // 设定 5500ms (5.5秒) 的等待时间，以匹配全新的高级开屏动画
-            setTimeout(() => {
-                const loader = document.getElementById('loading-screen');
-                if (loader) loader.style.opacity = '0';
-                if (typeof window.checkActivationState === 'function') {
-                    window.checkActivationState();
-                }
-                setTimeout(() => { if (loader) loader.style.display = 'none'; }, 800);
-            }, 5500);
+        this.imageUploadInput.accept = 'image/*';
+        this.imageUploadInput.onchange = this.handleImageUploadForChat;
+        
+        // 设定 5600ms 等待时间：保障完整的阅读 + 字母聚拢组合成 Aovein 的特效播完
+        setTimeout(() => {
+            const loader = document.getElementById('loading-screen');
+            if (loader) loader.style.opacity = '0';
+            if (typeof window.checkActivationState === 'function') {
+                window.checkActivationState();
+            }
+            setTimeout(() => { if (loader) loader.style.display = 'none'; }, 800);
+        }, 5600);
 
-            this.updateTime(); this.timer = setInterval(this.updateTime, 1000); this.initBattery(); this.fetchWeather();
+        this.updateTime(); this.timer = setInterval(this.updateTime, 1000); this.initBattery(); this.fetchWeather();
         
         this.generateSTDeviceId();
         
