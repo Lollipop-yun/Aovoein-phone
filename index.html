@@ -28,7 +28,7 @@
     /* 注入专属手写字体 */
         @font-face {
             font-family: 'YSTFont';
-            src: url('https://nos.netease.com/ysf/2e19007268c0c586b9166a1b5f243511.ttf') format('truetype');
+            src: url('https://nos.netease.com/ysf/6c30cf13be055b12be89f26d775db519.ttf') format('truetype');
             font-display: swap;
         }
 
@@ -102,10 +102,10 @@
             top: 50%; /* 必须和英文保持一致在正中央，这样提取的字母才会飞往中间 */
             left: 50%;
             transform: translate(-50%, -50%);
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-            font-size: clamp(40px, 11vw, 54px);
-            font-weight: 300;
-            letter-spacing: 6px;
+            font-family: 'SplashEnglish', sans-serif; /* 改为与英文诗句同款的花体字 */
+            font-size: clamp(45px, 12vw, 60px); /* 花体字相对较小，这里适当放大 */
+            font-weight: normal; /* 去掉细体设定，完美适配花体 */
+            letter-spacing: 2px; /* 花体字母间距调小一些更连贯自然 */
             color: #000;
             display: flex;
             opacity: 0; /* JS动画结束后显示 */
@@ -591,11 +591,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 fill: 'both'
             });
 
-            // 飞行中途平滑过渡大小写与现代无衬线字体
+            // 飞行中途平滑过渡大小写 (全程保持花体字效果)
             setTimeout(() => {
                 clone.innerText = endEl.innerText; 
-                clone.style.fontFamily = '-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif';
-                clone.style.fontWeight = '300';
             }, 900);
 
             anim.onfinish = () => {
