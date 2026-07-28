@@ -53,52 +53,109 @@
         }
         [v-cloak] { display: none !important; }
 
-        /* ==================== Aovein 加载页 ==================== */
+        /* 注入开屏专属英文字体 */
         @font-face {
-            font-family: 'AoveinIntroFont';
-            src: url('https://nos.netease.com/ysf/9f37324606bc54823be012ccb48f7b5d.ttf') format('truetype');
+            font-family: 'AoveinSplashEng';
+            src: url('https://nos.netease.com/ysf/a95b14ed1db1017144e039b4f16ee6f4.ttf') format('truetype');
             font-display: swap;
         }
+
+        /* ==================== Aovein 加载页 ==================== */
         #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #ffffff; z-index: 999999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.8s ease-out, visibility 0.8s;
+            overflow: hidden;
         }
-        .intro-container {
-            position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%);
-            width: 85%; text-align: center;
+        
+        .splash-content {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        .intro-en {
-            font-family: 'AoveinIntroFont', serif;
-            font-size: 32px;
+
+        .sentence-wrapper {
+            position: absolute;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            width: 85%;
+            animation: sentenceOut 1.5s cubic-bezier(0.4, 0, 0.2, 1) 3s forwards;
+        }
+
+        .en-sentence {
+            font-family: 'AoveinSplashEng', serif;
+            font-size: 26px; 
+            line-height: 1.4;
             color: #111;
-            line-height: 1.3;
-            margin-bottom: 24px;
+            letter-spacing: 0.5px;
             opacity: 0;
-            animation: introFadeIn 1.5s ease-out forwards;
+            animation: fadeInSplash 1.2s ease-out 0.2s forwards;
         }
-        .intro-en span {
-            display: inline-block; /* 极其重要：支持脱离文档流产生移动动画 */
-            transition: opacity 1.2s ease, color 1.2s ease;
-        }
-        .intro-zh {
-            font-family: 'YSTFont', 'Kaiti SC', serif;
-            font-size: 16px;
+
+        .cn-sentence {
+            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
+            font-size: 14px;
             color: #666;
             letter-spacing: 3px;
             opacity: 0;
-            animation: introFadeIn 1.5s ease-out 0.8s forwards;
-            transition: opacity 1s ease;
+            animation: fadeInSplash 1.2s ease-out 0.8s forwards;
         }
-        @keyframes introFadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .g-fade {
+            transition: all 1s ease;
+            animation: textDim 1.2s ease-in-out 1.8s forwards;
         }
-        .highlight-letter { font-weight: bold; color: #000; }
-        .fade-letter { color: #555; }
-        .progress-container { display: none; } /* 弃用旧版进度条 */
-        .progress-bar { display: none; }
+
+        .g-keep {
+            transition: all 1s ease;
+            animation: textGlow 1.2s ease-in-out 1.8s forwards;
+            display: inline-block;
+        }
+        
+        .g-keep.upper {
+            text-transform: uppercase;
+        }
+
+        .logo-wrapper {
+            position: absolute;
+            font-family: 'AoveinSplashEng', serif;
+            font-size: 52px;
+            color: #000;
+            opacity: 0;
+            animation: logoIn 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 3.5s forwards;
+        }
+
+        @keyframes fadeInSplash {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes textDim {
+            0% { opacity: 1; filter: blur(0); }
+            100% { opacity: 0; filter: blur(4px); }
+        }
+
+        @keyframes textGlow {
+            0% { color: #111; text-shadow: none; transform: scale(1); }
+            100% { color: #000; text-shadow: 0 0 12px rgba(0,0,0,0.25); transform: scale(1.15); }
+        }
+
+        @keyframes sentenceOut {
+            0% { opacity: 1; filter: blur(0); transform: scale(1); }
+            100% { opacity: 0; filter: blur(10px); transform: scale(1.05); }
+        }
+
+        @keyframes logoIn {
+            0% { opacity: 0; letter-spacing: 20px; filter: blur(10px); transform: scale(0.9); }
+            100% { opacity: 1; letter-spacing: 4px; filter: blur(0); transform: scale(1); }
+        }
 
         /* ==================== 激活界面 ==================== */
         #activation-screen {
@@ -459,86 +516,26 @@
 </head>
 <body>
 
-<!-- Aovein 启动加载页 -->
+<!-- Aovein 启动加载页 (全新高级动画) -->
 <div id="loading-screen">
-    <!-- 聚拢动画目标的隐形定位锚点 -->
-    <div id="target-aovein" style="position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%); font-family: 'AoveinIntroFont', serif; font-size: 60px; color: transparent; pointer-events: none; white-space: nowrap; display: flex; gap: 0px; z-index: -1;">
-        <span id="t-0">A</span><span id="t-1">o</span><span id="t-2">v</span><span id="t-3">e</span><span id="t-4">i</span><span id="t-5">n</span>
-    </div>
-
-    <!-- 句子展示区 -->
-    <div class="intro-container" id="intro-container">
-        <div class="intro-en" id="intro-en">
-            <span class="fade-letter">C</span><span class="fade-letter">h</span><span class="highlight-letter">a</span><span class="fade-letter">r</span><span class="fade-letter">a</span><span class="fade-letter">t</span><span class="fade-letter">e</span><span class="fade-letter">&nbsp;</span>
-            <span class="fade-letter">b</span><span class="highlight-letter">o</span><span class="fade-letter">n</span><span class="fade-letter">d</span><span class="fade-letter">s</span><span class="fade-letter">&nbsp;</span>
-            <span class="fade-letter">o</span><span class="highlight-letter">v</span><span class="fade-letter">e</span><span class="fade-letter">r</span><span class="fade-letter">r</span><span class="fade-letter">i</span><span class="fade-letter">d</span><span class="fade-letter">e</span><span class="fade-letter">&nbsp;</span>
-            <span class="fade-letter">r</span><span class="highlight-letter">e</span><span class="fade-letter">a</span><span class="fade-letter">l</span><span class="fade-letter">m</span><span class="fade-letter">&nbsp;</span>
-            <span class="fade-letter">l</span><span class="highlight-letter">i</span><span class="fade-letter">n</span><span class="fade-letter">e</span><span class="fade-letter">s</span><span class="fade-letter">&nbsp;</span>
-            <span class="fade-letter">b</span><span class="fade-letter">o</span><span class="fade-letter">u</span><span class="highlight-letter">n</span><span class="fade-letter">d</span>
+    <div class="splash-content">
+        <div class="sentence-wrapper">
+            <div class="en-sentence">
+                <span class="g-fade">Ch</span><span class="g-keep upper">a</span><span class="g-fade">rate b</span><span class="g-keep">o</span><span class="g-fade">nds o</span><span class="g-keep">v</span><span class="g-keep">e</span><span class="g-fade">rr</span><span class="g-keep">i</span><span class="g-fade">de realm li</span><span class="g-keep">n</span><span class="g-fade">es bound</span>
+            </div>
+            <div class="cn-sentence">真挚情意缔结的羁绊，跨越次元界限</div>
         </div>
-        <div class="intro-zh" id="intro-zh">真挚情意缔结的羁绊，跨越次元界限</div>
+        <div class="logo-wrapper">
+            Aovein
+        </div>
     </div>
     
-    <div style="position: absolute; bottom: 50px; text-align: center; color: #999; font-size: 12px; line-height: 1.8; width: 100%; padding: 0 20px; box-sizing: border-box; animation: fadeInBar 1s ease-out 0.5s forwards; opacity: 0;">
+    <!-- 下方为版权及免责声明 (延后到 Logo 出现时浮现) -->
+    <div style="position: absolute; bottom: 50px; text-align: center; color: #999; font-size: 12px; line-height: 1.8; width: 100%; padding: 0 20px; box-sizing: border-box; animation: fadeInBar 1.2s ease-out 3.5s forwards; opacity: 0;">
         <p>原作者小红书：@檩因冬信</p>
         <p style="font-size: 10px; margin-top: 6px; color: #aaa;">免责声明：使用者需自行承担使用本产品后的一切后果，<br>使用者做出的一切行为与原作者无关。</p>
     </div>
 </div>
-
-<!-- 开屏聚拢动画核心引擎 -->
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        // 等待 2.5 秒让人阅读，然后触发聚变
-        setTimeout(() => {
-            const enContainer = document.getElementById('intro-en');
-            const zhText = document.getElementById('intro-zh');
-            const highlights = document.querySelectorAll('.highlight-letter');
-            const fadeLetters = document.querySelectorAll('.fade-letter');
-            
-            if (!enContainer) return;
-
-            // 1. 尘埃落定：淡出中文和不相关的英文字母
-            zhText.style.opacity = '0';
-            fadeLetters.forEach(el => el.style.opacity = '0');
-
-            // 2. 坐标锁定：锁定这6个字母当前的绝对物理坐标
-            const startRects = Array.from(highlights).map(el => el.getBoundingClientRect());
-            
-            // 3. 防塌陷：固定父容器宽高，防止非关键字母消失后文字因为流式布局乱跳
-            enContainer.style.width = enContainer.offsetWidth + 'px';
-            enContainer.style.height = enContainer.offsetHeight + 'px';
-
-            // 4. 获取终点坐标：读取我们预埋在正中间隐形的 "Aovein" 每一个字母的坐标
-            const targets = [];
-            for(let i = 0; i < 6; i++) {
-                targets.push(document.getElementById('t-' + i).getBoundingClientRect());
-            }
-
-            // 5. 灵魂剥离：将6个关键字母脱离文档流，定在它们此刻所在的屏幕位置
-            highlights.forEach((el, i) => {
-                el.style.position = 'fixed';
-                el.style.left = startRects[i].left + 'px';
-                el.style.top = startRects[i].top + 'px';
-                el.style.margin = '0';
-                
-                // 首字母蜕变为大写
-                if (i === 0) el.innerText = 'A';
-
-                // 赋予优雅的贝塞尔曲线弹射动画
-                el.style.transition = 'all 1.4s cubic-bezier(0.25, 1, 0.3, 1)';
-                
-                // 6. 万象归一：触发下一帧，命令它们向终点坐标飞去！
-                requestAnimationFrame(() => {
-                    el.style.left = targets[i].left + 'px';
-                    el.style.top = targets[i].top + 'px';
-                    el.style.fontSize = (window.innerWidth > 400 ? 60 : 54) + 'px'; // 最终变大的字号
-                    el.style.color = '#000';
-                    el.style.textShadow = '0 6px 20px rgba(0,0,0,0.15)'; // 增加高级落地阴影
-                });
-            });
-        }, 2800); // 留给用户 2.8 秒时间的阅读期
-    });
-</script>
 
 <!-- 全新激活界面 -->
 <div id="activation-screen" class="hidden-screen">
@@ -6871,7 +6868,7 @@ const app = createApp({
         this.imageUploadInput.accept = 'image/*';
         this.imageUploadInput.onchange = this.handleImageUploadForChat;
         
-        // 设定 5600ms 等待时间：保障完整的阅读 + 字母聚拢组合成 Aovein 的特效播完
+        // 设定 6000ms (6秒) 的等待时间，配合高级演绎动画
         setTimeout(() => {
             const loader = document.getElementById('loading-screen');
             if (loader) loader.style.opacity = '0';
@@ -6879,7 +6876,7 @@ const app = createApp({
                 window.checkActivationState();
             }
             setTimeout(() => { if (loader) loader.style.display = 'none'; }, 800);
-        }, 5600);
+        }, 6000);
 
         this.updateTime(); this.timer = setInterval(this.updateTime, 1000); this.initBattery(); this.fetchWeather();
         
