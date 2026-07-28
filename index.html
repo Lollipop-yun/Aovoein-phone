@@ -69,27 +69,26 @@
 
         .splash-english {
             position: absolute;
-            top: 35%; /* 稍微往上提一点点，给下方留足空间 */
+            top: 50%; /* 位于手机屏幕正中央 */
             left: 50%;
             transform: translate(-50%, -50%);
             width: 95%;
             font-family: 'SplashEnglish', sans-serif;
-            font-size: clamp(28px, 8.5vw, 42px); /* 明显放大英文字体 */
+            font-size: clamp(28px, 8.5vw, 42px);
             color: #111;
             opacity: 0;
             animation: splashFadeIn 2.5s ease-out 0.5s forwards;
             text-align: center;
-            line-height: 1.8; /* 调整行高适应大字体 */
+            line-height: 1.8;
         }
 
         .splash-chinese {
             position: absolute;
-            top: 72%; /* 将中文大幅下移，处于屏幕下半部分 */
+            top: 85%; /* 调到屏幕最底部（在免责声明上方） */
             left: 50%;
             transform: translate(-50%, -50%);
             width: 90%;
-            /* 删除了手写字体设定，让其默认使用苹果/安卓系统原生UI字体 */
-            font-size: clamp(16px, 4.5vw, 22px); /* 放大中文字体 */
+            font-size: clamp(12px, 3.5vw, 15px); /* 字体调小，变得更精致 */
             font-weight: 500;
             color: #666;
             letter-spacing: 4px;
@@ -100,7 +99,7 @@
 
         .splash-logo {
             position: absolute;
-            top: 38%;
+            top: 50%; /* 必须和英文保持一致在正中央，这样提取的字母才会飞往中间 */
             left: 50%;
             transform: translate(-50%, -50%);
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
