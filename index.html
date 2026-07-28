@@ -53,108 +53,78 @@
         }
         [v-cloak] { display: none !important; }
 
-        /* 注入开屏专属英文字体 */
+        /* ==================== Aovein 开屏高级动画 ==================== */
         @font-face {
-            font-family: 'AoveinSplashEng';
+            font-family: 'AoveinIntroFont';
             src: url('https://nos.netease.com/ysf/a95b14ed1db1017144e039b4f16ee6f4.ttf') format('truetype');
             font-display: swap;
         }
 
-        /* ==================== Aovein 加载页 ==================== */
         #loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #ffffff; z-index: 999999;
+            position: fixed; inset: 0; background-color: #030303; z-index: 999999;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.8s ease-out, visibility 0.8s;
-            overflow: hidden;
+            transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1), visibility 1.2s;
+            color: white; overflow: hidden;
         }
         
-        .splash-content {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .sentence-wrapper {
-            position: absolute;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 24px;
-            width: 85%;
-            animation: sentenceOut 1.5s cubic-bezier(0.4, 0, 0.2, 1) 3s forwards;
+        .intro-container {
+            position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; width: 90%; max-width: 400px;
+            animation: fadeOutIntro 1.5s cubic-bezier(0.4, 0, 0.2, 1) 3.2s forwards;
         }
 
         .en-sentence {
-            font-family: 'AoveinSplashEng', serif;
-            font-size: 26px; 
-            line-height: 1.4;
-            color: #111;
-            letter-spacing: 0.5px;
-            opacity: 0;
-            animation: fadeInSplash 1.2s ease-out 0.2s forwards;
+            font-family: 'AoveinIntroFont', serif; font-size: 28px; line-height: 1.6;
+            color: rgba(255, 255, 255, 0.3); display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 6px;
         }
 
-        .cn-sentence {
-            font-family: "PingFang SC", "Helvetica Neue", sans-serif;
-            font-size: 14px;
-            color: #666;
-            letter-spacing: 3px;
-            opacity: 0;
-            animation: fadeInSplash 1.2s ease-out 0.8s forwards;
-        }
-
-        .g-fade {
-            transition: all 1s ease;
-            animation: textDim 1.2s ease-in-out 1.8s forwards;
-        }
-
-        .g-keep {
-            transition: all 1s ease;
-            animation: textGlow 1.2s ease-in-out 1.8s forwards;
-            display: inline-block;
-        }
+        .word { display: flex; }
+        .en-sentence span { display: inline-block; opacity: 0; transform: translateY(10px); animation: fadeInLetter 1s ease-out forwards; }
         
-        .g-keep.upper {
-            text-transform: uppercase;
+        .target-letter {
+            animation: fadeInLetter 1s ease-out forwards, highlightLetter 1.2s ease-in-out 1.8s forwards !important;
         }
 
-        .logo-wrapper {
-            position: absolute;
-            font-family: 'AoveinSplashEng', serif;
-            font-size: 52px;
-            color: #000;
-            opacity: 0;
-            animation: logoIn 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 3.5s forwards;
+        .zh-sentence {
+            margin-top: 32px; font-size: 15px; color: rgba(255, 255, 255, 0.7); font-weight: 300;
+            letter-spacing: 5px; opacity: 0; transform: translateY(15px);
+            animation: fadeInZh 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) 1.2s forwards;
         }
 
-        @keyframes fadeInSplash {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
+        .final-aovein {
+            position: absolute; top: 42%; left: 50%; transform: translate(-50%, -50%);
+            font-family: 'AoveinIntroFont', serif; font-size: 64px; color: #ffffff;
+            display: flex; gap: 2px; pointer-events: none; z-index: 10;
         }
 
-        @keyframes textDim {
-            0% { opacity: 1; filter: blur(0); }
-            100% { opacity: 0; filter: blur(4px); }
+        .final-aovein span {
+            display: inline-block; opacity: 0; filter: blur(12px);
+            transform: translate(var(--startX), var(--startY)) scale(1.8) rotate(var(--rot));
+            animation: convergeAovein 2s cubic-bezier(0.16, 1, 0.3, 1) 3.5s forwards;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
         }
 
-        @keyframes textGlow {
-            0% { color: #111; text-shadow: none; transform: scale(1); }
-            100% { color: #000; text-shadow: 0 0 12px rgba(0,0,0,0.25); transform: scale(1.15); }
+        @keyframes fadeInLetter {
+            0% { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
-
-        @keyframes sentenceOut {
-            0% { opacity: 1; filter: blur(0); transform: scale(1); }
-            100% { opacity: 0; filter: blur(10px); transform: scale(1.05); }
+        @keyframes fadeInZh {
+            0% { opacity: 0; transform: translateY(15px); filter: blur(6px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
-
-        @keyframes logoIn {
-            0% { opacity: 0; letter-spacing: 20px; filter: blur(10px); transform: scale(0.9); }
-            100% { opacity: 1; letter-spacing: 4px; filter: blur(0); transform: scale(1); }
+        @keyframes highlightLetter {
+            0% { color: rgba(255, 255, 255, 0.3); text-shadow: none; transform: scale(1); }
+            50% { color: #fff; text-shadow: 0 0 15px rgba(255,255,255,0.8); transform: scale(1.1); }
+            100% { color: #fff; text-shadow: 0 0 20px rgba(255,255,255,1); transform: scale(1.1); }
+        }
+        @keyframes fadeOutIntro {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); filter: blur(8px); visibility: hidden; }
+        }
+        @keyframes convergeAovein {
+            0% { opacity: 0; filter: blur(12px); transform: translate(var(--startX), var(--startY)) scale(1.8) rotate(var(--rot)); }
+            40% { opacity: 1; filter: blur(2px); }
+            100% { opacity: 1; filter: blur(0); transform: translate(0, 0) scale(1) rotate(0deg); text-shadow: 0 0 10px rgba(255,255,255,0.4); }
         }
 
         /* ==================== 激活界面 ==================== */
@@ -516,26 +486,54 @@
 </head>
 <body>
 
-<!-- Aovein 启动加载页 (全新高级动画) -->
+<!-- Aovein 高级开屏动画 -->
 <div id="loading-screen">
-    <div class="splash-content">
-        <div class="sentence-wrapper">
-            <div class="en-sentence">
-                <span class="g-fade">Ch</span><span class="g-keep upper">a</span><span class="g-fade">rate b</span><span class="g-keep">o</span><span class="g-fade">nds o</span><span class="g-keep">v</span><span class="g-keep">e</span><span class="g-fade">rr</span><span class="g-keep">i</span><span class="g-fade">de realm li</span><span class="g-keep">n</span><span class="g-fade">es bound</span>
-            </div>
-            <div class="cn-sentence">真挚情意缔结的羁绊，跨越次元界限</div>
-        </div>
-        <div class="logo-wrapper">
-            Aovein
-        </div>
-    </div>
+    <!-- 句子与高亮 -->
+    <div class="intro-container" id="intro-en-container"></div>
     
-    <!-- 下方为版权及免责声明 (延后到 Logo 出现时浮现) -->
-    <div style="position: absolute; bottom: 50px; text-align: center; color: #999; font-size: 12px; line-height: 1.8; width: 100%; padding: 0 20px; box-sizing: border-box; animation: fadeInBar 1.2s ease-out 3.5s forwards; opacity: 0;">
+    <!-- 聚合而成的 Aovein -->
+    <div class="final-aovein">
+        <span style="--startX:-90px; --startY:-50px; --rot:-15deg;">A</span>
+        <span style="--startX:-40px; --startY:60px; --rot:10deg;">o</span>
+        <span style="--startX:10px; --startY:-70px; --rot:-20deg;">v</span>
+        <span style="--startX:60px; --startY:40px; --rot:15deg;">e</span>
+        <span style="--startX:-30px; --startY:80px; --rot:-10deg;">i</span>
+        <span style="--startX:100px; --startY:-30px; --rot:25deg;">n</span>
+    </div>
+
+    <div style="position: absolute; bottom: 50px; text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; line-height: 1.8; width: 100%; padding: 0 20px; box-sizing: border-box; opacity: 0; animation: fadeInZh 1.5s 4.5s forwards;">
         <p>原作者小红书：@檩因冬信</p>
-        <p style="font-size: 10px; margin-top: 6px; color: #aaa;">免责声明：使用者需自行承担使用本产品后的一切后果，<br>使用者做出的一切行为与原作者无关。</p>
+        <p style="font-size: 10px; margin-top: 6px; color: rgba(255,255,255,0.3);">免责声明：使用者需自行承担使用本产品后的一切后果，<br>使用者做出的一切行为与原作者无关。</p>
     </div>
 </div>
+
+<script>
+(function(){
+    // 自执行生成散落的字幕结构
+    const container = document.getElementById('intro-en-container');
+    const words = ["Charate", "bonds", "override", "realm", "lines", "bound"];
+    const targets = [{w:0, c:2}, {w:1, c:1}, {w:2, c:1}, {w:2, c:2}, {w:4, c:1}, {w:4, c:2}];
+    
+    let enHtml = '<div class="en-sentence">';
+    let baseDelay = 0;
+    words.forEach((word, wIdx) => {
+        enHtml += '<div class="word">';
+        for(let i=0; i<word.length; i++) {
+            const isTarget = targets.find(t => t.w === wIdx && t.c === i);
+            const delay = (baseDelay + Math.random() * 0.4).toFixed(2);
+            if (isTarget) {
+                enHtml += `<span class="target-letter" style="animation-delay: ${delay}s">${word[i]}</span>`;
+            } else {
+                enHtml += `<span style="animation-delay: ${delay}s">${word[i]}</span>`;
+            }
+            baseDelay += 0.04;
+        }
+        enHtml += '</div>';
+    });
+    enHtml += '</div><div class="zh-sentence">真挚情意缔结的羁绊，跨越次元界限</div>';
+    container.innerHTML = enHtml;
+})();
+</script>
 
 <!-- 全新激活界面 -->
 <div id="activation-screen" class="hidden-screen">
@@ -6868,15 +6866,15 @@ const app = createApp({
         this.imageUploadInput.accept = 'image/*';
         this.imageUploadInput.onchange = this.handleImageUploadForChat;
         
-        // 设定 6000ms (6秒) 的等待时间，配合高级演绎动画
+        // 为高级开屏动画留出 5500ms (5.5秒) 的完美展示时间
         setTimeout(() => {
             const loader = document.getElementById('loading-screen');
             if (loader) loader.style.opacity = '0';
             if (typeof window.checkActivationState === 'function') {
                 window.checkActivationState();
             }
-            setTimeout(() => { if (loader) loader.style.display = 'none'; }, 800);
-        }, 6000);
+            setTimeout(() => { if (loader) loader.style.display = 'none'; }, 1200);
+        }, 5500);
 
         this.updateTime(); this.timer = setInterval(this.updateTime, 1000); this.initBattery(); this.fetchWeather();
         
