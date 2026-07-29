@@ -4087,12 +4087,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <!-- 文本消息 (自带实时翻译) -->
                                     <div v-else class="flex flex-col">
                                         <span>{{ msg.content }}</span>
-                                        <transition name="fade">
-                                            <!-- 如果带有翻译字段，并且允许显示，则直接展开 -->
-                                            <div v-if="msg.showTranslation && msg.translation" @click.stop="msg.showTranslation = false; saveData()" class="mt-2 pt-2 border-t border-gray-400/20 text-[13px] opacity-90 cursor-pointer active:opacity-50">
-                                                <div class="text-gray-500 font-medium">{{ msg.translation }}</div>
-                                            </div>
-                                        </transition>
+                                        <!-- 移除 fade 动画，实现原文与翻译绝对同步同时出现 -->
+                                        <div v-if="msg.showTranslation && msg.translation" @click.stop="msg.showTranslation = false; saveData()" class="mt-2 pt-2 border-t border-gray-400/20 text-[13px] opacity-90 cursor-pointer active:opacity-50">
+                                            <div class="text-gray-500 font-medium">{{ msg.translation }}</div>
+                                        </div>
                                     </div>
                                     
                                     <!-- 气泡内时间戳 (仅在设置为inside时显示，排版动态靠左或右) -->
@@ -6673,16 +6671,16 @@ const app = createApp({
             fileModal: { show: false, tab: 'real', title: '', content: '' }, 
             timezoneModal: { show: false, target: 'user' },
             timezones: [
-                { label: 'UTC-10 夏威夷', offset: -10, tz: 'Pacific/Honolulu' }, { label: 'UTC-9 阿拉斯加', offset: -9, tz: 'America/Anchorage' },
-                { label: 'UTC-8 洛杉矶/美西', offset: -8, tz: 'America/Los_Angeles' }, { label: 'UTC-7 丹佛', offset: -7, tz: 'America/Denver' },
-                { label: 'UTC-6 芝加哥/墨西哥城', offset: -6, tz: 'America/Chicago' }, { label: 'UTC-5 纽约/美东', offset: -5, tz: 'America/New_York' },
-                { label: 'UTC-4 多伦多', offset: -4, tz: 'America/Toronto' }, { label: 'UTC-3 布宜诺斯艾利斯', offset: -3, tz: 'America/Argentina/Buenos_Aires' },
-                { label: 'UTC+0 伦敦/里斯本', offset: 0, tz: 'Europe/London' }, { label: 'UTC+1 巴黎/柏林/罗马', offset: 1, tz: 'Europe/Paris' },
-                { label: 'UTC+2 雅典/开罗', offset: 2, tz: 'Europe/Athens' }, { label: 'UTC+3 莫斯科', offset: 3, tz: 'Europe/Moscow' },
-                { label: 'UTC+4 迪拜', offset: 4, tz: 'Asia/Dubai' }, { label: 'UTC+5 伊斯兰堡', offset: 5, tz: 'Asia/Karachi' },
-                { label: 'UTC+7 曼谷/雅加达', offset: 7, tz: 'Asia/Bangkok' }, { label: 'UTC+8 北京/港澳台/新加坡', offset: 8, tz: 'Asia/Shanghai' },
-                { label: 'UTC+9 东京/首尔', offset: 9, tz: 'Asia/Tokyo' }, { label: 'UTC+10 悉尼/关岛', offset: 10, tz: 'Australia/Sydney' },
-                { label: 'UTC+11 墨尔本', offset: 11, tz: 'Australia/Melbourne' }, { label: 'UTC+12 惠灵顿/斐济', offset: 12, tz: 'Pacific/Auckland' }
+                { label: 'UTC-10 夏威夷', offset: -10 }, { label: 'UTC-9 阿拉斯加', offset: -9 },
+                { label: 'UTC-8 洛杉矶/美西', offset: -8 }, { label: 'UTC-7 丹佛', offset: -7 },
+                { label: 'UTC-6 芝加哥/墨西哥城', offset: -6 }, { label: 'UTC-5 纽约/美东', offset: -5 },
+                { label: 'UTC-4 多伦多', offset: -4 }, { label: 'UTC-3 布宜诺斯艾利斯', offset: -3 },
+                { label: 'UTC+0 伦敦/里斯本', offset: 0 }, { label: 'UTC+1 巴黎/柏林/罗马', offset: 1 },
+                { label: 'UTC+2 雅典/开罗', offset: 2 }, { label: 'UTC+3 莫斯科', offset: 3 },
+                { label: 'UTC+4 迪拜', offset: 4 }, { label: 'UTC+5 伊斯兰堡', offset: 5 },
+                { label: 'UTC+7 曼谷/雅加达', offset: 7 }, { label: 'UTC+8 北京/港澳台/新加坡', offset: 8 },
+                { label: 'UTC+9 东京/首尔', offset: 9 }, { label: 'UTC+10 悉尼/关岛', offset: 10 },
+                { label: 'UTC+11 墨尔本', offset: 11 }, { label: 'UTC+12 惠灵顿/斐济', offset: 12 }
             ],
             stActivationModal: { show: false, code: '' },
             stDeviceId: '',
@@ -11151,34 +11149,41 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
-            // --- 精准双时区与夏令时自动计算逻辑 ---
-            const myTzOffset = session.myTimezone !== undefined ? session.myTimezone : 8;
-            const aiTzOffset = session.aiTimezone !== undefined ? session.aiTimezone : 8;
-            const myTzData = this.timezones.find(t => t.offset === myTzOffset);
-            const aiTzData = this.timezones.find(t => t.offset === aiTzOffset);
+            // --- 终极双时区计算逻辑 (原生支持全球夏令时 DST 自动校准) ---
+            const myTz = session.myTimezone !== undefined ? session.myTimezone : 8;
+            const aiTz = session.aiTimezone !== undefined ? session.aiTimezone : 8;
             
-            const formatSmartTzDate = (tzData) => {
-                const now = new Date();
-                if (tzData && tzData.tz) {
+            // 建立时区偏移到真实地理 IANA 标识的映射，解决夏令时差错问题
+            const offsetToIana = {
+                '-10': 'Pacific/Honolulu', '-9': 'America/Anchorage', '-8': 'America/Los_Angeles', 
+                '-7': 'America/Denver', '-6': 'America/Chicago', '-5': 'America/New_York', 
+                '-4': 'America/Halifax', '-3': 'America/Argentina/Buenos_Aires', '0': 'Europe/London', 
+                '1': 'Europe/Paris', '2': 'Europe/Athens', '3': 'Europe/Moscow', '4': 'Asia/Dubai', 
+                '5': 'Asia/Karachi', '7': 'Asia/Bangkok', '8': 'Asia/Shanghai', '9': 'Asia/Tokyo', 
+                '10': 'Australia/Sydney', '11': 'Pacific/Noumea', '12': 'Pacific/Auckland'
+            };
+
+            const formatTzDate = (offset) => {
+                const iana = offsetToIana[offset];
+                if (iana) {
                     try {
-                        const formatter = new Intl.DateTimeFormat('zh-CN', {
-                            timeZone: tzData.tz,
-                            year: 'numeric', month: 'long', day: 'numeric',
+                        return new Intl.DateTimeFormat('zh-CN', {
+                            timeZone: iana, year: 'numeric', month: 'long', day: 'numeric',
                             weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false
-                        });
-                        return formatter.format(now).replace(/日星期/, '日 星期');
+                        }).format(new Date());
                     } catch(e) {}
                 }
-                const utcNow = now.getTime() + (now.getTimezoneOffset() * 60000);
-                const d = new Date(utcNow + 3600000 * (tzData ? tzData.offset : 8));
+                // 兜底逻辑
+                const utcNow = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
+                const d = new Date(utcNow + 3600000 * offset);
                 const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
                 return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} (24小时制)`;
             };
             
             let timeContext = `\n[系统提示-时间与时区严格感知]:
-我(玩家)当前的当地时间是：${formatSmartTzDate(myTzData)}。
-你(角色)当前的当地时间是：${formatSmartTzDate(aiTzData)}。
-【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${formatSmartTzDate(aiTzData)}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
+我(玩家)当前的当地时间是：${formatTzDate(myTz)}。
+你(角色)当前的当地时间是：${formatTzDate(aiTz)}。
+【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${formatTzDate(aiTz)}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
 - 如果我问你“现在几点”或说“晚上好”，但你那里是早上，你必须根据你的时间纠正我，展现出明显的时差感！
 - 绝不能被我的时间带偏，绝不能把你的凌晨当成正午，否则判定严重OOC！`;
             
@@ -11359,9 +11364,8 @@ const app = createApp({
 You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).
 - YOU ARE THE GROUP OWNER. Members marked as "Muted: YES" MUST NOT speak in this round!
 - Members marked as "Admin: YES" can kick or mute other NPCs.
-- 【极度重要：群聊高强度互动】：不要只围着我（玩家）一个人说话！群里的角色和角色之间也必须经常互相开玩笑、互怼、八卦！你们可以互相艾特对方（例如在句子里说 "@XXX 别闹了"），展现出一个真实活跃的朋友圈子！
-- 【严禁身份错乱(防套皮)!!!】：你必须严格将你说的话匹配到正确的 speaker 名字上！如果A说话，speaker就是A；B说话，speaker就是B。绝对不允许张冠李戴（比如用A的名字说B的人设或台词），也绝对不允许让同一个人连发两条意思截然相反的回复！
-- 【多人回复要求】：如果大家都在讨论某个话题，请在 group_replies 数组里同时输出 2 到 3 个不同角色的独立回复对象，让群聊热闹起来！
+- 【强制群内角色互动】：群聊绝不仅是你和玩家的单线联系！如果有多个成员在场，你每次回复【必须生成至少两个不同角色的发言】。角色和角色之间必须互相吐槽、接话、互相艾特（如在回复中使用"@名字"）！
+- 【最高等级防套皮警告】：【绝对严禁身份错乱】！你生成的每一个 group_replies 对象，其 "speaker" 必须与台词的主人设【绝对吻合】！如果A是傲娇，B是温柔，绝不能让speaker填着A却输出温柔的话！如果发现套皮说话，将判定为严重任务失败！
 <GROUP_MEMBERS_LIST>\n${membersInfo}\n</GROUP_MEMBERS_LIST>
 </GROUP_CHAT_RULES>`;
             } else {
@@ -11732,46 +11736,6 @@ Structure:
                         .map(s => s.trim())
                         .filter(s => s && !s.includes('系统提示') && !s.includes('系统通知') && !s.includes('邀请你一起听歌'));
                     
-                    // 【新增：提前翻译机制，解决文字和翻译不同步问题】
-                    if (session.enableClickTranslate) {
-                        for (let i = 0; i < segments.length; i++) {
-                            let seg = segments[i];
-                            let trans = smartTranslations[i];
-                            if (!trans) {
-                                const hasChinese = /[\u4e00-\u9fa5]/.test(seg);
-                                const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
-                                const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg);
-                                // 如果不是显而易见的中文，或者是夹杂大量外语，就在后台偷偷先翻译好
-                                if (!(hasChinese && engWordCount < 3 && !hasForeignChars)) {
-                                    try {
-                                        let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
-                                        if (!url.endsWith('/v1')) url += '/v1';
-                                        const tRes = await fetch(`${url}/chat/completions`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
-                                            body: JSON.stringify({ 
-                                                model: this.apiConfig.selectedModel, 
-                                                messages:[
-                                                    { role: 'system', content: `你是一个精准的翻译助手。请将以下文本翻译为流畅地道的【${session.transTargetLang || '简体中文'}】。如果原文已经是目标语言，或者是纯符号，请直接回复“无需翻译”。除了翻译结果，绝对不要输出任何其他说明文字！` },
-                                                    { role: 'user', content: seg }
-                                                ],
-                                                temperature: 0.1 
-                                            })
-                                        });
-                                        if (tRes.ok) {
-                                            const tData = await tRes.json();
-                                            let tResult = tData.choices[0].message.content.trim();
-                                            const isAIWarning = tResult.includes('人工智能') || tResult.includes('心理') || tResult.includes('医生') || tResult.length > seg.length * 4;
-                                            if (!tResult.includes('无需') && !tResult.includes('不需要') && tResult !== seg && !isAIWarning) {
-                                                smartTranslations[i] = tResult; // 将翻译结果塞回数组，实现同步输出！
-                                            }
-                                        }
-                                    } catch(e) {}
-                                }
-                            }
-                        }
-                    }
-
                     // === 处理单聊 AI 修改备注 ===
                     if (!session.isGroup && block.change_remark && friend) {
                         const oldName = friend.remark || friend.name;
@@ -12013,7 +11977,22 @@ Structure:
                                  quote: (msgType === 'voice' || index !== 0) ? null : quoteObj 
                              };
                              session.messages.push(aiMsg);
-
+                             // 【高级翻译检测】：智能判断是否需要翻译，彻底杜绝纯中文触发翻译
+                             const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
+                             const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
+                             const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); // 日韩等字符
+                             
+                             if (session.enableClickTranslate && !trans) {
+                                 // 如果原文明显是中文，且外语单词少于3个，绝对不发起翻译请求！
+                                 if (hasChinese && engWordCount < 3 && !hasForeignChars) {
+                                     // 静默拦截，不需要翻译，别浪费 Tokens 和触发大模型发疯
+                                 } else {
+                                     setTimeout(() => {
+                                         this.translateMessage(aiMsg);
+                                     }, 1000);
+                                 }
+                             }
+                             
                              // 【新增】群聊AI发消息升1级
                              if (session.isGroup && speakerId) {
                                  if (!session.membersInfo) session.membersInfo = {};
