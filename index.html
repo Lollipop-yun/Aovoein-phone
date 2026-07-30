@@ -4087,10 +4087,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <!-- 文本消息 (自带实时翻译) -->
                                     <div v-else class="flex flex-col">
                                         <span>{{ msg.content }}</span>
-                                        <!-- 去除了 fade 过渡动画，让翻译和原文百分百同时瞬间出现 -->
-                                        <div v-if="msg.showTranslation && msg.translation" @click.stop="msg.showTranslation = false; saveData()" class="mt-2 pt-2 border-t border-gray-400/20 text-[13px] opacity-90 cursor-pointer active:opacity-50">
-                                            <div class="text-gray-500 font-medium">{{ msg.translation }}</div>
-                                        </div>
+                                        <transition name="fade">
+                                            <!-- 如果带有翻译字段，并且允许显示，则直接展开 -->
+                                            <div v-if="msg.showTranslation && msg.translation" @click.stop="msg.showTranslation = false; saveData()" class="mt-2 pt-2 border-t border-gray-400/20 text-[13px] opacity-90 cursor-pointer active:opacity-50">
+                                                <div class="text-gray-500 font-medium">{{ msg.translation }}</div>
+                                            </div>
+                                        </transition>
                                     </div>
                                     
                                     <!-- 气泡内时间戳 (仅在设置为inside时显示，排版动态靠左或右) -->
@@ -11149,46 +11151,23 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
-            // --- 精准双时区计算逻辑 (完美兼容夏令时 DST) ---
+            // --- 精准双时区计算逻辑 (强制计算 User 和 AI 对应的当地时间) ---
+            const utcNow = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
             const myTz = session.myTimezone !== undefined ? session.myTimezone : 8;
             const aiTz = session.aiTimezone !== undefined ? session.aiTimezone : 8;
-
-            const mapOffsetToIANA = (offset) => {
-                const map = {
-                    '-10': 'Pacific/Honolulu', '-9': 'America/Anchorage', '-8': 'America/Los_Angeles',
-                    '-7': 'America/Denver', '-6': 'America/Chicago', '-5': 'America/New_York',
-                    '-4': 'America/Halifax', '-3': 'America/Buenos_Aires', '0': 'Europe/London',
-                    '1': 'Europe/Paris', '2': 'Europe/Athens', '3': 'Europe/Moscow',
-                    '4': 'Asia/Dubai', '5': 'Asia/Karachi', '7': 'Asia/Bangkok',
-                    '8': 'Asia/Shanghai', '9': 'Asia/Tokyo', '10': 'Australia/Sydney',
-                    '11': 'Pacific/Noumea', '12': 'Pacific/Auckland'
-                };
-                return map[offset.toString()] || 'Asia/Shanghai';
-            };
-
-            const formatTzDate = (offset) => {
-                try {
-                    const ianaTz = mapOffsetToIANA(offset);
-                    // 利用底层 Intl 库自动精准计算任何地方的夏令时偏差！
-                    return new Intl.DateTimeFormat('zh-CN', {
-                        timeZone: ianaTz, year: 'numeric', month: 'long', day: 'numeric',
-                        weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false
-                    }).format(new Date());
-                } catch(e) {
-                    const utcNow = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
-                    const d = new Date(utcNow + 3600000 * offset);
-                    const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-                    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} (24小时制)`;
-                }
-            };
             
-            const myDateStr = formatTzDate(myTz);
-            const aiDateStr = formatTzDate(aiTz);
+            const myDate = new Date(utcNow + 3600000 * myTz);
+            const aiDate = new Date(utcNow + 3600000 * aiTz);
+            
+            const formatTzDate = (d) => {
+                const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+                return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} (24小时制)`;
+            };
             
             let timeContext = `\n[系统提示-时间与时区严格感知]:
-我(玩家)当前的当地时间是：${myDateStr}。
-你(角色)当前的当地时间是：${aiDateStr}。
-【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${aiDateStr}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
+我(玩家)当前的当地时间是：${formatTzDate(myDate)}。
+你(角色)当前的当地时间是：${formatTzDate(aiDate)}。
+【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${formatTzDate(aiDate)}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
 - 如果我问你“现在几点”或说“晚上好”，但你那里是早上，你必须根据你的时间纠正我，展现出明显的时差感！
 - 绝不能被我的时间带偏，绝不能把你的凌晨当成正午，否则判定严重OOC！`;
             
@@ -11366,11 +11345,11 @@ const app = createApp({
                 }
                 
                 roleIdentity = `<GROUP_CHAT_RULES>
-You play ALL the NPC members in this group chat. NEVER speak as "${session.name}" (the group name).
+You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).
 - YOU ARE THE GROUP OWNER. Members marked as "Muted: YES" MUST NOT speak in this round!
 - Members marked as "Admin: YES" can kick or mute other NPCs.
-- 【强制要求：群聊多人参与互动】：每次群聊回复，请务必让 2 到 3 个不同的群成员同时参与互动！绝对不允许只有一个人在自言自语！群里的角色之间必须互相艾特（@对方名字）、互怼或接茬，展现真实活跃的群聊氛围！
-- 【绝对禁忌：防套皮/身份错乱】：你必须严格将你说的话匹配到正确的 speaker 名字上！张三绝不能用张三的名字说李四的台词！A说话，speaker就是A；B说话，speaker就是B。绝对不允许同一个角色在 group_replies 数组里分裂成两个对象自己跟自己对话！
+- 【极度重要：群聊高强度互动】：不要只围着我（玩家）一个人说话！群里的角色和角色之间也必须经常互相开玩笑、互怼、八卦！你们可以互相艾特对方（例如在句子里说 "@XXX 别闹了"），展现出一个真实活跃的朋友圈子！
+- 【严禁身份错乱(防套皮)】：你必须严格将你说的话匹配到正确的 speaker 名字上！如果A说话，speaker就是A；B说话，speaker就是B。绝对不允许张冠李戴（比如用A的名字说B的人设或台词），也绝对不允许同一个角色在 group_replies 数组里分裂成两个对象自己跟自己对话！
 <GROUP_MEMBERS_LIST>\n${membersInfo}\n</GROUP_MEMBERS_LIST>
 </GROUP_CHAT_RULES>`;
             } else {
@@ -11421,7 +11400,7 @@ Structure:
     {
       "speaker": "说话的角色名字 (必须是群成员之一)",
       "reply":["第一句话", "第二句话"], 
-      "translations":["第一句话的翻译", "第二句话的翻译"], // 【重要】只要 reply 中包含了外语(如英文/日韩)，你必须在这里同步提供精准的中文翻译，确保文字与翻译能同时出现！如果是纯中文则填 "" 占位。数组长度必须与 reply 严格一致！
+      "translations":["对应的中文翻译"], // OPTIONAL: 【极度重要】如果句子是纯中文，绝对不要输出此字段！严禁把中文翻译成英文！只有当对应位置的 reply 包含【完整的外语长句】时才需要提供翻译。注意：translations 数组的长度必须和 reply 数组完全一致，不需要翻译的句子请用 "" (空字符串) 占位，以此保证翻译和原句绝对的一一对应，严禁翻译串行和超前翻译！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
       "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
@@ -11444,7 +11423,7 @@ Structure:
 Structure:
 {
   "reply":["第一句话", "第二句话"], // 必须是数组！
-  "translations":["第一句话的翻译", "第二句话的翻译"], // 【重要】只要 reply 中包含了外语(如英文/日韩)，你必须在这里同步提供精准的中文翻译，确保文字与翻译能同时出现！如果是纯中文则填 "" 占位。数组长度必须与 reply 严格一致！
+  "translations":["对应的中文翻译"], // OPTIONAL: 【极度重要】如果句子是纯中文，绝对不要输出此字段！严禁把中文翻译成英文！只有当对应位置的 reply 包含【完整的外语长句】时才需要提供翻译。注意：translations 数组的长度必须和 reply 数组完全一致，不需要翻译的句子请用 "" (空字符串) 占位，以此保证翻译和原句绝对的一一对应，严禁翻译串行和超前翻译！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
       "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
