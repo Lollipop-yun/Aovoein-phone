@@ -2943,9 +2943,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="ios-list-modal max-h-[85vh]">
                     <div class="ios-list-header">选择时区 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="timezoneModal.show = false">取消</button></div>
                     <div class="ios-list-content p-0 bg-white">
-                        <div v-for="tz in timezones" :key="tz.tz" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setTimezone(tz.tz)">
+                        <div v-for="tz in timezones" :key="tz.offset" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setTimezone(tz.offset)">
                             <div><div class="font-bold text-gray-900">{{ tz.label }}</div></div>
-                            <i v-if="getCurrentTimezone() === tz.tz || getCurrentTimezone() === tz.offset" class="fas fa-check text-blue-500"></i>
+                            <i v-if="getCurrentTimezone() === tz.offset" class="fas fa-check text-blue-500"></i>
                         </div>
                     </div>
                 </div>
@@ -6673,23 +6673,22 @@ const app = createApp({
             fileModal: { show: false, tab: 'real', title: '', content: '' }, 
             timezoneModal: { show: false, target: 'user' },
             timezones: [
-                { label: 'UTC-10 夏威夷', offset: -10, tz: 'Pacific/Honolulu' }, 
-                { label: 'UTC-9 阿拉斯加', offset: -9, tz: 'America/Anchorage' },
-                { label: '美西 (洛杉矶/旧金山)', offset: -8, tz: 'America/Los_Angeles' }, 
-                { label: '美中 (芝加哥/墨西哥城)', offset: -6, tz: 'America/Chicago' }, 
-                { label: '美东 (纽约/华盛顿)', offset: -5, tz: 'America/New_York' },
-                { label: '多伦多/加拿大东部', offset: -4, tz: 'America/Toronto' }, 
-                { label: '布宜诺斯艾利斯', offset: -3, tz: 'America/Argentina/Buenos_Aires' },
-                { label: '伦敦/里斯本', offset: 0, tz: 'Europe/London' }, 
-                { label: '巴黎/柏林/罗马', offset: 1, tz: 'Europe/Paris' },
-                { label: '雅典/开罗', offset: 2, tz: 'Europe/Athens' }, 
-                { label: '莫斯科', offset: 3, tz: 'Europe/Moscow' },
-                { label: '迪拜', offset: 4, tz: 'Asia/Dubai' }, 
-                { label: '曼谷/雅加达', offset: 7, tz: 'Asia/Bangkok' }, 
-                { label: '北京/港澳台/新加坡', offset: 8, tz: 'Asia/Shanghai' },
-                { label: '东京/首尔', offset: 9, tz: 'Asia/Tokyo' }, 
-                { label: '悉尼/关岛', offset: 10, tz: 'Australia/Sydney' },
-                { label: '新西兰/斐济', offset: 12, tz: 'Pacific/Auckland' }
+                { label: '美西 (洛杉矶/旧金山)', offset: 'America/Los_Angeles' },
+                { label: '美国山区 (丹佛)', offset: 'America/Denver' },
+                { label: '美中 (芝加哥/休斯顿)', offset: 'America/Chicago' },
+                { label: '美东 (纽约/华盛顿)', offset: 'America/New_York' },
+                { label: '阿拉斯加', offset: 'America/Anchorage' },
+                { label: '夏威夷 (太平洋)', offset: 'Pacific/Honolulu' },
+                { label: '伦敦/里斯本', offset: 'Europe/London' },
+                { label: '巴黎/柏林/罗马', offset: 'Europe/Paris' },
+                { label: '雅典/开罗', offset: 'Europe/Athens' },
+                { label: '莫斯科', offset: 'Europe/Moscow' },
+                { label: '迪拜', offset: 'Asia/Dubai' },
+                { label: '曼谷/雅加达', offset: 'Asia/Bangkok' },
+                { label: '北京/港澳台/新加坡', offset: 'Asia/Shanghai' },
+                { label: '东京/首尔', offset: 'Asia/Tokyo' },
+                { label: '悉尼/墨尔本', offset: 'Australia/Sydney' },
+                { label: '布宜诺斯艾利斯', offset: 'America/Argentina/Buenos_Aires' }
             ],
             stActivationModal: { show: false, code: '' },
             stDeviceId: '',
@@ -7734,10 +7733,13 @@ const app = createApp({
             this.timezoneModal.target = target;
             this.timezoneModal.show = true;
         },
-        getTimezoneLabel(val) {
-            if (val === undefined || val === null) return '北京/港澳台/新加坡';
-            const tz = this.timezones.find(t => t.tz === val || t.offset === val);
-            return tz ? tz.label : String(val);
+        getTimezoneLabel(offset) {
+            if (offset === undefined || offset === null) return '北京/港澳台/新加坡';
+            const tz = this.timezones.find(t => t.offset === offset);
+            if (tz) return tz.label;
+            // 兼容旧版的数字存档
+            if (typeof offset === 'number') return `UTC${offset > 0 ? '+'+offset : offset}`;
+            return offset;
         },
         getCurrentTimezone() {
             const session = this.wechatState.activeSession;
@@ -7745,13 +7747,13 @@ const app = createApp({
             if (this.timezoneModal.target === 'user') return session.myTimezone !== undefined ? session.myTimezone : 'Asia/Shanghai';
             return session.aiTimezone !== undefined ? session.aiTimezone : 'Asia/Shanghai';
         },
-        setTimezone(tzVal) {
+        setTimezone(offset) {
             const session = this.wechatState.activeSession;
             if (session) {
                 if (this.timezoneModal.target === 'user') {
-                    session.myTimezone = tzVal;
+                    session.myTimezone = offset;
                 } else {
-                    session.aiTimezone = tzVal;
+                    session.aiTimezone = offset;
                 }
                 this.saveData();
             }
@@ -11158,35 +11160,31 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
-            // --- 动态 IANA 时区追踪引擎 (原生支持夏令时/冬令时自动无缝切换) ---
+            // --- 精准双时区计算逻辑 (支持国际标准夏令时自适应) ---
             const myTz = session.myTimezone !== undefined ? session.myTimezone : 'Asia/Shanghai';
             const aiTz = session.aiTimezone !== undefined ? session.aiTimezone : 'Asia/Shanghai';
             
-            const formatTzDate = (tzValue) => {
-                const now = new Date();
-                if (typeof tzValue === 'string') {
-                    try {
-                        const formatter = new Intl.DateTimeFormat('zh-CN', {
-                            timeZone: tzValue,
-                            year: 'numeric', month: '2-digit', day: '2-digit',
-                            weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false
-                        });
-                        return formatter.format(now).replace(/\//g, '-') + ' (24小时制)';
-                    } catch(e) {}
+            const formatTzDate = (tzString) => {
+                try {
+                    // 兼容读取旧存档的纯数字时区
+                    if (typeof tzString === 'number') {
+                        const utcNow = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
+                        const d = new Date(utcNow + 3600000 * tzString);
+                        const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+                        return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} (24小时制)`;
+                    }
+                    // 新版底层夏令时引擎
+                    const options = { timeZone: tzString, year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false };
+                    return new Intl.DateTimeFormat('zh-CN', options).format(new Date());
+                } catch(e) {
+                    return new Date().toLocaleString();
                 }
-                // Fallback 兼容旧版本的数字偏移量存档
-                let num = typeof tzValue === 'number' ? tzValue : parseFloat(tzValue);
-                if (isNaN(num)) num = 8;
-                const utcNow = now.getTime() + (now.getTimezoneOffset() * 60000);
-                const targetDate = new Date(utcNow + 3600000 * num);
-                const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-                return `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日 ${weekDays[targetDate.getDay()]} ${String(targetDate.getHours()).padStart(2, '0')}:${String(targetDate.getMinutes()).padStart(2, '0')} (24小时制)`;
             };
             
             let timeContext = `\n[系统提示-时间与时区严格感知]:
 我(玩家)当前的当地时间是：${formatTzDate(myTz)}。
 你(角色)当前的当地时间是：${formatTzDate(aiTz)}。
-【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${formatTzDate(aiDate)}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
+【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${formatTzDate(aiTz)}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
 - 如果我问你“现在几点”或说“晚上好”，但你那里是早上，你必须根据你的时间纠正我，展现出明显的时差感！
 - 绝不能被我的时间带偏，绝不能把你的凌晨当成正午，否则判定严重OOC！`;
             
@@ -11419,7 +11417,7 @@ Structure:
     {
       "speaker": "说话的角色名字 (必须是群成员之一)",
       "reply":["第一句话", "第二句话"], 
-      "translations":["对应的中文翻译"], // OPTIONAL: 【极度重要】如果句子是纯中文，绝对不要输出此字段！严禁把中文翻译成英文！只有当对应位置的 reply 包含【完整的外语长句】时才需要提供翻译。注意：translations 数组的长度必须和 reply 数组完全一致，不需要翻译的句子请用 "" (空字符串) 占位，以此保证翻译和原句绝对的一一对应，严禁翻译串行和超前翻译！
+      "translations":["对应的中文翻译"], // 【必填约束】：如果 reply 中包含外语(英语/日韩等)，必须在此提供完整的中文翻译！如果是纯中文句子请填 "" 占位。注意：数组长度必须和 reply 严格一致，保证翻译和原句一一对应！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
       "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
@@ -11442,7 +11440,7 @@ Structure:
 Structure:
 {
   "reply":["第一句话", "第二句话"], // 必须是数组！
-  "translations":["对应的中文翻译"], // OPTIONAL: 【极度重要】如果句子是纯中文，绝对不要输出此字段！严禁把中文翻译成英文！只有当对应位置的 reply 包含【完整的外语长句】时才需要提供翻译。注意：translations 数组的长度必须和 reply 数组完全一致，不需要翻译的句子请用 "" (空字符串) 占位，以此保证翻译和原句绝对的一一对应，严禁翻译串行和超前翻译！
+  "translations":["对应的中文翻译"], // 【必填约束】：如果 reply 中包含外语(英语/日韩等)，必须在此提供完整的中文翻译！如果是纯中文句子请填 "" 占位。注意：数组长度必须和 reply 严格一致，保证翻译和原句一一对应！
       "action": "当前具体动作(每轮必须更新，绝不能用'无')",
       "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
@@ -11639,7 +11637,7 @@ Structure:
                         speakerAvatar = friend.avatar;
                     }
 
-                    // 【修复】：去除逗号切分，并在切分时严格对齐 translation 数组，彻底防止翻译串行和遗漏
+                    // 【终极修复：外语翻译同步】：只要包含外语翻译，绝对不进行气泡长句切分，确保语音、文字、翻译同时瞬间弹出！
                     let smartSegments = [];
                     let smartTranslations = [];
                     let rawTranslations = Array.isArray(block.translations) ? block.translations : [];
@@ -11647,13 +11645,13 @@ Structure:
                     rawSegments.forEach((seg, sIdx) => {
                         let curTrans = rawTranslations[sIdx] || null;
                         
-                        if (typeof seg === 'string' && seg.length > 40) {
+                        // 拦截条件：只有大于40字 且 没有翻译的外语时，才切分长句
+                        if (typeof seg === 'string' && seg.length > 40 && !curTrans) {
                             let parts = seg.match(/[^。！？.!?~～]+[。！？.!?~～]*/g);
                             if (parts && parts.length > 1) {
                                 smartSegments.push(...parts.map(p => p.trim()).filter(Boolean));
-                                // 如果长句被切分了，翻译只跟在原句的第一段上，后面的段落翻译置空，防止串行
                                 parts.forEach((p, pIdx) => {
-                                    smartTranslations.push(pIdx === 0 ? curTrans : null);
+                                    smartTranslations.push(null);
                                 });
                             } else {
                                 smartSegments.push(seg);
@@ -11664,44 +11662,6 @@ Structure:
                             smartTranslations.push(curTrans);
                         }
                     });
-                    
-                    // === 预翻译阻塞引擎：等待所有外语翻译完毕后，才让文本和翻译绝对同时在屏幕弹出 ===
-                    if (session.enableClickTranslate) {
-                        await Promise.all(smartSegments.map(async (seg, index) => {
-                            let trans = smartTranslations[index];
-                            const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
-                            const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
-                            const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); 
-                            
-                            // 如果大模型没有自行提供翻译，且确实包含外语，拦截并预翻译
-                            if (!trans && !(hasChinese && engWordCount < 3 && !hasForeignChars)) {
-                                try {
-                                    let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
-                                    if (!url.endsWith('/v1')) url += '/v1';
-                                    const res = await fetch(`${url}/chat/completions`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
-                                        body: JSON.stringify({ 
-                                            model: this.apiConfig.selectedModel, 
-                                            messages:[
-                                                { role: 'system', content: `你是一个极其精准的翻译助手。请将以下文本翻译为流畅地道的${session.transTargetLang || '简体中文 (普通话)'}。如果原文已经是目标语言，或者是纯符号、纯数字，请直接回复“无需翻译”。除了纯粹的翻译结果，绝对不要输出任何其他说明文字！` },
-                                                { role: 'user', content: seg.trim() }
-                                            ],
-                                            temperature: 0.1 
-                                        })
-                                    });
-                                    if (res.ok) {
-                                        const data = await res.json();
-                                        let result = data.choices[0].message.content.trim();
-                                        const isAIWarning = result.includes('人工智能') || result.includes('心理') || result.includes('医疗') || result.length > seg.length * 4;
-                                        if (!result.includes('无需翻译') && !result.includes('不需要') && result !== seg.trim() && !isAIWarning) {
-                                            smartTranslations[index] = result;
-                                        }
-                                    }
-                                } catch(e) { console.error("预翻译失败", e); }
-                            }
-                        }));
-                    }
                     
                     // === 处理红包和转账 ===
                     if (block.red_packet) {
@@ -12012,15 +11972,27 @@ Structure:
                                  duration: msgDuration,
                                  isExpanded: false,
                                  translation: trans,             
-                                 // 无论有没有开启默认展开，由于预翻译阻断已经翻译完毕，当展开或显示时它们必定是一起出现的
-                                 showTranslation: !!(trans && session.autoExpandTranslate),
+                                 showTranslation: !!trans,
                                  isBlockedSend: session.isBlocked,
                                  // 【修复】引用仅显示在AI的第一句话气泡上，严禁蔓延到后续分段的话中
                                  quote: (msgType === 'voice' || index !== 0) ? null : quoteObj 
                              };
                              session.messages.push(aiMsg);
+                             // 【高级翻译检测】：智能判断是否需要翻译，彻底杜绝纯中文触发翻译
+                             const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
+                             const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
+                             const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); // 日韩等字符
                              
-                             // (旧的延迟请求逻辑已删除，因为文字和翻译将在前置引擎中被完美组装)
+                             if (session.enableClickTranslate && !trans) {
+                                 // 如果原文明显是中文，且外语单词少于3个，绝对不发起翻译请求！
+                                 if (hasChinese && engWordCount < 3 && !hasForeignChars) {
+                                     // 静默拦截，不需要翻译，别浪费 Tokens 和触发大模型发疯
+                                 } else {
+                                     setTimeout(() => {
+                                         this.translateMessage(aiMsg);
+                                     }, 1000);
+                                 }
+                             }
                              
                              // 【新增】群聊AI发消息升1级
                              if (session.isGroup && speakerId) {
