@@ -2943,9 +2943,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="ios-list-modal max-h-[85vh]">
                     <div class="ios-list-header">选择时区 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="timezoneModal.show = false">取消</button></div>
                     <div class="ios-list-content p-0 bg-white">
-                        <div v-for="tz in timezones" :key="tz.offset" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setTimezone(tz.offset)">
+                        <div v-for="tz in timezones" :key="tz.tz" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="setTimezone(tz.tz)">
                             <div><div class="font-bold text-gray-900">{{ tz.label }}</div></div>
-                            <i v-if="getCurrentTimezone() === tz.offset" class="fas fa-check text-blue-500"></i>
+                            <i v-if="getCurrentTimezone() === tz.tz || getCurrentTimezone() === tz.offset" class="fas fa-check text-blue-500"></i>
                         </div>
                     </div>
                 </div>
@@ -6673,16 +6673,23 @@ const app = createApp({
             fileModal: { show: false, tab: 'real', title: '', content: '' }, 
             timezoneModal: { show: false, target: 'user' },
             timezones: [
-                { label: 'UTC-10 夏威夷', offset: -10 }, { label: 'UTC-9 阿拉斯加', offset: -9 },
-                { label: 'UTC-8 洛杉矶/美西', offset: -8 }, { label: 'UTC-7 丹佛', offset: -7 },
-                { label: 'UTC-6 芝加哥/墨西哥城', offset: -6 }, { label: 'UTC-5 纽约/美东', offset: -5 },
-                { label: 'UTC-4 多伦多', offset: -4 }, { label: 'UTC-3 布宜诺斯艾利斯', offset: -3 },
-                { label: 'UTC+0 伦敦/里斯本', offset: 0 }, { label: 'UTC+1 巴黎/柏林/罗马', offset: 1 },
-                { label: 'UTC+2 雅典/开罗', offset: 2 }, { label: 'UTC+3 莫斯科', offset: 3 },
-                { label: 'UTC+4 迪拜', offset: 4 }, { label: 'UTC+5 伊斯兰堡', offset: 5 },
-                { label: 'UTC+7 曼谷/雅加达', offset: 7 }, { label: 'UTC+8 北京/港澳台/新加坡', offset: 8 },
-                { label: 'UTC+9 东京/首尔', offset: 9 }, { label: 'UTC+10 悉尼/关岛', offset: 10 },
-                { label: 'UTC+11 墨尔本', offset: 11 }, { label: 'UTC+12 惠灵顿/斐济', offset: 12 }
+                { label: 'UTC-10 夏威夷', offset: -10, tz: 'Pacific/Honolulu' }, 
+                { label: 'UTC-9 阿拉斯加', offset: -9, tz: 'America/Anchorage' },
+                { label: '美西 (洛杉矶/旧金山)', offset: -8, tz: 'America/Los_Angeles' }, 
+                { label: '美中 (芝加哥/墨西哥城)', offset: -6, tz: 'America/Chicago' }, 
+                { label: '美东 (纽约/华盛顿)', offset: -5, tz: 'America/New_York' },
+                { label: '多伦多/加拿大东部', offset: -4, tz: 'America/Toronto' }, 
+                { label: '布宜诺斯艾利斯', offset: -3, tz: 'America/Argentina/Buenos_Aires' },
+                { label: '伦敦/里斯本', offset: 0, tz: 'Europe/London' }, 
+                { label: '巴黎/柏林/罗马', offset: 1, tz: 'Europe/Paris' },
+                { label: '雅典/开罗', offset: 2, tz: 'Europe/Athens' }, 
+                { label: '莫斯科', offset: 3, tz: 'Europe/Moscow' },
+                { label: '迪拜', offset: 4, tz: 'Asia/Dubai' }, 
+                { label: '曼谷/雅加达', offset: 7, tz: 'Asia/Bangkok' }, 
+                { label: '北京/港澳台/新加坡', offset: 8, tz: 'Asia/Shanghai' },
+                { label: '东京/首尔', offset: 9, tz: 'Asia/Tokyo' }, 
+                { label: '悉尼/关岛', offset: 10, tz: 'Australia/Sydney' },
+                { label: '新西兰/斐济', offset: 12, tz: 'Pacific/Auckland' }
             ],
             stActivationModal: { show: false, code: '' },
             stDeviceId: '',
@@ -7727,24 +7734,24 @@ const app = createApp({
             this.timezoneModal.target = target;
             this.timezoneModal.show = true;
         },
-        getTimezoneLabel(offset) {
-            if (offset === undefined || offset === null) return 'UTC+8 北京/港澳台/新加坡';
-            const tz = this.timezones.find(t => t.offset === offset);
-            return tz ? tz.label : `UTC${offset > 0 ? '+'+offset : offset}`;
+        getTimezoneLabel(val) {
+            if (val === undefined || val === null) return '北京/港澳台/新加坡';
+            const tz = this.timezones.find(t => t.tz === val || t.offset === val);
+            return tz ? tz.label : String(val);
         },
         getCurrentTimezone() {
             const session = this.wechatState.activeSession;
-            if (!session) return 8;
-            if (this.timezoneModal.target === 'user') return session.myTimezone !== undefined ? session.myTimezone : 8;
-            return session.aiTimezone !== undefined ? session.aiTimezone : 8;
+            if (!session) return 'Asia/Shanghai';
+            if (this.timezoneModal.target === 'user') return session.myTimezone !== undefined ? session.myTimezone : 'Asia/Shanghai';
+            return session.aiTimezone !== undefined ? session.aiTimezone : 'Asia/Shanghai';
         },
-        setTimezone(offset) {
+        setTimezone(tzVal) {
             const session = this.wechatState.activeSession;
             if (session) {
                 if (this.timezoneModal.target === 'user') {
-                    session.myTimezone = offset;
+                    session.myTimezone = tzVal;
                 } else {
-                    session.aiTimezone = offset;
+                    session.aiTimezone = tzVal;
                 }
                 this.saveData();
             }
@@ -11151,22 +11158,34 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
-            // --- 精准双时区计算逻辑 (强制计算 User 和 AI 对应的当地时间) ---
-            const utcNow = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
-            const myTz = session.myTimezone !== undefined ? session.myTimezone : 8;
-            const aiTz = session.aiTimezone !== undefined ? session.aiTimezone : 8;
+            // --- 动态 IANA 时区追踪引擎 (原生支持夏令时/冬令时自动无缝切换) ---
+            const myTz = session.myTimezone !== undefined ? session.myTimezone : 'Asia/Shanghai';
+            const aiTz = session.aiTimezone !== undefined ? session.aiTimezone : 'Asia/Shanghai';
             
-            const myDate = new Date(utcNow + 3600000 * myTz);
-            const aiDate = new Date(utcNow + 3600000 * aiTz);
-            
-            const formatTzDate = (d) => {
+            const formatTzDate = (tzValue) => {
+                const now = new Date();
+                if (typeof tzValue === 'string') {
+                    try {
+                        const formatter = new Intl.DateTimeFormat('zh-CN', {
+                            timeZone: tzValue,
+                            year: 'numeric', month: '2-digit', day: '2-digit',
+                            weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false
+                        });
+                        return formatter.format(now).replace(/\//g, '-') + ' (24小时制)';
+                    } catch(e) {}
+                }
+                // Fallback 兼容旧版本的数字偏移量存档
+                let num = typeof tzValue === 'number' ? tzValue : parseFloat(tzValue);
+                if (isNaN(num)) num = 8;
+                const utcNow = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const targetDate = new Date(utcNow + 3600000 * num);
                 const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-                return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} (24小时制)`;
+                return `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日 ${weekDays[targetDate.getDay()]} ${String(targetDate.getHours()).padStart(2, '0')}:${String(targetDate.getMinutes()).padStart(2, '0')} (24小时制)`;
             };
             
             let timeContext = `\n[系统提示-时间与时区严格感知]:
-我(玩家)当前的当地时间是：${formatTzDate(myDate)}。
-你(角色)当前的当地时间是：${formatTzDate(aiDate)}。
+我(玩家)当前的当地时间是：${formatTzDate(myTz)}。
+你(角色)当前的当地时间是：${formatTzDate(aiTz)}。
 【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${formatTzDate(aiDate)}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
 - 如果我问你“现在几点”或说“晚上好”，但你那里是早上，你必须根据你的时间纠正我，展现出明显的时差感！
 - 绝不能被我的时间带偏，绝不能把你的凌晨当成正午，否则判定严重OOC！`;
@@ -11646,6 +11665,44 @@ Structure:
                         }
                     });
                     
+                    // === 预翻译阻塞引擎：等待所有外语翻译完毕后，才让文本和翻译绝对同时在屏幕弹出 ===
+                    if (session.enableClickTranslate) {
+                        await Promise.all(smartSegments.map(async (seg, index) => {
+                            let trans = smartTranslations[index];
+                            const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
+                            const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
+                            const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); 
+                            
+                            // 如果大模型没有自行提供翻译，且确实包含外语，拦截并预翻译
+                            if (!trans && !(hasChinese && engWordCount < 3 && !hasForeignChars)) {
+                                try {
+                                    let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                                    if (!url.endsWith('/v1')) url += '/v1';
+                                    const res = await fetch(`${url}/chat/completions`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                                        body: JSON.stringify({ 
+                                            model: this.apiConfig.selectedModel, 
+                                            messages:[
+                                                { role: 'system', content: `你是一个极其精准的翻译助手。请将以下文本翻译为流畅地道的${session.transTargetLang || '简体中文 (普通话)'}。如果原文已经是目标语言，或者是纯符号、纯数字，请直接回复“无需翻译”。除了纯粹的翻译结果，绝对不要输出任何其他说明文字！` },
+                                                { role: 'user', content: seg.trim() }
+                                            ],
+                                            temperature: 0.1 
+                                        })
+                                    });
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        let result = data.choices[0].message.content.trim();
+                                        const isAIWarning = result.includes('人工智能') || result.includes('心理') || result.includes('医疗') || result.length > seg.length * 4;
+                                        if (!result.includes('无需翻译') && !result.includes('不需要') && result !== seg.trim() && !isAIWarning) {
+                                            smartTranslations[index] = result;
+                                        }
+                                    }
+                                } catch(e) { console.error("预翻译失败", e); }
+                            }
+                        }));
+                    }
+                    
                     // === 处理红包和转账 ===
                     if (block.red_packet) {
                         const rpMsg = {
@@ -11955,27 +12012,15 @@ Structure:
                                  duration: msgDuration,
                                  isExpanded: false,
                                  translation: trans,             
-                                 showTranslation: !!trans,
+                                 // 无论有没有开启默认展开，由于预翻译阻断已经翻译完毕，当展开或显示时它们必定是一起出现的
+                                 showTranslation: !!(trans && session.autoExpandTranslate),
                                  isBlockedSend: session.isBlocked,
                                  // 【修复】引用仅显示在AI的第一句话气泡上，严禁蔓延到后续分段的话中
                                  quote: (msgType === 'voice' || index !== 0) ? null : quoteObj 
                              };
                              session.messages.push(aiMsg);
-                             // 【高级翻译检测】：智能判断是否需要翻译，彻底杜绝纯中文触发翻译
-                             const hasChinese = /[\u4e00-\u9fa5]/.test(seg.trim());
-                             const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
-                             const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); // 日韩等字符
                              
-                             if (session.enableClickTranslate && !trans) {
-                                 // 如果原文明显是中文，且外语单词少于3个，绝对不发起翻译请求！
-                                 if (hasChinese && engWordCount < 3 && !hasForeignChars) {
-                                     // 静默拦截，不需要翻译，别浪费 Tokens 和触发大模型发疯
-                                 } else {
-                                     setTimeout(() => {
-                                         this.translateMessage(aiMsg);
-                                     }, 1000);
-                                 }
-                             }
+                             // (旧的延迟请求逻辑已删除，因为文字和翻译将在前置引擎中被完美组装)
                              
                              // 【新增】群聊AI发消息升1级
                              if (session.isGroup && speakerId) {
