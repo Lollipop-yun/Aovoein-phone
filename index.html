@@ -1992,235 +1992,189 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </transition>
     <transition name="scale">
-        <div v-if="addContactModal.show" class="fixed inset-0 z-[55000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div class="bg-[#fcfcfc] w-[92%] max-h-[88vh] overflow-hidden shadow-2xl flex flex-col relative rounded-[4px] border border-gray-200">
-                <!-- 顶部关闭按钮 -->
-                <button @click="addContactModal.show = false" class="absolute top-3 right-4 text-3xl font-light text-gray-400 hover:text-black transition z-20">&times;</button>
-                
-                <div class="flex-1 overflow-y-auto p-5 pb-8 scrollbar-hide">
-                    
-                    <!-- 顶部：照片与基础信息 -->
-                    <div class="flex gap-4 mb-6 relative mt-6">
-                        <!-- 左侧：宝丽来风格相片 (带回形针) -->
-                        <div class="w-[115px] shrink-0 relative">
-                            <!-- 回形针 -->
-                            <div class="absolute -top-4 left-6 text-gray-500 text-3xl z-10 rotate-12 drop-shadow-md"><i class="fas fa-paperclip"></i></div>
-                            <!-- 拍立得相框 -->
-                            <div class="bg-white p-1.5 pb-8 shadow-[0_4px_15px_rgba(0,0,0,0.06)] border border-gray-200 cursor-pointer active:scale-95 transition" @click="triggerAddContactAvatar">
-                                <div class="w-full aspect-square bg-gray-100 overflow-hidden relative border border-gray-100">
-                                    <img v-if="newContact.avatar" :src="newContact.avatar" class="w-full h-full object-cover">
-                                    <div v-else class="flex flex-col items-center justify-center h-full text-gray-300"><i class="fas fa-plus text-xl"></i></div>
+    <div v-if="addContactModal.show" class="fixed inset-0 z-[55000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-[#fcfcfc] w-[92%] max-h-[85vh] rounded-xl overflow-hidden shadow-2xl flex flex-col font-sans border border-gray-200 relative">
+            <div class="absolute top-4 right-4 z-20 cursor-pointer" @click="addContactModal.show = false"><i class="fas fa-times text-xl text-gray-400 hover:text-black"></i></div>
+            
+            <div class="flex-1 overflow-y-auto p-5 pt-8">
+                <div class="flex gap-4">
+                    <!-- 左侧：照片与签名 -->
+                    <div class="w-[125px] shrink-0 flex flex-col relative">
+                        <i class="fas fa-paperclip absolute -top-4 left-4 text-gray-400 text-2xl transform -rotate-12 z-10" style="filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.1));"></i>
+                        <div class="bg-white p-2 shadow-sm border border-gray-200">
+                            <div class="w-full aspect-square bg-gray-100 cursor-pointer overflow-hidden border border-gray-100 relative" @click="triggerAddContactAvatar">
+                                <img v-if="newContact.avatar" :src="newContact.avatar" class="w-full h-full object-cover">
+                                <div v-else class="flex flex-col items-center justify-center h-full text-gray-400">
+                                    <i class="fas fa-camera text-2xl mb-1"></i>
                                 </div>
                             </div>
                         </div>
+                        <div class="mt-4 relative group">
+                            <input v-model="newContact.signature" placeholder="个性签名..." class="w-full bg-transparent border-b border-gray-300 text-[11px] text-gray-600 outline-none pb-1 text-center font-serif" title="个性签名">
+                            <button @click="autoFillProfile('signature')" class="absolute -top-3 right-0 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100"><i class="fas fa-magic"></i></button>
+                        </div>
+                    </div>
 
-                        <!-- 右侧：档案字段 -->
-                        <div class="flex-1 flex flex-col justify-end pt-1">
-                            <!-- ID (微信号) -->
-                            <div class="flex items-center justify-between mb-1">
-                                <div class="flex items-center text-[18px] font-black tracking-tight font-mono text-gray-900 w-full">
-                                    <span class="mr-1">#ID-</span>
-                                    <input v-model="newContact.wechatId" placeholder="微信号" class="bg-transparent outline-none w-full placeholder-gray-300">
-                                </div>
-                                <i @click="autoFillProfile('wechatId')" class="fas fa-magic text-[10px] text-gray-400 hover:text-black cursor-pointer active:scale-90 ml-1"></i>
+                    <!-- 右侧：资料明细 -->
+                    <div class="flex-1 min-w-0 flex flex-col pt-1">
+                        <div class="flex items-center group relative border-b-2 border-black pb-1 mb-1">
+                            <span class="text-xl font-bold font-mono tracking-wider text-gray-900 shrink-0">#</span>
+                            <input v-model="newContact.wechatId" placeholder="WECHAT_ID" class="bg-transparent font-bold font-mono text-[17px] tracking-wider text-gray-900 outline-none w-full uppercase ml-1">
+                            <button @click="autoFillProfile('wechatId')" class="absolute right-0 top-1 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100"><i class="fas fa-magic"></i></button>
+                        </div>
+                        <div class="mb-4">
+                            <span class="text-[9px] text-gray-400 tracking-widest font-mono uppercase">IDENTIFICATION</span>
+                        </div>
+
+                        <div class="flex items-center border-b border-dashed border-gray-300 pb-1 mb-4 group relative">
+                            <input v-model="newContact.username" placeholder="网名 / 昵称" class="bg-transparent text-[14px] font-bold text-gray-800 outline-none w-full font-serif text-center">
+                            <button @click="autoFillProfile('username')" class="absolute right-0 top-1 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100"><i class="fas fa-magic"></i></button>
+                        </div>
+
+                        <div class="space-y-3 text-[11px] font-mono uppercase text-gray-500">
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">NAME</span>
+                                <input v-model="newContact.name" placeholder="姓名" class="bg-transparent text-right text-gray-900 font-bold outline-none w-20 truncate">
                             </div>
-                            <div class="w-full h-[2px] bg-gray-900 mb-1"></div>
-                            
-                            <!-- IDENTIFICATION (网名) -->
-                            <div class="text-[9px] font-bold text-gray-400 tracking-widest mb-1 flex items-center justify-between">
-                                <span>IDENTIFICATION</span>
-                                <i @click="autoFillProfile('username')" class="fas fa-magic text-[10px] text-gray-400 hover:text-black cursor-pointer active:scale-90"></i>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">REMARK</span>
+                                <input v-model="newContact.remark" placeholder="备注" class="bg-transparent text-right text-gray-900 font-bold outline-none w-20 truncate">
                             </div>
-                            <input v-model="newContact.username" placeholder="输入网名..." class="w-full bg-transparent text-[13px] font-bold text-gray-700 outline-none mb-4 font-serif">
-
-                            <!-- 点状虚线字段列表 -->
-                            <div class="space-y-2 mt-auto">
-                                <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                                    <span class="text-[9px] font-bold text-gray-400 tracking-wider">NAME</span>
-                                    <input v-model="newContact.name" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-24 font-serif" placeholder="姓名">
-                                </div>
-                                <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                                    <span class="text-[9px] font-bold text-gray-400 tracking-wider">REMARK</span>
-                                    <input v-model="newContact.remark" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-24 font-serif" placeholder="备注">
-                                </div>
-                                <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5 relative">
-                                    <span class="text-[9px] font-bold text-gray-400 tracking-wider">GENDER</span>
-                                    <div @click="openGenderSelect('contact')" class="text-right text-[13px] font-bold text-gray-900 cursor-pointer font-serif">{{ newContact.gender || '男' }}</div>
-                                </div>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5 cursor-pointer" @click="openGenderSelect('contact')">
+                                <span class="tracking-wider shrink-0">GENDER</span>
+                                <span class="text-gray-900 font-bold">{{ newContact.gender || '男' }}</span>
+                            </div>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">AGE</span>
+                                <input v-model="newContact.age" placeholder="年龄" class="bg-transparent text-right text-gray-900 font-bold outline-none w-16">
+                            </div>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">BIRTHDAY</span>
+                                <input v-model="newContact.birthday" placeholder="生日" class="bg-transparent text-right text-gray-900 font-bold outline-none w-20">
+                            </div>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">HEIGHT</span>
+                                <input v-model="newContact.height" placeholder="身高" class="bg-transparent text-right text-gray-900 font-bold outline-none w-16">
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- 补充档案字段 (双列排版) -->
-                    <div class="grid grid-cols-2 gap-x-6 gap-y-3 mb-8">
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">AGE</span>
-                            <input v-model="newContact.age" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="-">
-                        </div>
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">BIRTH</span>
-                            <input v-model="newContact.birthday" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="-">
-                        </div>
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">HEIGHT</span>
-                            <input v-model="newContact.height" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="cm">
-                        </div>
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">WEIGHT</span>
-                            <input v-model="newContact.weight" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="kg">
-                        </div>
-                    </div>
+                <!-- 底部：背景资料 -->
+                <div class="mt-8 border-l-4 border-black pl-3 mb-4">
+                    <div class="font-mono font-bold tracking-widest text-[11px] text-gray-800 mb-2">BACKGROUND RECORD</div>
+                    <textarea v-model="newContact.bio" placeholder="在此处输入角色的详细背景资料、经历、人设性格等。排版采用高对比度的冷色调黑白灰，文字保持宋体的优雅阅读感..." class="w-full bg-transparent text-[13px] leading-relaxed font-serif text-gray-700 outline-none h-36 resize-none text-justify"></textarea>
+                </div>
 
-                    <!-- BACKGROUND RECORD (背景资料) -->
-                    <div class="mb-6 relative">
-                        <div class="flex items-center gap-2 mb-3">
-                            <div class="w-1 h-3.5 bg-gray-800"></div>
-                            <h4 class="text-[12px] font-black tracking-widest text-gray-900 uppercase">Background Record</h4>
-                        </div>
-                        <textarea v-model="newContact.bio" placeholder="在此处填入角色的背景资料、性格特征等。排版采用高对比度的冷色调黑白灰。文字依旧保持宋体的优雅阅读感..." class="w-full h-40 bg-transparent text-[14px] leading-loose text-gray-700 outline-none resize-none font-serif text-justify border-none p-0 placeholder-gray-300"></textarea>
-                    </div>
-                    
-                    <!-- SIGNATURE (个性签名) -->
-                    <div class="mb-8 relative">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-2">
-                                <div class="w-1 h-3.5 bg-gray-800"></div>
-                                <h4 class="text-[12px] font-black tracking-widest text-gray-900 uppercase">Signature</h4>
-                            </div>
-                            <i @click="autoFillProfile('signature')" class="fas fa-magic text-[10px] text-gray-400 hover:text-black cursor-pointer active:scale-90"></i>
-                        </div>
-                        <input v-model="newContact.signature" placeholder="一句话个性签名..." class="w-full border-b border-dashed border-gray-300 bg-transparent text-[13px] font-serif text-gray-700 pb-1 outline-none">
-                    </div>
+                <div v-if="newContact.id" class="flex gap-3 mt-2 border-t border-gray-100 pt-4">
+                    <button @click="exportContactAsJSON" class="flex-1 py-2 bg-white text-gray-600 rounded font-bold text-xs shadow-sm border border-gray-200 active:bg-gray-50"><i class="fas fa-file-code mr-1"></i>JSON</button>
+                    <button @click="exportContactAsPNG" class="flex-1 py-2 bg-black text-white rounded font-bold text-xs shadow-sm active:scale-95"><i class="fas fa-image mr-1"></i>PNG 卡片</button>
+                </div>
 
-                    <!-- 导出与保存按钮 -->
-                    <div v-if="newContact.id" class="flex gap-3 mb-4">
-                        <button @click="exportContactAsJSON" class="flex-1 py-2.5 bg-white text-gray-700 font-bold text-[10px] uppercase tracking-wider border border-gray-300 hover:bg-gray-50 active:scale-95 transition"><i class="fas fa-code mr-1"></i> Export JSON</button>
-                        <button @click="exportContactAsPNG" class="flex-1 py-2.5 bg-gray-900 text-white font-bold text-[10px] uppercase tracking-wider shadow-md hover:bg-black active:scale-95 transition"><i class="fas fa-image mr-1"></i> PNG Card</button>
-                    </div>
-                    <button @click="saveNewContact" class="w-full py-3.5 bg-gray-900 text-white text-[13px] font-bold tracking-widest uppercase shadow-lg active:scale-95 transition mb-6">Save Record</button>
-
-                    <!-- 底部 Footer -->
-                    <div class="flex justify-between items-center text-[9px] text-gray-400 tracking-widest font-mono border-t border-gray-200 pt-4">
+                <!-- 版权标识与保存按钮 -->
+                <div class="mt-6 flex flex-col border-t border-gray-200 pt-4 pb-2">
+                    <button @click="saveNewContact" class="w-full bg-gray-900 text-white py-3 rounded-lg font-bold text-sm tracking-wider shadow-md active:scale-95 mb-4">SAVE / 完成保存</button>
+                    <div class="flex justify-between items-center text-[9px] text-gray-400 font-mono tracking-widest">
                         <span>SECURE SYSTEM V.3</span>
                         <span>DESIGN BY AOVEIN</span>
                     </div>
                 </div>
+
             </div>
         </div>
         <input type="file" ref="addContactAvatarInput" accept="image/*" class="hidden" @change="handleAddContactAvatar">
+    </div>
     </transition>    
 
-    <!-- 面具编辑/添加弹窗 (高对比黑白档案风) -->
     <transition name="scale">
-        <div v-if="maskModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <div class="bg-[#fcfcfc] w-[92%] max-h-[88vh] overflow-hidden shadow-2xl flex flex-col relative rounded-[4px] border border-gray-200">
-                <!-- 顶部关闭按钮 -->
-                <button @click="maskModal.show = false" class="absolute top-3 right-4 text-3xl font-light text-gray-400 hover:text-black transition z-20">&times;</button>
-                
-                <div class="flex-1 overflow-y-auto p-5 pb-8 scrollbar-hide">
-                    
-                    <!-- 顶部：照片与基础信息 -->
-                    <div class="flex gap-4 mb-6 relative mt-6">
-                        <!-- 左侧：宝丽来风格相片 (带回形针) -->
-                        <div class="w-[115px] shrink-0 relative">
-                            <!-- 回形针 -->
-                            <div class="absolute -top-4 left-6 text-gray-500 text-3xl z-10 rotate-12 drop-shadow-md"><i class="fas fa-paperclip"></i></div>
-                            <!-- 拍立得相框 -->
-                            <div class="bg-white p-1.5 pb-8 shadow-[0_4px_15px_rgba(0,0,0,0.06)] border border-gray-200 cursor-pointer active:scale-95 transition" @click="triggerMaskAvatar">
-                                <div class="w-full aspect-square bg-gray-100 overflow-hidden relative border border-gray-100">
-                                    <img v-if="maskForm.avatar" :src="maskForm.avatar" class="w-full h-full object-cover">
-                                    <div v-else class="flex flex-col items-center justify-center h-full text-gray-300"><i class="fas fa-plus text-xl"></i></div>
+    <div v-if="maskModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-[#fcfcfc] w-[92%] max-h-[85vh] rounded-xl overflow-hidden shadow-2xl flex flex-col font-sans border border-gray-200 relative">
+            <div class="absolute top-4 right-4 z-20 cursor-pointer" @click="maskModal.show = false"><i class="fas fa-times text-xl text-gray-400 hover:text-black"></i></div>
+            
+            <div class="flex-1 overflow-y-auto p-5 pt-8">
+                <div class="flex gap-4">
+                    <!-- 左侧：照片与签名 -->
+                    <div class="w-[125px] shrink-0 flex flex-col relative">
+                        <i class="fas fa-paperclip absolute -top-4 left-4 text-gray-400 text-2xl transform -rotate-12 z-10" style="filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.1));"></i>
+                        <div class="bg-white p-2 shadow-sm border border-gray-200">
+                            <div class="w-full aspect-square bg-gray-100 cursor-pointer overflow-hidden border border-gray-100 relative" @click="triggerMaskAvatar">
+                                <img v-if="maskForm.avatar" :src="maskForm.avatar" class="w-full h-full object-cover">
+                                <div v-else class="flex flex-col items-center justify-center h-full text-gray-400">
+                                    <i class="fas fa-camera text-2xl mb-1"></i>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- 右侧：档案字段 -->
-                        <div class="flex-1 flex flex-col justify-end pt-1">
-                            <!-- ID (微信号) -->
-                            <div class="flex items-center justify-between mb-1">
-                                <div class="flex items-center text-[18px] font-black tracking-tight font-mono text-gray-900 w-full">
-                                    <span class="mr-1">#ID-</span>
-                                    <input v-model="maskForm.wechatId" placeholder="微信号" class="bg-transparent outline-none w-full placeholder-gray-300">
-                                </div>
-                                <i @click="autoFillProfile('wechatId', true)" class="fas fa-magic text-[10px] text-gray-400 hover:text-black cursor-pointer active:scale-90 ml-1"></i>
-                            </div>
-                            <div class="w-full h-[2px] bg-gray-900 mb-1"></div>
-                            
-                            <!-- IDENTIFICATION (网名) -->
-                            <div class="text-[9px] font-bold text-gray-400 tracking-widest mb-1 flex items-center justify-between">
-                                <span>IDENTIFICATION</span>
-                                <i @click="autoFillProfile('username', true)" class="fas fa-magic text-[10px] text-gray-400 hover:text-black cursor-pointer active:scale-90"></i>
-                            </div>
-                            <input v-model="maskForm.username" placeholder="输入网名..." class="w-full bg-transparent text-[13px] font-bold text-gray-700 outline-none mb-4 font-serif">
-
-                            <!-- 点状虚线字段列表 (面具无备注) -->
-                            <div class="space-y-2 mt-auto">
-                                <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                                    <span class="text-[9px] font-bold text-gray-400 tracking-wider">NAME</span>
-                                    <input v-model="maskForm.name" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-24 font-serif" placeholder="姓名">
-                                </div>
-                                <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5 relative">
-                                    <span class="text-[9px] font-bold text-gray-400 tracking-wider">GENDER</span>
-                                    <div @click="openGenderSelect('mask')" class="text-right text-[13px] font-bold text-gray-900 cursor-pointer font-serif">{{ maskForm.gender || '男' }}</div>
-                                </div>
-                            </div>
+                        <div class="mt-4 relative group">
+                            <input v-model="maskForm.signature" placeholder="个性签名..." class="w-full bg-transparent border-b border-gray-300 text-[11px] text-gray-600 outline-none pb-1 text-center font-serif" title="个性签名">
+                            <button @click="autoFillProfile('signature', true)" class="absolute -top-3 right-0 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100"><i class="fas fa-magic"></i></button>
                         </div>
                     </div>
 
-                    <!-- 补充档案字段 (双列排版) -->
-                    <div class="grid grid-cols-2 gap-x-6 gap-y-3 mb-8">
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">AGE</span>
-                            <input v-model="maskForm.age" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="-">
+                    <!-- 右侧：资料明细 (无备注) -->
+                    <div class="flex-1 min-w-0 flex flex-col pt-1">
+                        <div class="flex items-center group relative border-b-2 border-black pb-1 mb-1">
+                            <span class="text-xl font-bold font-mono tracking-wider text-gray-900 shrink-0">#</span>
+                            <input v-model="maskForm.wechatId" placeholder="WECHAT_ID" class="bg-transparent font-bold font-mono text-[17px] tracking-wider text-gray-900 outline-none w-full uppercase ml-1">
+                            <button @click="autoFillProfile('wechatId', true)" class="absolute right-0 top-1 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100"><i class="fas fa-magic"></i></button>
                         </div>
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">BIRTH</span>
-                            <input v-model="maskForm.birthday" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="-">
+                        <div class="mb-4">
+                            <span class="text-[9px] text-gray-400 tracking-widest font-mono uppercase">IDENTIFICATION</span>
                         </div>
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">HEIGHT</span>
-                            <input v-model="maskForm.height" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="cm">
-                        </div>
-                        <div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-0.5">
-                            <span class="text-[9px] font-bold text-gray-400 tracking-wider">WEIGHT</span>
-                            <input v-model="maskForm.weight" class="text-right text-[13px] font-bold text-gray-900 outline-none bg-transparent w-16 font-serif" placeholder="kg">
-                        </div>
-                    </div>
 
-                    <!-- BACKGROUND RECORD (背景资料) -->
-                    <div class="mb-6 relative">
-                        <div class="flex items-center gap-2 mb-3">
-                            <div class="w-1 h-3.5 bg-gray-800"></div>
-                            <h4 class="text-[12px] font-black tracking-widest text-gray-900 uppercase">Background Record</h4>
+                        <div class="flex items-center border-b border-dashed border-gray-300 pb-1 mb-4 group relative">
+                            <input v-model="maskForm.username" placeholder="网名 / 昵称" class="bg-transparent text-[14px] font-bold text-gray-800 outline-none w-full font-serif text-center">
+                            <button @click="autoFillProfile('username', true)" class="absolute right-0 top-1 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100"><i class="fas fa-magic"></i></button>
                         </div>
-                        <textarea v-model="maskForm.bio" placeholder="在此处填入我的人设背景设定、性格特征等机密档案..." class="w-full h-40 bg-transparent text-[14px] leading-loose text-gray-700 outline-none resize-none font-serif text-justify border-none p-0 placeholder-gray-300"></textarea>
-                    </div>
-                    
-                    <!-- SIGNATURE (个性签名) -->
-                    <div class="mb-8 relative">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-2">
-                                <div class="w-1 h-3.5 bg-gray-800"></div>
-                                <h4 class="text-[12px] font-black tracking-widest text-gray-900 uppercase">Signature</h4>
+
+                        <div class="space-y-3 text-[11px] font-mono uppercase text-gray-500">
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">NAME</span>
+                                <input v-model="maskForm.name" placeholder="姓名" class="bg-transparent text-right text-gray-900 font-bold outline-none w-20 truncate">
                             </div>
-                            <!-- <i @click="autoFillProfile('signature', true)" class="fas fa-magic text-[10px] text-gray-400 hover:text-black cursor-pointer active:scale-90"></i> -->
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5 cursor-pointer" @click="openGenderSelect('mask')">
+                                <span class="tracking-wider shrink-0">GENDER</span>
+                                <span class="text-gray-900 font-bold">{{ maskForm.gender || '男' }}</span>
+                            </div>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">AGE</span>
+                                <input v-model="maskForm.age" placeholder="年龄" class="bg-transparent text-right text-gray-900 font-bold outline-none w-16">
+                            </div>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">BIRTHDAY</span>
+                                <input v-model="maskForm.birthday" placeholder="生日" class="bg-transparent text-right text-gray-900 font-bold outline-none w-20">
+                            </div>
+                            <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-0.5">
+                                <span class="tracking-wider shrink-0">HEIGHT</span>
+                                <input v-model="maskForm.height" placeholder="身高" class="bg-transparent text-right text-gray-900 font-bold outline-none w-16">
+                            </div>
                         </div>
-                        <input v-model="maskForm.signature" placeholder="一句话个性签名..." class="w-full border-b border-dashed border-gray-300 bg-transparent text-[13px] font-serif text-gray-700 pb-1 outline-none">
                     </div>
+                </div>
 
-                    <!-- 保存与删除按钮 -->
-                    <button @click="saveMask" class="w-full py-3.5 bg-gray-900 text-white text-[13px] font-bold tracking-widest uppercase shadow-lg active:scale-95 transition mb-3">Save Identity</button>
-                    <button v-if="maskForm.id" @click="deleteMask(maskForm.id)" class="w-full py-3 bg-white text-red-500 border border-gray-200 rounded-[4px] font-bold text-[12px] tracking-wider uppercase active:bg-gray-50 transition mb-6">Delete Identity</button>
+                <!-- 底部：背景资料 -->
+                <div class="mt-8 border-l-4 border-black pl-3 mb-4">
+                    <div class="font-mono font-bold tracking-widest text-[11px] text-gray-800 mb-2">BACKGROUND RECORD</div>
+                    <textarea v-model="maskForm.bio" placeholder="输入这副面具（我的分身）的详细背景资料、经历、人设性格等。排版采用高对比度的冷色调黑白灰，文字保持宋体的优雅阅读感..." class="w-full bg-transparent text-[13px] leading-relaxed font-serif text-gray-700 outline-none h-36 resize-none text-justify"></textarea>
+                </div>
 
-                    <!-- 底部 Footer -->
-                    <div class="flex justify-between items-center text-[9px] text-gray-400 tracking-widest font-mono border-t border-gray-200 pt-4">
+                <!-- 删除按钮 -->
+                <div v-if="maskForm.id" class="mt-2 border-t border-gray-100 pt-4">
+                    <button @click="deleteMask(maskForm.id)" class="w-full py-2 bg-white text-red-500 rounded font-bold text-xs shadow-sm border border-gray-200 active:bg-gray-50"><i class="fas fa-trash-alt mr-1"></i>删除此面具</button>
+                </div>
+
+                <!-- 版权标识与保存按钮 -->
+                <div class="mt-6 flex flex-col border-t border-gray-200 pt-4 pb-2">
+                    <button @click="saveMask" class="w-full bg-gray-900 text-white py-3 rounded-lg font-bold text-sm tracking-wider shadow-md active:scale-95 mb-4">SAVE / 完成保存</button>
+                    <div class="flex justify-between items-center text-[9px] text-gray-400 font-mono tracking-widest">
                         <span>SECURE SYSTEM V.3</span>
                         <span>DESIGN BY AOVEIN</span>
                     </div>
                 </div>
+
             </div>
         </div>
         <input type="file" ref="maskAvatarInput" accept="image/*" class="hidden" @change="handleMaskAvatar">
+    </div>
     </transition>    
     <transition name="app-slide">
         <div v-if="genderSelectModal.show" class="fixed inset-0 z-[125000]">
