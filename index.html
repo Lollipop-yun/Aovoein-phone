@@ -1996,7 +1996,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">微信号 (ID)</label><button @click="autoFillProfile('wechatId')" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="newContact.wechatId" placeholder="输入微信号/游戏ID" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><label class="text-xs text-gray-500 ml-1 mb-1 block">性别</label><div @click="openGenderSelect('contact')" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition"><span class="text-gray-800">{{ newContact.gender || '男' }}</span><i class="fas fa-chevron-right text-gray-300 text-xs"></i></div></div>
 <div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">身高(cm)</label><input v-model="newContact.height" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">体重(kg)</label><input v-model="newContact.weight" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div>
-<div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">年龄</label><input v-model="newContact.age" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">生日</label><input v-model="newContact.birthday" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">拍一拍</label><input v-model="newContact.nudge" placeholder="拍一拍后缀" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">个性签名</label><button @click="autoFillProfile('signature')" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="newContact.signature" placeholder="输入个性签名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
+<div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">年龄</label><input v-model="newContact.age" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">生日</label><input v-model="newContact.birthday" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">个性签名</label><button @click="autoFillProfile('signature')" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="newContact.signature" placeholder="输入个性签名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><label class="text-xs text-gray-500 ml-1 mb-1 block">背景资料 (Bio)</label><textarea v-model="newContact.bio" placeholder="输入人设、背景故事..." class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none h-24 resize-none"></textarea></div>
     
 <div v-if="newContact.id" class="pt-3 flex gap-3 border-t border-gray-100 mt-3">
@@ -2011,7 +2011,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <div><label class="text-xs text-gray-500 ml-1 mb-1 block">网络昵称 (网名)</label><input v-model="maskForm.username" placeholder="输入网名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><div class="flex justify-between items-center ml-1 mb-1"><label class="text-xs text-gray-500 block">微信号 (ID)</label><button @click="autoFillProfile('wechatId', true)" class="text-[10px] text-purple-500 font-bold active:scale-95"><i class="fas fa-magic"></i> AI填充</button></div><input v-model="maskForm.wechatId" placeholder="输入微信号/游戏ID" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div>
 <div><label class="text-xs text-gray-500 ml-1 mb-1 block">性别</label><div @click="openGenderSelect('mask')" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 flex justify-between items-center cursor-pointer active:bg-gray-100 transition"><span class="text-gray-800">{{ maskForm.gender || '男' }}</span><i class="fas fa-chevron-right text-gray-300 text-xs"></i></div></div>
-<div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">身高(cm)</label><input v-model="maskForm.height" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">体重(kg)</label><input v-model="maskForm.weight" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">年龄</label><input v-model="maskForm.age" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">生日</label><input v-model="maskForm.birthday" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">拍一拍</label><input v-model="maskForm.nudge" placeholder="拍一拍后缀" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">个性签名</label><input v-model="maskForm.signature" placeholder="输入个性签名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">背景资料 (Bio)</label><textarea v-model="maskForm.bio" placeholder="输入这个面具的人设背景..." class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none h-24 resize-none"></textarea></div><div v-if="maskForm.id" class="pt-4"><button @click="deleteMask(maskForm.id)" class="w-full py-3 bg-white text-red-500 border border-gray-200 rounded-xl font-bold text-sm">删除此面具</button></div></div></div><input type="file" ref="maskAvatarInput" accept="image/*" class="hidden" @change="handleMaskAvatar"></div></div></transition>    
+<div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">身高(cm)</label><input v-model="maskForm.height" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">体重(kg)</label><input v-model="maskForm.weight" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">年龄</label><input v-model="maskForm.age" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div class="flex-1"><label class="text-xs text-gray-500 ml-1 mb-1 block">生日</label><input v-model="maskForm.birthday" placeholder="选填" class="w-full bg-gray-50 px-3 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">个性签名</label><input v-model="maskForm.signature" placeholder="输入个性签名" class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none"></div><div><label class="text-xs text-gray-500 ml-1 mb-1 block">背景资料 (Bio)</label><textarea v-model="maskForm.bio" placeholder="输入这个面具的人设背景..." class="w-full bg-gray-50 px-4 py-3 rounded-xl text-sm border border-gray-200 outline-none h-24 resize-none"></textarea></div><div v-if="maskForm.id" class="pt-4"><button @click="deleteMask(maskForm.id)" class="w-full py-3 bg-white text-red-500 border border-gray-200 rounded-xl font-bold text-sm">删除此面具</button></div></div></div><input type="file" ref="maskAvatarInput" accept="image/*" class="hidden" @change="handleMaskAvatar"></div></div></transition>    
     <transition name="app-slide">
         <div v-if="genderSelectModal.show" class="fixed inset-0 z-[125000]">
             <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="genderSelectModal.show = false"></div>
@@ -4762,6 +4762,44 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <span class="text-[11px] text-gray-400 mt-0.5">{{ wechatState.activeSession.relationAiToUser || '未设置 (AI将自行推断)' }}</span>
                             </div>
                             <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <!-- 卡片 3.6：拍一拍设置 (向下展开) -->
+                    <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
+                        <div class="flex flex-col p-4 active:bg-gray-50 transition cursor-pointer" @click="wechatState.activeSession.showNudgeSettings = !wechatState.activeSession.showNudgeSettings">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[15px] text-gray-900">双击头像拍一拍</span>
+                                <i class="fas fa-chevron-right text-gray-300 text-sm transition-transform" :class="{'rotate-90': wechatState.activeSession.showNudgeSettings}"></i>
+                            </div>
+                        </div>
+                        <!-- 展开的拍一拍面板 -->
+                        <div v-if="wechatState.activeSession.showNudgeSettings" class="bg-gray-50 p-4 space-y-4 border-t border-gray-100">
+                            <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                <div class="flex flex-col">
+                                    <span class="text-[14px] font-bold text-gray-800">AI 即兴生成</span>
+                                    <span class="text-[10px] text-gray-400 mt-0.5">根据聊天场景自动生成拍一拍动作</span>
+                                </div>
+                                <input type="checkbox" class="switch-checkbox" :id="'nudge-dynamic-'+wechatState.activeSession.id" v-model="wechatState.activeSession.dynamicNudge" @change="saveData">
+                                <label :for="'nudge-dynamic-'+wechatState.activeSession.id" class="switch-label shrink-0"><div class="switch-button"></div></label>
+                            </div>
+
+                            <div v-if="!wechatState.activeSession.dynamicNudge" class="space-y-4">
+                                <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[12px] font-bold text-gray-600">我拍角色 (后缀, 一行一个)</span>
+                                        <button @click.stop="generateNudgeList('userToAi')" class="text-[10px] text-purple-600 font-bold active:scale-95 bg-purple-50 px-2 py-1 rounded-md"><i class="fas fa-magic"></i> AI 生成</button>
+                                    </div>
+                                    <textarea v-model="wechatState.activeSession.nudgeUserToAi" placeholder="例如：\n的小脑袋\n的肩膀说辛苦啦" class="w-full h-24 bg-gray-50 p-3 rounded-xl text-xs border border-gray-200 outline-none resize-none" @change="saveData"></textarea>
+                                </div>
+                                <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[12px] font-bold text-gray-600">角色拍我 (后缀, 一行一个)</span>
+                                        <button @click.stop="generateNudgeList('aiToUser')" class="text-[10px] text-purple-600 font-bold active:scale-95 bg-purple-50 px-2 py-1 rounded-md"><i class="fas fa-magic"></i> AI 生成</button>
+                                    </div>
+                                    <textarea v-model="wechatState.activeSession.nudgeAiToUser" placeholder="例如：\n的头并揉了揉\n的肚子" class="w-full h-24 bg-gray-50 p-3 rounded-xl text-xs border border-gray-200 outline-none resize-none" @change="saveData"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -9527,35 +9565,146 @@ const app = createApp({
             }); 
         },
                 
-        handleAvatarDblClick(msg) {
+        async handleAvatarDblClick(msg) {
             const session = this.wechatState.activeSession;
             if (!session) return;
             
-            // 判断点击的是谁的头像
-            let targetName = msg.isSelf ? '自己' : session.name;
-            let suffix = '';
-            
-            if (msg.isSelf) {
-                const mask = this.getMaskById(session.maskId);
-                suffix = mask.nudge || '';
+            // isUserNudgingAi 为 true 表示：我双击了AI的头像（我拍AI）；反之则是AI拍我
+            const isUserNudgingAi = !msg.isSelf;
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            const mask = this.getMaskById(session.maskId);
+
+            const aiName = msg.name || session.name; // 兼容群聊具体人名
+            const myName = mask.name || '我';
+
+            // 微信文案基础格式
+            let baseText = isUserNudgingAi ? `我拍了拍"${aiName}"` : `"${aiName}"拍了拍我`;
+
+            // 如果开启了即兴生成
+            if (session.dynamicNudge) {
+                if (!this.apiConfig.apiKey) return this.showToast('AI 即兴生成需配置 API Key');
+                this.showToast('正在根据场景生成动作...');
+
+                const recentContext = session.messages.slice(-6).map(m => `[${m.isSelf ? myName : aiName}]: ${m.content}`).join('\n');
+                const prompt = `结合当前聊天场景和双方人设，生成一个微信拍一拍的后缀。
+场景上下文：\n${recentContext}
+${isUserNudgingAi ? `是我(${myName})拍了拍对方(${aiName})。` : `是对方(${aiName})拍了拍我(${myName})。`}
+要求：
+1. 只需要输出后缀，不要输出前面的“我拍了拍”等主语！
+2. 字数尽量在15个字以内，符合人物性格和当前氛围。
+3. 绝对不要加任何标点、引号或多余解释！`;
+
+                try {
+                    let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                    if (!url.endsWith('/v1')) url += '/v1';
+                    const res = await fetch(`${url}/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                        body: JSON.stringify({
+                            model: this.apiConfig.selectedModel,
+                            messages:[{ role: 'user', content: prompt }],
+                            temperature: 0.8
+                        })
+                    });
+                    if(res.ok) {
+                        const data = await res.json();
+                        let suffix = data.choices[0].message.content.trim().replace(/^的/, ''); // 如果大模型自带"的"，先去掉
+                        session.messages.push({
+                            type: 'system',
+                            content: `${baseText}的${suffix}`,
+                            time: Date.now()
+                        });
+                        this.scrollToBottom();
+                        this.saveData();
+                    }
+                } catch(e) {
+                    this.showToast('动态拍一拍生成失败');
+                }
             } else {
-                const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-                suffix = (friend && friend.nudge) ? friend.nudge : '';
+                // 如果未开启即兴生成，从用户填写的预设列表中随机抽取
+                let textBlock = isUserNudgingAi ? (session.nudgeUserToAi || '') : (session.nudgeAiToUser || '');
+                let lines = textBlock.split('\n').map(l => l.trim()).filter(Boolean);
+
+                let suffix = '';
+                if (lines.length > 0) {
+                    suffix = lines[Math.floor(Math.random() * lines.length)];
+                    suffix = suffix.replace(/^的/, '');
+                }
+
+                if (suffix) {
+                    session.messages.push({
+                        type: 'system',
+                        content: `${baseText}的${suffix}`,
+                        time: Date.now()
+                    });
+                } else {
+                    session.messages.push({
+                        type: 'system',
+                        content: `${baseText}`,
+                        time: Date.now()
+                    });
+                }
+                this.scrollToBottom();
+                this.saveData();
             }
-            
-            let content = `我拍了拍${targetName}`;
-            if (suffix) {
-                content += suffix.startsWith('的') ? suffix : `的${suffix}`;
+        },
+
+        async generateNudgeList(type) {
+            if (!this.apiConfig.apiKey) return this.showToast('请先配置 API Key');
+            const session = this.wechatState.activeSession;
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            const mask = this.getMaskById(session.maskId);
+
+            let prompt = "";
+            if (type === 'userToAi') {
+                prompt = `我现在的角色是: ${mask.name}(人设: ${mask.bio})。对方是: ${friend ? friend.name : session.name}(人设: ${friend ? friend.bio : '无'})。
+请为我生成5个在微信里“我拍了拍对方”的动作后缀。
+例如：的小脑袋、的肩膀说辛苦啦、并递上一杯奶茶。
+要求：
+1. 贴合我们俩的人设和关系。
+2. 只要后缀部分，绝对不要带“我拍了拍”这些主语。
+3. 一行一个，绝对不要带有数字序号、标点符号或多余解释！`;
+            } else {
+                prompt = `对方的角色是: ${friend ? friend.name : session.name}(人设: ${friend ? friend.bio : '无'})。我是: ${mask.name}(人设: ${mask.bio})。
+请为对方生成5个在微信里“对方拍了拍我”的动作后缀。
+例如：的脑袋、的头并揉了揉、并坏笑了一下。
+要求：
+1. 贴合我们俩的人设和对方的性格。
+2. 只要后缀部分，绝对不要带“对方拍了拍”这些主语。
+3. 一行一个，绝对不要带有数字序号、标点符号或多余解释！`;
             }
-            
-            // 作为系统旁白消息压入聊天
-            session.messages.push({
-                type: 'system',
-                content: content,
-                time: Date.now()
-            });
-            this.scrollToBottom();
-            this.saveData();
+
+            this.showToast('AI 正在生成专属拍一拍动作...');
+            try {
+                let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+
+                const res = await fetch(`${url}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                    body: JSON.stringify({
+                        model: this.apiConfig.selectedModel,
+                        messages:[{ role: 'user', content: prompt }],
+                        temperature: 0.8
+                    })
+                });
+
+                if(!res.ok) throw new Error('网络请求异常');
+                const data = await res.json();
+                // 强制过滤掉AI可能带的序号 (如 1. 2. - 等)
+                const result = data.choices[0].message.content.trim().replace(/^[0-9]+[、.，\s-]*|^- /gm, '');
+                
+                if (type === 'userToAi') {
+                    session.nudgeUserToAi = result;
+                } else {
+                    session.nudgeAiToUser = result;
+                }
+                this.saveData();
+                this.showToast('✨ 拍一拍预设生成成功');
+            } catch(e) {
+                console.error(e);
+                this.showToast('生成失败，请检查 API');
+            }
         },
         resizeInput(e) {
             const target = e.target || this.$refs.chatInputArea;
