@@ -4678,47 +4678,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                             </div>
                         </div>
-                        
-                        <!-- 拍一拍设置 (可展开内嵌卡片) -->
-                        <div class="flex flex-col border-b border-gray-50">
-                            <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="toggleNudgeSettings">
-                                <span class="text-[15px] text-gray-900">拍一拍设置</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[14px] text-gray-500">{{ wechatState.activeSession?.nudgeSettings?.aiImprovise ? 'AI 即兴' : '预设句子池' }}</span>
-                                    <i class="fas fa-chevron-right text-gray-300 text-sm transition-transform duration-200" :class="{'rotate-90': showNudgeSettings}"></i>
-                                </div>
-                            </div>
-                            <!-- 展开区域 -->
-                            <div v-show="showNudgeSettings" class="bg-gray-50/60 p-4 space-y-5 border-t border-gray-50 shadow-inner">
-                                <p class="text-[11px] text-gray-400 -mt-2 leading-relaxed">句子里可用 {user} 代表你的名字、{char} 代表角色名。每次拍时随机抽一句。</p>
-                                
-                                <div>
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-[13px] font-bold text-gray-700">你拍角色 (user → char)</span>
-                                        <button @click.stop="generateNudgeIdeas('userToChar')" class="text-[11px] text-blue-500 bg-blue-50 px-3 py-1 rounded-full font-bold active:scale-95 transition">AI 生成</button>
-                                    </div>
-                                    <textarea v-model="wechatState.activeSession.nudgeSettings.userToCharText" @blur="saveData" placeholder="输入一句或多句拍一拍文案（每行一句）..." class="w-full bg-white p-3 rounded-xl text-[13px] border border-gray-200 outline-none resize-none shadow-sm h-20 leading-relaxed"></textarea>
-                                </div>
-
-                                <div class="flex justify-between items-center bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm">
-                                    <div class="flex flex-col">
-                                        <span class="text-[13px] font-bold text-gray-800">角色动作由 AI 即兴生成</span>
-                                        <span class="text-[10px] text-gray-400 mt-0.5 max-w-[200px] leading-relaxed">开启后，角色对你做动作时 AI 会根据当下剧情即兴产出，不再使用下方句子池。</span>
-                                    </div>
-                                    <input type="checkbox" :id="'ai-nudge-toggle-'+wechatState.activeSession.id" class="switch-checkbox" v-model="wechatState.activeSession.nudgeSettings.aiImprovise" @change="saveData">
-                                    <label :for="'ai-nudge-toggle-'+wechatState.activeSession.id" class="switch-label shrink-0"><div class="switch-button"></div></label>
-                                </div>
-
-                                <div v-if="!wechatState.activeSession.nudgeSettings.aiImprovise" class="animate-fade-in">
-                                    <div class="flex justify-between items-center mb-2">
-                                        <span class="text-[13px] font-bold text-gray-700">角色拍你 (char → user)</span>
-                                        <button @click.stop="generateNudgeIdeas('charToUser')" class="text-[11px] text-blue-500 bg-blue-50 px-3 py-1 rounded-full font-bold active:scale-95 transition">AI 生成</button>
-                                    </div>
-                                    <textarea v-model="wechatState.activeSession.nudgeSettings.charToUserText" @blur="saveData" placeholder="输入一句或多句拍一拍文案（每行一句）..." class="w-full bg-white p-3 rounded-xl text-[13px] border border-gray-200 outline-none resize-none shadow-sm h-20 leading-relaxed"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="flex justify-between items-center p-4 cursor-pointer active:bg-gray-50 transition" @click="avatarModeModal.show = true">
                             <span class="text-[15px] text-gray-900">头像显示设置</span>
                             <div class="flex items-center gap-2">
@@ -4808,6 +4767,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <!-- 卡片 4：AI 自动化功能与开关 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
+                        
+                        <!-- 【新增】拍一拍动作设置面板 -->
+                        <div class="flex flex-col p-4 active:bg-gray-50 transition border-b border-gray-100">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="flex flex-col">
+                                    <span class="text-[15px] text-gray-900">拍一拍动作设置</span>
+                                    <span class="text-[11px] text-gray-400 mt-0.5">双击头像时的自定义肢体动作</span>
+                                </div>
+                                <input type="checkbox" class="switch-checkbox" :id="'nudge-active-'+wechatState.activeSession.id" v-model="wechatState.activeSession.enableCustomNudge" @change="saveData">
+                                <label :for="'nudge-active-'+wechatState.activeSession.id" class="switch-label"><div class="switch-button"></div></label>
+                            </div>
+                            <!-- 展开内容 -->
+                            <div v-if="wechatState.activeSession.enableCustomNudge" class="bg-gray-50 rounded-lg px-3 pb-2 shadow-inner divide-y divide-gray-200/60 mt-3 border border-gray-100">
+                                
+                                <div class="py-3">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[13px] text-gray-700 font-bold">我拍角色 (User 拍 Char)</span>
+                                        <button @click="generateAINudge('userToAi')" class="text-[11px] text-blue-500 font-bold active:opacity-50 px-2.5 py-1 bg-blue-50 rounded-md">AI 生成</button>
+                                    </div>
+                                    <textarea v-model="wechatState.activeSession.nudgeUserToAi" placeholder="每次拍时随机抽一句，如：\n拍了拍TA的肩膀\n捏了捏TA的脸颊\n(一行一句)" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-[12px] outline-none shadow-sm text-gray-600 resize-none h-20" @change="saveData"></textarea>
+                                </div>
+                                
+                                <div class="py-3">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-[13px] text-gray-700 font-bold">角色拍我 (Char 拍 User)</span>
+                                        <button v-if="!wechatState.activeSession.nudgeAiImprovise" @click="generateAINudge('aiToUser')" class="text-[11px] text-blue-500 font-bold active:opacity-50 px-2.5 py-1 bg-blue-50 rounded-md">AI 生成</button>
+                                    </div>
+                                    <!-- 角色拍我的开关 -->
+                                    <div class="flex items-center justify-between mb-3 bg-white p-2 rounded-lg border border-gray-200 shadow-sm">
+                                        <span class="text-[12px] text-gray-800 font-bold">角色动作由 AI 即兴生成</span>
+                                        <input type="checkbox" :id="'nudge-ai-improvise-'+wechatState.activeSession.id" class="switch-checkbox-sm" v-model="wechatState.activeSession.nudgeAiImprovise" @change="saveData">
+                                        <label :for="'nudge-ai-improvise-'+wechatState.activeSession.id" class="switch-label-sm"><div class="switch-button-sm"></div></label>
+                                    </div>
+                                    <!-- 输入框 / 提示语 -->
+                                    <div v-if="!wechatState.activeSession.nudgeAiImprovise">
+                                        <textarea v-model="wechatState.activeSession.nudgeAiToUser" placeholder="每次拍时随机抽一句，如：\n拍了拍你的脑袋说真乖\n戳了戳你的酒窝\n(一行一句)" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-[12px] outline-none shadow-sm text-gray-600 resize-none h-20" @change="saveData"></textarea>
+                                    </div>
+                                    <div v-else class="text-[11px] text-gray-400 mt-1 leading-relaxed px-1">
+                                        开启后，角色会在聊天时根据当下的氛围和剧情环境，主动对你做出肢体动作，下方的静态词库将不再使用。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="flex flex-col p-4 active:bg-gray-50 transition">
                             <div class="flex justify-between items-center mb-1">
                                 <span class="text-[15px] text-gray-900">允许角色进行后台活动</span>
@@ -6767,7 +6770,6 @@ const app = createApp({
             folderSelectModal: { show: false }, 
             
             // Global Notifications & Status
-            showNudgeSettings: false, // 拍一拍面板展开控制
             globalNotification: { show: false, title: '', content: '', avatar: '', sessionId: '' },
             statusModal: { show: false }, statusHistoryModal: { show: false },
             currentStatus: { action: '', thought: '', outfit: '', note: '' },
@@ -9569,101 +9571,85 @@ const app = createApp({
             }); 
         },
                 
-        toggleNudgeSettings() {
+        handleAvatarDblClick(msg) {
             const session = this.wechatState.activeSession;
-            if (session && !session.nudgeSettings) {
-                session.nudgeSettings = { userToCharText: '', charToUserText: '', aiImprovise: false };
-                this.saveData();
+            if (!session) return;
+            
+            let targetName = msg.isSelf ? '自己' : session.name;
+            let content = `"我"拍了拍"${targetName}"`;
+
+            // 【全新高定拍一拍逻辑】
+            if (session.enableCustomNudge) {
+                if (msg.isSelf) {
+                    content = `"我"拍了拍自己`;
+                } else {
+                    const lines = (session.nudgeUserToAi || '').split('\n').map(l=>l.trim()).filter(Boolean);
+                    if (lines.length > 0) {
+                        const randomLine = lines[Math.floor(Math.random() * lines.length)];
+                        content = `"我"${randomLine}`;
+                    }
+                }
             }
-            this.showNudgeSettings = !this.showNudgeSettings;
+            
+            session.messages.push({
+                type: 'system',
+                content: content,
+                time: Date.now()
+            });
+            this.scrollToBottom();
+            this.saveData();
+            
+            // 如果开启了即兴拍一拍，且双击的是AI头像，触发一次顺势剧情推进
+            if (!msg.isSelf && session.enableCustomNudge && session.nudgeAiImprovise) {
+                setTimeout(() => {
+                    this.triggerReceive(`[肢体接触系统通知]：我刚才对你做了一个动作：${content}。请你立刻对我的动作做出合理的即兴反应（语言或动作均可）。`);
+                }, 1000);
+            }
         },
-        async generateNudgeIdeas(type) {
+
+        // --- 拍一拍 AI 代写方法 ---
+        async generateAINudge(type) {
             if (!this.apiConfig.apiKey) return this.showToast('请先配置 API Key');
             const session = this.wechatState.activeSession;
+            if (!session) return;
             const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
             const mask = this.getMaskById(session.maskId);
             
-            let charName = session.isGroup ? '群成员' : (friend ? friend.name : session.name);
-            let charBio = friend ? friend.bio : '无';
-            
-            let prompt = '';
-            if (type === 'userToChar') {
-                prompt = `角色名: ${charName}, 玩家名: ${mask.name}。\n请帮我生成5个适合玩家用来“拍一拍”角色的微信动作文案。格式如“{user}拍了拍{char}的头说真可爱”、“{user}捏了捏{char}的小脸”。每行一个，直接输出。必须严格使用 {user} 代表玩家，{char} 代表角色，不要加任何序号或引号。`;
-            } else {
-                prompt = `角色名: ${charName}, 人设: ${charBio}。玩家名: ${mask.name}。\n请帮我生成5个符合该角色性格的，适合角色用来“拍一拍”玩家的微信动作文案。格式如“{char}拍了拍{user}的肩膀”、“{char}无奈地揉了揉{user}的头发”。每行一个，直接输出。必须严格使用 {user} 代表玩家，{char} 代表角色，不要加任何序号或引号。`;
-            }
-            
-            this.showToast('AI 正在构思动作，请稍候...');
+            this.showToast('AI 正在构思动作文案...');
             try {
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
+                
+                let prompt = '';
+                if (type === 'userToAi') {
+                    prompt = `你现在的身份是：${mask.name}。对方是：${friend?friend.name:session.name}。请你生成 5 句我(玩家)对Ta做的轻微肢体动作（即微信拍一拍的后缀文案）。要求：口语化、动作生动带感、符合人物性格、不要太长。格式为每行一句，如：\n拍了拍Ta的肩膀\n捏了捏Ta的脸颊\n直接输出这 5 句话，千万不要标数字序号，不要多余解释。`;
+                } else {
+                    prompt = `你现在的身份是：${friend?friend.name:session.name} (人设:${friend?friend.bio:'无'})。对方是：${mask.name}。请你生成 5 句你对对方(玩家)做的轻微肢体动作（即微信拍一拍的后缀文案）。要求：口语化、完全贴合你的人设性格，不要太长。格式为每行一句，如：\n拍了拍你的头说真乖\n轻轻敲了一下你的额头\n直接输出这 5 句话，千万不要标数字序号，不要多余解释。`;
+                }
+                
                 const res = await fetch(`${url}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
                     body: JSON.stringify({ 
                         model: this.apiConfig.selectedModel, 
-                        messages: [{ role: 'user', content: prompt }]
+                        messages:[{ role: 'user', content: prompt }],
+                        temperature: 0.9
                     })
                 });
-                if (res.ok) {
+                
+                if(res.ok) {
                     const data = await res.json();
-                    let text = data.choices[0].message.content.trim();
-                    text = text.replace(/^\d+[\.\、\)]\s*/gm, ''); // 去掉烦人的序号
-                    if (!session.nudgeSettings) session.nudgeSettings = { userToCharText: '', charToUserText: '', aiImprovise: false };
-                    if (type === 'userToChar') {
-                        session.nudgeSettings.userToCharText = (session.nudgeSettings.userToCharText ? session.nudgeSettings.userToCharText + '\n' : '') + text;
+                    let content = data.choices[0].message.content.trim().replace(/['"「」]/g, '').replace(/^\d+[\.、]\s*/gm, '');
+                    if (type === 'userToAi') {
+                        session.nudgeUserToAi = session.nudgeUserToAi ? session.nudgeUserToAi + '\n' + content : content;
                     } else {
-                        session.nudgeSettings.charToUserText = (session.nudgeSettings.charToUserText ? session.nudgeSettings.charToUserText + '\n' : '') + text;
+                        session.nudgeAiToUser = session.nudgeAiToUser ? session.nudgeAiToUser + '\n' + content : content;
                     }
                     this.saveData();
-                    this.showToast('生成成功！');
+                    this.showToast('动作生成成功');
                 }
             } catch(e) {
-                this.showToast('生成失败');
-            }
-        },
-        handleAvatarDblClick(msg) {
-            const session = this.wechatState.activeSession;
-            if (!session) return;
-            
-            if (!session.nudgeSettings) {
-                session.nudgeSettings = { userToCharText: '', charToUserText: '', aiImprovise: false };
-            }
-
-            const maskName = this.getMaskById(session.maskId).name || '我';
-            let aiName = session.name;
-            if (session.isGroup && msg.name) {
-                aiName = msg.name;
-            } else if (!session.isGroup) {
-                const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-                aiName = friend ? (friend.remark || friend.name) : session.name;
-            }
-
-            let content = '';
-            if (!msg.isSelf) {
-                const textPool = session.nudgeSettings.userToCharText || '';
-                const lines = textPool.split('\n').map(s => s.trim()).filter(Boolean);
-                if (lines.length > 0) {
-                    let randomLine = lines[Math.floor(Math.random() * lines.length)];
-                    content = randomLine.replace(/\{user\}/g, `"${maskName}"`).replace(/\{char\}/g, `"${aiName}"`);
-                } else {
-                    content = `"${maskName}" 拍了拍 "${aiName}"`;
-                }
-            } else {
-                content = `"${maskName}" 拍了拍自己`;
-            }
-            
-            session.messages.push({ type: 'system', content: content, time: Date.now() });
-            this.scrollToBottom();
-            this.saveData();
-
-            // 如果拍了 AI，有 40% 的概率唤醒 AI 对此作出反应
-            if (!msg.isSelf && !session.isGroup) {
-                if (Math.random() < 0.4) {
-                    setTimeout(() => {
-                        this.triggerReceive(`玩家刚刚拍了拍你（系统旁白: ${content}）。你可以根据你的人设和当时的心情，对我的这个行为做出反应或吐槽。`);
-                    }, 2000);
-                }
+                this.showToast('生成失败，请检查网络');
             }
         },
         resizeInput(e) {
@@ -11570,7 +11556,7 @@ Structure:
   "location": { "name": "Place Name", "address": "Detailed Address" },
   "qinmi_reply": "accept" OR "reject",
   "music_control": "next" OR "prev" OR "stop",
-  "nudge": "${session.nudgeSettings?.aiImprovise ? 'OPTIONAL: 如果你想拍一拍玩家，请在这里直接写出你想拍的动作，例如 {char}捏了捏{user}的脸' : 'OPTIONAL: 如果你想拍一拍玩家，请设为 true'}",
+  "nudge_user": ${session.enableCustomNudge && session.nudgeAiImprovise ? '"OPTIONAL: 填入你想对玩家做的即兴肢体动作，如\'拍了拍你的头\'，它会在聊天中以系统灰字显示出来"' : 'true OR false, // OPTIONAL: 若你想对玩家使用拍一拍，设为 true'},
   "html_widget": "OPTIONAL: Valid HTML string using Tailwind CSS...",
   "change_avatar": true OR false,
   "sticker_id": "OPTIONAL: 填入你想发的表情包的纯数字 ID",
@@ -11911,8 +11897,38 @@ Structure:
                     if (block.quote_user_message) {
                         quoteObj = { name: '我', content: block.quote_user_message };
                     }
-
+                    
+                    // === 处理 AI 拍一拍玩家 ===
+                    if (block.nudge_user) {
+                        let nudgeStr = '';
+                        if (session.enableCustomNudge && session.nudgeAiImprovise && typeof block.nudge_user === 'string' && block.nudge_user !== 'true') {
+                            // AI 即兴现编的拍一拍动作
+                            nudgeStr = `"${speakerName}"${block.nudge_user.replace(/拍了拍/g, '')}`;
+                        } else if (session.enableCustomNudge && !session.nudgeAiImprovise) {
+                            // 从填写的词库里随机抽
+                            const lines = (session.nudgeAiToUser || '').split('\n').map(l=>l.trim()).filter(Boolean);
+                            if (lines.length > 0) {
+                                nudgeStr = `"${speakerName}"${lines[Math.floor(Math.random() * lines.length)]}`;
+                            } else {
+                                nudgeStr = `"${speakerName}"拍了拍"我"`;
+                            }
+                        } else {
+                            nudgeStr = `"${speakerName}"拍了拍"我"`;
+                        }
+                        
+                        setTimeout(() => {
+                            session.messages.push({
+                                type: 'system',
+                                content: nudgeStr,
+                                time: Date.now()
+                            });
+                            this.scrollToBottom();
+                        }, delay);
+                        delay += 1000;
+                    }
+                    
                     // === 处理单聊 AI 自主修改在线状态 ===
+                   
                     if (!session.isGroup && block.change_online_status && friend) {
                         const newColor = block.change_online_status.color;
                         const newText = block.change_online_status.text;
@@ -12006,37 +12022,6 @@ Structure:
                             }, delay);
                             delay += 1500;
                         }
-                    }
-
-                    if (block.nudge) {
-                        setTimeout(() => {
-                            if (!session.nudgeSettings) session.nudgeSettings = { userToCharText: '', charToUserText: '', aiImprovise: false };
-                            let nudgeStr = '';
-                            
-                            // AI 即兴模式
-                            if (session.nudgeSettings.aiImprovise && typeof block.nudge === 'string' && block.nudge !== 'true' && block.nudge !== 'user') {
-                                nudgeStr = block.nudge.replace(/\{user\}/g, '"我"').replace(/\{char\}/g, `"${speakerName}"`);
-                            } else {
-                                // 预设池模式
-                                const textPool = session.nudgeSettings.charToUserText || '';
-                                const lines = textPool.split('\n').map(s => s.trim()).filter(Boolean);
-                                if (lines.length > 0) {
-                                    let randomLine = lines[Math.floor(Math.random() * lines.length)];
-                                    nudgeStr = randomLine.replace(/\{user\}/g, '"我"').replace(/\{char\}/g, `"${speakerName}"`);
-                                } else {
-                                    nudgeStr = `"${speakerName}" 拍了拍我`;
-                                }
-                            }
-                            
-                            session.messages.push({
-                                type: 'system',
-                                content: nudgeStr,
-                                time: Date.now()
-                            });
-                            this.scrollToBottom();
-                            this.saveData();
-                        }, delay);
-                        delay += 1000;
                     }
 
                     if (block.sticker_id) {
