@@ -1995,8 +1995,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <transition name="scale">
         <div v-if="addContactModal.show" class="fixed inset-0 z-[55000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div class="bg-white w-[92%] max-h-[90vh] shadow-2xl flex flex-col relative font-sans overflow-hidden border border-gray-200">
-                <button @click="saveNewContact" class="absolute top-4 right-4 text-gray-400 hover:text-black z-20 text-xl active:scale-90 transition"><i class="fas fa-times"></i></button>
-
+                
                 <div class="flex-1 overflow-y-auto p-6 scrollbar-hide relative">
                     <div class="flex gap-4 mb-8 mt-2">
                         <div class="shrink-0 relative cursor-pointer group" @click="triggerAddContactAvatar">
@@ -2013,13 +2012,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="flex items-center gap-1">
                                 <span class="text-[17px] font-bold text-gray-900 font-mono tracking-tighter">#ID-</span>
                                 <input v-model="newContact.wechatId" placeholder="微信号" class="text-[15px] font-bold text-gray-400 font-mono outline-none bg-transparent flex-1 min-w-0">
-                                <i class="fas fa-magic text-purple-400 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('wechatId')"></i>
+                                <i class="fas fa-magic text-gray-400 hover:text-gray-600 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('wechatId')"></i>
                             </div>
                             <div class="text-[9px] text-gray-400 tracking-widest uppercase mb-1">Identification</div>
                             
                             <div class="border-b-[1.5px] border-gray-200 pb-1.5 mb-3 flex items-center">
                                 <input v-model="newContact.username" placeholder="输入网名..." class="text-[13px] font-bold text-gray-600 outline-none bg-transparent w-full">
-                                <i class="fas fa-magic text-purple-400 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('username')"></i>
+                                <i class="fas fa-magic text-gray-400 hover:text-gray-600 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('username')"></i>
                             </div>
 
                             <div class="space-y-1">
@@ -2050,7 +2049,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Height</span>
-                            <input v-model="newContact.height" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10">
+                            <div class="flex items-baseline"><input v-model="newContact.height" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">cm</span></div>
                         </div>
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Weight</span>
@@ -2072,14 +2071,20 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div class="w-1 h-4 bg-gray-900"></div>
                                 <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Signature</span>
                             </div>
-                            <i class="fas fa-magic text-purple-400 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('signature')"></i>
+                            <i class="fas fa-magic text-gray-400 hover:text-gray-600 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('signature')"></i>
                         </div>
                         <input v-model="newContact.signature" placeholder="一句话个性签名..." class="w-full border-b border-dashed border-gray-300 pb-2 text-[13px] text-gray-500 outline-none bg-transparent italic">
                     </div>
 
-                    <div v-if="newContact.id" class="flex gap-3 mb-6">
+                    <div v-if="newContact.id" class="flex gap-3 mb-4">
                         <button @click="exportContactAsJSON" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition border border-gray-200"><i class="fas fa-code"></i> Export JSON</button>
                         <button @click="exportContactAsPNG" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition shadow-md"><i class="fas fa-image"></i> PNG Card</button>
+                    </div>
+
+                    <!-- 底部确认与取消按钮 -->
+                    <div class="flex gap-3 mb-4">
+                        <button @click="addContactModal.show = false" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[13px] tracking-widest active:scale-95 transition border border-gray-200">取消</button>
+                        <button @click="saveNewContact" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[13px] tracking-widest active:scale-95 transition shadow-md">确定</button>
                     </div>
 
                     <div class="flex justify-between items-center text-[8px] text-gray-400 font-bold tracking-widest uppercase pt-4 border-t border-gray-100">
@@ -2096,8 +2101,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <transition name="scale">
         <div v-if="maskModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div class="bg-white w-[92%] max-h-[90vh] shadow-2xl flex flex-col relative font-sans overflow-hidden border border-gray-200">
-                <button @click="saveMask" class="absolute top-4 right-4 text-gray-400 hover:text-black z-20 text-xl active:scale-90 transition"><i class="fas fa-times"></i></button>
-
+                
                 <div class="flex-1 overflow-y-auto p-6 scrollbar-hide relative">
                     <div class="flex gap-4 mb-8 mt-2">
                         <div class="shrink-0 relative cursor-pointer group" @click="triggerMaskAvatar">
@@ -2114,13 +2118,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="flex items-center gap-1">
                                 <span class="text-[17px] font-bold text-gray-900 font-mono tracking-tighter">#ID-</span>
                                 <input v-model="maskForm.wechatId" placeholder="微信号" class="text-[15px] font-bold text-gray-400 font-mono outline-none bg-transparent flex-1 min-w-0">
-                                <i class="fas fa-magic text-purple-400 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('wechatId', true)"></i>
+                                <i class="fas fa-magic text-gray-400 hover:text-gray-600 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('wechatId', true)"></i>
                             </div>
                             <div class="text-[9px] text-gray-400 tracking-widest uppercase mb-1">Identification</div>
                             
                             <div class="border-b-[1.5px] border-gray-200 pb-1.5 mb-3 flex items-center">
                                 <input v-model="maskForm.username" placeholder="输入网名..." class="text-[13px] font-bold text-gray-600 outline-none bg-transparent w-full">
-                                <i class="fas fa-magic text-purple-400 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('username', true)"></i>
+                                <i class="fas fa-magic text-gray-400 hover:text-gray-600 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('username', true)"></i>
                             </div>
 
                             <div class="space-y-1">
@@ -2148,7 +2152,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Height</span>
-                            <input v-model="maskForm.height" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10">
+                            <div class="flex items-baseline"><input v-model="maskForm.height" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">cm</span></div>
                         </div>
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Weight</span>
@@ -2170,13 +2174,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div class="w-1 h-4 bg-gray-900"></div>
                                 <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Signature</span>
                             </div>
-                            <i class="fas fa-magic text-purple-400 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('signature', true)"></i>
+                            <i class="fas fa-magic text-gray-400 hover:text-gray-600 text-[11px] cursor-pointer active:scale-90 transition" @click="autoFillProfile('signature', true)"></i>
                         </div>
                         <input v-model="maskForm.signature" placeholder="一句话个性签名..." class="w-full border-b border-dashed border-gray-300 pb-2 text-[13px] text-gray-500 outline-none bg-transparent italic">
                     </div>
 
-                    <div v-if="maskForm.id" class="mb-6">
+                    <div v-if="maskForm.id" class="mb-4">
                         <button @click="deleteMask(maskForm.id)" class="w-full py-3 bg-red-50 text-red-500 font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition border border-red-100"><i class="fas fa-trash-alt"></i> Delete Mask</button>
+                    </div>
+
+                    <!-- 底部确认与取消按钮 -->
+                    <div class="flex gap-3 mb-4">
+                        <button @click="maskModal.show = false" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[13px] tracking-widest active:scale-95 transition border border-gray-200">取消</button>
+                        <button @click="saveMask" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[13px] tracking-widest active:scale-95 transition shadow-md">确定</button>
                     </div>
 
                     <div class="flex justify-between items-center text-[8px] text-gray-400 font-bold tracking-widest uppercase pt-4 border-t border-gray-100">
