@@ -2041,7 +2041,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="grid grid-cols-2 gap-x-6 gap-y-4 mb-8">
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Age</span>
-                            <div class="flex items-baseline"><input v-model="newContact.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-900 ml-0.5 font-bold">岁</span></div>
+                            <div class="flex items-baseline"><input v-model="newContact.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold">岁</span></div>
                         </div>
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Birth</span>
@@ -2144,7 +2144,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="grid grid-cols-2 gap-x-6 gap-y-4 mb-8">
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Age</span>
-                            <div class="flex items-baseline"><input v-model="maskForm.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-900 ml-0.5 font-bold">岁</span></div>
+                            <div class="flex items-baseline"><input v-model="maskForm.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold">岁</span></div>
                         </div>
                         <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Birth</span>
@@ -4056,7 +4056,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                                 
                                 <!-- 气泡核心 -->
-                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' ? 'chat-bubble-image' : '', msg.type === 'sticker' ? 'chat-bubble-sticker' : '', msg.type === 'red_packet' || msg.type === 'transfer' ? 'chat-bubble-finance' : '', msg.type === 'transfer' ? 'chat-bubble-transfer' : '', msg.type === 'red_packet' ? 'chat-bubble-redpacket' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
+                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' ? 'chat-bubble-image' : '', msg.type === 'sticker' ? 'chat-bubble-sticker' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file' || msg.type === 'red_packet' || msg.type === 'transfer') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
                                      :style="(msg.type === 'voice' && !msg.quote) ? { width: (60 + Math.min(msg.duration, 60) * 4) + 'px' } : {}"
                                      @click="handleChatBubbleClick(msg)"
                                      @contextmenu.prevent="showChatContextMenu($event, msg, i)">
@@ -4082,22 +4082,34 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <transition name="fade"><div v-if="msg.isRevealed" class="fake-image-text">{{ msg.content }}</div></transition>
                                     </div>
                                     
-                                    <!-- 红包消息 -->
-                                    <div v-else-if="msg.type === 'red_packet'" class="finance-content-wrapper">
-                                        <div class="finance-content">
-                                            <div class="redpacket-icon-box finance-icon-box"><i class="fas fa-wallet"></i></div>
-                                            <div class="finance-text"><div class="finance-title">{{ msg.note || '恭喜发财，大吉大利' }}</div><div class="finance-desc" v-if="msg.isSelf">查看红包</div></div>
+                                    <!-- 新版红包消息 (iOS灰白ins风) -->
+                                    <div v-else-if="msg.type === 'red_packet'" class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col cursor-pointer active:scale-95 transition" :class="msg.isOpened ? 'opacity-70' : ''">
+                                        <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
+                                            <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border" :class="msg.isOpened ? 'bg-gray-50 text-gray-400 border-gray-200' : 'bg-red-50 text-red-500 border-red-100'"><i class="fas fa-envelope text-lg"></i></div>
+                                            <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                                <div class="text-[14px] font-bold text-gray-900 truncate">{{ msg.note || '恭喜发财，大吉大利' }}</div>
+                                                <div class="text-[11px] mt-0.5" :class="msg.isOpened ? 'text-gray-400' : 'text-red-500'">{{ msg.isOpened ? '已领取' : '微信红包' }}</div>
+                                            </div>
                                         </div>
-                                        <div class="finance-footer">微信红包</div>
+                                        <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
+                                            <span>Red Packet</span>
+                                            <i class="fas fa-chevron-right text-[8px] opacity-50"></i>
+                                        </div>
                                     </div>
                                     
-                                    <!-- 转账消息 -->
-                                    <div v-else-if="msg.type === 'transfer'" class="finance-content-wrapper">
-                                        <div class="finance-content">
-                                            <div class="finance-icon-box"><i class="fas fa-exchange-alt"></i></div>
-                                            <div class="finance-text"><div class="finance-title">¥{{ msg.amount }}</div><div class="finance-desc">{{ msg.isReceived ? '已收款' : (msg.isSelf ? '等待对方收款' : '转账给你') }}</div></div>
+                                    <!-- 新版转账消息 (iOS灰白ins风) -->
+                                    <div v-else-if="msg.type === 'transfer'" class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col cursor-pointer active:scale-95 transition" :class="(msg.isReceived || msg.isRefunded) ? 'opacity-70' : ''">
+                                        <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
+                                            <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border" :class="(msg.isReceived || msg.isRefunded) ? 'bg-gray-50 text-gray-400 border-gray-200' : 'bg-orange-50 text-orange-500 border-orange-100'"><i class="fas" :class="msg.isRefunded ? 'fa-undo' : (msg.isReceived ? 'fa-check-circle' : 'fa-exchange-alt')"></i></div>
+                                            <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                                <div class="text-[16px] font-bold text-gray-900 font-mono tracking-tight">¥{{ msg.amount }}</div>
+                                                <div class="text-[11px] mt-0.5" :class="(msg.isReceived || msg.isRefunded) ? 'text-gray-400' : 'text-orange-500'">{{ msg.isRefunded ? '已退还' : (msg.isReceived ? '已收款' : (msg.isSelf ? '等待对方收款' : '转账给你')) }}</div>
+                                            </div>
                                         </div>
-                                        <div class="finance-footer">微信转账</div>
+                                        <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
+                                            <span>Transfer</span>
+                                            <i class="fas fa-chevron-right text-[8px] opacity-50"></i>
+                                        </div>
                                     </div>
                                     
                                     <!-- 亲密付邀请 -->
