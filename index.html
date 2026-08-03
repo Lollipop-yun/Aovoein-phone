@@ -11284,6 +11284,35 @@ const app = createApp({
                 }
             }
 
+            // --- 【新增】点击接收时，瞬间触发历史未领取的红包的抢包行为 ---
+            let hasNewClaims = false;
+            if (session.messages) {
+                session.messages.forEach(msg => {
+                    if (msg.type === 'red_packet' && !msg.isClaimedByAI) {
+                        msg.isClaimedByAI = true;
+                        if (session.isGroup) {
+                            this.simulateGroupRedPacketClaim(msg, session);
+                            hasNewClaims = true;
+                        } else {
+                            if (msg.isSelf && !msg.isOpened) {
+                                msg.isOpened = true;
+                                session.messages.push({
+                                    type: 'system',
+                                    content: `"${session.name}" 领取了你的红包`,
+                                    time: Date.now()
+                                });
+                                hasNewClaims = true;
+                            }
+                        }
+                    }
+                });
+            }
+            if (hasNewClaims) {
+                this.scrollToBottom();
+                this.saveData();
+            }
+            // -----------------------------------------------------
+
             session.isTyping = true; 
             this.saveData(); // 强制存盘，退出重进依然会显示
             // 兼容点击事件传过来的异常参数
@@ -14938,88 +14967,80 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
              this.redPacketModal.show = false;
              this.scrollToBottom();
              this.saveData();
-             
-             // AI 自动抢红包逻辑
-             const session = this.wechatState.activeSession;
-             setTimeout(() => {
-                 if (session.isGroup) {
-                     this.simulateGroupRedPacketClaim(msg, session);
-                 } else {
-                     msg.isOpened = true;
-                     session.messages.push({
-                         type: 'system',
-                         content: `"${session.name}" 领取了你的红包`,
-                         time: Date.now()
-                     });
-                     this.scrollToBottom();
-                     this.saveData();
-                 }
-             }, 2000 + Math.random() * 3000); // 2~5秒后AI自动抢
+             // (定时抢包逻辑已转移至点击接收按钮时同步触发)
         },
         
         simulateGroupRedPacketClaim(rpMsg, session) {
             rpMsg.isClaimed = true; // 标记已被触发过，防止重复触发
-            this.saveData();
 
-            const delay = 1000 + Math.random() * 2000;
-            setTimeout(() => {
-                const totalAmount = parseFloat(rpMsg.amount);
-                const count = rpMsg.count || 1;
-                
-                let candidates = session.members.filter(id => {
-                    const f = this.wechatState.friendList.find(x => x.id === id);
-                    return f && !(session.muted && session.muted.includes(id));
+            // 彻底去除 Timeout，保证抢包瞬间完成，且抢包结果能直接注入大模型上下文中！
+            const totalAmount = parseFloat(rpMsg.amount);
+            const count = rpMsg.count || 1;
+            
+            let candidates = session.members.filter(id => {
+                const f = this.wechatState.friendList.find(x => x.id === id);
+                return f && !(session.muted && session.muted.includes(id));
+            });
+            // 核心修改：无论谁发的红包，玩家(mine)必加入抢红包序列
+            candidates.push('mine');
+            candidates.sort(() => 0.5 - Math.random());
+            
+            const actualCount = Math.min(count, candidates.length);
+            const luckyOnes = candidates.slice(0, actualCount);
+            
+            // === 经典的微信红包随机分配算法 (二倍均值法) ===
+            let remainAmount = totalAmount;
+            let remainCount = actualCount;
+            let splits =[];
+            for (let i = 0; i < actualCount - 1; i++) {
+                let max = (remainAmount / remainCount) * 2;
+                let amt = Math.max(0.01, Math.random() * max);
+                amt = Math.floor(amt * 100) / 100;
+                splits.push(amt);
+                remainAmount -= amt;
+                remainCount--;
+            }
+            splits.push(Math.floor(remainAmount * 100) / 100);
+            
+            // 找出最大的金额（手气王）
+            const maxAmount = Math.max(...splits);
+            
+            rpMsg.claims =[]; // 挂载领取名单给气泡，用于详情页展示
+            let myClaimAmount = 0;
+            
+            luckyOnes.forEach((id, index) => {
+                let name = id === 'mine' ? '我' : this.getFriendName(id);
+                let avatar = id === 'mine' ? this.getMaskById(session.maskId).avatar : this.getFriendAvatar(id);
+                let amt = splits[index];
+                if (id === 'mine') myClaimAmount = amt;
+                rpMsg.claims.push({
+                    id: id,
+                    name: name,
+                    avatar: avatar,
+                    amount: amt,
+                    isBest: amt === maxAmount,
+                    time: Date.now()
                 });
-                if (!rpMsg.isSelf) candidates.push('mine');
-                candidates.sort(() => 0.5 - Math.random());
-                
-                const actualCount = Math.min(count, candidates.length);
-                const luckyOnes = candidates.slice(0, actualCount);
-                
-                // === 经典的微信红包随机分配算法 (二倍均值法) ===
-                let remainAmount = totalAmount;
-                let remainCount = actualCount;
-                let splits =[];
-                for (let i = 0; i < actualCount - 1; i++) {
-                    let max = (remainAmount / remainCount) * 2;
-                    let amt = Math.max(0.01, Math.random() * max);
-                    amt = Math.floor(amt * 100) / 100;
-                    splits.push(amt);
-                    remainAmount -= amt;
-                    remainCount--;
+            });
+
+            // 处理玩家抢到红包的财务入账与气泡状态
+            if (myClaimAmount > 0) {
+                if (!rpMsg.isSelf) {
+                    this.addToWallet('income', myClaimAmount, rpMsg.name, '抢到群红包');
+                } else {
+                    this.addToWallet('income', myClaimAmount, '系统', '抢回自己发的红包');
                 }
-                splits.push(Math.floor(remainAmount * 100) / 100);
-                
-                // 找出最大的金额（手气王）
-                const maxAmount = Math.max(...splits);
-                
-                rpMsg.claims =[]; // 挂载领取名单给气泡，用于详情页展示
-                
-                luckyOnes.forEach((id, index) => {
-                    let name = id === 'mine' ? '我' : this.getFriendName(id);
-                    let avatar = id === 'mine' ? this.getMaskById(session.maskId).avatar : this.getFriendAvatar(id);
-                    let amt = splits[index];
-                    rpMsg.claims.push({
-                        id: id,
-                        name: name,
-                        avatar: avatar,
-                        amount: amt,
-                        isBest: amt === maxAmount,
-                        time: Date.now()
-                    });
-                });
-                
-                const bestClaimer = rpMsg.claims.find(c => c.isBest);
-                const timeStr = `${Math.floor(Math.random() * 50 + 5)}秒`;
-                
-                // 发送系统通知（明确指出是谁抢的）
-                let claimerNames = rpMsg.claims.map(c => c.name).join('、');
-                let text = `${claimerNames} 领取了${rpMsg.isSelf ? '你' : rpMsg.name}的红包。\n红包已被领完，${timeStr}被抢光，${bestClaimer.name} 是手气王。`;
-                
-                session.messages.push({ type: 'system', content: text, time: Date.now() });
-                this.scrollToBottom();
-                this.saveData();
-            }, delay);
+                rpMsg.isOpened = true; // 自己抢到了，气泡变灰
+            }
+            
+            const bestClaimer = rpMsg.claims.find(c => c.isBest);
+            const timeStr = `${Math.floor(Math.random() * 50 + 5)}秒`;
+            
+            // 发送系统通知（明确指出是谁抢的）
+            let claimerNames = rpMsg.claims.map(c => c.name).join('、');
+            let text = `${claimerNames} 领取了${rpMsg.isSelf ? '你' : rpMsg.name}的红包。\n红包已被领完，${timeStr}被抢光，${bestClaimer.name} 是手气王。`;
+            
+            session.messages.push({ type: 'system', content: text, time: Date.now() });
         },
 
         sendTransfer() {
@@ -15115,9 +15136,11 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             }
             
             if(msg.type === 'red_packet') {
-                if(!msg.isSelf) { 
+                const session = this.wechatState.activeSession;
+                // 单聊情况下的点包收款 (群聊已由模拟抢包算法处理)
+                if(!msg.isSelf && !session.isGroup) { 
                     if (!msg.isOpened) {
-                         this.addToWallet('income', parseFloat(msg.amount), this.wechatState.activeSession.name, '红包收入');
+                         this.addToWallet('income', parseFloat(msg.amount), session.name, '红包收入');
                          msg.isOpened = true;
                          this.saveData();
                     }
@@ -15128,18 +15151,17 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 // 如果是已操作过的转账，无视点击
                 if (msg.isReceived || msg.isRefunded) return;
 
+                // 【修复】：自己发出去的转账，不可点击接收/退回，只能等对方操作
+                if (msg.isSelf) {
+                    return this.showToast('等待对方收款');
+                }
+
                 // 校验权限：群聊指定收款人时，判断是否是我自己
                 if (this.wechatState.activeSession.isGroup && msg.targetUserId) {
-                    if (!msg.isSelf) {
-                        const myMaskName = this.getMaskById(this.wechatState.activeSession.maskId).name;
-                        const targetName = this.getFriendName(msg.targetUserId);
-                        if (targetName !== myMaskName && msg.targetUserId !== 'mine') {
-                            return this.showToast('这是给别人的专属转账，你不能领哦');
-                        }
-                    } else {
-                        // 自己发的，点气泡唤起退回菜单
-                        this.transferActionModal = { show: true, msg: msg };
-                        return;
+                    const myMaskName = this.getMaskById(this.wechatState.activeSession.maskId).name;
+                    const targetName = this.getFriendName(msg.targetUserId);
+                    if (targetName !== myMaskName && msg.targetUserId !== 'mine') {
+                        return this.showToast('这是给别人的专属转账，你不能领哦');
                     }
                 }
                 
