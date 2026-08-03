@@ -5095,7 +5095,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
 
-            <!-- 红包详情页 (修复多人拼手气渲染) -->
+            <!-- 红包详情页 (完美复刻原版UI) -->
             <div v-if="wechatState.activeNav === 'red-packet-detail'" class="flex-1 flex flex-col red-packet-bg absolute inset-0 z-50">
                 <div class="rp-header">
                      <div class="pt-10 px-4 flex justify-between items-center text-white/90">
@@ -5108,13 +5108,23 @@ document.addEventListener("DOMContentLoaded", () => {
                      </div>
                 </div>
                 <div class="flex-1 pt-12 flex flex-col items-center">
-                    <h3 class="font-bold text-lg mb-1">{{ currentRedPacketData.isSelf ? getMaskById(wechatState.activeSession.maskId).name : currentRedPacketData.name }}发送的红包</h3>
-                    <p class="text-xs text-gray-400 mb-6">{{ currentRedPacketData.note }}</p>
+                    <h3 class="font-bold text-[16px] text-gray-800 mb-1">{{ currentRedPacketData.isSelf ? getMaskById(wechatState.activeSession.maskId).name : currentRedPacketData.name }}的红包</h3>
+                    <p class="text-xs text-gray-400 mb-8">{{ currentRedPacketData.note }}</p>
                     
-                    <h1 class="text-4xl font-bold text-[#d44d44] mb-8 font-mono">{{ formatMoney(currentRedPacketData.amount) }} <span class="text-sm text-black font-normal font-sans">元</span></h1>
+                    <!-- 如果我抢到了，居中显示我抢到的金额 -->
+                    <div v-if="getMyClaimAmount(currentRedPacketData) !== null" class="text-center mb-8 flex items-baseline justify-center gap-1">
+                        <span class="text-[44px] font-bold text-[#d44d44] font-mono leading-none tracking-tight">¥ {{ formatMoney(getMyClaimAmount(currentRedPacketData)) }}</span>
+                        <span class="text-sm text-black font-normal font-sans ml-1"></span>
+                    </div>
+                    <div v-else class="text-center mb-8 text-sm text-gray-400 font-medium">
+                        你未领到此红包
+                    </div>
 
                     <div class="w-full bg-white flex-1 p-0 border-t border-gray-100 overflow-y-auto pb-safe">
-                        <div class="text-xs text-gray-400 p-4 border-b border-gray-50 bg-gray-50/50">{{ currentRedPacketData.count || 1 }}个红包，已领完</div>
+                        <div class="text-xs text-gray-400 p-4 border-b border-gray-50 bg-gray-50/50 flex justify-between">
+                            <span>{{ currentRedPacketData.count || 1 }}个红包，已领完</span>
+                            <span>共 {{ formatMoney(currentRedPacketData.amount) }} 元</span>
+                        </div>
                         
                         <!-- 动态渲染领取名单 -->
                         <div v-if="currentRedPacketData.claims" v-for="(claim, idx) in currentRedPacketData.claims" :key="idx" class="flex items-center justify-between p-4 border-b border-gray-50">
@@ -5128,7 +5138,7 @@ document.addEventListener("DOMContentLoaded", () => {
                              <div class="flex flex-col items-end">
                                  <span class="font-bold text-[15px] text-gray-900 font-mono">{{ formatMoney(claim.amount) }} 元</span>
                                  <!-- 手气王皇冠图标 -->
-                                 <div v-if="claim.isBest" class="flex items-center gap-1 text-yellow-500 mt-1 text-[10px] font-bold"><i class="fas fa-crown"></i>手气王</div>
+                                 <div v-if="claim.isBest && (currentRedPacketData.count > 1 || currentRedPacketData.claims.length > 1)" class="flex items-center gap-1 text-yellow-500 mt-1 text-[10px] font-bold"><i class="fas fa-crown"></i>手气最佳</div>
                              </div>
                         </div>
                     </div>
@@ -11284,24 +11294,23 @@ const app = createApp({
                 }
             }
 
-            // --- 【新增】点击接收时，瞬间触发历史未领取的红包的抢包行为 ---
+            // --- 点击接收时，瞬间结算所有历史未被领取的红包 ---
             let hasNewClaims = false;
             if (session.messages) {
                 session.messages.forEach(msg => {
                     if (msg.type === 'red_packet' && !msg.isClaimedByAI) {
-                        msg.isClaimedByAI = true;
-                        if (session.isGroup) {
-                            this.simulateGroupRedPacketClaim(msg, session);
-                            hasNewClaims = true;
-                        } else {
-                            if (msg.isSelf && !msg.isOpened) {
-                                msg.isOpened = true;
-                                session.messages.push({
-                                    type: 'system',
-                                    content: `"${session.name}" 领取了你的红包`,
-                                    time: Date.now()
-                                });
+                        msg.isClaimedByAI = true; // 标记系统已处理
+                        if (!msg.claims || msg.claims.length === 0) {
+                            if (session.isGroup) {
+                                this.generateGroupRedPacketClaims(msg, session);
                                 hasNewClaims = true;
+                            } else {
+                                if (msg.isSelf) {
+                                    // 单聊AI领包
+                                    msg.claims = [{ id: session.targetId, name: session.name, avatar: session.avatar, amount: msg.amount, time: Date.now(), isBest: true }];
+                                    session.messages.push({ type: 'system', content: `"${session.name}" 领取了你的红包`, time: Date.now() });
+                                    hasNewClaims = true;
+                                }
                             }
                         }
                     }
@@ -11758,7 +11767,8 @@ Structure:
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
       "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 详细的外卖代付请求
-      "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" } // OPTIONAL: 详细的已点外卖卡片
+      "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 详细的已点外卖卡片
+      "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" } // OPTIONAL: 群内发红包。务必填写符合逻辑的 count (红包个数)！
     }
   ],
   "fake_image": "OPTIONAL: description...",
@@ -14970,21 +14980,28 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
              // (定时抢包逻辑已转移至点击接收按钮时同步触发)
         },
         
-        simulateGroupRedPacketClaim(rpMsg, session) {
-            rpMsg.isClaimed = true; // 标记已被触发过，防止重复触发
+        getMyClaimAmount(rpMsg) {
+            if (!rpMsg || !rpMsg.claims) return null;
+            const myClaim = rpMsg.claims.find(c => c.id === 'mine');
+            return myClaim ? myClaim.amount : null;
+        },
 
-            // 彻底去除 Timeout，保证抢包瞬间完成，且抢包结果能直接注入大模型上下文中！
+        generateGroupRedPacketClaims(rpMsg, session) {
+            if (rpMsg.claims && rpMsg.claims.length > 0) return; // 防止重复生成
+
             const totalAmount = parseFloat(rpMsg.amount);
             const count = rpMsg.count || 1;
             
+            // 获取活跃群成员（排除被禁言的）
             let candidates = session.members.filter(id => {
                 const f = this.wechatState.friendList.find(x => x.id === id);
                 return f && !(session.muted && session.muted.includes(id));
             });
-            // 核心修改：无论谁发的红包，玩家(mine)必加入抢红包序列
+            // 【核心规则】：无论谁发红包，玩家必在抢包池里！
             candidates.push('mine');
-            candidates.sort(() => 0.5 - Math.random());
             
+            // 打乱顺序，抽出手快的几个人
+            candidates.sort(() => 0.5 - Math.random());
             const actualCount = Math.min(count, candidates.length);
             const luckyOnes = candidates.slice(0, actualCount);
             
@@ -15002,10 +15019,10 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             }
             splits.push(Math.floor(remainAmount * 100) / 100);
             
-            // 找出最大的金额（手气王）
+            // 找出手气最佳
             const maxAmount = Math.max(...splits);
             
-            rpMsg.claims =[]; // 挂载领取名单给气泡，用于详情页展示
+            rpMsg.claims =[]; 
             let myClaimAmount = 0;
             
             luckyOnes.forEach((id, index) => {
@@ -15013,6 +15030,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 let avatar = id === 'mine' ? this.getMaskById(session.maskId).avatar : this.getFriendAvatar(id);
                 let amt = splits[index];
                 if (id === 'mine') myClaimAmount = amt;
+                
                 rpMsg.claims.push({
                     id: id,
                     name: name,
@@ -15023,22 +15041,11 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 });
             });
 
-            // 处理玩家抢到红包的财务入账与气泡状态
-            if (myClaimAmount > 0) {
-                if (!rpMsg.isSelf) {
-                    this.addToWallet('income', myClaimAmount, rpMsg.name, '抢到群红包');
-                } else {
-                    this.addToWallet('income', myClaimAmount, '系统', '抢回自己发的红包');
-                }
-                rpMsg.isOpened = true; // 自己抢到了，气泡变灰
-            }
-            
             const bestClaimer = rpMsg.claims.find(c => c.isBest);
-            const timeStr = `${Math.floor(Math.random() * 50 + 5)}秒`;
             
-            // 发送系统通知（明确指出是谁抢的）
+            // 发送系统通知（注入上下文给AI看）
             let claimerNames = rpMsg.claims.map(c => c.name).join('、');
-            let text = `${claimerNames} 领取了${rpMsg.isSelf ? '你' : rpMsg.name}的红包。\n红包已被领完，${timeStr}被抢光，${bestClaimer.name} 是手气王。`;
+            let text = `${claimerNames} 领取了${rpMsg.isSelf ? '你' : rpMsg.name}的红包。\n红包已被领完，${bestClaimer.name} 是手气王。`;
             
             session.messages.push({ type: 'system', content: text, time: Date.now() });
         },
@@ -15129,7 +15136,6 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         },
         
         handleChatBubbleClick(msg) {
-            // 【新增】如果处于多选模式，点击气泡直接勾选！
             if (this.isMultiSelectMode) {
                 this.toggleSelectMessage(msg);
                 return;
@@ -15137,14 +15143,38 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             
             if(msg.type === 'red_packet') {
                 const session = this.wechatState.activeSession;
-                // 单聊情况下的点包收款 (群聊已由模拟抢包算法处理)
-                if(!msg.isSelf && !session.isGroup) { 
-                    if (!msg.isOpened) {
-                         this.addToWallet('income', parseFloat(msg.amount), session.name, '红包收入');
-                         msg.isOpened = true;
-                         this.saveData();
+                // 如果该红包还没生成抢包名单（例如AI主动发的，或你刚发的），立刻生成
+                if (!msg.claims || msg.claims.length === 0) {
+                    if (session.isGroup) {
+                        this.generateGroupRedPacketClaims(msg, session);
+                    } else {
+                        // 单聊名单生成
+                        if (msg.isSelf) {
+                            // 我发的，AI抢了
+                            msg.claims = [{ id: session.targetId, name: session.name, avatar: session.avatar, amount: msg.amount, time: Date.now(), isBest: true }];
+                            msg.isClaimedByAI = true;
+                        } else {
+                            // AI发的，我抢了
+                            msg.claims = [{ id: 'mine', name: '我', avatar: this.getMaskById(session.maskId).avatar, amount: msg.amount, time: Date.now(), isBest: true }];
+                        }
                     }
                 }
+
+                // 处理玩家点击气泡时的变灰(已领取)与财务入账
+                if (!msg.isOpened) {
+                    const myClaim = msg.claims.find(c => c.id === 'mine');
+                    if (myClaim) {
+                        // 如果我抢到了
+                        this.addToWallet('income', parseFloat(myClaim.amount), msg.name || session.name, msg.isSelf ? '抢回自己发的红包' : '抢到红包');
+                        msg.isOpened = true;
+                        this.saveData();
+                    } else if (!msg.isSelf) {
+                        // 如果我没抢到(包被群里别人抢光了)，但也算打开过了
+                        msg.isOpened = true;
+                        this.saveData();
+                    }
+                }
+
                 this.currentRedPacketData = msg;
                 this.wechatState.activeNav = 'red-packet-detail';
             } else if(msg.type === 'transfer') {
