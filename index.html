@@ -3954,7 +3954,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="flex flex-col flex-1 min-w-0">
                                 <!-- 点击名字修改状态，加入 whitespace-nowrap 修复输入中截断 -->
                                 <h1 class="font-bold text-[15px] text-gray-900 leading-tight flex items-center gap-1 cursor-pointer active:opacity-50" @click.stop="!wechatState.activeSession.isGroup && openEditStatusModal()">
-                                    <span v-if="isTyping" class="text-sm font-normal text-gray-500 whitespace-nowrap">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
+                                    <span v-if="wechatState.activeSession?.isTyping" class="text-sm font-normal text-gray-500 whitespace-nowrap">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                                     <span v-else class="truncate">{{ getCurrentChatTitle() }}</span>
                                 </h1>
                                 <div v-if="!wechatState.activeSession.isGroup" class="flex items-center gap-1.5 mt-[3px] cursor-pointer active:opacity-50 w-fit" @click.stop="openEditStatusModal()">
@@ -3969,7 +3969,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div v-if="(wechatState.activeSession?.headerLayout || 'center') === 'center'" class="flex flex-col items-center absolute left-1/2 -translate-x-1/2 w-[60%]">
                         <!-- 点击名字跳出心声 (群聊屏蔽顶部点击) -->
                         <h1 class="font-medium text-[16px] text-gray-900 flex items-center justify-center gap-1 w-full cursor-pointer active:opacity-50" @click.stop="!wechatState.activeSession.isGroup && openStatusModal()">
-                            <span v-if="isTyping" class="whitespace-nowrap text-center">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
+                            <span v-if="wechatState.activeSession?.isTyping" class="whitespace-nowrap text-center">对方正在输入中<span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span></span>
                             <span v-else class="truncate w-full text-center">{{ getCurrentChatTitle() }}</span>
                         </h1>
                         <!-- 点击状态修改状态 -->
@@ -3998,7 +3998,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 <!-- 聊天容器：支持自定义背景图 -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-2 bg-[#fdfdfd] bg-cover bg-center" ref="chatContainer" @click="closeChatMenus"
                      :style="{ backgroundImage: wechatState.activeSession.wallpaper ? 'url(' + wechatState.activeSession.wallpaper + ')' : '' }">
-                    <div v-if="wechatState.activeSession.messages.length === 0" class="text-center text-xs text-gray-300 py-4">星期日 13:42</div>
                     
                     <div v-for="(msg, i) in wechatState.activeSession.messages" :key="i">
                         <!-- 时间旁白 -->
@@ -11285,7 +11284,8 @@ const app = createApp({
                 }
             }
 
-            this.isTyping = true; 
+            session.isTyping = true; 
+            this.saveData(); // 强制存盘，退出重进依然会显示
             // 兼容点击事件传过来的异常参数
             const prompt = typeof directionPrompt === 'string' ? directionPrompt : '';
             this.generateAiReply(prompt);
@@ -11453,20 +11453,28 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
-            // --- 精准双时区计算逻辑 (支持国际标准夏令时自适应) ---
-            const myTz = session.myTimezone !== undefined ? session.myTimezone : 'Asia/Shanghai';
-            const aiTz = session.aiTimezone !== undefined ? session.aiTimezone : 'Asia/Shanghai';
+            // --- 精准双时区计算逻辑 (完美拦截并自动转换旧版数字存档，杜绝夏令时错误) ---
+            const getIanaTz = (tz) => {
+                if (tz === undefined || tz === null) return 'Asia/Shanghai';
+                if (typeof tz === 'number' || !isNaN(Number(tz))) {
+                    const map = {
+                        "-10": "Pacific/Honolulu", "-9": "America/Anchorage", "-8": "America/Los_Angeles",
+                        "-7": "America/Denver", "-6": "America/Chicago", "-5": "America/New_York",
+                        "-4": "America/Toronto", "-3": "America/Argentina/Buenos_Aires", "0": "Europe/London",
+                        "1": "Europe/Paris", "2": "Europe/Athens", "3": "Europe/Moscow", "4": "Asia/Dubai",
+                        "5": "Asia/Karachi", "7": "Asia/Bangkok", "8": "Asia/Shanghai", "9": "Asia/Tokyo",
+                        "10": "Australia/Sydney", "11": "Pacific/Noumea", "12": "Pacific/Fiji"
+                    };
+                    return map[tz.toString()] || 'Asia/Shanghai';
+                }
+                return tz;
+            };
+
+            const myTz = getIanaTz(session.myTimezone);
+            const aiTz = getIanaTz(session.aiTimezone);
             
             const formatTzDate = (tzString) => {
                 try {
-                    // 兼容读取旧存档的纯数字时区
-                    if (typeof tzString === 'number') {
-                        const utcNow = new Date().getTime() + (new Date().getTimezoneOffset() * 60000);
-                        const d = new Date(utcNow + 3600000 * tzString);
-                        const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
-                        return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${weekDays[d.getDay()]} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} (24小时制)`;
-                    }
-                    // 新版底层夏令时引擎
                     const options = { timeZone: tzString, year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false };
                     return new Intl.DateTimeFormat('zh-CN', options).format(new Date());
                 } catch(e) {
@@ -11901,7 +11909,8 @@ Structure:
                 }
                 // ======================
 
-                this.isTyping = false; 
+                session.isTyping = false; 
+                this.saveData();
                 this.handleAiIntimatePayConsumption(session);
 
                 let delay = 0;
@@ -12424,7 +12433,8 @@ Structure:
                 }, delay + 300); // 这里的 delay 是上面文字循环累加出来的时间，+300 保证卡片绝对在最底下！
 
             } catch(e) {
-                this.isTyping = false;
+                session.isTyping = false;
+                this.saveData();
                 
                 // --- 修改为：系统旁白提示 ---
                 session.messages.push({
