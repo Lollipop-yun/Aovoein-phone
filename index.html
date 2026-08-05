@@ -13341,7 +13341,12 @@ Structure:
         // ---------------------
 
         previewFontFromUrl() {
-            if(!this.fontInputUrl) return this.showToast('请输入URL');
+            let actualUrl = this.fontInputUrl;
+            if (this.fontInputUrl && this.fontInputUrl.startsWith('[本地文件]')) {
+                actualUrl = this._tempLocalFontData;
+            }
+            if(!actualUrl) return this.showToast('请输入URL或上传文件');
+            
             this.isLoading = true;
             const n = 'PreviewFont_' + Date.now();
             
@@ -13352,7 +13357,7 @@ Structure:
             // 改用 CSS 动态注入方式，兼容性极强，绕过严格的 JS CORS 拦截
             let style = document.createElement('style');
             style.id = 'dynamic-preview-font';
-            style.innerHTML = `@font-face { font-family: "${n}"; src: url("${this.fontInputUrl}"); font-display: swap; }`;
+            style.innerHTML = `@font-face { font-family: "${n}"; src: url("${actualUrl}"); font-display: swap; }`;
             document.head.appendChild(style);
             
             // 给予浏览器 800ms 解析并下载字体的时间
@@ -13364,8 +13369,12 @@ Structure:
         },
         applyFontFromUrl() {
             if(this.previewFontFamily) {
+                let actualUrl = this.fontInputUrl;
+                if (this.fontInputUrl && this.fontInputUrl.startsWith('[本地文件]')) {
+                    actualUrl = this._tempLocalFontData;
+                }
                 this.themeConfig.fontFamily = this.previewFontFamily;
-                this.themeConfig.fontUrl = this.fontInputUrl;
+                this.themeConfig.fontUrl = actualUrl;
                 this.saveData();
                 this.loadFont(this.themeConfig.fontUrl, this.themeConfig.fontFamily);
                 this.showToast('字体已全局应用');
@@ -13393,7 +13402,7 @@ Structure:
             this.showToast('已恢复默认字体');
         },
         
-        // --- 新增：本地字体文件上传转换逻辑 ---
+        // --- 修复：本地字体文件上传卡顿与转换逻辑 ---
         triggerFontFileUpload() {
             if(this.$refs.fontUploadInput) this.$refs.fontUploadInput.click();
         },
@@ -13405,8 +13414,9 @@ Structure:
             
             const reader = new FileReader();
             reader.onload = (ev) => {
-                // 将本地字体转为 Base64 塞进输入框，底层会自动当做 URL 渲染并存入 IndexedDB 长期保存
-                this.fontInputUrl = ev.target.result;
+                // 【核心修复】：几MB的Base64不要塞给 input，隐藏到底层，input只显示优雅的文件名
+                this._tempLocalFontData = ev.target.result; 
+                this.fontInputUrl = `[本地文件] ${f.name}`;
                 this.previewFontFromUrl(); 
             };
             reader.onerror = () => {
@@ -13415,6 +13425,25 @@ Structure:
             };
             reader.readAsDataURL(f);
             e.target.value = '';
+        },
+        
+        // --- 新增：动态注册预设字体引擎，拒绝盲盒 ---
+        updatePresetFontsStyle() {
+            let style = document.getElementById('preset-fonts-style');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'preset-fonts-style';
+                document.head.appendChild(style);
+            }
+            let css = '';
+            if (this.fontPresets && this.fontPresets.length > 0) {
+                this.fontPresets.forEach(p => {
+                    if (p.fontUrl && p.fontFamily) {
+                        css += `@font-face { font-family: "${p.fontFamily}"; src: url("${p.fontUrl}"); font-display: swap; }\n`;
+                    }
+                });
+            }
+            style.innerHTML = css;
         },
         // ------------------------------------
 
@@ -13427,8 +13456,22 @@ Structure:
             this.saveData(); 
         },
 
-        saveFontPreset() { this.showInput("预设名称", "", "", (n) => { if(n) { this.fontPresets.push({ name:n, fontFamily:this.themeConfig.fontFamily, fontUrl:this.themeConfig.fontUrl, fontSize:this.themeConfig.fontSize, fontColor:this.themeConfig.fontColor }); this.saveData(); } }); },        
-        deleteFontPreset(i) { this.showConfirm("删除？",()=>{this.fontPresets.splice(i,1);this.saveData();}); },
+        saveFontPreset() { 
+            this.showInput("预设名称", "", "", (n) => { 
+                if(n) { 
+                    this.fontPresets.push({ name:n, fontFamily:this.themeConfig.fontFamily, fontUrl:this.themeConfig.fontUrl, fontSize:this.themeConfig.fontSize, fontColor:this.themeConfig.fontColor }); 
+                    this.updatePresetFontsStyle();
+                    this.saveData(); 
+                } 
+            }); 
+        },        
+        deleteFontPreset(i) { 
+            this.showConfirm("删除？",() => {
+                this.fontPresets.splice(i,1);
+                this.updatePresetFontsStyle();
+                this.saveData();
+            }); 
+        },
         triggerWallpaperUpload() { this.$refs.wallpaperInput.click(); },
         async handleWallpaperUpload(e) { const f=e.target.files[0]; if(!f)return; try { this.themeConfig.wallpaper = await compressImage(f, 1080); this.saveData(); } catch(e){} },
         resetWallpaper() { this.themeConfig.wallpaper=''; this.saveData(); },
@@ -13851,6 +13894,9 @@ Structure:
                     this.dataProtection = persisted;
                 });
             }
+            
+            // 【新增】：加载存档时，自动把预设库里的字体注册到系统里，保证列表显示真实字体
+            this.updatePresetFontsStyle();
         },
         async toggleDataProtection() {
             if (this.dataProtection) {
