@@ -6363,13 +6363,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.4 逻辑修正与修复</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-07 17:43</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.4 逻辑修正与深度优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-07 22:18</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">修复：</span>彻底解决其他群成员 AI 发言时等级经验条卡死在1级无法增长的恶性 BUG。</li>
-                                    <li><span class="font-bold text-gray-800">优化：</span>深度强化大模型底层解析指令，强行界定“群红包(拼手气)”与“专属转账(一对一)”的逻辑差异，避免 AI 在群里张冠李戴。</li>
-                                    <li><span class="font-bold text-gray-800">优化：</span>深度强化大模型底层解析指令，明确界定“外卖代付（让玩家付钱请客）”与“已点外卖（AI付完钱请玩家吃）”的概念，防止 AI 错乱。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>群聊中 AI 角色的等级卡在 LV1 不变的问题，强制底层追踪赋值，确保所有人的发言条数都会被正确记录和升级。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>深度强化大模型逻辑，明确界定“红包”为群体福利，“转账”为专属单人发钱，杜绝群聊中 AI 乱发红包给人结账的情况。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>梳理外卖逻辑，严格向大模型规定“外卖代付请求”为 AI 想吃让玩家买单，而“已点外卖卡片”才是 AI 请玩家吃东西，彻底解决 AI 行为错乱。</li>
                                 </ul>
                             </div>
 
@@ -9966,15 +9966,22 @@ const app = createApp({
             
             if (currentSession.isGroup) {
                 if (!currentSession.membersInfo) currentSession.membersInfo = {};
-                if (!currentSession.membersInfo['mine']) currentSession.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
-                
-                let info = currentSession.membersInfo['mine'];
-                info.msgCount = (info.msgCount || 0) + 1;
-                // 全新算法：升级所需总发言数 = 5 * 当前等级 * (当前等级 + 1)
-                let nextLevelReq = 5 * info.level * (info.level + 1);
-                if (info.msgCount >= nextLevelReq && info.level < 100) {
-                    info.level++;
+                if (!currentSession.membersInfo['mine']) {
+                    currentSession.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
                 }
+                
+                // 【强制底层赋值】：直接修改对象的底层属性，防止 Vue 追踪丢失
+                let currentCount = currentSession.membersInfo['mine'].msgCount || 0;
+                let currentLevel = currentSession.membersInfo['mine'].level || 1;
+                
+                currentCount++;
+                let nextLevelReq = 5 * currentLevel * (currentLevel + 1);
+                if (currentCount >= nextLevelReq && currentLevel < 100) {
+                    currentLevel++;
+                }
+                
+                currentSession.membersInfo['mine'].msgCount = currentCount;
+                currentSession.membersInfo['mine'].level = currentLevel;
             }
             currentSession.lastMessage = inputContent;
             currentSession.bgTriggerCount = 0; 
@@ -10892,7 +10899,7 @@ const app = createApp({
                 session.membersInfo[memberId] = {
                     level: 1, // 所有人初始默认都是 1 级
                     customTitle: '',
-                    msgCount: 0 // 彻底修复：使用条数计数器而非日期，否则会被强行重置
+                    lastLevelDate: '' 
                 };
             }
 
@@ -10929,9 +10936,9 @@ const app = createApp({
             const session = this.wechatState.activeSession;
             if (!session.membersInfo) session.membersInfo = {};
             session.members.forEach(id => {
-                if (!session.membersInfo[id]) session.membersInfo[id] = { level: 1, customTitle: '', msgCount: 0 };
+                if (!session.membersInfo[id]) session.membersInfo[id] = { level: 1, customTitle: '', lastLevelDate: '' };
             });
-            if (!session.membersInfo['mine']) session.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
+            if (!session.membersInfo['mine']) session.membersInfo['mine'] = { level: 1, customTitle: '', lastLevelDate: '' };
             this.saveData();
             this.groupTitleModal.show = true;
         },
@@ -11864,10 +11871,10 @@ Structure:
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
-      "transfer": { "amount": "52.00", "note": "给你的转账", "target_user": "目标名字" }, // OPTIONAL: 【转账】：你想【单独、专属地】把钱给群里的【某一个人】(别人不能抢)，必须用 target_user 指定对方的名字！
-      "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 【红包】：你想在群里给大家撒钱拼手气，发这个！群里所有人都能抢！必须填写 count！
-      "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 【求玩家请客】：你没钱了或想撒娇，发外卖代付请求，让【我(玩家)替你付款】！
-      "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" } // OPTIONAL: 【你请玩家吃外卖】：你已经付完钱了，你想送好吃的请【我(玩家)】吃！
+      "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：群聊中如果想【单独给某个人】(如玩家或特定NPC)钱，绝对不能用红包，必须用转账并填写 target_user！
+      "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【警告】：只能用来给大家发福利，【绝对不能】用来给单人付款！
+      "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
+      "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" } // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
     }
   ],
   "fake_image": "OPTIONAL: description...",
@@ -11893,10 +11900,10 @@ Structure:
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
   "recall": true OR false, // OPTIONAL: 若你发出这句话后立刻觉得后悔、不妥、怕对方生气，想要迅速撤回刚才那句话时设为 true
   "fake_image": "OPTIONAL: description...",
-  "transfer": { "amount": "52.00", "note": "For you", "target_user": "我" }, // OPTIONAL: 【转账】：直接转账给我
-  "red_packet": { "amount": "8.88", "count": 1, "note": "Happy Day" }, // OPTIONAL: 【红包】：发个红包
-  "food_payment": { "item": "冰美式", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 【求玩家请客】：想撒娇让【我(玩家)替你付款】！
-  "food_delivery": { "item": "全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 【你请玩家吃外卖】：你已经付完钱了，送好吃的请【我(玩家)】吃！
+  "red_packet": { "amount": "8.88", "count": 1, "note": "Happy Day" }, // OPTIONAL: 发红包。【警告】：红包是活跃气氛用的，不可用于付款结算！
+  "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：如果你想【单独给玩家】付款、打钱，必须且只能用转账！
+  "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
+  "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
   "location": { "name": "Place Name", "address": "Detailed Address" },
   "qinmi_reply": "accept" OR "reject",
   "music_control": "next" OR "prev" OR "stop",
@@ -12464,17 +12471,24 @@ Structure:
                                  }
                              }
                              
-                             // 【修改】群聊AI发消息按条数升级
+                             // 【强制底层赋值】：修复其他角色等级卡死的 Bug
                              if (session.isGroup && speakerId) {
                                  if (!session.membersInfo) session.membersInfo = {};
-                                 if (!session.membersInfo[speakerId]) session.membersInfo[speakerId] = { level: 1, customTitle: '', msgCount: 0 };
-                                 
-                                 let info = session.membersInfo[speakerId];
-                                 info.msgCount = (info.msgCount || 0) + 1;
-                                 let nextLevelReq = 5 * info.level * (info.level + 1);
-                                 if (info.msgCount >= nextLevelReq && info.level < 100) {
-                                     info.level++;
+                                 if (!session.membersInfo[speakerId]) {
+                                     session.membersInfo[speakerId] = { level: 1, customTitle: '', msgCount: 0 };
                                  }
+                                 
+                                 let currentCount = session.membersInfo[speakerId].msgCount || 0;
+                                 let currentLevel = session.membersInfo[speakerId].level || 1;
+                                 
+                                 currentCount++;
+                                 let nextLevelReq = 5 * currentLevel * (currentLevel + 1);
+                                 if (currentCount >= nextLevelReq && currentLevel < 100) {
+                                     currentLevel++;
+                                 }
+                                 
+                                 session.membersInfo[speakerId].msgCount = currentCount;
+                                 session.membersInfo[speakerId].level = currentLevel;
                              }
                              this.scrollToBottom();
                              // 【群聊极速小开差联动】：角色在群里发完言，有 15% 的几率立刻跑到私聊框去找玩家说悄悄话
