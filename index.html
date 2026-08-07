@@ -6622,7 +6622,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </transition>
 
-    <transition name="page-slide"><div v-if="themesPage === 'wallpaper'" class="absolute inset-0 p-4 space-y-6"><div class="w-full aspect-[9/16] bg-gray-200 rounded-3xl overflow-hidden shadow-lg relative mx-auto max-w-[240px] border-4 border-white"><img v-if="themeConfig.wallpaper" :src="themeConfig.wallpaper" class="w-full h-full object-cover"><div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-100"><i class="fas fa-image text-3xl mb-2"></i><span class="text-xs">默认壁纸</span></div></div><div class="flex flex-col gap-3"><button @click="triggerWallpaperUpload" class="w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold active:scale-95 transition shadow-lg">从相册选择</button><button @click="resetWallpaper" class="w-full bg-white text-gray-600 py-3.5 rounded-2xl font-bold border border-gray-200 active:bg-gray-50 transition">恢复默认</button></div><input type="file" ref="wallpaperInput" accept="image/*" class="hidden" @change="handleWallpaperUpload"></div></transition><transition name="page-slide"><div v-if="themesPage === 'font'" class="absolute inset-0 p-4 pb-20"><div class="space-y-6"><div class="bg-gray-100 rounded-2xl p-6 text-center border border-gray-200" :style="{fontFamily: previewFontFamily || themeConfig.fontFamily}"><div class="text-2xl font-bold mb-2" :style="{color: themeConfig.fontColor}">12:30</div><div class="text-lg" :style="{color: themeConfig.fontColor}">Hello World</div><div class="text-sm opacity-60" :style="{color: themeConfig.fontColor}">预览字体效果</div></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3"><div class="flex justify-between items-center ml-1"><label class="text-xs font-bold text-gray-500">字体导入 (URL / 本地)</label><button @click="triggerFontFileUpload" class="text-[10px] bg-blue-50 text-blue-500 px-2 py-1 rounded font-bold active:scale-95">上传 .ttf 文件</button></div><div class="flex gap-2"><input v-model="fontInputUrl" placeholder="https://... 或点击右上角上传" class="flex-1 w-0 bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none"><button @click="previewFontFromUrl" :disabled="isLoading" class="px-4 bg-gray-100 text-gray-600 rounded-xl font-bold text-xs active:scale-95 transition shrink-0"><span v-if="!isLoading">预览</span><i v-else class="fas fa-spinner fa-spin"></i></button><button @click="applyFontFromUrl" class="px-4 bg-black text-white rounded-xl font-bold text-xs active:scale-95 transition shrink-0">应用</button></div><button @click="resetFont" class="w-full bg-white text-red-500 py-2 rounded-xl font-bold text-xs border border-gray-100 active:bg-gray-50">恢复默认字体</button></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4"><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">大小</span><span class="text-xs text-gray-400">{{ (themeConfig.fontSize * 100).toFixed(0) }}%</span></div><input type="range" min="0.8" max="1.2" step="0.05" v-model.number="themeConfig.fontSize" @change="saveData" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">色号</span></div><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full border border-gray-200 shadow-sm shrink-0" :style="{backgroundColor: themeConfig.fontColor}"></div><input type="text" v-model="themeConfig.fontColor" @change="saveData" placeholder="#000000" class="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-sm border border-gray-200 font-mono outline-none uppercase"></div></div></div><div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"><div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50"><span class="font-bold text-gray-800 text-sm">预设</span><button @click="saveFontPreset" class="text-blue-600 text-xs font-bold px-3 py-1 bg-blue-50 rounded-lg active:bg-blue-100">保存</button></div><div v-if="fontPresets.length === 0" class="p-6 text-center text-gray-400 text-xs">无预设</div><div v-else class="divide-y divide-gray-50"><div v-for="(fp, idx) in fontPresets" :key="idx" class="p-4 flex items-center justify-between"><div class="flex-1 min-w-0 mr-2"><div class="font-bold text-gray-800 text-sm truncate" :style="{fontFamily: fp.fontFamily}">{{ fp.name }}</div></div><div class="flex items-center gap-2"><button @click="applyFontPreset(fp)" class="w-7 h-7 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fas fa-check text-[10px]"></i></button><button @click="deleteFontPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button></div></div></div></div><input type="file" ref="fontUploadInput" accept=".ttf,.otf,.woff,.woff2" class="hidden" @change="handleFontFileUpload"></div></div></transition><transition name="page-slide"><div v-if="themesPage === 'icons'" class="absolute inset-0 p-4 pb-20"><div class="space-y-4"><div class="flex justify-end"><button @click="resetAllIcons" class="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded-lg active:bg-red-100">重置所有</button></div><div class="space-y-3"><div v-for="appId in appList" :key="appId" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0 home-icon-custom"><img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i></div><div class="flex-1"><label class="text-[10px] font-bold text-gray-400 mb-1 block">应用名称</label><input :value="getAppName(appId)" @input="(e)=>setAppName(appId, e.target.value)" class="w-full bg-gray-50 px-2 py-1.5 rounded-lg text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2 items-center"><input v-model="tempIconUrls[appId]" placeholder="图标 URL" class="flex-1 w-0 bg-gray-50 px-3 py-2 rounded-lg text-xs border border-gray-200 outline-none"><button @click="setAppIcon(appId, tempIconUrls[appId])" class="w-8 h-8 shrink-0 bg-black text-white rounded-lg text-[14px] font-bold flex items-center justify-center shadow-sm active:scale-95 transition"><i class="fas fa-check"></i></button><button @click="triggerIconUpload(appId)" class="w-8 h-8 shrink-0 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold active:bg-gray-200 flex items-center justify-center shadow-sm"><i class="fas fa-image"></i></button><button @click="resetApp(appId)" class="w-8 h-8 shrink-0 bg-red-50 text-red-500 rounded-lg text-xs active:bg-red-100 flex items-center justify-center shadow-sm"><i class="fas fa-undo"></i></button></div></div></div><input type="file" ref="iconUploadInput" accept="image/*" class="hidden" @change="handleIconFile"></div></div></transition>
+    <transition name="page-slide"><div v-if="themesPage === 'wallpaper'" class="absolute inset-0 p-4 space-y-6"><div class="w-full aspect-[9/16] bg-gray-200 rounded-3xl overflow-hidden shadow-lg relative mx-auto max-w-[240px] border-4 border-white"><img v-if="themeConfig.wallpaper" :src="themeConfig.wallpaper" class="w-full h-full object-cover"><div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-100"><i class="fas fa-image text-3xl mb-2"></i><span class="text-xs">默认壁纸</span></div></div><div class="flex flex-col gap-3"><button @click="triggerWallpaperUpload" class="w-full bg-gray-900 text-white py-3.5 rounded-2xl font-bold active:scale-95 transition shadow-lg">从相册选择</button><button @click="resetWallpaper" class="w-full bg-white text-gray-600 py-3.5 rounded-2xl font-bold border border-gray-200 active:bg-gray-50 transition">恢复默认</button></div><input type="file" ref="wallpaperInput" accept="image/*" class="hidden" @change="handleWallpaperUpload"></div></transition><transition name="page-slide"><div v-if="themesPage === 'font'" class="absolute inset-0 p-4 pb-20"><div class="space-y-6"><div class="bg-gray-100 rounded-2xl p-6 text-center border border-gray-200" :style="{fontFamily: previewFontFamily || themeConfig.fontFamily}"><div class="text-2xl font-bold mb-2" :style="{color: themeConfig.fontColor}">12:30</div><div class="text-lg" :style="{color: themeConfig.fontColor}">Hello World</div><div class="text-sm opacity-60" :style="{color: themeConfig.fontColor}">预览字体效果</div></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-3"><div class="flex justify-between items-center ml-1"><label class="text-xs font-bold text-gray-500">字体导入 (URL / 本地)</label><button @click="triggerFontFileUpload" class="text-[10px] bg-blue-50 text-blue-500 px-2 py-1 rounded font-bold active:scale-95">上传 .ttf 文件</button></div><div class="flex gap-2"><input :value="fontInputUrl && fontInputUrl.length > 200 ? '【本地大文件字体已读取，请点击应用】' : fontInputUrl" @input="fontInputUrl = $event.target.value" placeholder="https://... 或点击右上角上传" class="flex-1 w-0 bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none"><button @click="previewFontFromUrl" :disabled="isLoading" class="px-4 bg-gray-100 text-gray-600 rounded-xl font-bold text-xs active:scale-95 transition shrink-0"><span v-if="!isLoading">预览</span><i v-else class="fas fa-spinner fa-spin"></i></button><button @click="applyFontFromUrl" class="px-4 bg-black text-white rounded-xl font-bold text-xs active:scale-95 transition shrink-0">应用</button></div><button @click="resetFont" class="w-full bg-white text-red-500 py-2 rounded-xl font-bold text-xs border border-gray-100 active:bg-gray-50">恢复默认字体</button></div><div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 space-y-4"><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">大小</span><span class="text-xs text-gray-400">{{ (themeConfig.fontSize * 100).toFixed(0) }}%</span></div><input type="range" min="0.8" max="1.2" step="0.05" v-model.number="themeConfig.fontSize" @change="saveData" class="w-full h-2 bg-gray-200 rounded-lg cursor-pointer"></div><div><div class="flex justify-between mb-2"><span class="text-xs font-bold text-gray-500">色号</span></div><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full border border-gray-200 shadow-sm shrink-0" :style="{backgroundColor: themeConfig.fontColor}"></div><input type="text" v-model="themeConfig.fontColor" @change="saveData" placeholder="#000000" class="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-sm border border-gray-200 font-mono outline-none uppercase"></div></div></div><div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100"><div class="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50"><span class="font-bold text-gray-800 text-sm">预设</span><button @click="saveFontPreset" class="text-blue-600 text-xs font-bold px-3 py-1 bg-blue-50 rounded-lg active:bg-blue-100">保存</button></div><div v-if="fontPresets.length === 0" class="p-6 text-center text-gray-400 text-xs">无预设</div><div v-else class="divide-y divide-gray-50"><div v-for="(fp, idx) in fontPresets" :key="idx" class="p-4 flex items-center justify-between"><div class="flex-1 min-w-0 mr-2"><div class="font-bold text-gray-800 text-sm truncate" :style="{fontFamily: fp.fontFamily}">{{ fp.name }}</div></div><div class="flex items-center gap-2"><button @click="applyFontPreset(fp)" class="w-7 h-7 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fas fa-check text-[10px]"></i></button><button @click="deleteFontPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><i class="fas fa-trash text-[10px]"></i></button></div></div></div></div><input type="file" ref="fontUploadInput" accept=".ttf,.otf,.woff,.woff2" class="hidden" @change="handleFontFileUpload"></div></div></transition><transition name="page-slide"><div v-if="themesPage === 'icons'" class="absolute inset-0 p-4 pb-20"><div class="space-y-4"><div class="flex justify-end"><button @click="resetAllIcons" class="text-xs text-red-500 font-bold px-3 py-1 bg-red-50 rounded-lg active:bg-red-100">重置所有</button></div><div class="space-y-3"><div v-for="appId in appList" :key="appId" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl border border-gray-100 overflow-hidden flex items-center justify-center bg-gray-50 shrink-0 home-icon-custom"><img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i></div><div class="flex-1"><label class="text-[10px] font-bold text-gray-400 mb-1 block">应用名称</label><input :value="getAppName(appId)" @input="(e)=>setAppName(appId, e.target.value)" class="w-full bg-gray-50 px-2 py-1.5 rounded-lg text-sm border border-gray-200 outline-none"></div></div><div class="flex gap-2 items-center"><input v-model="tempIconUrls[appId]" placeholder="图标 URL" class="flex-1 w-0 bg-gray-50 px-3 py-2 rounded-lg text-xs border border-gray-200 outline-none"><button @click="setAppIcon(appId, tempIconUrls[appId])" class="w-8 h-8 shrink-0 bg-black text-white rounded-lg text-[14px] font-bold flex items-center justify-center shadow-sm active:scale-95 transition"><i class="fas fa-check"></i></button><button @click="triggerIconUpload(appId)" class="w-8 h-8 shrink-0 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold active:bg-gray-200 flex items-center justify-center shadow-sm"><i class="fas fa-image"></i></button><button @click="resetApp(appId)" class="w-8 h-8 shrink-0 bg-red-50 text-red-500 rounded-lg text-xs active:bg-red-100 flex items-center justify-center shadow-sm"><i class="fas fa-undo"></i></button></div></div></div><input type="file" ref="iconUploadInput" accept="image/*" class="hidden" @change="handleIconFile"></div></div></transition>
     
     <!-- 这是你刚才丢失导致白屏的 NPC 头像库页面，必须紧贴在图标设置的下面，</main>的上面！ -->
     <transition name="page-slide">
@@ -7281,6 +7281,9 @@ const app = createApp({
         'themesPage'(newVal) {
             if(newVal === 'beautify') {
                 this.beautifyConfig.tempCode = '';
+            }
+            if(newVal === 'font') {
+                this.injectPresetFonts();
             }
         },
         'beautifyConfig.currentTab'() {
@@ -9606,7 +9609,24 @@ const app = createApp({
                 setTimeout(() => { input.classList.remove('error'); err.classList.remove('show'); }, 1000);
             }
         },
-
+        // --- 核心字体预加载引擎 ---
+        injectPresetFonts() {
+            let style = document.getElementById('preset-fonts-style');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'preset-fonts-style';
+                document.head.appendChild(style);
+            }
+            let css = '';
+            if (this.fontPresets && this.fontPresets.length > 0) {
+                this.fontPresets.forEach(p => {
+                    if (p.fontUrl && p.fontFamily) {
+                        css += `@font-face { font-family: "${p.fontFamily}"; src: url("${p.fontUrl}"); font-display: swap; }\n`;
+                    }
+                });
+            }
+            style.innerHTML = css;
+        },
         openApp(name) { this.currentApp = name; this.isAppOpen = true; this.settingsPage = 'main'; this.themesPage = 'main'; },
         closeApp() { 
             this.isAppOpen = false; 
@@ -13341,12 +13361,7 @@ Structure:
         // ---------------------
 
         previewFontFromUrl() {
-            let actualUrl = this.fontInputUrl;
-            if (this.fontInputUrl && this.fontInputUrl.startsWith('[本地文件]')) {
-                actualUrl = this._tempLocalFontData;
-            }
-            if(!actualUrl) return this.showToast('请输入URL或上传文件');
-            
+            if(!this.fontInputUrl) return this.showToast('请输入URL');
             this.isLoading = true;
             const n = 'PreviewFont_' + Date.now();
             
@@ -13357,7 +13372,7 @@ Structure:
             // 改用 CSS 动态注入方式，兼容性极强，绕过严格的 JS CORS 拦截
             let style = document.createElement('style');
             style.id = 'dynamic-preview-font';
-            style.innerHTML = `@font-face { font-family: "${n}"; src: url("${actualUrl}"); font-display: swap; }`;
+            style.innerHTML = `@font-face { font-family: "${n}"; src: url("${this.fontInputUrl}"); font-display: swap; }`;
             document.head.appendChild(style);
             
             // 给予浏览器 800ms 解析并下载字体的时间
@@ -13369,12 +13384,8 @@ Structure:
         },
         applyFontFromUrl() {
             if(this.previewFontFamily) {
-                let actualUrl = this.fontInputUrl;
-                if (this.fontInputUrl && this.fontInputUrl.startsWith('[本地文件]')) {
-                    actualUrl = this._tempLocalFontData;
-                }
                 this.themeConfig.fontFamily = this.previewFontFamily;
-                this.themeConfig.fontUrl = actualUrl;
+                this.themeConfig.fontUrl = this.fontInputUrl;
                 this.saveData();
                 this.loadFont(this.themeConfig.fontUrl, this.themeConfig.fontFamily);
                 this.showToast('字体已全局应用');
@@ -13402,7 +13413,7 @@ Structure:
             this.showToast('已恢复默认字体');
         },
         
-        // --- 修复：本地字体文件上传卡顿与转换逻辑 ---
+        // --- 新增：本地字体文件上传转换逻辑 ---
         triggerFontFileUpload() {
             if(this.$refs.fontUploadInput) this.$refs.fontUploadInput.click();
         },
@@ -13414,9 +13425,8 @@ Structure:
             
             const reader = new FileReader();
             reader.onload = (ev) => {
-                // 【核心修复】：几MB的Base64不要塞给 input，隐藏到底层，input只显示优雅的文件名
-                this._tempLocalFontData = ev.target.result; 
-                this.fontInputUrl = `[本地文件] ${f.name}`;
+                // 将本地字体转为 Base64 塞进输入框，底层会自动当做 URL 渲染并存入 IndexedDB 长期保存
+                this.fontInputUrl = ev.target.result;
                 this.previewFontFromUrl(); 
             };
             reader.onerror = () => {
@@ -13425,25 +13435,6 @@ Structure:
             };
             reader.readAsDataURL(f);
             e.target.value = '';
-        },
-        
-        // --- 新增：动态注册预设字体引擎，拒绝盲盒 ---
-        updatePresetFontsStyle() {
-            let style = document.getElementById('preset-fonts-style');
-            if (!style) {
-                style = document.createElement('style');
-                style.id = 'preset-fonts-style';
-                document.head.appendChild(style);
-            }
-            let css = '';
-            if (this.fontPresets && this.fontPresets.length > 0) {
-                this.fontPresets.forEach(p => {
-                    if (p.fontUrl && p.fontFamily) {
-                        css += `@font-face { font-family: "${p.fontFamily}"; src: url("${p.fontUrl}"); font-display: swap; }\n`;
-                    }
-                });
-            }
-            style.innerHTML = css;
         },
         // ------------------------------------
 
@@ -13456,22 +13447,8 @@ Structure:
             this.saveData(); 
         },
 
-        saveFontPreset() { 
-            this.showInput("预设名称", "", "", (n) => { 
-                if(n) { 
-                    this.fontPresets.push({ name:n, fontFamily:this.themeConfig.fontFamily, fontUrl:this.themeConfig.fontUrl, fontSize:this.themeConfig.fontSize, fontColor:this.themeConfig.fontColor }); 
-                    this.updatePresetFontsStyle();
-                    this.saveData(); 
-                } 
-            }); 
-        },        
-        deleteFontPreset(i) { 
-            this.showConfirm("删除？",() => {
-                this.fontPresets.splice(i,1);
-                this.updatePresetFontsStyle();
-                this.saveData();
-            }); 
-        },
+        saveFontPreset() { this.showInput("预设名称", "", "", (n) => { if(n) { this.fontPresets.push({ name:n, fontFamily:this.themeConfig.fontFamily, fontUrl:this.themeConfig.fontUrl, fontSize:this.themeConfig.fontSize, fontColor:this.themeConfig.fontColor }); this.saveData(); this.injectPresetFonts(); } }); },        
+        deleteFontPreset(i) { this.showConfirm("确定删除该字体预设？",()=>{this.fontPresets.splice(i,1);this.saveData(); this.injectPresetFonts();}); },
         triggerWallpaperUpload() { this.$refs.wallpaperInput.click(); },
         async handleWallpaperUpload(e) { const f=e.target.files[0]; if(!f)return; try { this.themeConfig.wallpaper = await compressImage(f, 1080); this.saveData(); } catch(e){} },
         resetWallpaper() { this.themeConfig.wallpaper=''; this.saveData(); },
@@ -13895,8 +13872,10 @@ Structure:
                 });
             }
             
-            // 【新增】：加载存档时，自动把预设库里的字体注册到系统里，保证列表显示真实字体
-            this.updatePresetFontsStyle();
+            // 系统初始化后，静默注入一次字体列表，保证各种界面的预览不闪烁
+            setTimeout(() => {
+                if(typeof this.injectPresetFonts === 'function') this.injectPresetFonts();
+            }, 1000);
         },
         async toggleDataProtection() {
             if (this.dataProtection) {
