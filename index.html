@@ -6359,6 +6359,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
+                            <!-- v1.2 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.2 字体体验优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-07 16:01</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">优化：</span>应用字体预设时，顶部的 URL 输入框将自动同步显示该预设对应的字体链接（或本地大文件提示），避免 UI 状态与实际应用状态脱节。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.1 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -13518,17 +13531,20 @@ Structure:
             reader.readAsDataURL(f);
             e.target.value = '';
         },
-
         applyFontPreset(p) { 
             if(p.fontUrl) this.loadFont(p.fontUrl, p.fontFamily); 
             this.themeConfig.fontFamily = p.fontFamily; 
             this.themeConfig.fontUrl = p.fontUrl; 
             this.themeConfig.fontSize = p.fontSize; 
             this.themeConfig.fontColor = p.fontColor; 
+            
+            // 同步更新输入框的URL与当前的预览字体内测名
+            this.fontInputUrl = p.fontUrl;
+            this.previewFontFamily = p.fontFamily;
+            
             this.saveData(); 
             this.showToast(`已应用预设: ${p.name}`);
         },
-
         saveFontPreset() { 
             this.showInput("预设名称", "", "", (n) => { 
                 if(n) { 
