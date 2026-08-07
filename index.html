@@ -6359,7 +6359,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.2 更新日志 (当前最新) -->
+                            <!-- v1.3 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.3 群聊经验等级重构</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-07 16:32</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">重构：</span>全新群聊等级算法。不再按“隔天发言”升级，改为按“累计发言条数”升级（LV1到LV2需10条，LV2到LV3需20条，以此类推，每级递增10条上限，最高LV100）。旧存档将自动平滑继承转换经验值。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>支持管理员手动修改等级后，底层经验条会自动同步至该等级门槛，防止再次发言时发生等级错乱或秒掉级。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.2 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -9937,17 +9950,20 @@ const app = createApp({
             
             if (currentSession.isGroup) {
                 if (!currentSession.membersInfo) currentSession.membersInfo = {};
-                if (!currentSession.membersInfo['mine']) currentSession.membersInfo['mine'] = { level: 1, customTitle: '', lastLevelDate: '' };
-                const today = new Date().toLocaleDateString();
-                if (currentSession.membersInfo['mine'].lastLevelDate !== today) {
-                    // 修复卡在1级Bug：第一次发言只标记日期保持1级，后续隔天发言再递增
-                    if (currentSession.membersInfo['mine'].lastLevelDate === '') {
-                        currentSession.membersInfo['mine'].lastLevelDate = today;
-                    } else {
-                        if (currentSession.membersInfo['mine'].level < 100) currentSession.membersInfo['mine'].level++;
-                        currentSession.membersInfo['mine'].lastLevelDate = today;
-                    }
-                }
+                if (!currentSession.membersInfo['mine']) currentSession.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
+                
+                let info = currentSession.membersInfo['mine'];
+                // 平滑兼容旧存档：如果没有发言条数数据，根据当前等级反推出一个保底条数
+                if (info.msgCount === undefined) info.msgCount = 5 * (info.level || 1) * ((info.level || 1) - 1);
+                
+                // 每次发言条数 +1
+                info.msgCount++;
+                
+                // 核心算法：通过总条数反推当前处于的等级 L = floor((1 + sqrt(1 + 0.8 * N)) / 2)
+                let calculatedLevel = Math.floor((1 + Math.sqrt(1 + 0.8 * info.msgCount)) / 2);
+                if (calculatedLevel > 100) calculatedLevel = 100;
+                
+                info.level = calculatedLevel;
             }
             currentSession.lastMessage = inputContent;
             currentSession.bgTriggerCount = 0; 
@@ -10865,7 +10881,7 @@ const app = createApp({
                 session.membersInfo[memberId] = {
                     level: 1, // 所有人初始默认都是 1 级
                     customTitle: '',
-                    lastLevelDate: '' 
+                    msgCount: 0 
                 };
             }
 
@@ -10902,9 +10918,9 @@ const app = createApp({
             const session = this.wechatState.activeSession;
             if (!session.membersInfo) session.membersInfo = {};
             session.members.forEach(id => {
-                if (!session.membersInfo[id]) session.membersInfo[id] = { level: 1, customTitle: '', lastLevelDate: '' };
+                if (!session.membersInfo[id]) session.membersInfo[id] = { level: 1, customTitle: '', msgCount: 0 };
             });
-            if (!session.membersInfo['mine']) session.membersInfo['mine'] = { level: 1, customTitle: '', lastLevelDate: '' };
+            if (!session.membersInfo['mine']) session.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
             this.saveData();
             this.groupTitleModal.show = true;
         },
@@ -10924,8 +10940,12 @@ const app = createApp({
             let level = parseInt(this.editTitleModal.level);
             if (level < 1) level = 1; if (level > 100) level = 100;
 
+            // 强力覆盖：一旦管理员手动强行修改了某人的等级，后台必须自动给他的发言条数充值到该等级的最低要求条数，防止下次发言瞬间掉级！
+            const minMsgsForLevel = 5 * level * (level - 1);
+
             session.membersInfo[targetId] = {
                 level: level,
+                msgCount: minMsgsForLevel,
                 customTitle: this.editTitleModal.customTitle.trim()
             };
             this.saveData();
@@ -12423,20 +12443,20 @@ Structure:
                                  }
                              }
                              
-                             // 【新增】群聊AI发消息升1级
+                             // 【新增】群聊AI发消息累积经验升级
                              if (session.isGroup && speakerId) {
                                  if (!session.membersInfo) session.membersInfo = {};
-                                 if (!session.membersInfo[speakerId]) session.membersInfo[speakerId] = { level: 1, customTitle: '', lastLevelDate: '' };
-                                 const today = new Date().toLocaleDateString();
-                                 if (session.membersInfo[speakerId].lastLevelDate !== today) {
-                                     // 修复卡在1级Bug：第一次发言只标记日期保持1级，后续隔天发言再递增
-                                     if (session.membersInfo[speakerId].lastLevelDate === '') {
-                                         session.membersInfo[speakerId].lastLevelDate = today;
-                                     } else {
-                                         if (session.membersInfo[speakerId].level < 100) session.membersInfo[speakerId].level++;
-                                         session.membersInfo[speakerId].lastLevelDate = today;
-                                     }
-                                 }
+                                 if (!session.membersInfo[speakerId]) session.membersInfo[speakerId] = { level: 1, customTitle: '', msgCount: 0 };
+                                 
+                                 let info = session.membersInfo[speakerId];
+                                 if (info.msgCount === undefined) info.msgCount = 5 * (info.level || 1) * ((info.level || 1) - 1);
+                                 
+                                 info.msgCount++;
+                                 
+                                 let calculatedLevel = Math.floor((1 + Math.sqrt(1 + 0.8 * info.msgCount)) / 2);
+                                 if (calculatedLevel > 100) calculatedLevel = 100;
+                                 
+                                 info.level = calculatedLevel;
                              }
                              this.scrollToBottom();
                              // 【群聊极速小开差联动】：角色在群里发完言，有 15% 的几率立刻跑到私聊框去找玩家说悄悄话
