@@ -3469,8 +3469,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col gap-4">
                     <h3 class="text-lg font-bold text-center mb-2">修改群头衔</h3>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">等级 (1-100)</label>
-                        <input type="number" v-model.number="editTitleModal.level" class="w-full bg-gray-50 p-3 rounded-xl text-sm border border-gray-200 outline-none">
+                        <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">当前群等级</label>
+                        <div class="w-full bg-gray-100 p-3 rounded-xl text-sm border border-gray-200 text-gray-500 font-mono">LV.{{ editTitleModal.level }} (随发言条数自动升级)</div>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 ml-1 mb-1 block">专属头衔 (选填)</label>
@@ -4045,14 +4045,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             
                             
                             <div class="flex flex-col max-w-[70%]" :class="msg.isSelf ? 'items-end' : 'items-start'">
-                                <!-- 群聊专属：显示发消息人的头衔和名字 -->
-                                <div v-if="wechatState.activeSession?.isGroup && !msg.isSelf" class="flex items-center gap-1.5 ml-1.5 mb-1">
+                                <!-- 群聊专属：显示发消息人的头衔和名字 (解除屏蔽玩家限制) -->
+                                <div v-if="wechatState.activeSession?.isGroup" class="flex items-center gap-1.5 mb-1" :class="msg.isSelf ? 'mr-1.5' : 'ml-1.5'">
                                     <span v-if="wechatState.activeSession.showGroupTitle !== false && getGroupTitleInfo(msg)" 
                                           class="px-1.5 py-[1px] rounded-[4px] text-[9px] font-bold text-white shadow-sm tracking-wide" 
                                           :class="getGroupTitleInfo(msg).color">
                                         LV{{ getGroupTitleInfo(msg).level }} {{ getGroupTitleInfo(msg).text }}
                                     </span>
-                                    <span class="text-[10px] text-gray-500 font-medium">{{ msg.name }}</span>
+                                    <span class="text-[10px] text-gray-500 font-medium">{{ msg.isSelf ? getMaskById(wechatState.activeSession.maskId).name : msg.name }}</span>
                                 </div>
                                 
                                 <!-- 气泡核心 -->
@@ -6363,12 +6363,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.3 群聊经验等级重构</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-07 16:32</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.3 群聊体验强化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-07 17:00</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">重构：</span>全新群聊等级算法。不再按“隔天发言”升级，改为按“累计发言条数”升级（LV1到LV2需10条，LV2到LV3需20条，以此类推，每级递增10条上限，最高LV100）。旧存档将自动平滑继承转换经验值。</li>
-                                    <li><span class="font-bold text-gray-800">优化：</span>支持管理员手动修改等级后，底层经验条会自动同步至该等级门槛，防止再次发言时发生等级错乱或秒掉级。</li>
+                                    <li><span class="font-bold text-gray-800">重构：</span>群聊等级增长逻辑重置，由“隔天发言升1级”改为“累积发言数自动升级（LV1->LV2需10条，LV2->LV3需20条，依此类推）”。</li>
+                                    <li><span class="font-bold text-gray-800">限制：</span>关闭群头衔管理中手动修改等级的权限，仅保留专属头衔颁发。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>群主颁发或修改成员头衔时，群聊中会自动插入一条专属系统旁白通知。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>群聊中玩家（自己）发送消息时，也会在气泡上方显示专属头衔与名字（且群主头衔适配专属橙黄色）。</li>
                                 </ul>
                             </div>
 
@@ -9953,17 +9955,12 @@ const app = createApp({
                 if (!currentSession.membersInfo['mine']) currentSession.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
                 
                 let info = currentSession.membersInfo['mine'];
-                // 平滑兼容旧存档：如果没有发言条数数据，根据当前等级反推出一个保底条数
-                if (info.msgCount === undefined) info.msgCount = 5 * (info.level || 1) * ((info.level || 1) - 1);
-                
-                // 每次发言条数 +1
-                info.msgCount++;
-                
-                // 核心算法：通过总条数反推当前处于的等级 L = floor((1 + sqrt(1 + 0.8 * N)) / 2)
-                let calculatedLevel = Math.floor((1 + Math.sqrt(1 + 0.8 * info.msgCount)) / 2);
-                if (calculatedLevel > 100) calculatedLevel = 100;
-                
-                info.level = calculatedLevel;
+                info.msgCount = (info.msgCount || 0) + 1;
+                // 全新算法：升级所需总发言数 = 5 * 当前等级 * (当前等级 + 1)
+                let nextLevelReq = 5 * info.level * (info.level + 1);
+                if (info.msgCount >= nextLevelReq && info.level < 100) {
+                    info.level++;
+                }
             }
             currentSession.lastMessage = inputContent;
             currentSession.bgTriggerCount = 0; 
@@ -10881,7 +10878,7 @@ const app = createApp({
                 session.membersInfo[memberId] = {
                     level: 1, // 所有人初始默认都是 1 级
                     customTitle: '',
-                    msgCount: 0 
+                    lastLevelDate: '' 
                 };
             }
 
@@ -10894,7 +10891,7 @@ const app = createApp({
 
             // 严格遵循配色和判定逻辑
             if (isOwner) {
-                bgColor = 'bg-yellow-500';
+                bgColor = 'bg-[#ffb03a]'; // 完美复刻供图的橙黄色
                 titleText = info.customTitle || '群主';
             } else if (isAdmin) {
                 bgColor = 'bg-[#07c160]'; // 微信绿
@@ -10918,9 +10915,9 @@ const app = createApp({
             const session = this.wechatState.activeSession;
             if (!session.membersInfo) session.membersInfo = {};
             session.members.forEach(id => {
-                if (!session.membersInfo[id]) session.membersInfo[id] = { level: 1, customTitle: '', msgCount: 0 };
+                if (!session.membersInfo[id]) session.membersInfo[id] = { level: 1, customTitle: '', lastLevelDate: '' };
             });
-            if (!session.membersInfo['mine']) session.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
+            if (!session.membersInfo['mine']) session.membersInfo['mine'] = { level: 1, customTitle: '', lastLevelDate: '' };
             this.saveData();
             this.groupTitleModal.show = true;
         },
@@ -10937,17 +10934,26 @@ const app = createApp({
         saveMemberTitle() {
             const session = this.wechatState.activeSession;
             const targetId = this.editTitleModal.targetId;
-            let level = parseInt(this.editTitleModal.level);
-            if (level < 1) level = 1; if (level > 100) level = 100;
+            const newTitle = this.editTitleModal.customTitle.trim();
 
-            // 强力覆盖：一旦管理员手动强行修改了某人的等级，后台必须自动给他的发言条数充值到该等级的最低要求条数，防止下次发言瞬间掉级！
-            const minMsgsForLevel = 5 * level * (level - 1);
+            let info = session.membersInfo[targetId];
+            if (!info) info = { level: 1, msgCount: 0, customTitle: '' };
+            
+            const oldTitle = info.customTitle;
+            info.customTitle = newTitle;
+            session.membersInfo[targetId] = info;
+            
+            // 检测到改了头衔，就发系统旁白通知
+            if (oldTitle !== newTitle && newTitle !== '') {
+                const targetName = targetId === 'mine' ? '你' : this.getFriendName(targetId);
+                session.messages.push({
+                    type: 'system',
+                    content: `[群聊提示] 群主已为 "${targetName}" 颁发了专属头衔: ${newTitle}`,
+                    time: Date.now()
+                });
+                this.scrollToBottom();
+            }
 
-            session.membersInfo[targetId] = {
-                level: level,
-                msgCount: minMsgsForLevel,
-                customTitle: this.editTitleModal.customTitle.trim()
-            };
             this.saveData();
             this.editTitleModal.show = false;
             this.showToast('群头衔已更新');
@@ -12443,20 +12449,17 @@ Structure:
                                  }
                              }
                              
-                             // 【新增】群聊AI发消息累积经验升级
+                             // 【修改】群聊AI发消息按条数升级
                              if (session.isGroup && speakerId) {
                                  if (!session.membersInfo) session.membersInfo = {};
                                  if (!session.membersInfo[speakerId]) session.membersInfo[speakerId] = { level: 1, customTitle: '', msgCount: 0 };
                                  
                                  let info = session.membersInfo[speakerId];
-                                 if (info.msgCount === undefined) info.msgCount = 5 * (info.level || 1) * ((info.level || 1) - 1);
-                                 
-                                 info.msgCount++;
-                                 
-                                 let calculatedLevel = Math.floor((1 + Math.sqrt(1 + 0.8 * info.msgCount)) / 2);
-                                 if (calculatedLevel > 100) calculatedLevel = 100;
-                                 
-                                 info.level = calculatedLevel;
+                                 info.msgCount = (info.msgCount || 0) + 1;
+                                 let nextLevelReq = 5 * info.level * (info.level + 1);
+                                 if (info.msgCount >= nextLevelReq && info.level < 100) {
+                                     info.level++;
+                                 }
                              }
                              this.scrollToBottom();
                              // 【群聊极速小开差联动】：角色在群里发完言，有 15% 的几率立刻跑到私聊框去找玩家说悄悄话
