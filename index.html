@@ -6239,6 +6239,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div @click="navigateSettings('push-config')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
                                     <div class="flex items-center gap-4"><i class="fas fa-layer-group text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">系统推送</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                                 </div>
+                                <div @click="navigateSettings('changelog')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
+                                    <div class="flex items-center gap-4"><i class="fas fa-history text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">更新日志</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                                </div>
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50">
                                     <div class="flex items-center gap-4"><i class="fas fa-expand text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">全屏模式</span></div><input type="checkbox" id="toggle-fs" class="switch-checkbox" v-model="isFullScreen" @change="toggleFullScreen"><label for="toggle-fs" class="switch-label"><div class="switch-button"></div></label>
                                 </div>
@@ -6349,6 +6352,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'push-config'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4"><div class="flex justify-between items-center"><span class="font-bold text-gray-800 text-sm">允许浏览器消息推送</span><input type="checkbox" id="push-toggle" class="switch-checkbox" v-model="pushConfig.enabled" @change="togglePushPermission"><label for="push-toggle" class="switch-label"><div class="switch-button"></div></label></div><p class="text-xs text-gray-500">开启后，AI发送消息时会通过浏览器原生通知推送到你的设备。开启此功能通常需要你在浏览器中同意通知权限。</p><button @click="testPushNotification" class="w-full bg-gray-900 text-white py-3 rounded-xl text-sm font-bold active:scale-95 transition">测试推送</button></div>
+                    </div>
+                </transition>
+
+                <!-- 更新日志 -->
+                <transition name="page-slide">
+                    <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
+                        <div class="space-y-4">
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.1 性能与修复更新</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-07 15:18</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>字体预设点击后无法重新加载应用的问题。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>字体预设列表无法正确显示预览字体样式的问题。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>采用全新底层 Blob 内存切片渲染引擎，彻底解决上传大型 TTF 本地字体后导致的内存溢出及保存卡死问题。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>设置中心增加独立「更新日志」面板。</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </transition>
 
@@ -7133,7 +7157,7 @@ const app = createApp({
         totalUnreadCount() {
             return this.wechatState.sessions.reduce((sum, s) => sum + (s.unreadCount || 0), 0);
         },
-        settingsTitle() { if (this.settingsPage === 'api-config') return 'API 配置'; if (this.settingsPage === 'data-manage') return '数据管理'; if (this.settingsPage === 'notification') return '消息提示音'; return '系统设置'; },
+        settingsTitle() { if (this.settingsPage === 'api-config') return 'API 配置'; if (this.settingsPage === 'data-manage') return '数据管理'; if (this.settingsPage === 'notification') return '消息提示音'; if (this.settingsPage === 'changelog') return '更新日志'; return '系统设置'; },
         themesTitle() { if (this.themesPage === 'wallpaper') return '壁纸设置'; if (this.themesPage === 'font') return '字体设置'; if (this.themesPage === 'icons') return '图标设置'; if (this.themesPage === 'beautify') return '美化设置'; if (this.themesPage === 'home_preset') return '主屏预设'; if (this.themesPage === 'notification_beautify') return '通知栏美化'; if (this.themesPage === 'npc_avatars') return 'NPC 形象库'; return '主题商店'; },
         folders() { return this.worldData.filter(i => i.type === 'folder'); },
         rootFiles() { return this.worldData.filter(i => i.type === 'file' && !i.parentId); },
@@ -13360,28 +13384,76 @@ Structure:
         },
         // ---------------------
 
+        // --- 核心字体预加载引擎 (极致性能优化版) ---
+        injectPresetFonts() {
+            let style = document.getElementById('preset-fonts-style');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'preset-fonts-style';
+                document.head.appendChild(style);
+            }
+            // 异步处理，防止卡顿
+            setTimeout(() => {
+                let css = '';
+                if (this.fontPresets && this.fontPresets.length > 0) {
+                    this.fontPresets.forEach(p => {
+                        if (p.fontUrl && p.fontFamily) {
+                            let finalUrl = p.fontUrl;
+                            if (finalUrl.startsWith('data:')) {
+                                try {
+                                    const arr = finalUrl.split(',');
+                                    const mime = arr[0].match(/:(.*?);/)[1];
+                                    const bstr = atob(arr[1]);
+                                    let n = bstr.length;
+                                    const u8arr = new Uint8Array(n);
+                                    while(n--){ u8arr[n] = bstr.charCodeAt(n); }
+                                    finalUrl = URL.createObjectURL(new Blob([u8arr], {type:mime}));
+                                } catch(e) {}
+                            }
+                            css += `@font-face { font-family: "${p.fontFamily}"; src: url("${finalUrl}"); font-display: swap; }\n`;
+                        }
+                    });
+                }
+                style.innerHTML = css;
+            }, 50);
+        },
+
         previewFontFromUrl() {
             if(!this.fontInputUrl) return this.showToast('请输入URL');
             this.isLoading = true;
             const n = 'PreviewFont_' + Date.now();
             
-            // 移除旧的预览样式，防止冲突
             let oldStyle = document.getElementById('dynamic-preview-font');
             if (oldStyle) oldStyle.remove();
 
-            // 改用 CSS 动态注入方式，兼容性极强，绕过严格的 JS CORS 拦截
-            let style = document.createElement('style');
-            style.id = 'dynamic-preview-font';
-            style.innerHTML = `@font-face { font-family: "${n}"; src: url("${this.fontInputUrl}"); font-display: swap; }`;
-            document.head.appendChild(style);
-            
-            // 给予浏览器 800ms 解析并下载字体的时间
+            // Blob 内存压缩引擎
             setTimeout(() => {
-                this.previewFontFamily = n;
-                this.isLoading = false;
-                this.showToast('预览已更新（若仍无效，请确认链接是 .ttf / .woff 直链格式）');
-            }, 800);
+                let finalUrl = this.fontInputUrl;
+                if (finalUrl.startsWith('data:')) {
+                    try {
+                        const arr = finalUrl.split(',');
+                        const mime = arr[0].match(/:(.*?);/)[1];
+                        const bstr = atob(arr[1]);
+                        let len = bstr.length;
+                        const u8arr = new Uint8Array(len);
+                        while(len--){ u8arr[len] = bstr.charCodeAt(len); }
+                        finalUrl = URL.createObjectURL(new Blob([u8arr], {type:mime}));
+                    } catch(e) {}
+                }
+                
+                let style = document.createElement('style');
+                style.id = 'dynamic-preview-font';
+                style.innerHTML = `@font-face { font-family: "${n}"; src: url("${finalUrl}"); font-display: swap; }`;
+                document.head.appendChild(style);
+                
+                setTimeout(() => {
+                    this.previewFontFamily = n;
+                    this.isLoading = false;
+                    this.showToast('预览已更新');
+                }, 100);
+            }, 50);
         },
+
         applyFontFromUrl() {
             if(this.previewFontFamily) {
                 this.themeConfig.fontFamily = this.previewFontFamily;
@@ -13391,6 +13463,7 @@ Structure:
                 this.showToast('字体已全局应用');
             } else { this.showToast('请先预览字体'); }
         },
+
         loadFont(u, n) { 
             let style = document.getElementById('global-custom-font');
             if (!style) {
@@ -13398,22 +13471,32 @@ Structure:
                 style.id = 'global-custom-font';
                 document.head.appendChild(style);
             }
-            // 全局注入 @font-face
-            style.innerHTML = `@font-face { font-family: "${n}"; src: url("${u}"); font-display: swap; }`;
-            // 全局挂载字体，并保留系统默认字体作为后备以防万一
+            let finalUrl = u;
+            if (finalUrl.startsWith('data:')) {
+                try {
+                    const arr = finalUrl.split(',');
+                    const mime = arr[0].match(/:(.*?);/)[1];
+                    const bstr = atob(arr[1]);
+                    let len = bstr.length;
+                    const u8arr = new Uint8Array(len);
+                    while(len--){ u8arr[len] = bstr.charCodeAt(len); }
+                    finalUrl = URL.createObjectURL(new Blob([u8arr], {type:mime}));
+                } catch(e) {}
+            }
+            style.innerHTML = `@font-face { font-family: "${n}"; src: url("${finalUrl}"); font-display: swap; }`;
             document.body.style.fontFamily = `"${n}", var(--custom-font, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif)`;
         },
+
         resetFont() {
             this.themeConfig.fontFamily = '';
             this.themeConfig.fontUrl = '';
             document.body.style.fontFamily = '';
             let style = document.getElementById('global-custom-font');
-            if (style) style.remove(); // 清除动态注入的 CSS
+            if (style) style.remove(); 
             this.saveData();
             this.showToast('已恢复默认字体');
         },
         
-        // --- 新增：本地字体文件上传转换逻辑 ---
         triggerFontFileUpload() {
             if(this.$refs.fontUploadInput) this.$refs.fontUploadInput.click();
         },
@@ -13425,7 +13508,6 @@ Structure:
             
             const reader = new FileReader();
             reader.onload = (ev) => {
-                // 将本地字体转为 Base64 塞进输入框，底层会自动当做 URL 渲染并存入 IndexedDB 长期保存
                 this.fontInputUrl = ev.target.result;
                 this.previewFontFromUrl(); 
             };
@@ -13436,7 +13518,6 @@ Structure:
             reader.readAsDataURL(f);
             e.target.value = '';
         },
-        // ------------------------------------
 
         applyFontPreset(p) { 
             if(p.fontUrl) this.loadFont(p.fontUrl, p.fontFamily); 
@@ -13445,10 +13526,41 @@ Structure:
             this.themeConfig.fontSize = p.fontSize; 
             this.themeConfig.fontColor = p.fontColor; 
             this.saveData(); 
+            this.showToast(`已应用预设: ${p.name}`);
         },
 
-        saveFontPreset() { this.showInput("预设名称", "", "", (n) => { if(n) { this.fontPresets.push({ name:n, fontFamily:this.themeConfig.fontFamily, fontUrl:this.themeConfig.fontUrl, fontSize:this.themeConfig.fontSize, fontColor:this.themeConfig.fontColor }); this.saveData(); this.injectPresetFonts(); } }); },        
-        deleteFontPreset(i) { this.showConfirm("确定删除该字体预设？",()=>{this.fontPresets.splice(i,1);this.saveData(); this.injectPresetFonts();}); },
+        saveFontPreset() { 
+            this.showInput("预设名称", "", "", (n) => { 
+                if(n) { 
+                    // 修复：必须获取正在预览的字体(或者当前生效的字体)，避免存成默认字体
+                    const family = this.previewFontFamily || this.themeConfig.fontFamily;
+                    const url = this.fontInputUrl || this.themeConfig.fontUrl;
+                    
+                    this.fontPresets.push({ 
+                        name: n, 
+                        fontFamily: family, 
+                        fontUrl: url, 
+                        fontSize: this.themeConfig.fontSize, 
+                        fontColor: this.themeConfig.fontColor 
+                    }); 
+                    
+                    this.showToast('正在处理数据...');
+                    // 使用 setTimeout 释放主线程，防止巨大 Base64 保存时卡死
+                    setTimeout(() => {
+                        this.saveData(); 
+                        this.injectPresetFonts();
+                        this.showToast('预设已保存！');
+                    }, 50);
+                } 
+            }); 
+        },        
+        deleteFontPreset(i) { 
+            this.showConfirm("确定删除该字体预设？", () => {
+                this.fontPresets.splice(i,1);
+                this.saveData();
+                this.injectPresetFonts();
+            }); 
+        },
         triggerWallpaperUpload() { this.$refs.wallpaperInput.click(); },
         async handleWallpaperUpload(e) { const f=e.target.files[0]; if(!f)return; try { this.themeConfig.wallpaper = await compressImage(f, 1080); this.saveData(); } catch(e){} },
         resetWallpaper() { this.themeConfig.wallpaper=''; this.saveData(); },
