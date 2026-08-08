@@ -1306,7 +1306,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- 消息弹窗 -->
     <transition name="app-slide">
-        <div v-if="globalNotification.show" class="top-notification-banner" @click="jumpToChat(globalNotification.sessionId)">
+        <div v-if="globalNotification.show" class="top-notification-banner" 
+             @click="jumpToChat(globalNotification.sessionId)"
+             @touchstart="onNotifTouchStart"
+             @touchmove="onNotifTouchMove"
+             @touchend="onNotifTouchEnd"
+             :style="{ transform: globalNotification.swipeY < 0 ? `translate(-50%, calc(${globalNotification.swipeY}px))` : 'translate(-50%, 0)', transition: globalNotification.isSwiping ? 'none' : 'transform 0.2s ease, opacity 0.2s ease', opacity: globalNotification.swipeY < -30 ? 0 : 1 }">
             <div class="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0"><img :src="globalNotification.avatar" class="w-full h-full object-cover"></div>
             <div class="flex-1 min-w-0"><div class="font-bold text-sm truncate">{{ globalNotification.title }}</div><div class="text-xs text-gray-500 truncate">{{ globalNotification.content }}</div></div>
             <span class="text-xs text-gray-400">现在</span>
@@ -6359,7 +6364,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.4 更新日志 (当前最新) -->
+                            <!-- v1.5 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-rose-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.5 核心交互优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-08 16:32</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>彻底解决群聊发言等级卡在 1 级不更新的视图渲染 Bug，利用 Vue 的对象解构特性打通了深度响应式数据流。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>全局消息横幅弹窗支持“上滑隐藏”手势操作，在不清理未读数的同时迅速屏蔽当前打扰，体验更加原生丝滑。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.4 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7044,7 +7062,7 @@ const app = createApp({
             folderSelectModal: { show: false }, 
             
             // Global Notifications & Status
-            globalNotification: { show: false, title: '', content: '', avatar: '', sessionId: '' },
+            globalNotification: { show: false, title: '', content: '', avatar: '', sessionId: '', swipeY: 0, isSwiping: false, startY: 0 },
             statusModal: { show: false }, statusHistoryModal: { show: false },
             currentStatus: { action: '', thought: '', outfit: '', note: '' },
             currentStatusHistory: [], 
@@ -9966,13 +9984,10 @@ const app = createApp({
             
             if (currentSession.isGroup) {
                 if (!currentSession.membersInfo) currentSession.membersInfo = {};
-                if (!currentSession.membersInfo['mine']) {
-                    currentSession.membersInfo['mine'] = { level: 1, customTitle: '', msgCount: 0 };
-                }
+                const info = currentSession.membersInfo['mine'] || { level: 1, customTitle: '', msgCount: 0 };
                 
-                // 【强制底层赋值】：直接修改对象的底层属性，防止 Vue 追踪丢失
-                let currentCount = currentSession.membersInfo['mine'].msgCount || 0;
-                let currentLevel = currentSession.membersInfo['mine'].level || 1;
+                let currentCount = info.msgCount || 0;
+                let currentLevel = info.level || 1;
                 
                 currentCount++;
                 let nextLevelReq = 5 * currentLevel * (currentLevel + 1);
@@ -9980,8 +9995,12 @@ const app = createApp({
                     currentLevel++;
                 }
                 
-                currentSession.membersInfo['mine'].msgCount = currentCount;
-                currentSession.membersInfo['mine'].level = currentLevel;
+                // 完美触发 Vue 响应式更新：解构赋值替换原对象
+                currentSession.membersInfo['mine'] = { 
+                    ...info, 
+                    msgCount: currentCount, 
+                    level: currentLevel 
+                };
             }
             currentSession.lastMessage = inputContent;
             currentSession.bgTriggerCount = 0; 
@@ -10893,17 +10912,11 @@ const app = createApp({
             }
             if (!memberId) return null; 
 
-            // 初始化成员信息存储
-            if (!session.membersInfo) session.membersInfo = {};
-            if (!session.membersInfo[memberId]) {
-                session.membersInfo[memberId] = {
-                    level: 1, // 所有人初始默认都是 1 级
-                    customTitle: '',
-                    lastLevelDate: '' 
-                };
-            }
+            // 完美的只读取值，坚决不在渲染函数中赋值，彻底打通 Vue 响应式
+            const info = (session.membersInfo && session.membersInfo[memberId]) 
+                         ? session.membersInfo[memberId] 
+                         : { level: 1, customTitle: '', msgCount: 0 };
 
-            const info = session.membersInfo[memberId];
             const isOwner = memberId === 'mine'; // 默认玩家是群主
             const isAdmin = !isOwner && session.admins && session.admins.includes(memberId);
 
@@ -12471,15 +12484,13 @@ Structure:
                                  }
                              }
                              
-                             // 【强制底层赋值】：修复其他角色等级卡死的 Bug
+                             // 【强制响应式赋值】：完美触发 Vue 视图更新，解决卡 1 级 Bug
                              if (session.isGroup && speakerId) {
                                  if (!session.membersInfo) session.membersInfo = {};
-                                 if (!session.membersInfo[speakerId]) {
-                                     session.membersInfo[speakerId] = { level: 1, customTitle: '', msgCount: 0 };
-                                 }
+                                 const info = session.membersInfo[speakerId] || { level: 1, customTitle: '', msgCount: 0 };
                                  
-                                 let currentCount = session.membersInfo[speakerId].msgCount || 0;
-                                 let currentLevel = session.membersInfo[speakerId].level || 1;
+                                 let currentCount = info.msgCount || 0;
+                                 let currentLevel = info.level || 1;
                                  
                                  currentCount++;
                                  let nextLevelReq = 5 * currentLevel * (currentLevel + 1);
@@ -12487,8 +12498,11 @@ Structure:
                                      currentLevel++;
                                  }
                                  
-                                 session.membersInfo[speakerId].msgCount = currentCount;
-                                 session.membersInfo[speakerId].level = currentLevel;
+                                 session.membersInfo[speakerId] = { 
+                                     ...info, 
+                                     msgCount: currentCount, 
+                                     level: currentLevel 
+                                 };
                              }
                              this.scrollToBottom();
                              // 【群聊极速小开差联动】：角色在群里发完言，有 15% 的几率立刻跑到私聊框去找玩家说悄悄话
@@ -12660,8 +12674,28 @@ Structure:
         viewRecalled(msg) { this.showConfirm(msg.content, null); },
         
         showGlobalNotification(session, content) {
-            this.globalNotification = { show: true, title: session.name, content: content, avatar: session.avatar, sessionId: session.id };
+            this.globalNotification = { show: true, title: session.name, content: content, avatar: session.avatar, sessionId: session.id, swipeY: 0, isSwiping: false, startY: 0 };
             setTimeout(() => { this.globalNotification.show = false; }, 3000);
+        },
+        onNotifTouchStart(e) {
+            this.globalNotification.startY = e.touches[0].clientY;
+            this.globalNotification.isSwiping = true;
+        },
+        onNotifTouchMove(e) {
+            if (!this.globalNotification.isSwiping) return;
+            const diff = e.touches[0].clientY - this.globalNotification.startY;
+            if (diff < 0) { // 只允许上滑
+                this.globalNotification.swipeY = diff;
+                e.preventDefault();
+            }
+        },
+        onNotifTouchEnd() {
+            this.globalNotification.isSwiping = false;
+            // 只要往上拉超过 20px，就触发隐藏当前这条弹窗
+            if (this.globalNotification.swipeY < -20) {
+                this.globalNotification.show = false;
+            }
+            this.globalNotification.swipeY = 0;
         },
         async togglePushPermission() {
             if (this.pushConfig.enabled) {
