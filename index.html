@@ -6368,12 +6368,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.7 角色行为控制与指令优化</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-10 01:05</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.7 AI 主权增强与防沉默</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-10 01:23</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">重构：</span>大幅度升级“群聊小开差”系统！彻底废除了原先的 15% 随机概率，将“是否给玩家发私聊”的决定权通过 JSON 字段 `private_message_to_user` 直接交给大模型，AI 现在会根据真实的剧情意愿主动来找你私聊，不再盲目触发。</li>
-                                    <li><span class="font-bold text-gray-800">修复：</span>向大模型追加了极其严厉的警告指令，彻底解决了角色有时莫名其妙当“无声哑巴”只发红包却不发任何文字消息的 Bug。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>赋予 AI 在群聊中“绝对主权”。大模型现在可以主动、有目的地选择在群聊说话后给你发送“私密小窗”，而不再仅仅依赖系统的随机概率触发。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>完善防沉默（Anti-Silence）机制指令。修复了 AI 在发送红包或转账卡片时，有时不发文字导致气泡内容为空的尴尬情况。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>私聊推送全链路贯通。AI 在群聊里发起的私聊现在能完美触发展示系统顶部消息弹窗，点击弹窗后可精准跃迁至对应的单聊窗口，并正常显示列表小红点。</li>
                                 </ul>
                             </div>
 
@@ -9535,6 +9536,46 @@ const app = createApp({
                 } catch(e) { console.error("群聊触发私聊开小差失败", e); }
             }, 6000 + Math.random() * 4000); 
         },
+        deliverDirectPrivateMessage(friendId, msgContent) {
+            const friend = this.wechatState.friendList.find(f => f.id === friendId);
+            if (!friend) return;
+            
+            let privateSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
+            if (!privateSession) {
+                const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
+                if (!myMaskId) return;
+                privateSession = { 
+                    id: Date.now().toString() + Math.random().toString(), targetId: friend.id, name: friend.remark || friend.name, 
+                    avatar: friend.avatar, maskId: myMaskId, messages: [], lastMessage: '', time: Date.now(),
+                    isPinned: false, status: {}, statusHistory: [], wallpaper: '', groupId: null, 
+                    customAvatarSelf: '', customAvatarTarget: '', isBlocked: false, avatarMode: 'all' 
+                };
+                this.wechatState.sessions.unshift(privateSession);
+            }
+
+            privateSession.messages.push({
+                content: msgContent,
+                isSelf: false,
+                time: Date.now(),
+                avatar: privateSession.avatar,
+                type: 'text'
+            });
+            privateSession.lastMessage = msgContent;
+            privateSession.time = Date.now();
+
+            if (this.currentApp !== 'wechat' || this.wechatState.activeNav !== 'room' || this.wechatState.activeSession?.id !== privateSession.id || document.hidden) {
+                privateSession.unreadCount = (privateSession.unreadCount || 0) + 1;
+                if (!document.hidden) {
+                    this.showGlobalNotification(privateSession, msgContent);
+                }
+                this.sendPushNotification('微信新消息', privateSession.name, msgContent, privateSession.avatar);
+            } else {
+                this.scrollToBottom();
+            }
+
+            if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
+            this.saveData();
+        },
         toggleGroupAdmin(memId) {
             const session = this.wechatState.activeSession;
             if(!session) return;
@@ -11870,6 +11911,7 @@ You are NO LONGER an AI. You are a real, living person chatting on a modern mess
 7. Texting Habits: Speak like a normal human texting. Use concise, natural phrases. Do not write poetic paragraphs. Share mundane things around you naturally.
 8. Coherent Bubbles: When writing the JSON "reply" array, DO NOT split a single continuous thought (connected by commas) into multiple bubbles. Only split by periods or question marks.
 9. Anti-Repetition (防重复刷屏): 【极度重要】绝对不要重复发送同样的功能性卡片（比如刚点过外卖、刚发过红包转账，就绝对不要在下一轮马上又发一个一模一样的）！只在剧情真正需要推进时才使用这些能力。
+10. Anti-Silence (防沉默机制): 【极度重要】哪怕你发送了红包、转账或私聊，你的 "reply" 数组中也必须正常说话！绝对不允许只发卡片却一言不发（reply为空数组）！
 </TONE_AND_STYLE_GUIDELINES>
 
 <ENVIRONMENT_CONTEXT>
@@ -11910,9 +11952,9 @@ Structure:
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
-      "private_message_to_user": "OPTIONAL: 如果你在群里回复完之后，想立刻私下单独找我(玩家)说悄悄话、吐槽等，请在这里填入私信的具体内容。如果不想发私信请勿输出此字段。",
       "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：群聊中如果想【单独给某个人】(如玩家或特定NPC)钱，绝对不能用红包，必须用转账并填写 target_user！
-      "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【严重警告】：如果在群里发红包，"reply" 数组里必须配上说话的内容，绝对不能当无声哑巴！而且红包只能当福利，不能用来单人结账！
+      "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【警告】：只能用来给大家发福利，【绝对不能】用来给单人付款！
+      "private_message": "OPTIONAL: 【极度重要】如果你在群里发完言后，想趁机私下找我(玩家)开小差、吐槽或说悄悄话，请直接在这里填入你要发给我的单聊内容（系统会自动将其发到我们的私聊窗口，并附带弹窗提醒！）",
       "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
       "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" } // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
     }
@@ -11940,7 +11982,7 @@ Structure:
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
   "recall": true OR false, // OPTIONAL: 若你发出这句话后立刻觉得后悔、不妥、怕对方生气，想要迅速撤回刚才那句话时设为 true
   "fake_image": "OPTIONAL: description...",
-  "red_packet": { "amount": "8.88", "count": 1, "note": "Happy Day" }, // OPTIONAL: 发红包。【严重警告】：发红包时必须在 "reply" 中配上说话的内容，不能不说话！红包仅限活跃气氛，不可用于付款结算！
+  "red_packet": { "amount": "8.88", "count": 1, "note": "Happy Day" }, // OPTIONAL: 发红包。【警告】：红包是活跃气氛用的，不可用于付款结算！
   "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：如果你想【单独给玩家】付款、打钱，必须且只能用转账！
   "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
   "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
@@ -12220,6 +12262,13 @@ Structure:
                         };
                         session.messages.push(fdMsg);
                         session.lastMessage = '[购物订单]';
+                    }
+
+                    // === 处理主动私聊联动 ===
+                    if (session.isGroup && block.private_message && speakerId) {
+                        setTimeout(() => {
+                            this.deliverDirectPrivateMessage(speakerId, block.private_message);
+                        }, delay + 2500); // 延迟2.5秒，显得像发完群聊再切出去发私聊
                     }
 
                     // 清理过滤多余垃圾字符
@@ -12535,7 +12584,13 @@ Structure:
                                  };
                              }
                              this.scrollToBottom();
-                             // 【群聊极速小开差联动】：旧版随机触发已废弃，改为由大模型 JSON 字段精确控制。
+                             // 【群聊极速小开差联动】：角色在群里发完言，有 15% 的几率立刻跑到私聊框去找玩家说悄悄话
+                             if (session.isGroup && speakerId && index === segments.length - 1) {
+                                 // 如果大模型已经主动明确写了 private_message，就不再随机触发，避免发两条
+                                 if (!block.private_message && Math.random() < 0.15) {
+                                     this.triggerPrivateMessageFromGroup(speakerId, speakerName, seg.trim(), session);
+                                 }
+                             }
                              
                              if (index === segments.length - 1) {
                                  session.lastMessage = msgType === 'voice' ? '[语音]' : seg.trim();
@@ -12573,56 +12628,6 @@ Structure:
                         }, delay);
                         delay += 1000 + Math.random() * 800; 
                     });
-
-                    // --- 【新增】基于大模型意愿的主动群聊小开差 (发私信) ---
-                    if (session.isGroup && speakerId && r.private_message_to_user) {
-                        setTimeout(() => {
-                            let pmFriend = this.wechatState.friendList.find(f => f.id === speakerId);
-                            if (pmFriend) {
-                                let privateSession = this.wechatState.sessions.find(s => s.targetId === pmFriend.id && !s.isGroup);
-                                if (!privateSession) {
-                                    const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
-                                    if (myMaskId) {
-                                        privateSession = { 
-                                            id: Date.now().toString(), targetId: pmFriend.id, name: pmFriend.remark || pmFriend.name, 
-                                            avatar: pmFriend.avatar, maskId: myMaskId, messages: [], lastMessage: '', time: Date.now(),
-                                            isPinned: false, status: {}, statusHistory: [], wallpaper: '', groupId: null, 
-                                            customAvatarSelf: '', customAvatarTarget: '', isBlocked: false, avatarMode: 'all' 
-                                        };
-                                        this.wechatState.sessions.unshift(privateSession);
-                                    }
-                                }
-                                if (privateSession) {
-                                    privateSession.messages.push({
-                                        content: r.private_message_to_user,
-                                        isSelf: false,
-                                        time: Date.now(),
-                                        avatar: privateSession.avatar,
-                                        type: 'text'
-                                    });
-                                    privateSession.lastMessage = r.private_message_to_user;
-                                    privateSession.time = Date.now();
-                                    
-                                    if (this.currentApp !== 'wechat' || this.wechatState.activeNav !== 'room' || this.wechatState.activeSession?.id !== privateSession.id || document.hidden) {
-                                        privateSession.unreadCount = (privateSession.unreadCount || 0) + 1;
-                                        if (!document.hidden) {
-                                            this.showGlobalNotification(privateSession, r.private_message_to_user);
-                                        }
-                                        this.sendPushNotification('微信新消息', privateSession.name, r.private_message_to_user, privateSession.avatar);
-                                    } else {
-                                        // 确保刚好在看单聊时也能滑动
-                                        this.$nextTick(() => {
-                                            const c = this.$refs.chatContainer;
-                                            if (c) c.scrollTop = c.scrollHeight;
-                                        });
-                                    }
-                                    if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
-                                    this.saveData();
-                                }
-                            }
-                        }, delay + 500);
-                        delay += 1000;
-                    }
                 });               
                 // --- 绝对安全追加：等上面所有文字都发完后，再出音乐卡片和切歌 ---
                 setTimeout(() => {
