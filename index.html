@@ -6364,7 +6364,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.6 更新日志 (当前最新) -->
+                            <!-- v1.7 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.7 角色行为控制与指令优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-10 01:05</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">重构：</span>大幅度升级“群聊小开差”系统！彻底废除了原先的 15% 随机概率，将“是否给玩家发私聊”的决定权通过 JSON 字段 `private_message_to_user` 直接交给大模型，AI 现在会根据真实的剧情意愿主动来找你私聊，不再盲目触发。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>向大模型追加了极其严厉的警告指令，彻底解决了角色有时莫名其妙当“无声哑巴”只发红包却不发任何文字消息的 Bug。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.6 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -11897,8 +11910,9 @@ Structure:
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
+      "private_message_to_user": "OPTIONAL: 如果你在群里回复完之后，想立刻私下单独找我(玩家)说悄悄话、吐槽等，请在这里填入私信的具体内容。如果不想发私信请勿输出此字段。",
       "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：群聊中如果想【单独给某个人】(如玩家或特定NPC)钱，绝对不能用红包，必须用转账并填写 target_user！
-      "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【警告】：只能用来给大家发福利，【绝对不能】用来给单人付款！
+      "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【严重警告】：如果在群里发红包，"reply" 数组里必须配上说话的内容，绝对不能当无声哑巴！而且红包只能当福利，不能用来单人结账！
       "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
       "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" } // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
     }
@@ -11926,7 +11940,7 @@ Structure:
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
   "recall": true OR false, // OPTIONAL: 若你发出这句话后立刻觉得后悔、不妥、怕对方生气，想要迅速撤回刚才那句话时设为 true
   "fake_image": "OPTIONAL: description...",
-  "red_packet": { "amount": "8.88", "count": 1, "note": "Happy Day" }, // OPTIONAL: 发红包。【警告】：红包是活跃气氛用的，不可用于付款结算！
+  "red_packet": { "amount": "8.88", "count": 1, "note": "Happy Day" }, // OPTIONAL: 发红包。【严重警告】：发红包时必须在 "reply" 中配上说话的内容，不能不说话！红包仅限活跃气氛，不可用于付款结算！
   "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：如果你想【单独给玩家】付款、打钱，必须且只能用转账！
   "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
   "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
@@ -12521,12 +12535,7 @@ Structure:
                                  };
                              }
                              this.scrollToBottom();
-                             // 【群聊极速小开差联动】：角色在群里发完言，有 15% 的几率立刻跑到私聊框去找玩家说悄悄话
-                             if (session.isGroup && speakerId && index === segments.length - 1) {
-                                 if (Math.random() < 0.15) {
-                                     this.triggerPrivateMessageFromGroup(speakerId, speakerName, seg.trim(), session);
-                                 }
-                             }
+                             // 【群聊极速小开差联动】：旧版随机触发已废弃，改为由大模型 JSON 字段精确控制。
                              
                              if (index === segments.length - 1) {
                                  session.lastMessage = msgType === 'voice' ? '[语音]' : seg.trim();
@@ -12564,6 +12573,56 @@ Structure:
                         }, delay);
                         delay += 1000 + Math.random() * 800; 
                     });
+
+                    // --- 【新增】基于大模型意愿的主动群聊小开差 (发私信) ---
+                    if (session.isGroup && speakerId && r.private_message_to_user) {
+                        setTimeout(() => {
+                            let pmFriend = this.wechatState.friendList.find(f => f.id === speakerId);
+                            if (pmFriend) {
+                                let privateSession = this.wechatState.sessions.find(s => s.targetId === pmFriend.id && !s.isGroup);
+                                if (!privateSession) {
+                                    const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
+                                    if (myMaskId) {
+                                        privateSession = { 
+                                            id: Date.now().toString(), targetId: pmFriend.id, name: pmFriend.remark || pmFriend.name, 
+                                            avatar: pmFriend.avatar, maskId: myMaskId, messages: [], lastMessage: '', time: Date.now(),
+                                            isPinned: false, status: {}, statusHistory: [], wallpaper: '', groupId: null, 
+                                            customAvatarSelf: '', customAvatarTarget: '', isBlocked: false, avatarMode: 'all' 
+                                        };
+                                        this.wechatState.sessions.unshift(privateSession);
+                                    }
+                                }
+                                if (privateSession) {
+                                    privateSession.messages.push({
+                                        content: r.private_message_to_user,
+                                        isSelf: false,
+                                        time: Date.now(),
+                                        avatar: privateSession.avatar,
+                                        type: 'text'
+                                    });
+                                    privateSession.lastMessage = r.private_message_to_user;
+                                    privateSession.time = Date.now();
+                                    
+                                    if (this.currentApp !== 'wechat' || this.wechatState.activeNav !== 'room' || this.wechatState.activeSession?.id !== privateSession.id || document.hidden) {
+                                        privateSession.unreadCount = (privateSession.unreadCount || 0) + 1;
+                                        if (!document.hidden) {
+                                            this.showGlobalNotification(privateSession, r.private_message_to_user);
+                                        }
+                                        this.sendPushNotification('微信新消息', privateSession.name, r.private_message_to_user, privateSession.avatar);
+                                    } else {
+                                        // 确保刚好在看单聊时也能滑动
+                                        this.$nextTick(() => {
+                                            const c = this.$refs.chatContainer;
+                                            if (c) c.scrollTop = c.scrollHeight;
+                                        });
+                                    }
+                                    if(this.notificationConfig.currentSound) new Audio(this.notificationConfig.currentSound).play();
+                                    this.saveData();
+                                }
+                            }
+                        }, delay + 500);
+                        delay += 1000;
+                    }
                 });               
                 // --- 绝对安全追加：等上面所有文字都发完后，再出音乐卡片和切歌 ---
                 setTimeout(() => {
