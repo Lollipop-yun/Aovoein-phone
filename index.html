@@ -5070,6 +5070,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                         <div class="flex flex-col border-b border-gray-100">
+                            <div v-if="!wechatState.activeSession.isGroup" class="flex justify-between items-center p-4 border-b border-gray-50 active:bg-gray-50 transition">
+                                <div class="flex flex-col">
+                                    <span class="text-[15px] text-gray-900">允许角色识别头像 (多模态)</span>
+                                    <span class="text-[11px] text-gray-400 mt-0.5">大模型将能“看见”你们俩的头像</span>
+                                </div>
+                                <input type="checkbox" class="switch-checkbox" :id="'vision-avatar-'+wechatState.activeSession.id" v-model="wechatState.activeSession.enableAvatarVision" @change="saveData">
+                                <label :for="'vision-avatar-'+wechatState.activeSession.id" class="switch-label"><div class="switch-button"></div></label>
+                            </div>
+
                             <div class="flex justify-between items-center p-4 active:bg-gray-50 transition">
                                 <span class="text-[15px] text-gray-900">允许角色主动发送照片 (生图)</span>
                                 <input type="checkbox" class="switch-checkbox" :id="'auto-img-'+wechatState.activeSession.id" v-model="wechatState.activeSession.enableAutoImage" @change="saveData">
@@ -6393,7 +6402,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.11 更新日志 (当前最新) -->
+                            <!-- v1.12 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.12 亲密付感知与多模态视觉</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-11 01:57</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>规范了 AI 即兴生成“拍一拍”动作时的文本格式。现在 AI 生成的拍一拍将严格遵循 <code>"A"拍了拍"B"的...</code> 格式，彻底解决文案乱飘的问题。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>亲密付“借花献佛”的感知链路打通！现在当你使用 AI 角色给你的亲密付给别人发红包或转账时，该角色会收到一条隐蔽的系统通知，并真切地知道你拿 ta 的钱干了什么，从而引发精彩的互动。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>单聊设置中新增【允许角色识别头像】功能。开启后，底层将启用 Vision 视觉模型接口，把你们双方的头像发送给 AI，AI 能够“看”到头像并在聊天中做出自然评价！</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.11 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-yellow-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12102,7 +12125,7 @@ Structure:
   "qinmi_invite": "give" OR "ask", // OPTIONAL: 如果你想主动为玩家开通亲密付(give)，或者你想主动求玩家为你开通亲密付(ask)
   "qinmi_change_limit": 5000, // OPTIONAL: 填入纯数字。如果你已经为玩家开通了亲密付，你可以随时随地通过此字段修改给玩家的限额！
   "music_control": "next" OR "prev" OR "stop",
-  "nudge_user": ${session.enableCustomNudge && session.nudgeAiImprovise ? '"OPTIONAL: 填入你想对玩家做的即兴肢体动作，如\'拍了拍你的头\'，它会在聊天中以系统灰字显示出来"' : 'true OR false, // OPTIONAL: 若你想对玩家使用拍一拍，设为 true'},
+  "nudge_user": ${session.enableCustomNudge && session.nudgeAiImprovise ? '"OPTIONAL: 填入你想对玩家做的即兴肢体动作，必须以\'拍了拍\'开头，例如\'拍了拍你的头\'"' : 'true OR false, // OPTIONAL: 若你想对玩家使用拍一拍，设为 true'},
   "html_widget": "OPTIONAL: Valid HTML string using Tailwind CSS...",
   "change_avatar": true OR false,
   "sticker_id": "OPTIONAL: 填入你想发的表情包的纯数字 ID",
@@ -12120,6 +12143,24 @@ Structure:
             }          
 
             contextMessages.push({ role: 'system', content: systemPrompt });
+
+            // === 视觉多模态：传递头像 ===
+            if (!session.isGroup && session.enableAvatarVision) {
+                const myAvatar = this.getMaskById(session.maskId).avatar;
+                const aiAvatar = friend ? friend.avatar : session.avatar;
+                // 如果头像确实是 http 开头的在线图片或 base64，才传给大模型 (避免纯本地路径无法识别)
+                if (myAvatar && aiAvatar && (myAvatar.startsWith('http') || myAvatar.startsWith('data:'))) {
+                    contextMessages.push({
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: '[系统视觉权限] 玩家已允许你识别双方的头像。请观察以下视觉信息：图1是我(玩家)的头像，图2是你(角色)的头像。你可以结合人设，在接下来的聊天中自然地对头像做出反应或评价。' },
+                            { type: 'image_url', image_url: { url: myAvatar } },
+                            { type: 'image_url', image_url: { url: aiAvatar } }
+                        ]
+                    });
+                }
+            }
+
             // --- 读取线下约会相处的记忆 ---
             let offlineMemoryContext = "";
             if (session.offlineMessages && session.offlineMessages.length > 0) {
@@ -12516,8 +12557,9 @@ Structure:
                     if (block.nudge_user) {
                         let nudgeStr = '';
                         if (session.enableCustomNudge && session.nudgeAiImprovise && typeof block.nudge_user === 'string' && block.nudge_user !== 'true') {
-                            // AI 即兴现编的拍一拍动作
-                            nudgeStr = `"${speakerName}"${block.nudge_user.replace(/拍了拍/g, '')}`;
+                            // AI 即兴现编的拍一拍动作，强制规范格式为 "A"拍了拍"B"的...
+                            let action = block.nudge_user.replace(/^拍了拍/, '');
+                            nudgeStr = `"${speakerName}"拍了拍"我"${action}`;
                         } else if (session.enableCustomNudge && !session.nudgeAiImprovise) {
                             // 从填写的词库里随机抽
                             const lines = (session.nudgeAiToUser || '').split('\n').map(l=>l.trim()).filter(Boolean);
@@ -15583,8 +15625,9 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
              const amt = parseFloat(this.transferModal.amount);
              if(!amt || amt <= 0) return this.showToast('请输入金额');
 
+             let tid = this.wechatState.activeSession?.isGroup ? this.transferModal.targetUserId : this.wechatState.activeSession?.targetId;
              // 改为弹出支付方式选择框
-             this.paymentSelectModal = { show: true, amount: amt, type: 'transfer' };
+             this.paymentSelectModal = { show: true, amount: amt, type: 'transfer', targetUserId: tid };
         },
         finalizeTransfer() {
              const msg = {
@@ -16205,10 +16248,27 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 if ((source.limit - source.balanceUsed) < amount) return this.showToast('亲密付剩余额度不足');
                 source.balanceUsed = (parseFloat(source.balanceUsed) + parseFloat(amount)).toFixed(2);
                 let desc = '模拟消费';
-                if (this.paymentSelectModal.type === 'red_packet') desc = '发红包';
-                if (this.paymentSelectModal.type === 'transfer') desc = '转账';
+                let detailDesc = '日常消费';
+                if (this.paymentSelectModal.type === 'red_packet') {
+                    desc = '发红包'; detailDesc = '发微信红包';
+                }
+                if (this.paymentSelectModal.type === 'transfer') {
+                    desc = '转账';
+                    const tName = this.paymentSelectModal.targetUserId ? this.getFriendName(this.paymentSelectModal.targetUserId) : '别人';
+                    detailDesc = `给"${tName}"转账`;
+                }
                 source.history.unshift({ item: desc, amount: amount, time: Date.now() });
                 this.showToast(`亲密付支付成功 (-${amount})`);
+
+                // 通知提供亲密付的 AI 角色
+                const aiSession = this.wechatState.sessions.find(s => s.targetId === source.targetId);
+                if (aiSession) {
+                    aiSession.messages.push({
+                        type: 'system',
+                        content: `[系统通知(仅AI可见)] 我(玩家)刚刚使用了你给我的亲密付消费了 ¥${amount}，用于：${detailDesc}。请你在接下来的聊天中根据人设自然地提及或做出反应！`,
+                        time: Date.now()
+                    });
+                }
             }
             
             this.paymentSelectModal.show = false;
