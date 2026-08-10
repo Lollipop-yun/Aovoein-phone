@@ -4122,7 +4122,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
                                     
                                     <!-- 亲密付邀请 -->
-                                    <div v-else-if="msg.type === 'qinmi_invite'" class="qinmi-content-wrapper">
+                                    <div v-else-if="msg.type === 'qinmi_invite'" class="qinmi-content-wrapper cursor-pointer active:scale-95 transition" :class="(!msg.isSelf && msg.isHandled) ? 'opacity-70' : ''">
                                         <div class="qinmi-header"><i class="fas fa-heart qinmi-icon"></i><span class="font-bold">{{ msg.inviteType === 'give' ? '亲密付' : '亲密付求助' }}</span></div>
                                         <div class="qinmi-body">{{ msg.inviteType === 'give' ? '我想为你开通亲密付' : '能帮我开通亲密付吗？' }}</div>
                                         <div class="qinmi-footer"><span>微信亲密付</span><i class="fas fa-chevron-right text-xs"></i></div>
@@ -6368,7 +6368,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.8 更新日志 (当前最新) -->
+                            <!-- v1.9 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-pink-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.9 亲密付双向闭环修复</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-10 23:54</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了“大模型无法响应和主动发起亲密付”的底层漏洞。补全了提示词，现在 AI 能正常使用 <code>qinmi_reply</code> 接受/拒绝请求，也能用 <code>qinmi_invite</code> 主动求包养或包养你。</li>
+                                    <li><span class="font-bold text-gray-800">交互：</span>为 AI 发出的亲密付邀请补全了 UI 交互闭环。现在玩家可以点击 AI 发送的亲密付气泡，弹出确认弹窗并完成后续的额度设置或收款操作。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.8 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-teal-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12033,7 +12046,8 @@ Structure:
   "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
   "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
   "location": { "name": "Place Name", "address": "Detailed Address" },
-  "qinmi_reply": "accept" OR "reject",
+  "qinmi_reply": "accept" OR "reject", // OPTIONAL: 如果玩家向你发起了亲密付邀请或求助，请填入 accept(接受) 或 reject(拒绝)
+  "qinmi_invite": "give" OR "ask", // OPTIONAL: 如果你想主动为玩家开通亲密付(give)，或者你想主动求玩家为你开通亲密付(ask)
   "music_control": "next" OR "prev" OR "stop",
   "nudge_user": ${session.enableCustomNudge && session.nudgeAiImprovise ? '"OPTIONAL: 填入你想对玩家做的即兴肢体动作，如\'拍了拍你的头\'，它会在聊天中以系统灰字显示出来"' : 'true OR false, // OPTIONAL: 若你想对玩家使用拍一拍，设为 true'},
   "html_widget": "OPTIONAL: Valid HTML string using Tailwind CSS...",
@@ -12308,6 +12322,39 @@ Structure:
                         };
                         session.messages.push(fdMsg);
                         session.lastMessage = '[购物订单]';
+                    }
+
+                    // === 处理亲密付回复 ===
+                    if (block.qinmi_reply) {
+                        this.handleAiQinmiResponse(session, block.qinmi_reply);
+                    }
+
+                    // === 处理主动发起亲密付 ===
+                    if (block.qinmi_invite === 'give' || block.qinmi_invite === 'ask') {
+                        // 检查是否已经存在活跃的亲密付
+                        const existing = this.wallet.intimatePays.find(p => p.targetId === (speakerId || session.targetId) && p.status === 'active');
+                        if (!existing) {
+                            this.wallet.intimatePays.push({
+                                id: Date.now().toString(),
+                                targetId: speakerId || session.targetId,
+                                type: block.qinmi_invite === 'give' ? 'income' : 'outcome',
+                                limit: block.qinmi_invite === 'give' ? (Math.floor(Math.random() * 50) + 10) * 100 : 0,
+                                balanceUsed: 0,
+                                status: 'pending',
+                                history: []
+                            });
+                            const qMsg = {
+                                type: 'qinmi_invite',
+                                inviteType: block.qinmi_invite,
+                                isHandled: false,
+                                isSelf: false,
+                                time: Date.now(),
+                                avatar: speakerAvatar,
+                                name: speakerName
+                            };
+                            session.messages.push(qMsg);
+                            session.lastMessage = '[亲密付邀请]';
+                        }
                     }
 
                     // === 处理主动私聊联动 ===
@@ -15598,6 +15645,40 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 // 如果权限没问题，唤起接收/退还操作菜单
                 this.transferActionModal = { show: true, msg: msg };
 
+            } else if(msg.type === 'qinmi_invite') {
+                if (!msg.isSelf && !msg.isHandled) {
+                    this.showConfirm(msg.inviteType === 'give' ? '接受对方为你开通的亲密付？' : '同意为对方开通亲密付？', () => {
+                        msg.isHandled = true;
+                        const pending = this.wallet.intimatePays.find(p => p.targetId === (this.wechatState.activeSession.targetId) && p.status === 'pending');
+                        if (pending) {
+                            pending.status = 'active';
+                            if (pending.type === 'outcome') {
+                                this.showInput('设置额度', '1000', '请输入每月限额', (val) => {
+                                    pending.limit = parseFloat(val) || 1000;
+                                    this.wechatState.activeSession.messages.push({
+                                        type: 'system',
+                                        content: `[系统提示] 你已为对方开通亲密付`,
+                                        time: Date.now()
+                                    });
+                                    this.saveData();
+                                    this.scrollToBottom();
+                                    this.showToast('亲密付已开通');
+                                }, 'number');
+                            } else {
+                                this.wechatState.activeSession.messages.push({
+                                    type: 'system',
+                                    content: `[系统提示] 你已接受对方为你开通的亲密付`,
+                                    time: Date.now()
+                                });
+                                this.saveData();
+                                this.scrollToBottom();
+                                this.showToast('亲密付已接受');
+                            }
+                        }
+                    });
+                } else if (msg.isSelf) {
+                    this.showToast('等待对方确认');
+                }
             } else if(msg.type === 'voice') {
                 // 判断 MiniMax 是否开启且配置完整，并且点击的不是自己发的语音
                 if (this.minimaxConfig && this.minimaxConfig.enabled && !msg.isSelf) {
