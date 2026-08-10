@@ -1728,16 +1728,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     <i class="far fa-trash-alt text-lg"></i>
                 </div>
                 <div class="text-center mb-6">
-                    <!-- 仅群聊允许点击修改该角色的本群专属头像 -->
-                    <div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg relative" :class="wechatState.activeSession?.isGroup ? 'cursor-pointer active:scale-95 transition' : ''" @click="wechatState.activeSession?.isGroup ? triggerGroupCustomAvatar() : null">
-                        <img :src="currentStatus.avatar || getChatAvatar({isSelf: false, targetId: wechatState.activeSession?.targetId})" class="w-full h-full object-cover">
-                        <div v-if="wechatState.activeSession?.isGroup" class="absolute bottom-0 left-0 w-full h-1/3 bg-black/40 flex items-center justify-center backdrop-blur-[2px]"><i class="fas fa-camera text-white/80 text-[11px] mb-2"></i></div>
+                    <div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg relative cursor-pointer group" @click="wechatState.activeSession?.isGroup ? triggerGroupMemberAvatarUpload() : null">
+                        <img :src="getChatAvatar({isSelf: false, name: currentStatus.name, avatar: currentStatus.avatar})" class="w-full h-full object-cover">
+                        <div v-if="wechatState.activeSession?.isGroup" class="absolute bottom-0 left-0 w-full bg-black/40 text-white text-[9px] py-0.5 text-center font-bold">群内换头</div>
                     </div>
                     <h3 class="text-xl font-bold text-gray-900">{{ currentStatus.name || wechatState.activeSession?.name }}</h3>
                     <p class="text-xs text-gray-400 mt-1">Current State</p>
                 </div>
-                <!-- 隐藏的群专属头像上传 Input -->
-                <input type="file" ref="groupCustomAvatarInput" accept="image/*" class="hidden" @change="handleGroupCustomAvatarUpload">
                 <div class="space-y-4 text-sm">
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">动作</div><div class="text-gray-800">{{ currentStatus.action || '无' }}</div></div>
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800 italic">"{{ currentStatus.thought || '...' }}"</div></div>
@@ -2682,6 +2679,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         </transition>
         <input type="file" ref="groupAvatarInput2" accept="image/*" class="hidden" @change="handleGroupAvatarChange2">
+        <input type="file" ref="groupMemberAvatarInput" accept="image/*" class="hidden" @change="handleGroupMemberAvatarChange">
         
         <!-- 角色人际关系网全屏界面 -->
         <transition name="page-slide">
@@ -6372,14 +6370,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.8 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-teal-500"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.8 群聊自定义深度拓展</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-10 16:44</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.8 翻译与群聊专属个性化优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-10 02:29</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">优化：</span>调整群聊翻译逻辑。群聊详情设置中删除了“自动翻译”选项，现在群内每个角色的外语发言都会智能跟随该角色在你【单聊设置】中的目标语言和翻译规则，做到千人千面。</li>
-                                    <li><span class="font-bold text-gray-800">新增：</span>群聊专供“剧组换脸”功能。在群聊点击角色头像呼出【心声】面板后，可以通过点击头像直接为该角色设定【仅在本群生效】的专属头像，完美契合跑团、剧本杀中一个角色在不同群不同形象的需求，且绝不污染单聊和通讯录的原始头像。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>群聊中右上角的设置面板移除了“自动翻译”的全局控制。现在，群聊内角色的翻译行为将直接继承并跟随你们私聊框中设定的翻译语言选项，更加灵活。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>群聊专供的“独立换头”机制。在群聊点击角色头像弹出的“心声面板”中，现在可以直接点击头像为其更换【仅在本群生效】的专属头像，不影响该角色在单聊和通讯录中的形象。</li>
                                 </ul>
                             </div>
 
@@ -9248,6 +9246,52 @@ const app = createApp({
             try { this.groupProfileModal.avatar = await compressImage(f, 300); } catch(e){}
             e.target.value = '';
         },
+        triggerGroupMemberAvatarUpload() {
+            if (this.wechatState.activeSession && this.wechatState.activeSession.isGroup) {
+                this.$refs.groupMemberAvatarInput.click();
+            }
+        },
+        async handleGroupMemberAvatarChange(e) {
+            const f = e.target.files[0]; if(!f) return;
+            try {
+                const url = await compressImage(f, 300);
+                const session = this.wechatState.activeSession;
+                const nameToMatch = this.currentStatus.name;
+                const friend = this.wechatState.friendList.find(x => (x.remark || x.name) === nameToMatch);
+                
+                if (friend) {
+                    if (!session.membersInfo) session.membersInfo = {};
+                    if (!session.membersInfo[friend.id]) session.membersInfo[friend.id] = { level: 1, customTitle: '', msgCount: 0 };
+                    
+                    // 赋值并触发 Vue 更新
+                    session.membersInfo[friend.id] = {
+                        ...session.membersInfo[friend.id],
+                        customAvatar: url
+                    };
+                    
+                    // 立即更新当前心声弹窗的头像
+                    this.currentStatus.avatar = url;
+                    
+                    // 替换该群聊中此人所有的历史气泡头像
+                    if (session.messages) {
+                        session.messages.forEach(m => {
+                            if (m.name === nameToMatch) m.avatar = url;
+                        });
+                    }
+                    if (session.statusHistory) {
+                        session.statusHistory.forEach(s => {
+                            if (s.name === nameToMatch) s.avatar = url;
+                        });
+                    }
+                    
+                    this.saveData();
+                    this.showToast('该角色在本群的专属头像已更新');
+                }
+            } catch(err) {
+                this.showToast('头像更新失败');
+            }
+            e.target.value = '';
+        },
         saveGroupProfile() {
             const session = this.wechatState.activeSession;
             if(session) {
@@ -9328,58 +9372,22 @@ const app = createApp({
             // 确保仅仅在“群聊”中点击头像会触发心声弹窗，单聊被彻底屏蔽
             if (!msg.isSelf && session && session.isGroup) {
                 this.currentStatus = msg.status || { action: '无', thought: '暂无心声', outfit: '未知', note: '无', avatar: msg.avatar, name: msg.name };
-                // 确保强制赋予正确的 name 和 avatar 供弹窗渲染和识别
-                this.currentStatus.name = msg.name;
-                this.currentStatus.avatar = this.getChatAvatar(msg);
                 this.statusModal.show = true;
             }
-        },
-        
-        triggerGroupCustomAvatar() {
-            if (this.$refs.groupCustomAvatarInput) this.$refs.groupCustomAvatarInput.click();
-        },
-        async handleGroupCustomAvatarUpload(e) {
-            const f = e.target.files[0]; if(!f) return;
-            try {
-                const url = await compressImage(f, 300);
-                const session = this.wechatState.activeSession;
-                if (session && session.isGroup) {
-                    if (!session.groupCustomAvatars) session.groupCustomAvatars = {};
-                    const friend = this.wechatState.friendList.find(fr => (fr.remark || fr.name) === this.currentStatus.name);
-                    if (friend) {
-                        session.groupCustomAvatars[friend.id] = url;
-                        this.currentStatus.avatar = url; // 立即更新弹窗视图
-                        this.saveData();
-                        this.showToast('已设置该角色在本群的专属头像');
-                    }
-                }
-            } catch(err) { console.error(err); }
-            e.target.value = '';
         },
 
         // --- 获取聊天头像方法 ---
         getChatAvatar(ctx) {
             let session = this.wechatState.activeSession;
-            
             if (ctx.targetId && (!session || session.targetId !== ctx.targetId)) {
                 session = this.wechatState.sessions.find(s => s.targetId === ctx.targetId) || session;
             }
-
             if (!session) return ctx.avatar || '';
 
             if (ctx.isSelf) {
                 return session.customAvatarSelf || this.getMaskById(session.maskId).avatar;
             } else {
-                // 【修复群聊头像】：动态从联系人列表读取最新头像，而不是用群默认头像
-                if (session.isGroup) {
-                    const friend = this.wechatState.friendList.find(f => (f.remark || f.name) === ctx.name);
-                    // 检查是否有该群专属的自定义头像
-                    if (friend && session.groupCustomAvatars && session.groupCustomAvatars[friend.id]) {
-                        return session.groupCustomAvatars[friend.id];
-                    }
-                    if (friend) return friend.avatar;
-                    return ctx.avatar || session.avatar;
-                }
+                if (session.isGroup) return ctx.avatar || session.avatar; // 群聊返回发消息者的头像
                 return session.customAvatarTarget || session.avatar;
             }
         },
@@ -9670,24 +9678,7 @@ const app = createApp({
             this.groupAddMemberModal.show = false;
             this.saveData();
             this.showToast('已邀请加入群聊');
-        },
-        async handleGroupAvatarChange2(e) {
-            const f = e.target.files[0]; if(!f) return;
-            try { this.groupProfileModal.avatar = await compressImage(f, 300); } catch(e){}
-            e.target.value = '';
-        },
-        saveGroupProfile() {
-            const session = this.wechatState.activeSession;
-            if(session) {
-                session.name = this.groupProfileModal.name;
-                session.remark = this.groupProfileModal.remark;
-                session.bio = this.groupProfileModal.bio;
-                session.avatar = this.groupProfileModal.avatar;
-                this.saveData();
-                this.showToast('群资料已保存');
-            }
-            this.groupProfileModal.show = false;
-        },
+        },       
 
         // --- 美化功能相关逻辑 ---
         updateDynamicStyles() {
@@ -12607,14 +12598,15 @@ Structure:
                              const engWordCount = (seg.match(/[a-zA-Z]+/g) || []).length;
                              const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); // 日韩等字符
                              
-                             // 【修改】查找生效的单聊会话获取翻译设置
-                             let effectiveSession = session;
+                             let enableTranslate = session.enableClickTranslate;
                              if (session.isGroup && speakerId) {
-                                 const singleSession = this.wechatState.sessions.find(s => s.targetId === speakerId && !s.isGroup);
-                                 if (singleSession) effectiveSession = singleSession;
+                                 const pSession = this.wechatState.sessions.find(s => s.targetId === speakerId && !s.isGroup);
+                                 if (pSession) {
+                                     enableTranslate = pSession.enableClickTranslate;
+                                 }
                              }
-
-                             if (effectiveSession.enableClickTranslate && !trans) {
+                             
+                             if (enableTranslate && !trans) {
                                  // 如果原文明显是中文，且外语单词少于3个，绝对不发起翻译请求！
                                  if (hasChinese && engWordCount < 3 && !hasForeignChars) {
                                      // 静默拦截，不需要翻译，别浪费 Tokens 和触发大模型发疯
@@ -15746,17 +15738,22 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             if (msg.isTranslating || (msg.translation && msg.translation !== '翻译失败')) return;
 
             const session = this.wechatState.activeSession;
-            let effectiveSession = session;
-            if (session.isGroup && msg.name) {
-                const friend = this.wechatState.friendList.find(f => f.remark === msg.name || f.name === msg.name);
+            let configSession = session;
+            
+            // 如果是群聊，找到发言者对应的单聊会话，读取其单聊的翻译设置
+            if (session && session.isGroup && msg.name) {
+                const friend = this.wechatState.friendList.find(f => (f.remark || f.name) === msg.name);
                 if (friend) {
-                    const singleSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
-                    if (singleSession) effectiveSession = singleSession;
+                    const pSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
+                    if (pSession && pSession.enableClickTranslate) {
+                        configSession = pSession;
+                    }
                 }
             }
 
-            let source = effectiveSession?.transSourceLang || '自动识别';
-            let target = effectiveSession?.transTargetLang || '简体中文 (普通话)';
+            let source = configSession?.transSourceLang || '自动识别';
+            let target = configSession?.transTargetLang || '简体中文 (普通话)';
+            const autoExpand = configSession?.autoExpandTranslate || false;
 
             // 【绝对强力本地拦截】：只要目标语言是中文，且原文已经有中文了，而且英文单词不到 3 个，直接掐断！绝不发网络请求！
             const isTargetChinese = target.includes('中文') || target.includes('粤语') || target.includes('普通话');
@@ -15801,7 +15798,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     msg.showTranslation = false;
                 } else {
                     msg.translation = result;
-                    msg.showTranslation = !!effectiveSession.autoExpandTranslate;
+                    msg.showTranslation = autoExpand;
                 }
             } catch(e) {
                 console.error("翻译失败:", e);
@@ -16678,7 +16675,13 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 // 【修复群聊头像】：动态从联系人列表读取最新头像，而不是用群默认头像
                 if (session.isGroup) {
                     const friend = this.wechatState.friendList.find(f => (f.remark || f.name) === ctx.name);
-                    if (friend) return friend.avatar;
+                    if (friend) {
+                        // 优先检查该群聊中是否设置了该角色的群内专属头像
+                        if (session.membersInfo && session.membersInfo[friend.id] && session.membersInfo[friend.id].customAvatar) {
+                            return session.membersInfo[friend.id].customAvatar;
+                        }
+                        return friend.avatar;
+                    }
                     return ctx.avatar || session.avatar;
                 }
                 return session.customAvatarTarget || session.avatar;
