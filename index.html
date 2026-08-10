@@ -3694,7 +3694,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                             <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md"><img :src="getChatAvatar({isSelf: false, targetId: activeQinmiDetail.targetId})" class="w-full h-full object-cover"></div>
                         </div>
-                        <div class="flex justify-between text-sm mb-2"><span class="text-gray-500">每月限额</span><span class="font-bold">¥{{ activeQinmiDetail.limit }}</span></div>
+                        <div class="flex justify-between text-sm mb-2 items-center">
+                            <span class="text-gray-500">每月限额</span>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold">¥{{ activeQinmiDetail.limit }}</span>
+                                <span v-if="activeQinmiDetail.type === 'outcome'" class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full cursor-pointer active:scale-95 transition" @click="modifyQinmiLimit">修改</span>
+                            </div>
+                        </div>
                         <div class="flex justify-between text-sm"><span class="text-gray-500">剩余额度</span><span class="font-bold text-green-600">¥{{ (activeQinmiDetail.limit - activeQinmiDetail.balanceUsed).toFixed(2) }}</span></div>
                     </div>
                     
@@ -4126,6 +4132,25 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="qinmi-header"><i class="fas fa-heart qinmi-icon"></i><span class="font-bold">{{ msg.inviteType === 'give' ? '亲密付' : '亲密付求助' }}</span></div>
                                         <div class="qinmi-body">{{ msg.inviteType === 'give' ? '我想为你开通亲密付' : '能帮我开通亲密付吗？' }}</div>
                                         <div class="qinmi-footer"><span>微信亲密付</span><i class="fas fa-chevron-right text-xs"></i></div>
+                                    </div>
+                                    
+                                    <!-- 亲密付额度修改卡片 (iOS 灰白 ins 风) -->
+                                    <div v-else-if="msg.type === 'qinmi_limit_change'" class="bg-white border border-gray-200 rounded-[14px] w-[230px] overflow-hidden shadow-sm flex flex-col cursor-default">
+                                        <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-gray-50/50">
+                                            <div class="w-9 h-9 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center shrink-0"><i class="fas fa-heart-circle-bolt text-[15px]"></i></div>
+                                            <div class="flex-1 min-w-0 flex flex-col">
+                                                <div class="text-[13px] font-bold text-gray-900 truncate">亲密付额度调整</div>
+                                                <div class="text-[10px] text-gray-500 mt-0.5 truncate">操作人: {{ msg.changer }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="p-4 flex flex-col gap-2">
+                                            <div class="flex justify-between items-center text-[12px]"><span class="text-gray-500">原额度</span><span class="font-mono text-gray-400 line-through">¥{{ msg.oldLimit }}</span></div>
+                                            <div class="flex justify-between items-center text-[12px]"><span class="text-gray-500">新额度</span><span class="font-mono font-bold text-gray-900 text-[15px]">¥{{ msg.newLimit }}</span></div>
+                                        </div>
+                                        <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between border-t border-gray-50">
+                                            <span>Intimate Pay</span>
+                                            <i class="fas fa-chevron-right text-[8px] opacity-50"></i>
+                                        </div>
                                     </div>
                                     
                                     <!-- 定位卡片 -->
@@ -6368,7 +6393,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.9 更新日志 (当前最新) -->
+                            <!-- v1.10 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.10 亲密付额度与账单流转系统</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-11 00:30</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">新增：</span>双向动态额度修改。现在你可以在亲密付详情页随时修改给角色的额度，修改后会自动在聊天界面下发“特殊灰白通知卡片”并触发 AI 反馈。同时，大模型也被赋予了修改限额的权利，可以根据心情随时随地提升或降低对你的限额。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>完善了 AI 亲密付随机掉落的消费逻辑（原本的 <code>handleAiIntimatePayConsumption</code> 将继续默默在你们的账单详情页留下真实消费痕迹，沉浸感拉满）。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.9 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-pink-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12048,6 +12086,7 @@ Structure:
   "location": { "name": "Place Name", "address": "Detailed Address" },
   "qinmi_reply": "accept" OR "reject", // OPTIONAL: 如果玩家向你发起了亲密付邀请或求助，请填入 accept(接受) 或 reject(拒绝)
   "qinmi_invite": "give" OR "ask", // OPTIONAL: 如果你想主动为玩家开通亲密付(give)，或者你想主动求玩家为你开通亲密付(ask)
+  "qinmi_change_limit": 5000, // OPTIONAL: 填入纯数字。如果你已经为玩家开通了亲密付，你可以随时随地通过此字段修改给玩家的限额！
   "music_control": "next" OR "prev" OR "stop",
   "nudge_user": ${session.enableCustomNudge && session.nudgeAiImprovise ? '"OPTIONAL: 填入你想对玩家做的即兴肢体动作，如\'拍了拍你的头\'，它会在聊天中以系统灰字显示出来"' : 'true OR false, // OPTIONAL: 若你想对玩家使用拍一拍，设为 true'},
   "html_widget": "OPTIONAL: Valid HTML string using Tailwind CSS...",
@@ -12354,6 +12393,30 @@ Structure:
                             };
                             session.messages.push(qMsg);
                             session.lastMessage = '[亲密付邀请]';
+                        }
+                    }
+                    
+                    // === 处理AI修改亲密付限额 ===
+                    if (block.qinmi_change_limit !== undefined && block.qinmi_change_limit !== null) {
+                        const newLimit = parseFloat(block.qinmi_change_limit);
+                        if (!isNaN(newLimit) && newLimit > 0) {
+                            // 查找AI为我开通的亲密付 (对于我来说是 income)
+                            const activePay = this.wallet.intimatePays.find(p => p.targetId === (speakerId || session.targetId) && p.status === 'active' && p.type === 'income');
+                            if (activePay) {
+                                const oldLimit = activePay.limit;
+                                activePay.limit = newLimit;
+                                session.messages.push({
+                                    type: 'qinmi_limit_change',
+                                    changer: speakerName,
+                                    oldLimit: oldLimit,
+                                    newLimit: newLimit,
+                                    isSelf: false,
+                                    time: Date.now(),
+                                    avatar: speakerAvatar,
+                                    name: speakerName
+                                });
+                                session.lastMessage = '[亲密付额度修改]';
+                            }
                         }
                     }
 
@@ -16073,6 +16136,38 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         openQinmiSpecificDetail(qp) {
             this.activeQinmiDetail = qp;
             this.wechatState.activeNav = 'qinmi-specific-detail';
+        },
+        modifyQinmiLimit() {
+            if (!this.activeQinmiDetail || this.activeQinmiDetail.type !== 'outcome') return;
+            this.showInput('修改亲密付限额', this.activeQinmiDetail.limit, '请输入新的每月限额', (val) => {
+                const newLimit = parseFloat(val);
+                if (newLimit > 0) {
+                    const oldLimit = this.activeQinmiDetail.limit;
+                    this.activeQinmiDetail.limit = newLimit;
+                    
+                    const session = this.wechatState.sessions.find(s => s.targetId === this.activeQinmiDetail.targetId);
+                    if (session) {
+                        session.messages.push({
+                            type: 'qinmi_limit_change',
+                            changer: '我',
+                            oldLimit: oldLimit,
+                            newLimit: newLimit,
+                            isSelf: true,
+                            time: Date.now(),
+                            avatar: this.getMaskById(session.maskId).avatar
+                        });
+                        session.lastMessage = '[亲密付额度调整]';
+                        this.saveData();
+                        this.showToast('额度修改成功');
+                        
+                        setTimeout(() => {
+                            this.triggerReceive(`我刚刚把给你的亲密付额度从 ${oldLimit} 修改为了 ${newLimit}。请你对这个额度的变化做出符合人设的自然反应！`);
+                        }, 1500);
+                    }
+                } else {
+                    this.showToast('无效的额度');
+                }
+            }, 'number');
         },
         getAvailableQinmiSources() {
             return this.wallet.intimatePays.filter(p => p.type === 'income' && p.status === 'active' && (p.limit - p.balanceUsed) > 0);
