@@ -1275,7 +1275,7 @@ document.addEventListener("DOMContentLoaded", () => {
                  </div>
                  <div class="p-8 text-center">
                      <div class="text-3xl font-bold">¥{{ paymentSelectModal.amount }}</div>
-                     <div class="text-gray-400 text-sm mt-1">模拟消费</div>
+                     <div class="text-gray-400 text-sm mt-1">{{ paymentSelectModal.type === 'red_packet' ? '发红包' : (paymentSelectModal.type === 'transfer' ? '微信转账' : '模拟消费') }}</div>
                  </div>
                  <div class="px-4 pb-8 space-y-2">
                      <div class="text-xs text-gray-400 ml-2 mb-1">选择付款方式</div>
@@ -6393,7 +6393,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.10 更新日志 (当前最新) -->
+                            <!-- v1.11 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-yellow-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.11 借花献佛：全方位钱包整合</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-11 01:24</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">新增：</span>红包与转账功能现已全面接入“支付选择中心”。现在你不仅可以扣除自己钱包余额，还可以直接选择消耗对方给你的【亲密付】额度来发红包，享受“借花献佛”的奇妙交互。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>当 AI 角色随机使用你的亲密付发生消费时，现在会直观地在聊天界面插入一条“使用了你的亲密付”的灰白系统通知，且不再暴露具体的消费项目和金额，保留神秘感。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了单聊/群聊转账退还自动逻辑中偶尔可能触发报错导致气泡弹不出来的隐藏 Bug。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.10 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7196,7 +7210,7 @@ const app = createApp({
             currentRedPacketData: null,
             wallet: { balance: 0.00, transactions: [], intimatePays: [] },
             qinmiSelectModal: { show: false },
-            paymentSelectModal: { show: false, amount: 0 },
+            paymentSelectModal: { show: false, amount: 0, type: 'consumption' },
             activeQinmiDetail: null,
 
             // Music System
@@ -15462,7 +15476,6 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         sendRedPacket() {
              const amt = parseFloat(this.redPacketModal.amount);
              if(!amt || amt <= 0) return this.showToast('请输入金额');
-             if(this.wallet.balance < amt) return this.showToast('余额不足');
              
              let count = 1;
              if (this.wechatState.activeSession?.isGroup) {
@@ -15471,7 +15484,15 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                  if (count > this.wechatState.activeSession.members.length + 1) return this.showToast('红包个数不能大于总人数');
              }
 
-             this.addToWallet('expense', amt, this.wechatState.activeSession.name, '发出红包');
+             // 改为弹出支付方式选择框
+             this.paymentSelectModal = { show: true, amount: amt, type: 'red_packet' };
+        },
+        finalizeRedPacket() {
+             const amt = parseFloat(this.redPacketModal.amount);
+             let count = 1;
+             if (this.wechatState.activeSession?.isGroup) {
+                 count = parseInt(this.redPacketModal.count);
+             }
              
              const msg = {
                  type: 'red_packet',
@@ -15487,9 +15508,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
              this.redPacketModal.show = false;
              this.scrollToBottom();
              this.saveData();
-             // (定时抢包逻辑已转移至点击接收按钮时同步触发)
-        },
-        
+        },        
         getMyClaimAmount(rpMsg) {
             if (!rpMsg || !rpMsg.claims) return null;
             const myClaim = rpMsg.claims.find(c => c.id === 'mine');
@@ -15563,10 +15582,11 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         sendTransfer() {
              const amt = parseFloat(this.transferModal.amount);
              if(!amt || amt <= 0) return this.showToast('请输入金额');
-             if(this.wallet.balance < amt) return this.showToast('余额不足');
-             
-             this.addToWallet('expense', amt, this.wechatState.activeSession.name, '转账支出');
 
+             // 改为弹出支付方式选择框
+             this.paymentSelectModal = { show: true, amount: amt, type: 'transfer' };
+        },
+        finalizeTransfer() {
              const msg = {
                  type: 'transfer',
                  amount: this.transferModal.amount,
@@ -15590,25 +15610,25 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                          receiverName = this.getFriendName(msg.targetUserId);
                      }
                      
-                     // 20% 概率对方会退还转账，80% 概率收下
                      const isRejected = Math.random() < 0.2;
                      
-                     // 明确一下 AI 的头像
-                     let aiAvatar = session.avatar;
-                     if (session.isGroup && msg.targetUserId) {
+                     // 修复原来隐蔽的 session 未定义 Bug
+                     const currentSession = this.wechatState.activeSession;
+                     let aiAvatar = currentSession.avatar;
+                     if (currentSession.isGroup && msg.targetUserId) {
                          aiAvatar = this.getFriendAvatar(msg.targetUserId);
                      }
 
                      if (isRejected) {
                          msg.isRefunded = true;
                          this.addToWallet('income', parseFloat(msg.amount), '系统', '转账退还');
-                         session.messages.push({
+                         currentSession.messages.push({
                              type: 'system',
                              content: `"${receiverName}" 退还了你的转账`,
                              time: Date.now()
                          });
                          // AI 自动发出退回消息气泡
-                         session.messages.push({
+                         currentSession.messages.push({
                              type: 'text',
                              content: `我退还了你的转账`,
                              isSelf: false,
@@ -15618,13 +15638,13 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                          });
                      } else {
                          msg.isReceived = true;
-                         session.messages.push({
+                         currentSession.messages.push({
                              type: 'system',
                              content: `"${receiverName}" 接收了你的转账`,
                              time: Date.now()
                          });
                          // AI 自动发出接收消息气泡
-                         session.messages.push({
+                         currentSession.messages.push({
                              type: 'text',
                              content: `我接收了你的转账`,
                              isSelf: false,
@@ -16176,15 +16196,30 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             const amount = this.paymentSelectModal.amount;
             if (method === 'balance') {
                 if (this.wallet.balance < amount) return this.showToast('余额不足');
-                this.addToWallet('expense', amount, '商户消费', '模拟消费');
+                let desc = '模拟消费';
+                if (this.paymentSelectModal.type === 'red_packet') desc = '发出红包';
+                if (this.paymentSelectModal.type === 'transfer') desc = '转账支出';
+                this.addToWallet('expense', amount, '微信支付', desc);
                 this.showToast('支付成功');
             } else if (method === 'qinmi') {
-                if ((source.limit - source.balanceUsed) < amount) return this.showToast('额度不足');
+                if ((source.limit - source.balanceUsed) < amount) return this.showToast('亲密付剩余额度不足');
                 source.balanceUsed = (parseFloat(source.balanceUsed) + parseFloat(amount)).toFixed(2);
-                source.history.unshift({ item: '模拟消费', amount: amount, time: Date.now() });
+                let desc = '模拟消费';
+                if (this.paymentSelectModal.type === 'red_packet') desc = '发红包';
+                if (this.paymentSelectModal.type === 'transfer') desc = '转账';
+                source.history.unshift({ item: desc, amount: amount, time: Date.now() });
                 this.showToast(`亲密付支付成功 (-${amount})`);
             }
+            
             this.paymentSelectModal.show = false;
+
+            // 支付成功后自动下发气泡
+            if (this.paymentSelectModal.type === 'red_packet') {
+                this.finalizeRedPacket();
+            } else if (this.paymentSelectModal.type === 'transfer') {
+                this.finalizeTransfer();
+            }
+
             this.saveData();
         },
         handleAiIntimatePayConsumption(session) {
@@ -16201,6 +16236,13 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                              pay.balanceUsed = (parseFloat(pay.balanceUsed) + parseFloat(cost)).toFixed(2);
                              pay.history.unshift({ item, amount: cost, time: Date.now() });
                              this.addToWallet('expense', cost, session.name, `亲密付-${item}`);
+                             
+                             session.messages.push({
+                                 type: 'system',
+                                 content: `[系统提示] ${session.name} 刚刚使用了你的亲密付`,
+                                 time: Date.now()
+                             });
+                             if (this.wechatState.activeSession?.id === session.id) this.scrollToBottom();
                          }
                      }
                  }
