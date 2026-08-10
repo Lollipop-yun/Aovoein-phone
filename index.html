@@ -6402,7 +6402,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.12 更新日志 (当前最新) -->
+                            <!-- v1.13 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.13 头像联动裁剪与时间纪律</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-11 02:28</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了“时间感应”开关的越权问题。现在只有当你在聊天设置中打开了时间感应，AI 才会获取当前的真实时间，否则完全不会知道确切时间。</li>
+                                    <li><span class="font-bold text-gray-800">恢复：</span>找回了角色“听指令换头像”的功能！如果你发了一张图片并让它换上，它现在能够准确执行换头动作并在聊天里弹出系统提示了。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>史诗级占有欲更新：【情侣头像裁剪】！大模型现在可以主动读取你的头像，并且利用生图 API（结合 <code>--cref</code> 技术）强行裁剪你头像里的某一部分（例如你抱着的娃娃），偷偷换成它自己的头像。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.12 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7745,6 +7759,66 @@ const app = createApp({
                     content: `[系统提示] ${name} 尝试发送照片失败了。`,
                     time: Date.now()
                 });
+                this.scrollToBottom();
+            }
+        },
+        async generateCroppedAvatar(session, baseAvatarUrl, cropDesc, speakerId, speakerName) {
+            if (!this.imageApiConfig.apiKey || !this.imageApiConfig.baseUrl) {
+                session.messages.push({ type: 'system', content: `[系统提示] 由于生图 API 未配置，${speakerName} 裁剪头像失败。`, time: Date.now() });
+                this.scrollToBottom();
+                return;
+            }
+            try {
+                let url = this.imageApiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+                
+                // 强制指令：裁剪特定的物品/特征，保持情侣头风格
+                let finalPrompt = `A profile picture focusing tightly on: ${cropDesc}. This is a cropped close-up style avatar. Anime or aesthetic style.`;
+                
+                let payload = {
+                    model: this.imageApiConfig.selectedModel || 'dall-e-3',
+                    prompt: finalPrompt,
+                    n: 1,
+                    size: "1024x1024"
+                };
+
+                // 如果基础头像是 URL (反代能识别的)，用 cref 喂给它，保证画风一致
+                if (baseAvatarUrl && baseAvatarUrl.startsWith('http')) {
+                    payload.prompt += ` --cref ${baseAvatarUrl} --cw 100`;
+                    payload.prompt = `[Style strictly matching this reference image: ${baseAvatarUrl}] ` + payload.prompt;
+                }
+
+                const res = await fetch(`${url}/images/generations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.imageApiConfig.apiKey.trim()}` },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    const imgUrl = data.data[0].url;
+                    if (imgUrl) {
+                        // 覆盖头像
+                        if (session.isGroup && speakerId) {
+                            if (!session.membersInfo[speakerId]) session.membersInfo[speakerId] = { level: 1, customTitle: '', msgCount: 0 };
+                            session.membersInfo[speakerId].customAvatar = imgUrl;
+                        } else {
+                            session.customAvatarTarget = imgUrl;
+                        }
+                        session.messages.push({
+                            type: 'system',
+                            content: `[系统提示] ${speakerName} 成功将你的头像裁剪为 "${cropDesc}" 并换上了情侣头像！`,
+                            time: Date.now()
+                        });
+                        this.scrollToBottom();
+                        this.saveData();
+                    }
+                } else {
+                    throw new Error('生图失败');
+                }
+            } catch (e) {
+                console.error("裁剪头像失败", e);
+                session.messages.push({ type: 'system', content: `[系统提示] ${speakerName} 裁剪头像失败。`, time: Date.now() });
                 this.scrollToBottom();
             }
         },
@@ -11839,12 +11913,15 @@ const app = createApp({
                 }
             };
             
-            let timeContext = `\n[系统提示-时间与时区严格感知]:
+            let timeContext = "";
+            if (session.enableTimeSense) {
+                timeContext = `\n[系统提示-时间与时区严格感知]:
 我(玩家)当前的当地时间是：${formatTzDate(myTz)}。
 你(角色)当前的当地时间是：${formatTzDate(aiTz)}。
 【绝对时间纪律警告！！！】：你目前身处你自己的时区，你必须且只能以【你当前的当地时间（${formatTzDate(aiTz)}）】作为你生活作息、环境亮暗、吃饭睡觉的唯一衡量标准！
 - 如果我问你“现在几点”或说“晚上好”，但你那里是早上，你必须根据你的时间纠正我，展现出明显的时差感！
 - 绝不能被我的时间带偏，绝不能把你的凌晨当成正午，否则判定严重OOC！`;
+            }
             
             // Music Sense Logic (NEW)
             // --- 强化音乐感知与 AI 主动切歌 ---
@@ -12090,11 +12167,14 @@ Structure:
       "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【警告】：只能用来给大家发福利，【绝对不能】用来给单人付款！
       "private_message": "OPTIONAL: 【极度重要】如果你在群里发完言后，想趁机私下找我(玩家)开小差、吐槽或说悄悄话，请直接在这里填入你要发给我的单聊内容（系统会自动将其发到我们的私聊窗口，并附带弹窗提醒！）",
       "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
-      "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" } // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
+      "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" }, // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
+      "change_avatar": true OR false, // OPTIONAL: 如果玩家刚才发了一张图片给你，并要求你把它换成头像，请设为 true！
+      "crop_and_set_avatar": "OPTIONAL: 如果你觉得我(玩家)当前的头像很好看，想偷偷'裁剪'我头像里的某一部分作为你自己的情侣头像，请填入你想截取的具体内容描写(如: 你抱着的娃娃)！"
     }
   ],
   "fake_image": "OPTIONAL: description...",
-  "change_avatar": true OR false,
+  "change_avatar": true OR false, // OPTIONAL: 如果玩家刚才发了一张图片给你，并要求你把它换成头像，请设为 true！
+  "crop_and_set_avatar": "OPTIONAL: 如果你觉得我(玩家)当前的头像很好看，想偷偷'裁剪'我头像里的某一部分作为你自己的情侣头像，请填入你想截取的具体内容描写(如: 你抱着的娃娃)！",
   "sticker_id": "OPTIONAL: 表情ID",
   "invite_music": true
 }
@@ -12126,8 +12206,9 @@ Structure:
   "qinmi_change_limit": 5000, // OPTIONAL: 填入纯数字。如果你已经为玩家开通了亲密付，你可以随时随地通过此字段修改给玩家的限额！
   "music_control": "next" OR "prev" OR "stop",
   "nudge_user": ${session.enableCustomNudge && session.nudgeAiImprovise ? '"OPTIONAL: 填入你想对玩家做的即兴肢体动作，必须以\'拍了拍\'开头，例如\'拍了拍你的头\'"' : 'true OR false, // OPTIONAL: 若你想对玩家使用拍一拍，设为 true'},
+  "change_avatar": true OR false, // OPTIONAL: 如果玩家刚才发了一张图片给你，并要求你把它换成头像，请设为 true！
+  "crop_and_set_avatar": "OPTIONAL: 如果你觉得我(玩家)当前的头像很好看，想偷偷'裁剪'我头像里的某一部分作为你自己的情侣头像，请填入你想截取的具体内容描写(如: 你抱着的娃娃)！",
   "html_widget": "OPTIONAL: Valid HTML string using Tailwind CSS...",
-  "change_avatar": true OR false,
   "sticker_id": "OPTIONAL: 填入你想发的表情包的纯数字 ID",
   "invite_music": true
 }
@@ -12510,6 +12591,47 @@ Structure:
                             });
                         }
                     }
+
+                    // === 处理 AI 自主更换头像 (玩家发图) ===
+                    if (block.change_avatar === true || block.change_avatar === "true") {
+                        // 往上找最近的一张图片
+                        let lastImgMsg = [...session.messages].reverse().find(m => m.type === 'image' || m.type === 'fake_image');
+                        if (lastImgMsg) {
+                            if (session.isGroup && speakerId) {
+                                if (!session.membersInfo) session.membersInfo = {};
+                                if (!session.membersInfo[speakerId]) session.membersInfo[speakerId] = { level: 1, customTitle: '', msgCount: 0 };
+                                session.membersInfo[speakerId].customAvatar = lastImgMsg.content;
+                            } else {
+                                session.customAvatarTarget = lastImgMsg.content;
+                            }
+                            session.messages.push({
+                                type: 'system',
+                                content: `[系统提示] ${speakerName} 乖乖地将你发送的图片设置为了自己的头像`,
+                                time: Date.now()
+                            });
+                            this.saveData();
+                        }
+                    }
+
+                    // === 处理 AI 裁剪玩家头像作情侣头 ===
+                    if (block.crop_and_set_avatar) {
+                        const cropDesc = block.crop_and_set_avatar;
+                        const userAvatar = this.getMaskById(session.maskId).avatar; // 获取玩家的头像
+                        
+                        session.messages.push({
+                            type: 'system',
+                            content: `[系统提示] ${speakerName} 正在裁剪你的头像（提取焦点：${cropDesc}）作为自己的新头像...`,
+                            time: Date.now()
+                        });
+                        this.scrollToBottom();
+                        
+                        // 延迟调用生图 API 来生成这个“裁剪”后的专属头像
+                        setTimeout(() => {
+                            this.generateCroppedAvatar(session, userAvatar, cropDesc, speakerId, speakerName);
+                        }, delay + 2000);
+                        delay += 1000;
+                    }
+
                     // === 处理角色的私密收藏 ===
                     if (block.favorite_user_content) {
                         let targetSession = session;
