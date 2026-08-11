@@ -2565,9 +2565,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <transition name="page-slide">
             <div v-if="groupProfileModal.show" class="fixed inset-0 z-[105000] bg-[#f5f6fa] flex flex-col font-sans pb-safe">
                 <!-- 顶部导航栏 -->
-                <header class="h-[90px] pt-10 px-4 flex items-center bg-[#f5f6fa] shrink-0 z-50 sticky top-0">
-                    <button @click="groupProfileModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[20px]"></i></button>
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f5f6fa] shrink-0 z-50 sticky top-0">
+                    <button @click="groupProfileModal.show = false" class="w-8 h-8 flex items-center justify-start text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[20px]"></i></button>
                     <h1 class="font-medium text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">群资料管理</h1>
+                    <button @click="saveGroupProfile" class="text-[#07c160] font-bold text-[15px] active:opacity-50">确定</button>
                 </header>
 
                 <div class="flex-1 overflow-y-auto px-4 pb-12 space-y-6 pt-6">
@@ -2582,11 +2583,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <!-- 群名与权限卡片 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-50 px-4">
-                        <div class="flex justify-between items-center py-4 cursor-pointer">
+                        <div class="flex justify-between items-center py-4">
                             <span class="text-[16px] text-gray-900">群聊名称</span>
                             <div class="flex items-center gap-1">
-                                <input v-model="groupProfileModal.name" class="bg-transparent text-right text-[14px] text-gray-500 outline-none w-32" @blur="saveGroupProfile">
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                                <input v-model="groupProfileModal.name" placeholder="请输入群聊名称" class="bg-transparent text-right text-[14px] text-gray-500 outline-none w-40">
+                                <i class="fas fa-edit text-gray-300 text-xs"></i>
                             </div>
                         </div>
                         <div class="flex justify-between items-center py-4">
@@ -2598,39 +2599,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <!-- 详细资料卡片 (增加群公告) -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-50 px-4">
-                        <div class="flex flex-col py-4 cursor-pointer relative" @click="showInput('修改群介绍', groupProfileModal.bio, '在这里，发现更多~', (v) => { if(v !== undefined){ groupProfileModal.bio=v; saveGroupProfile(); } })">
-                            <span class="text-[16px] text-gray-900 mb-1">群介绍</span>
-                            <span class="text-[14px] text-gray-400 truncate w-[90%]">{{ groupProfileModal.bio || '在这里，发现更多~' }}</span>
-                            <i class="fas fa-chevron-right text-gray-300 text-sm absolute right-0 top-1/2 -translate-y-1/2"></i>
+                        <div class="flex flex-col py-4 relative">
+                            <div class="flex flex-col mb-2">
+                                <span class="text-[16px] text-gray-900">群介绍 (隐秘设定)</span>
+                                <span class="text-[11px] text-gray-400 mt-0.5">告诉AI本群是用来干嘛的，不在表面展示</span>
+                            </div>
+                            <textarea v-model="groupProfileModal.bio" placeholder="例如：这是一个魔法学院新生交流群..." class="w-full h-24 bg-gray-50 rounded-xl p-3 text-[14px] text-gray-700 outline-none resize-none shadow-inner border border-gray-100"></textarea>
                         </div>
                         
                         <!-- 【新增】群公告入口 -->
                         <div class="flex flex-col py-4 cursor-pointer relative" @click="showInput('发布群公告', wechatState.activeSession.groupNotice, '输入群公告，将在群聊顶部显示', (v) => { if(v !== undefined){ wechatState.activeSession.groupNotice=v; saveData(); } })">
-                            <span class="text-[16px] text-gray-900 mb-1">群公告</span>
+                            <span class="text-[16px] text-gray-900 mb-1">群公告 (表面展示)</span>
                             <span class="text-[14px] text-gray-400 truncate w-[90%]">{{ wechatState.activeSession.groupNotice || '未设置' }}</span>
                             <i class="fas fa-chevron-right text-gray-300 text-sm absolute right-0 top-1/2 -translate-y-1/2"></i>
-                        </div>
-
-                        <div class="flex justify-between items-center py-4 cursor-pointer">
-                            <span class="text-[16px] text-gray-900">群分类</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[14px] text-gray-400">未设置</span>
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center py-4 cursor-pointer">
-                            <span class="text-[16px] text-gray-900">群标签</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[14px] text-gray-400">未设置</span>
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center py-4 cursor-pointer">
-                            <span class="text-[16px] text-gray-900">群地点</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[14px] text-gray-400">未设置</span>
-                                <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -6402,7 +6383,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.14 更新日志 (当前最新) -->
+                            <!-- v1.15 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.15 群资料深度精简与暗线设定注入</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-11 16:43</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">优化：</span>大刀阔斧去除了群聊资料页面中无用的“群分类”、“群标签”等冗余废案，化繁为简。同时在顶部新增了非常符合直觉的“确定”按钮，告别了以前输完还要到处点空白处盲狙保存的时代。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>赋予了“群介绍”真正的底色价值。现在扩充了群介绍的输入框，你可以更舒展地向 AI 描述这个群的建立初衷（如“吃瓜吐槽小分队”或“修仙门派长老群”）。大模型在回复时将自动读取该隐秘设定，让所有 NPC 成员更加沉浸在这个群的核心氛围中。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.14 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-fuchsia-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12050,9 +12044,11 @@ const app = createApp({
                 if (session.groupNotice) {
                     groupNoticeContext = `\n【群公告(极度重要)】：当前群处置顶了一条群公告：“${session.groupNotice}”。大家可以在聊天中自然地探讨、吐槽或遵守这个公告内容。`;
                 }
+
+                let groupPurpose = session.bio ? `\n【本群核心目的/介绍】：${session.bio}` : "";
                 
                 roleIdentity = `<GROUP_CHAT_RULES>
-You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).
+You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).${groupPurpose}
 - YOU ARE THE GROUP OWNER. Members marked as "Muted: YES" MUST NOT speak in this round!
 - Members marked as "Admin: YES" can kick or mute other NPCs.
 - 【极度重要：群聊高强度互动】：不要只围着我（玩家）一个人说话！群里的角色和角色之间也必须经常互相开玩笑、互怼、八卦！你们可以互相艾特对方（例如在句子里说 "@XXX 别闹了"），展现出一个真实活跃的朋友圈子！
