@@ -6402,7 +6402,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.13 更新日志 (当前最新) -->
+                            <!-- v1.14 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-fuchsia-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.14 表情包序列映射与撤回算法重构</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-11 15:51</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>重写了底层提取表情包的代码。修复了大模型输出的数字 ID 被代码引擎强行匹配长字符 ID 从而导致失败，进而触发兜底机制“永远只发列表第一个表情包”的 Bug。现在 AI 能够完全按照你的表情包图库自如挑选发送了。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>重构了 AI 主观撤回消息的判定机制。撤回逻辑不再被死板地绑定在 AI 回复的“最后一句话”上。现在当 AI 感到后悔、不妥或嘴快时，系统将动态随机抽取本轮连发中的任意一句话进行撤回（可以是第一句、中间一句或最后一句），更贴近人类行为逻辑。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.13 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -11904,7 +11917,7 @@ const app = createApp({
             let stickerContext = "";
             if (this.stickers && this.stickers.length > 0) {
                 const availableStickers = this.stickers.map((s, idx) => `[ID:${idx} 描述:${s.desc}]`).join(', ');
-                stickerContext = `\n[你的表情包库]: 如果你想发表情包，请在返回JSON的 "sticker_id" 中填入你想发的表情ID。可用表情列表: ${availableStickers}`;
+                stickerContext = `\n[你的表情包库]: 如果你想发表情包，请在返回JSON的 "sticker_id" 中严格填入上述对应的纯数字 ID。可用表情列表: ${availableStickers}`;
             }
             
             // --- 读取小说连载注入 ---
@@ -12508,6 +12521,17 @@ Structure:
                         .map(s => s.trim())
                         .filter(s => s && !s.includes('系统提示') && !s.includes('系统通知') && !s.includes('邀请你一起听歌'));
                     
+                    // === 计算AI撤回逻辑 (随机作用于本轮的某一句) ===
+                    let recallIndex = -1;
+                    const aiWantsRecall = block.recall === true || block.recall === "true";
+                    const regretThought = block.thought && block.thought.match(/(后悔|不妥|生气|太冲动|不该说|撤回|撤掉|收回|嘴快)/);
+                    if (aiWantsRecall || (regretThought && Math.random() < 0.4)) {
+                        if (segments.length > 0) {
+                            // 随机抽取本轮回复中的任意一句进行撤回
+                            recallIndex = Math.floor(Math.random() * segments.length);
+                        }
+                    }
+
                     // === 处理单聊 AI 修改备注 ===
                     if (!session.isGroup && block.change_remark && friend) {
                         const oldName = friend.remark || friend.name;
@@ -12732,9 +12756,16 @@ Structure:
                         }
                     }
 
-                    if (block.sticker_id) {
+                    if (block.sticker_id !== undefined && block.sticker_id !== null && block.sticker_id !== "") {
                         setTimeout(() => {
-                            const sticker = this.stickers.find(s => s.id == block.sticker_id) || (this.stickers.length > 0 ? this.stickers[0] : null);
+                            let sIdx = parseInt(block.sticker_id);
+                            let sticker = null;
+                            if (!isNaN(sIdx) && sIdx >= 0 && sIdx < this.stickers.length) {
+                                sticker = this.stickers[sIdx];
+                            } else {
+                                // 兜底：防止大模型输出了真正的长 ID 字符串
+                                sticker = this.stickers.find(s => s.id == block.sticker_id) || (this.stickers.length > 0 ? this.stickers[0] : null);
+                            }
                             if (sticker) {
                                 session.messages.push({
                                     type: 'sticker',
@@ -12864,27 +12895,19 @@ Structure:
                                  }
                              }
                              
+                             // 撤回目标气泡
+                             if (index === recallIndex) {
+                                 setTimeout(() => {
+                                     const targetIdx = session.messages.indexOf(aiMsg);
+                                     if (targetIdx > -1) {
+                                         session.messages[targetIdx].isRecalled = true; 
+                                         this.saveData();
+                                     }
+                                 }, 3000 + Math.random() * 2000); // 3-5秒后撤回
+                             }
+                             
                              if (index === segments.length - 1) {
                                  session.lastMessage = msgType === 'voice' ? '[语音]' : seg.trim();
-                                 
-                                 // AI 撤回逻辑：根据 AI 主观意愿 (block.recall) 或者强烈的后悔情绪触发，而不是纯随机
-                                 const aiWantsRecall = block.recall === true || block.recall === "true";
-                                 const regretThought = block.thought && block.thought.match(/(后悔|不妥|生气|太冲动|不该说|撤回|撤掉|收回)/);
-                                 
-                                 // 当AI主动要求撤回，或者心声里流露出强烈的后悔/怕生气时(30%触发概率)，才会执行撤回
-                                 if (aiWantsRecall || (regretThought && Math.random() < 0.3)) {
-                                     setTimeout(() => {
-                                         const targetIdx = session.messages.indexOf(aiMsg);
-                                         if (targetIdx > -1) {
-                                             session.messages[targetIdx].isRecalled = true; 
-                                             this.saveData();
-                                         }
-                                     }, 3000 + Math.random() * 2000); // 3-5秒后撤回
-                                 }
-                                 this.saveData();
-                             }
-                             if (index === segments.length - 1) {
-                                 // ... 原有的撤回等逻辑 ...
                                  this.saveData();
                                  // 【触发自动总结检测】
                                  this.checkAutoSummarize(session);
