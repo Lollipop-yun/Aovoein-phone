@@ -2592,7 +2592,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="flex justify-between items-center py-4">
                             <span class="text-[16px] text-gray-900">允许群成员修改群聊名称</span>
-                            <input type="checkbox" class="switch-checkbox" id="allow-rename-toggle">
+                            <input type="checkbox" class="switch-checkbox" id="allow-rename-toggle" v-model="groupProfileModal.allowRename">
                             <label for="allow-rename-toggle" class="switch-label"><div class="switch-button"></div></label>
                         </div>
                     </div>
@@ -2607,10 +2607,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             <textarea v-model="groupProfileModal.bio" placeholder="例如：这是一个魔法学院新生交流群..." class="w-full h-24 bg-gray-50 rounded-xl p-3 text-[14px] text-gray-700 outline-none resize-none shadow-inner border border-gray-100"></textarea>
                         </div>
                         
-                        <!-- 【新增】群公告入口 -->
-                        <div class="flex flex-col py-4 cursor-pointer relative" @click="showInput('发布群公告', wechatState.activeSession.groupNotice, '输入群公告，将在群聊顶部显示', (v) => { if(v !== undefined){ wechatState.activeSession.groupNotice=v; saveData(); } })">
+                        <!-- 【新增】群公告入口 (调用 textarea 增大高度) -->
+                        <div class="flex flex-col py-4 cursor-pointer relative" @click="showInput('发布群公告', groupProfileModal.groupNotice, '输入群公告，将在群聊顶部显示', (v) => { if(v !== undefined){ groupProfileModal.groupNotice=v; } }, 'textarea')">
                             <span class="text-[16px] text-gray-900 mb-1">群公告 (表面展示)</span>
-                            <span class="text-[14px] text-gray-400 truncate w-[90%]">{{ wechatState.activeSession.groupNotice || '未设置' }}</span>
+                            <span class="text-[14px] text-gray-400 truncate w-[90%]">{{ groupProfileModal.groupNotice || '未设置' }}</span>
                             <i class="fas fa-chevron-right text-gray-300 text-sm absolute right-0 top-1/2 -translate-y-1/2"></i>
                         </div>
                     </div>
@@ -6383,7 +6383,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.15 更新日志 (当前最新) -->
+                            <!-- v1.16 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.16 群交互补全：动态改名与红包反应</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-11 17:38</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了发送红包后，点击“接收”只会默默领钱而导致 AI 哑巴的现象。现在点击接收红包后，底层会强制注入一条强指令，迫使 AI 在接下来的聊天中对该红包做出感谢、吐槽或调侃的自然反馈。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>AI 自主群改名权限。开启“允许群成员修改群聊名称”后，AI 角色有权利根据聊天的走向或心情，自主将群名修改为它喜欢的名字，并会在公屏留下系统通知。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>群资料管理的交互重构完成。现在群公告也改为了高度更大的多行输入框，且所有操作（含开关、群介绍、群公告）都统一合并在右上角点击“确定”时一并保存生效，不再有误触风险。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.15 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -9408,6 +9422,8 @@ const app = createApp({
                 session.remark = this.groupProfileModal.remark;
                 session.bio = this.groupProfileModal.bio;
                 session.avatar = this.groupProfileModal.avatar;
+                session.groupNotice = this.groupProfileModal.groupNotice;
+                session.allowMemberRename = this.groupProfileModal.allowRename;
                 this.saveData();
                 this.showToast('群资料已保存');
             }
@@ -9510,7 +9526,9 @@ const app = createApp({
                 name: session.name,
                 remark: session.remark || '',
                 bio: session.bio || '',
-                avatar: session.avatar
+                avatar: session.avatar,
+                groupNotice: session.groupNotice || '',
+                allowRename: !!session.allowMemberRename
             };
         },
         removeGroupMember(memId) {
@@ -11656,17 +11674,19 @@ const app = createApp({
                     }
                 });
             }
+            let injectedPrompt = typeof directionPrompt === 'string' ? directionPrompt : '';
+
             if (hasNewClaims) {
                 this.scrollToBottom();
                 this.saveData();
+                // 抢完红包后，强行给大模型注入反应要求，打破沉默
+                if (!injectedPrompt) injectedPrompt = "大家刚刚抢了你发的红包，请在接下来的聊天中对这个红包做出自然的反应（例如感谢老板、吐槽自己手气、调侃手气最佳等）！";
             }
             // -----------------------------------------------------
 
             session.isTyping = true; 
             this.saveData(); // 强制存盘，退出重进依然会显示
-            // 兼容点击事件传过来的异常参数
-            const prompt = typeof directionPrompt === 'string' ? directionPrompt : '';
-            this.generateAiReply(prompt);
+            this.generateAiReply(injectedPrompt);
         },
         async triggerReAddRequest(session, isPostReject = false) {
              const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
@@ -12046,9 +12066,10 @@ const app = createApp({
                 }
 
                 let groupPurpose = session.bio ? `\n【本群核心目的/介绍】：${session.bio}` : "";
+                let renameRule = session.allowMemberRename ? `\n- 【群名修改权限】：当前群主已允许成员修改群名。如果你觉得当前的群名不够有趣或不符合现在的聊天氛围，你可以使用 JSON 中的 "change_group_name" 字段将其修改为一个新的名字！` : "";
                 
                 roleIdentity = `<GROUP_CHAT_RULES>
-You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).${groupPurpose}
+You play ALL the NPC members in this group chat. Choose the most appropriate member(s) to reply. NEVER speak as "${session.name}" (the group name).${groupPurpose}${renameRule}
 - YOU ARE THE GROUP OWNER. Members marked as "Muted: YES" MUST NOT speak in this round!
 - Members marked as "Admin: YES" can kick or mute other NPCs.
 - 【极度重要：群聊高强度互动】：不要只围着我（玩家）一个人说话！群里的角色和角色之间也必须经常互相开玩笑、互怼、八卦！你们可以互相艾特对方（例如在句子里说 "@XXX 别闹了"），展现出一个真实活跃的朋友圈子！
@@ -12111,6 +12132,7 @@ Structure:
       "note": "随笔日记(OPTIONAL: 看心情决定是否提笔，必须使用纯中文)",
       "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
+      "change_group_name": "OPTIONAL: 填入你想修改的新群名(仅限群名修改权限开启时有效)",
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
@@ -12690,8 +12712,17 @@ Structure:
                         }
                     }
 
-                    // === 处理群聊 AI 作为管理员踢人/禁言 ===
+                    // === 处理群聊 AI 修改群名 / 作为管理员踢人/禁言 ===
                     if (session.isGroup) {
+                        if (session.allowMemberRename && block.change_group_name) {
+                            session.name = block.change_group_name;
+                            session.messages.push({
+                                type: 'system',
+                                content: `"${speakerName}" 修改群名为 "${block.change_group_name}"`,
+                                time: Date.now()
+                            });
+                        }
+                        
                         // 寻找发言人的 ID，判断其是否拥有管理员权限
                         const spkFriend = this.wechatState.friendList.find(f => f.name === block.speaker || f.remark === block.speaker);
                         const isAdmin = spkFriend && session.admins && session.admins.includes(spkFriend.id);
