@@ -4280,28 +4280,28 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
 
                                     <!-- 【新增】群投票卡片 (iOS灰白ins风) -->
-                                    <div v-else-if="msg.type === 'group_vote'" class="bg-white border border-gray-200 rounded-[18px] w-[260px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] flex flex-col" :class="{'opacity-80': msg.isExpired}">
-                                        <div class="p-4 border-b border-gray-50 flex items-start gap-3 bg-gray-50/50 relative">
+                                    <div v-else-if="msg.type === 'group_vote'" class="bg-white border border-gray-200 rounded-[18px] w-[260px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] flex flex-col">
+                                        <div class="p-4 border-b border-gray-50 flex items-start gap-3 bg-gray-50/50">
                                             <div class="w-9 h-9 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0 mt-0.5"><i class="fas fa-poll text-[16px]"></i></div>
                                             <div class="flex-1 min-w-0">
                                                 <div class="text-[15px] font-bold text-gray-900 leading-snug break-words">{{ msg.title }}</div>
-                                                <div class="text-[11px] text-gray-500 mt-1 font-medium flex items-center">
-                                                    群投票 · {{ Object.keys(msg.votes || {}).length }}人已投
-                                                    <span v-if="msg.isExpired" class="ml-2 bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded text-[9px]">已结束</span>
+                                                <div class="text-[11px] text-gray-500 mt-1 font-medium flex justify-between items-center">
+                                                    <span>群投票 · {{ Object.keys(msg.votes || {}).length }}人已投</span>
+                                                    <span v-if="msg.isEnded" class="bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded text-[9px]">已结束</span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="p-3.5 space-y-2.5 relative bg-white">
                                             <!-- 未投票时：显示纯选项 -->
                                             <div v-if="Object.keys(msg.votes || {}).length === 0" class="space-y-2">
-                                                <div v-for="(opt, idx) in msg.options" :key="idx" @click.stop="!msg.isExpired ? castVote(msg, opt) : showToast('投票已结束')" class="flex items-center gap-3 p-3 rounded-[12px] border border-gray-100 bg-gray-50/50 cursor-pointer active:bg-gray-100 transition shadow-sm">
+                                                <div v-for="(opt, idx) in msg.options" :key="idx" @click.stop="castVote(msg, opt)" class="flex items-center gap-3 p-3 rounded-[12px] border border-gray-100 bg-gray-50/50 cursor-pointer active:bg-gray-100 transition shadow-sm" :class="{'opacity-50 cursor-not-allowed': msg.isEnded}">
                                                     <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-300 shrink-0"></div>
                                                     <span class="text-[14px] text-gray-800 font-medium truncate">{{ opt }}</span>
                                                 </div>
                                             </div>
                                             <!-- 已投票后：显示比例阶梯排列 -->
                                             <div v-else class="space-y-2">
-                                                <div v-for="(optObj, idx) in getSortedVoteOptions(msg)" :key="idx" class="relative h-10 rounded-[12px] overflow-hidden bg-gray-50 border border-gray-100 flex items-center px-3 cursor-pointer group" @click.stop="!msg.isExpired ? castVote(msg, optObj.name) : showToast('投票已结束')">
+                                                <div v-for="(optObj, idx) in getSortedVoteOptions(msg)" :key="idx" class="relative h-10 rounded-[12px] overflow-hidden bg-gray-50 border border-gray-100 flex items-center px-3 cursor-pointer group" :class="{'opacity-70': msg.isEnded}" @click.stop="castVote(msg, optObj.name)">
                                                     <div class="absolute top-0 left-0 h-full bg-blue-100/60 transition-all duration-700 ease-out" :style="{ width: optObj.percent + '%' }"></div>
                                                     <div class="relative z-10 flex justify-between items-center w-full text-[13px]">
                                                         <div class="flex items-center gap-2 min-w-0 flex-1">
@@ -6514,16 +6514,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.19 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-orange-500"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.19 群聊专属体验与投票补丁</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-12 19:58</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.19 群投票机制完善与全局群头像联动</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-12 22:14</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">修复：</span>修复了我发起的群投票 UI 背景错位问题，现在“我”和“AI”发出的投票卡片均能完美适配灰白气泡；修复了发起人无法二次修改投票的权限限制。</li>
-                                    <li><span class="font-bold text-gray-800">新增：</span>全局群投票倒计时系统。底层植入了轮询监听引擎，当发起的投票到达截止时间时，投票通道将自动上锁变灰，并在群聊公屏发出一份统计出最高票选项的系统结算通知！</li>
-                                    <li><span class="font-bold text-gray-800">指令：</span>全面增强防重叠指令。如果群内存在活跃的投票，AI 将被勒令禁止“自己重开一个新投票”，并强制其参与当前投票。</li>
-                                    <li><span class="font-bold text-gray-800">优化：</span>群内换头像全局穿透。你在心声卡片中为 NPC 更换的“群内专属头像”，现在不止生效于聊天气泡，也会完美穿透到“红包领取名单”、“投票详情名单”等一切具有群内社交属性的面板上。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了群投票卡片 UI 样式不适配的问题，彻底去除了默认气泡背景，还原纯正 iOS 灰白 ins 风卡片。同时修复了 AI 无法参与自己发起的群投票的 Bug，现在 AI 发起投票后能立刻给自己投上一票。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>群投票时效系统。引入了倒计时轮询检测机制，当设定的截止时间到达后，投票卡片会自动置灰禁止再投，并自动在群聊中发布“投票结束”及最高票结果的系统公告。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>群专属头像深度全局化。现在在心声面板为群成员设置的专属头像，将不仅在气泡和心声中生效，还会自动同步至该群内的群投票详情、音视频通话、红包转账等所有功能模块中，彻底保障群聊设定的沉浸感。</li>
                                 </ul>
                             </div>
 
@@ -7651,7 +7650,7 @@ const app = createApp({
             this.wechatState.sessions.forEach(session => {
                 this.checkOfflineRecovery(session);
                 this.checkBackgroundActivity(session);
-                this.checkPollExpiration(session); // <--- 新增群投票到期检测
+                if (session.isGroup) this.checkGroupVotes(session);
             });
         }, 60000);
         
@@ -10280,6 +10279,8 @@ const app = createApp({
             if (session.messages) {
                 session.messages = session.messages.filter(m => !m.isTempError);
             }
+            if (session.isGroup) this.checkGroupVotes(session);
+            
             this.$nextTick(() => {
                 setTimeout(() => {
                     const c = this.$refs.chatContainer;
@@ -11616,47 +11617,6 @@ const app = createApp({
                 }
             }
         },
-        checkPollExpiration(session) {
-            if (!session.messages || !session.isGroup) return;
-            const nowIso = new Date().toISOString().slice(0, 16);
-            let isUpdated = false;
-            
-            session.messages.forEach(m => {
-                // 如果是群投票，且尚未标记过期，且时间已到
-                if (m.type === 'group_vote' && !m.isExpired && m.endTime) {
-                    if (nowIso >= m.endTime) {
-                        m.isExpired = true;
-                        isUpdated = true;
-                        
-                        // 结算票数
-                        let counts = {};
-                        m.options.forEach(o => counts[o] = 0);
-                        Object.values(m.votes || {}).forEach(v => {
-                            if (counts[v] !== undefined) counts[v]++;
-                        });
-                        
-                        let max = 0;
-                        let winners = [];
-                        for (let opt in counts) {
-                            if (counts[opt] > max) { max = counts[opt]; winners = [opt]; }
-                            else if (counts[opt] === max) { winners.push(opt); }
-                        }
-                        
-                        let resultText = max > 0 ? `选项「${winners.join('、')}」获得最多票数(${max}票)` : '无人参与投票';
-                        session.messages.push({
-                            type: 'system',
-                            content: `[系统通知] 群投票《${m.title}》已到期结束。${resultText}`,
-                            time: Date.now()
-                        });
-                    }
-                }
-            });
-            
-            if (isUpdated) {
-                if (this.wechatState.activeSession?.id === session.id) this.scrollToBottom();
-                this.saveData();
-            }
-        },
         async triggerBackgroundActivity(session) {
             const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
             if (!friend) return;
@@ -12070,11 +12030,11 @@ const app = createApp({
             // --- 动态群投票感知 ---
             let voteContext = "";
             if (session.isGroup && session.messages) {
-                // 找到最近的一个群投票 (过滤掉已过期的)
-                const activeVote = [...session.messages].reverse().find(m => m.type === 'group_vote' && !m.isExpired);
+                // 找到最近的一个群投票，并且不能是已结束状态
+                const activeVote = [...session.messages].reverse().find(m => m.type === 'group_vote' && !m.isEnded);
                 if (activeVote) {
                     const opts = activeVote.options.join(', ');
-                    voteContext = `\n【群投票进行中】：群里当前有一个未结束的投票《${activeVote.title}》。选项有：[${opts}]。你必须在你的 JSON 返回中使用 "vote_for" 字段填入你要投的选项名称参与投票！绝对不要在此刻发起新的投票（禁止使用 "create_group_vote"）！`;
+                    voteContext = `\n【群投票进行中】：群里当前有一个未结束的投票《${activeVote.title}》。选项有：[${opts}]。如果你(当前说话的角色)还没投票，请必须在你的 JSON 返回中使用 "vote_for" 字段填入你要投的选项名称，并在 reply 聊天中谈论你的选择！注意：当前已有投票在进行，严禁再发起新的群投票！`;
                 }
             }
 
@@ -12732,15 +12692,6 @@ Structure:
                         }
                     }
                     
-                    // === 处理群投票 (AI参与投票) ===
-                    if (block.vote_for && session.isGroup) {
-                        const latestVote = [...session.messages].reverse().find(m => m.type === 'group_vote');
-                        if (latestVote && latestVote.options.includes(block.vote_for)) {
-                            if (!latestVote.votes) latestVote.votes = {};
-                            latestVote.votes[speakerId] = block.vote_for;
-                        }
-                    }
-
                     // === 处理群投票 (AI发起投票) ===
                     if (block.create_group_vote && block.create_group_vote.title && Array.isArray(block.create_group_vote.options) && block.create_group_vote.options.length >= 2) {
                         session.messages.push({
@@ -12748,14 +12699,28 @@ Structure:
                             title: block.create_group_vote.title,
                             options: block.create_group_vote.options,
                             startTime: new Date().toISOString().slice(0,16),
-                            endTime: new Date(Date.now() + 86400000).toISOString().slice(0,16),
+                            endTime: new Date(Date.now() + 86400000).toISOString().slice(0,16), // 默认24小时后结束
                             votes: {},
+                            isEnded: false,
                             isSelf: false,
                             time: Date.now(),
                             avatar: speakerAvatar,
                             name: speakerName
                         });
                         session.lastMessage = '[群投票]';
+                    }
+
+                    // === 处理群投票 (AI参与投票) ===
+                    if (block.vote_for && session.isGroup) {
+                        const latestVote = [...session.messages].reverse().find(m => m.type === 'group_vote' && !m.isEnded);
+                        if (latestVote) {
+                            // 模糊匹配：防范大模型多加了空格或标点符号
+                            const matchOpt = latestVote.options.find(o => o.trim() === String(block.vote_for).trim() || String(block.vote_for).includes(o));
+                            if (matchOpt) {
+                                if (!latestVote.votes) latestVote.votes = {};
+                                latestVote.votes[speakerId] = matchOpt;
+                            }
+                        }
                     }
 
                     // === 处理AI修改亲密付限额 ===
@@ -15955,8 +15920,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             
             luckyOnes.forEach((id, index) => {
                 let name = id === 'mine' ? '我' : this.getFriendName(id);
-                // 优先读取群内专属换头的头像
-                let avatar = id === 'mine' ? this.getMaskById(session.maskId).avatar : (session.membersInfo?.[id]?.customAvatar || this.getFriendAvatar(id));
+                let avatar = id === 'mine' ? this.getMaskById(session.maskId).avatar : this.getFriendAvatar(id);
                 let amt = splits[index];
                 if (id === 'mine') myClaimAmount = amt;
                 
@@ -17383,11 +17347,54 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
 
         getFriendAvatar(tid) {
              const f = this.wechatState.friendList.find(x => x.id === tid);
-             return f ? f.avatar : '';
+             if (!f) return '';
+             // 核心渗透：如果当前正处在这个群聊中，优先返回他在此群的“专属定制头像”，否则返回联系人原头像
+             const session = this.wechatState.activeSession;
+             if (session && session.isGroup && session.membersInfo && session.membersInfo[tid] && session.membersInfo[tid].customAvatar) {
+                 return session.membersInfo[tid].customAvatar;
+             }
+             return f.avatar;
         },
         getFriendName(tid) {
             const f = this.wechatState.friendList.find(x=>x.id===tid);
             return f ? (f.remark||f.name) : '未知好友';
+        },
+        
+        checkGroupVotes(session) {
+            if (!session || !session.messages) return;
+            let updated = false;
+            session.messages.forEach(msg => {
+                if (msg.type === 'group_vote' && !msg.isEnded && msg.endTime) {
+                    const endMs = new Date(msg.endTime).getTime();
+                    // 当现实时间超过了设定的截止时间
+                    if (Date.now() >= endMs) {
+                        msg.isEnded = true;
+                        updated = true;
+                        
+                        // 结算最高票选项
+                        const options = this.getSortedVoteOptions(msg);
+                        if (options.length > 0 && options[0].count > 0) {
+                            const maxVotes = options[0].count;
+                            const winners = options.filter(o => o.count === maxVotes).map(o => o.name).join('、');
+                            session.messages.push({
+                                type: 'system',
+                                content: `[群投票结束] 《${msg.title}》 投票已到期结束，【${winners}】获得了最多票数 (${maxVotes}票)`,
+                                time: Date.now()
+                            });
+                        } else {
+                            session.messages.push({
+                                type: 'system',
+                                content: `[群投票结束] 《${msg.title}》 投票已到期结束，无人参与投票。`,
+                                time: Date.now()
+                            });
+                        }
+                    }
+                }
+            });
+            if (updated) {
+                if (this.wechatState.activeSession?.id === session.id) this.scrollToBottom();
+                this.saveData();
+            }
         },
         
         // 核心：智能裁剪用户头像的边角料
@@ -18550,6 +18557,7 @@ ${greetingInstruction}`;
                 startTime: this.groupVoteCreateModal.startTime,
                 endTime: this.groupVoteCreateModal.endTime,
                 votes: {},
+                isEnded: false,
                 isSelf: true,
                 time: Date.now(),
                 avatar: this.getMaskById(session.maskId).avatar,
@@ -18560,11 +18568,11 @@ ${greetingInstruction}`;
             this.scrollToBottom();
             this.saveData();
             this.showToast('群投票已发出。AI将在你点击接收后参与投票。');
-            // 注意：这里按要求故意不调用 triggerReceive()，等待玩家点击放大镜接收。
         },
         castVote(msg, opt) {
+            if (msg.isEnded) return this.showToast('该投票已结束');
             if (!msg.votes) msg.votes = {};
-            // 允许改票
+            // 允许自由改票
             msg.votes['mine'] = opt;
             this.saveData();
             this.showToast('投票成功');
@@ -18589,15 +18597,13 @@ ${greetingInstruction}`;
         getVoteDetailList(msg) {
             if (!msg || !msg.votes) return [];
             let list = [];
-            const session = this.wechatState.activeSession;
             for (let [userId, option] of Object.entries(msg.votes)) {
                 let name = userId === 'mine' ? '我' : this.getFriendName(userId);
-                // 同步适配群内专属头像
-                let avatar = userId === 'mine' ? this.getMaskById(session.maskId).avatar : (session.membersInfo?.[userId]?.customAvatar || this.getFriendAvatar(userId));
+                let avatar = userId === 'mine' ? this.getMaskById(this.wechatState.activeSession.maskId).avatar : this.getFriendAvatar(userId);
                 list.push({ name, avatar, option });
             }
             return list;
-        },
+        }
     }
 });
 app.component('taobao-app', TaobaoApp);
