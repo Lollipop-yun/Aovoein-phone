@@ -1615,140 +1615,6 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </transition>
 
-    <!-- 【新增】群活动选择弹窗 -->
-    <transition name="app-slide">
-        <div v-if="groupActivityMenu.show" class="fixed inset-0 z-[72000]">
-            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="groupActivityMenu.show = false"></div>
-            <div class="ios-list-modal">
-                <div class="ios-list-header">群活动 <button class="absolute right-4 text-gray-500 font-normal text-sm" @click="groupActivityMenu.show = false">取消</button></div>
-                <div class="ios-list-content p-0 bg-white">
-                    <div class="p-4 border-b border-gray-50 flex items-center gap-3 cursor-pointer active:bg-gray-50" @click="showToast('群抽奖开发中')">
-                        <div class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><i class="fas fa-gift"></i></div>
-                        <span class="text-gray-900 font-medium">群抽奖</span>
-                    </div>
-                    <div class="p-4 border-b border-gray-50 flex items-center gap-3 cursor-pointer active:bg-gray-50" @click="openPollCreateModal">
-                        <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center"><i class="fas fa-poll"></i></div>
-                        <span class="text-gray-900 font-medium">发起群投票</span>
-                    </div>
-                    <div class="p-4 border-b border-gray-50 flex items-center gap-3 cursor-pointer active:bg-gray-50" @click="showToast('群接龙开发中')">
-                        <div class="w-8 h-8 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center"><i class="fas fa-link"></i></div>
-                        <span class="text-gray-900 font-medium">群接龙</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </transition>
-
-    <!-- 【新增】发起群投票全屏界面 (极致还原图示 UI) -->
-    <transition name="page-slide">
-        <div v-if="pollCreateModal.show" class="fixed inset-0 z-[116000] bg-[#f5f6f8] flex flex-col font-sans pb-safe">
-            <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f5f6f8] shrink-0 sticky top-0 z-50">
-                <button @click="pollCreateModal.show = false" class="w-8 h-8 flex items-center justify-start text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[20px]"></i></button>
-                <h1 class="font-medium text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">发起群投票</h1>
-                <button @click="sendGroupPoll" class="text-[#07c160] text-[15px] font-bold">发布</button>
-            </header>
-            
-            <div class="flex-1 overflow-y-auto pb-12">
-                <div class="text-[13px] text-gray-500 mb-1 ml-4 mt-2">基本信息</div>
-                <div class="bg-white border-y border-gray-200">
-                    <div class="px-4 py-3.5 border-b border-gray-100">
-                        <input v-model="pollCreateModal.title" placeholder="投票标题(最多30个字符)" maxlength="30" class="w-full bg-transparent outline-none text-[16px] text-gray-900 placeholder-gray-400 font-medium">
-                    </div>
-                    <div class="px-4 py-3.5 flex flex-col">
-                        <input v-model="pollCreateModal.desc" placeholder="投票描述(选填)" class="w-full bg-transparent outline-none text-[15px] text-gray-900 placeholder-gray-400 mb-4">
-                        <div class="w-20 h-20 bg-gray-100 border border-gray-200 rounded-sm flex flex-col items-center justify-center text-gray-300 cursor-pointer active:bg-gray-200 transition" @click="showToast('配图功能待接入')">
-                            <i class="fas fa-plus text-2xl mb-1"></i>
-                            <span class="text-[10px]">选填</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-[13px] text-gray-500 mb-1 ml-4 mt-6">选项设置</div>
-                <div class="bg-white border-y border-gray-200 divide-y divide-gray-100">
-                    <div class="flex justify-between items-center px-4 py-3.5">
-                        <span class="text-[16px] text-gray-900">选项类型</span>
-                        <div class="flex items-center gap-1 text-[15px] text-gray-500">
-                            <span>文字投票</span>
-                            <i class="fas fa-chevron-right text-[12px] text-gray-300"></i>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center px-4 py-3.5">
-                        <span class="text-[16px] text-gray-900">选项详情</span>
-                        <input type="checkbox" class="switch-checkbox" id="poll-detail-toggle">
-                        <label for="poll-detail-toggle" class="switch-label"><div class="switch-button"></div></label>
-                    </div>
-                </div>
-
-                <div class="bg-white border-y border-gray-200 mt-6 divide-y divide-gray-100">
-                    <div class="flex justify-between items-center px-4 py-3.5">
-                        <span class="text-[16px] text-gray-900 font-bold">投票选项</span>
-                        <span class="text-[14px] text-gray-400">批量添加 <i class="fas fa-chevron-right text-[10px]"></i></span>
-                    </div>
-                    
-                    <!-- 动态选项列表 -->
-                    <div v-for="(opt, idx) in pollCreateModal.options" :key="idx" class="flex items-center px-4 py-3.5 gap-3">
-                        <div @click="removePollOption(idx)" class="w-[22px] h-[22px] rounded-full bg-[#fa5151] flex items-center justify-center text-white shrink-0 cursor-pointer active:scale-90">
-                            <i class="fas fa-minus text-[12px]"></i>
-                        </div>
-                        <input v-model="pollCreateModal.options[idx]" :placeholder="'请输入第'+(idx+1)+'项 （30个字以内）'" maxlength="30" class="flex-1 bg-transparent outline-none text-[16px] text-gray-900 placeholder-gray-400">
-                    </div>
-                    
-                    <div class="flex items-center justify-between px-4 py-3.5">
-                        <div class="flex items-center gap-2 cursor-pointer active:opacity-50" @click="addPollOption">
-                            <div class="w-[22px] h-[22px] rounded-full bg-[#10aeff] flex items-center justify-center text-white shrink-0">
-                                <i class="fas fa-plus text-[12px]"></i>
-                            </div>
-                            <span class="text-[16px] text-[#10aeff]">添加选项</span>
-                        </div>
-                        <div class="flex items-center gap-4 text-[#576b95] text-[15px]">
-                            <span class="flex items-center gap-1 cursor-pointer"><div class="w-[22px] h-[22px] rounded-full bg-[#10aeff] flex items-center justify-center text-white shrink-0"><i class="fas fa-plus text-[12px]"></i></div> 其他__</span>
-                            <span class="flex items-center gap-1 cursor-pointer">排序 <i class="fas fa-sort-amount-down text-[14px]"></i></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-[12px] text-gray-400 mt-2 ml-4">已添加 {{pollCreateModal.options.length}} 项，最多可添加 1000 项</div>
-
-                <!-- 截止时间 -->
-                <div class="bg-white border-y border-gray-200 mt-6">
-                    <div class="flex justify-between items-center px-4 py-3.5">
-                        <span class="text-[16px] text-gray-900">截止时间</span>
-                        <input type="datetime-local" v-model="pollCreateModal.endTime" class="bg-transparent text-[15px] text-gray-500 outline-none">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </transition>
-
-    <!-- 【新增】投票结果详情弹窗 (底部抽屉) -->
-    <transition name="app-slide">
-        <div v-if="pollDetailModal.show" class="fixed inset-0 z-[117000]">
-            <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="pollDetailModal.show = false"></div>
-            <div class="ios-list-modal max-h-[85vh]">
-                <div class="ios-list-header">投票结果 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="pollDetailModal.show = false">关闭</button></div>
-                <div class="ios-list-content p-0 bg-white">
-                    <div class="p-4 border-b border-gray-100 bg-gray-50/50">
-                        <div class="font-bold text-[16px] text-gray-900 mb-1">{{ pollDetailModal.pollMsg?.pollData.title }}</div>
-                        <div class="text-[12px] text-gray-500">共 {{ pollDetailModal.pollMsg?.pollData.votersCount }} 人参与</div>
-                    </div>
-                    
-                    <div v-for="(opt, idx) in getSortedPollOptions(pollDetailModal.pollMsg)" :key="idx" class="border-b border-gray-50 last:border-0">
-                        <div class="px-4 py-3 flex justify-between items-center bg-gray-50/30">
-                            <span class="font-bold text-[14px] text-gray-800">{{ opt.text }}</span>
-                            <span class="text-[12px] text-gray-500">{{ opt.voters.length }}票 ({{ getPollPercentage(pollDetailModal.pollMsg, opt) }}%)</span>
-                        </div>
-                        <div v-if="opt.voters.length > 0" class="px-4 py-3 flex flex-wrap gap-3">
-                            <!-- 渲染该选项下的投票人头像 -->
-                            <div v-for="voterId in opt.voters" :key="voterId" class="flex flex-col items-center gap-1 w-10">
-                                <img :src="voterId === 'mine' ? getMaskById(wechatState.activeSession?.maskId).avatar : getFriendAvatar(voterId)" class="w-8 h-8 rounded-full object-cover border border-gray-200">
-                                <span class="text-[9px] text-gray-500 w-full text-center truncate">{{ voterId === 'mine' ? '我' : getFriendName(voterId) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </transition>
-
     <!-- 提醒谁看 弹窗 -->
     <transition name="app-slide">
         <div v-if="mentionModal.show" class="fixed inset-0 z-[71000] bg-gray-50 flex flex-col">
@@ -4280,46 +4146,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="forward-content">{{ msg.content }}</div>
                                     </div>
                                     
-                                    <!-- 【新增】群投票卡片 (iOS 灰白 ins 风) -->
-                                    <div v-else-if="msg.type === 'group_poll'" class="bg-white border border-gray-200 rounded-xl w-[250px] overflow-hidden shadow-sm flex flex-col cursor-default pb-1">
-                                        <div class="p-3 border-b border-gray-50 flex items-center gap-2 bg-gray-50/50">
-                                            <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0"><i class="fas fa-poll text-[11px]"></i></div>
-                                            <div class="flex-1 min-w-0 flex items-center justify-between">
-                                                <div class="text-[12px] font-bold text-gray-900 truncate">群投票</div>
-                                                <div class="text-[10px] text-gray-400">单选</div>
-                                            </div>
-                                        </div>
-                                        <div class="px-4 py-3 flex flex-col gap-3">
-                                            <div class="text-[15px] font-bold text-gray-800 leading-snug">{{ msg.pollData.title }}</div>
-                                            
-                                            <!-- 未投票视图 -->
-                                            <div v-if="!hasVotedPoll(msg)" class="flex flex-col gap-2 mt-1">
-                                                <div v-for="(opt, oIdx) in msg.pollData.options" :key="oIdx" @click="castPollVote(msg, opt)" class="bg-gray-50 border border-gray-100 rounded-lg p-2.5 text-[13px] text-gray-700 cursor-pointer active:bg-gray-100 transition text-center font-medium shadow-sm">
-                                                    {{ opt.text }}
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- 已投票视图 (按票数梯度排序) -->
-                                            <div v-else class="flex flex-col gap-2 mt-1">
-                                                <div v-for="(opt, oIdx) in getSortedPollOptions(msg)" :key="oIdx" class="relative bg-gray-50 border border-gray-100 rounded-lg overflow-hidden h-9 flex items-center px-3 cursor-pointer active:opacity-80 transition" @click="viewPollDetails(msg)">
-                                                    <!-- 动态进度条背景 -->
-                                                    <div class="absolute left-0 top-0 h-full bg-blue-100/60 transition-all duration-500" :style="{width: getPollPercentage(msg, opt) + '%'}"></div>
-                                                    <div class="relative z-10 flex justify-between items-center w-full text-[12px]">
-                                                        <span class="text-gray-800 font-medium truncate max-w-[70%] flex items-center gap-1">
-                                                            {{ opt.text }}
-                                                            <i v-if="opt.voters.includes('mine')" class="fas fa-check-circle text-blue-500 text-[10px] ml-1"></i>
-                                                        </span>
-                                                        <span class="text-gray-500 font-mono">{{ opt.voters.length }}票</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="px-4 pb-2 flex justify-between items-center text-[10px]">
-                                            <span class="text-gray-400">{{ msg.pollData.votersCount }}人已参与</span>
-                                            <span class="text-gray-400 cursor-pointer active:text-gray-600 transition" @click="viewPollDetails(msg)">查看结果 <i class="fas fa-chevron-right text-[8px] ml-0.5"></i></span>
-                                        </div>
-                                    </div>
-                                    
                                     <!-- 微信发送文件卡片 -->
                                     <div v-else-if="msg.type === 'file'" class="bg-white border border-gray-200 rounded-xl w-[240px] overflow-hidden shadow-sm flex items-center p-4 cursor-pointer active:scale-95 transition" @click="showToast('文件已被对方读取处理')">
                                         <div class="flex-1 min-w-0 pr-4 flex flex-col justify-center">
@@ -4450,6 +4276,42 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="flex gap-2">
                                             <button @click.stop="acceptMusicInvite(msg)" class="flex-1 bg-black text-white text-xs font-bold py-2 rounded-lg active:scale-95" :disabled="msg.isAccepted">{{ msg.isAccepted ? '已加入' : '加入' }}</button>
                                             <button v-if="!msg.isAccepted" @click.stop="msg.isAccepted=true; showToast('已拒绝')" class="flex-1 bg-gray-100 text-gray-500 text-xs font-bold py-2 rounded-lg active:scale-95">拒绝</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- 【新增】群投票卡片 (iOS灰白ins风) -->
+                                    <div v-else-if="msg.type === 'group_vote'" class="bg-white border border-gray-200 rounded-[18px] w-[260px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] flex flex-col">
+                                        <div class="p-4 border-b border-gray-50 flex items-start gap-3 bg-gray-50/50">
+                                            <div class="w-9 h-9 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0 mt-0.5"><i class="fas fa-poll text-[16px]"></i></div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-[15px] font-bold text-gray-900 leading-snug break-words">{{ msg.title }}</div>
+                                                <div class="text-[11px] text-gray-500 mt-1 font-medium">群投票 · {{ Object.keys(msg.votes || {}).length }}人已投</div>
+                                            </div>
+                                        </div>
+                                        <div class="p-3.5 space-y-2.5 relative bg-white">
+                                            <!-- 未投票时：显示纯选项 -->
+                                            <div v-if="Object.keys(msg.votes || {}).length === 0" class="space-y-2">
+                                                <div v-for="(opt, idx) in msg.options" :key="idx" @click.stop="castVote(msg, opt)" class="flex items-center gap-3 p-3 rounded-[12px] border border-gray-100 bg-gray-50/50 cursor-pointer active:bg-gray-100 transition shadow-sm">
+                                                    <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-300 shrink-0"></div>
+                                                    <span class="text-[14px] text-gray-800 font-medium truncate">{{ opt }}</span>
+                                                </div>
+                                            </div>
+                                            <!-- 已投票后：显示比例阶梯排列 -->
+                                            <div v-else class="space-y-2">
+                                                <div v-for="(optObj, idx) in getSortedVoteOptions(msg)" :key="idx" class="relative h-10 rounded-[12px] overflow-hidden bg-gray-50 border border-gray-100 flex items-center px-3 cursor-pointer group" @click.stop="!msg.votes['mine'] ? castVote(msg, optObj.name) : null">
+                                                    <div class="absolute top-0 left-0 h-full bg-blue-100/60 transition-all duration-700 ease-out" :style="{ width: optObj.percent + '%' }"></div>
+                                                    <div class="relative z-10 flex justify-between items-center w-full text-[13px]">
+                                                        <div class="flex items-center gap-2 min-w-0 flex-1">
+                                                            <i v-if="msg.votes['mine'] === optObj.name" class="fas fa-check-circle text-blue-500 text-[14px] shadow-sm bg-white rounded-full"></i>
+                                                            <span class="text-gray-800 font-bold truncate" :class="{'text-blue-700': msg.votes['mine'] === optObj.name}">{{ optObj.name }}</span>
+                                                        </div>
+                                                        <span class="text-gray-500 font-mono shrink-0 ml-2 font-medium">{{ optObj.count }}票</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="pt-3 flex justify-end">
+                                                <button @click.stop="voteDetailsModal.msg = msg; voteDetailsModal.show = true;" class="text-[11px] text-gray-500 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full font-bold active:bg-gray-200 transition shadow-sm">查看投票详情</button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -4607,7 +4469,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                             <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
                             <div v-if="!wechatState.activeSession?.isGroup" class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
-                            <div v-else class="attach-item" @click="groupActivityMenu.show = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-flag text-gray-600"></i></div><span class="attach-label">群活动</span></div>
+                            <div v-else class="attach-item" @click="groupActivityModal.show = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-flag text-gray-600"></i></div><span class="attach-label">群活动</span></div>
                             <!-- 线下模式 (灰色咖啡杯) -->
                             <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
                         </div>
@@ -6332,6 +6194,96 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
         </transition>
+
+        <!-- 群活动选择弹窗 (iOS 灰白风) -->
+        <transition name="app-slide">
+            <div v-if="groupActivityModal.show" class="fixed inset-0 z-[105000]">
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="groupActivityModal.show = false"></div>
+                <div class="ios-list-modal">
+                    <div class="ios-list-header">选择群活动 <button class="absolute right-4 text-gray-500 font-normal text-sm" @click="groupActivityModal.show = false">取消</button></div>
+                    <div class="ios-list-content p-0 bg-white">
+                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="openGroupVoteCreate">
+                            <div class="flex items-center gap-3"><i class="fas fa-poll-h text-blue-500 w-5 text-center text-lg"></i><span class="text-gray-900 font-medium">群投票</span></div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                        </div>
+                        <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="showToast('群抽奖开发中')">
+                            <div class="flex items-center gap-3"><i class="fas fa-gift text-red-500 w-5 text-center text-lg"></i><span class="text-gray-900 font-medium">群抽奖</span></div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                        </div>
+                        <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="showToast('群接龙开发中')">
+                            <div class="flex items-center gap-3"><i class="fas fa-link text-green-500 w-5 text-center text-lg"></i><span class="text-gray-900 font-medium">群接龙</span></div>
+                            <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 群投票发起全屏界面 (完美复刻参考图灰白结构) -->
+        <transition name="page-slide">
+            <div v-if="groupVoteCreateModal.show" class="fixed inset-0 z-[116000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] shrink-0 sticky top-0 z-50">
+                    <button @click="groupVoteCreateModal.show = false" class="w-8 h-8 flex items-center justify-start text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[20px]"></i></button>
+                    <h1 class="font-medium text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">发起群投票</h1>
+                    <button @click="sendGroupVote" class="text-gray-900 font-bold text-[15px] active:opacity-50 flex items-center justify-center w-8 h-8 bg-gray-200/80 rounded-full"><i class="fas fa-dot-circle text-lg"></i></button>
+                </header>
+                <div class="flex-1 overflow-y-auto pb-12 pt-2">
+                    <div class="text-[13px] text-gray-500 mb-2 ml-4">基本信息</div>
+                    <div class="bg-white px-4 border-y border-gray-100 mb-6">
+                        <input v-model="groupVoteCreateModal.title" placeholder="投票标题(最多30个字符)" maxlength="30" class="w-full text-[16px] text-gray-900 outline-none bg-transparent py-4 border-b border-gray-50">
+                        <input placeholder="投票描述(选填)" class="w-full text-[14px] text-gray-500 outline-none bg-transparent py-4">
+                    </div>
+
+                    <div class="text-[13px] text-gray-500 mb-2 ml-4">选项设置</div>
+                    <div class="bg-white border-y border-gray-100 mb-6">
+                        <div class="space-y-0">
+                            <div v-for="(opt, idx) in groupVoteCreateModal.options" :key="idx" class="flex items-center gap-3 px-4 py-3 border-b border-gray-50">
+                                <div class="w-5 h-5 rounded-full bg-[#fa5151] text-white flex items-center justify-center cursor-pointer shrink-0 active:scale-90" @click="removeVoteOption(idx)"><i class="fas fa-minus text-[10px]"></i></div>
+                                <input v-model="groupVoteCreateModal.options[idx]" :placeholder="'请输入第'+(idx+1)+'项 (30个字以内)'" maxlength="30" class="flex-1 text-[15px] outline-none bg-transparent text-gray-900">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-[#576b95] text-[15px] font-medium cursor-pointer active:bg-gray-50 px-4 py-4" @click="addVoteOption">
+                            <i class="fas fa-plus-circle text-lg"></i> 添加选项
+                        </div>
+                    </div>
+
+                    <div class="text-[13px] text-gray-500 mb-2 ml-4">时间设置</div>
+                    <div class="bg-white border-y border-gray-100 px-4 divide-y divide-gray-50">
+                        <div class="flex justify-between items-center py-4">
+                            <span class="text-[16px] text-gray-900">开始时间</span>
+                            <input type="datetime-local" v-model="groupVoteCreateModal.startTime" class="bg-transparent text-right text-[15px] text-gray-500 outline-none">
+                        </div>
+                        <div class="flex justify-between items-center py-4">
+                            <span class="text-[16px] text-gray-900">截止时间</span>
+                            <input type="datetime-local" v-model="groupVoteCreateModal.endTime" class="bg-transparent text-right text-[15px] text-gray-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <!-- 投票结果详情弹窗 -->
+        <transition name="app-slide">
+            <div v-if="voteDetailsModal.show" class="fixed inset-0 z-[117000] bg-gray-50 flex flex-col font-sans pb-safe">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-10">
+                    <button @click="voteDetailsModal.show = false" class="text-gray-600 font-medium text-[16px]">关闭</button>
+                    <h1 class="font-bold text-[17px] text-gray-900">投票结果</h1>
+                    <div class="w-10"></div>
+                </header>
+                <div class="flex-1 overflow-y-auto p-4">
+                    <div v-if="getVoteDetailList(voteDetailsModal.msg).length === 0" class="text-center text-gray-400 mt-20 text-sm">暂无角色投票</div>
+                    <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-50">
+                        <div v-for="(v, idx) in getVoteDetailList(voteDetailsModal.msg)" :key="idx" class="p-4 flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <img :src="v.avatar" class="w-10 h-10 rounded-full object-cover bg-gray-100 border border-gray-100">
+                                <span class="font-bold text-[15px] text-gray-900">{{ v.name }}</span>
+                            </div>
+                            <span class="text-[13px] bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-medium max-w-[120px] truncate">投给了: {{ v.option }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
         
         <!-- AI 生图提示词设置弹窗 (已提升至全局层级) -->
         <transition name="scale">
@@ -6559,15 +6511,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.18 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-indigo-400"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.18 群活动首发：群投票系统</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-12 17:15</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.18 群活动实装：动态阶梯群投票</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-12 17:48</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">新增：</span>在群聊的 <code>+</code> 号面板中正式解锁了【群活动】模块。目前已支持高度还原的 iOS 灰白风“发起群投票”功能。</li>
-                                    <li><span class="font-bold text-gray-800">机制：</span>投票卡片完全动态化。在未投票时仅展示选项；投完票后，UI 会瞬间化为带有蓝色背景填充进度的“梯形”排行榜。</li>
-                                    <li><span class="font-bold text-gray-800">智能：</span>赋予了大模型 <code>vote_poll</code> 权限。当你发起投票后，AI 会立刻收到系统传达的投票数据，并会主动、思考后参与投票，且你可以在右下角的“查看详情”弹窗中抓出究竟是哪个 NPC 投了哪个选项！</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>附件菜单群聊专属“群活动”中已实装【群投票】功能！采用了纯正的 iOS 灰白 Instagram 风格进行打造。当你发起投票并按下放大镜(接收)后，大模型将会主动读取群投票选项，投出它的一票并在聊天里表态！而且随着票数增加，选项卡片会像阶梯一样呈现漂亮的动态比例排序。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>大模型现在被赋予了在群聊中自主发起群投票调节气氛的权力，互动维度进一步扩张。</li>
                                 </ul>
                             </div>
 
@@ -7473,11 +7424,6 @@ const app = createApp({
             paymentSelectModal: { show: false, amount: 0, type: 'consumption' },
             activeQinmiDetail: null,
 
-            // Group Activities & Poll
-            groupActivityMenu: { show: false },
-            pollCreateModal: { show: false, title: '', desc: '', options: ['', ''], endTime: '' },
-            pollDetailModal: { show: false, pollMsg: null },
-
             // Music System
             musicModal: { 
                 show: false, 
@@ -7534,6 +7480,9 @@ const app = createApp({
             
             // Diary Feature (New - Immersive)
             diaries: [],
+            groupActivityModal: { show: false },
+            groupVoteCreateModal: { show: false, title: '', options: ['', ''], startTime: '', endTime: '' },
+            voteDetailsModal: { show: false, msg: null },
             diaryState: { 
                 showGenerate: false, // Legacy fallback
                 isWriting: false,
@@ -12058,6 +12007,18 @@ const app = createApp({
             const recentMoments = this.moments.slice(0, 5).map(m => `[Moment by ${m.name}]: ${m.content}`).join("\n");
             const momentContext = recentMoments ? `\n[Recent Social Media Moments]:\n${recentMoments}\n` : "";
             
+            // --- 动态群投票感知 ---
+            let voteContext = "";
+            if (session.isGroup && session.messages) {
+                // 找到最近的一个群投票
+                const activeVote = [...session.messages].reverse().find(m => m.type === 'group_vote');
+                // 判断当前角色是否还没投过票 (针对群聊，判断 speakerId 稍后在循环里处理，这里先抛出全局规则)
+                if (activeVote) {
+                    const opts = activeVote.options.join(', ');
+                    voteContext = `\n【群投票进行中】：群里当前有一个投票《${activeVote.title}》。选项有：[${opts}]。如果你(当前说话的角色)还没投票，请必须在你的 JSON 返回中使用 "vote_for" 字段填入你要投的选项名称，并在 reply 聊天中谈论你的选择！`;
+                }
+            }
+
             // --- 精准双时区计算逻辑 (完美拦截并自动转换旧版数字存档，杜绝夏令时错误) ---
             const getIanaTz = (tz) => {
                 if (tz === undefined || tz === null) return 'Asia/Shanghai';
@@ -12340,9 +12301,10 @@ Structure:
       "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
       "change_group_name": "OPTIONAL: 填入你想修改的新群名(仅限群名修改权限开启时有效)",
+      "vote_for": "OPTIONAL: 填入你想投的选项名称 (如果当前群里有投票且你还没投，必须完全匹配选项文字)",
+      "create_group_vote": { "title": "投票标题", "options": ["选项1", "选项2"] }, // OPTIONAL: 如果你想主动发起一个群投票活跃气氛，填入此项
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
-      "vote_poll": "OPTIONAL: 如果群里发布了群投票且你还没投，请在这里填入你想投的那个选项的具体文字内容！",
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
       "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：群聊中如果想【单独给某个人】(如玩家或特定NPC)钱，绝对不能用红包，必须用转账并填写 target_user！
       "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【警告】：只能用来给大家发福利，【绝对不能】用来给单人付款！
@@ -12711,6 +12673,32 @@ Structure:
                         }
                     }
                     
+                    // === 处理群投票 (AI参与投票) ===
+                    if (block.vote_for && session.isGroup) {
+                        const latestVote = [...session.messages].reverse().find(m => m.type === 'group_vote');
+                        if (latestVote && latestVote.options.includes(block.vote_for)) {
+                            if (!latestVote.votes) latestVote.votes = {};
+                            latestVote.votes[speakerId] = block.vote_for;
+                        }
+                    }
+
+                    // === 处理群投票 (AI发起投票) ===
+                    if (block.create_group_vote && block.create_group_vote.title && Array.isArray(block.create_group_vote.options) && block.create_group_vote.options.length >= 2) {
+                        session.messages.push({
+                            type: 'group_vote',
+                            title: block.create_group_vote.title,
+                            options: block.create_group_vote.options,
+                            startTime: new Date().toISOString().slice(0,16),
+                            endTime: new Date(Date.now() + 86400000).toISOString().slice(0,16),
+                            votes: {},
+                            isSelf: false,
+                            time: Date.now(),
+                            avatar: speakerAvatar,
+                            name: speakerName
+                        });
+                        session.lastMessage = '[群投票]';
+                    }
+
                     // === 处理AI修改亲密付限额 ===
                     if (block.qinmi_change_limit !== undefined && block.qinmi_change_limit !== null) {
                         const newLimit = parseFloat(block.qinmi_change_limit);
@@ -12920,7 +12908,7 @@ Structure:
                         }
                     }
 
-                    // === 处理群聊 AI 修改群名 / 参与群投票 / 管理员操作 ===
+                    // === 处理群聊 AI 修改群名 / 作为管理员踢人/禁言 ===
                     if (session.isGroup) {
                         if (session.allowMemberRename && block.change_group_name) {
                             session.name = block.change_group_name;
@@ -12931,31 +12919,6 @@ Structure:
                             });
                         }
                         
-                        // === 处理 AI 参与群投票 ===
-                        if (block.vote_poll && speakerId) {
-                            const pollMsgs = session.messages.filter(m => m.type === 'group_poll');
-                            if (pollMsgs.length > 0) {
-                                const latestPoll = pollMsgs[pollMsgs.length - 1]; // 取最近的一次投票
-                                // 检查该 AI 是否已经投过票
-                                let alreadyVoted = false;
-                                latestPoll.pollData.options.forEach(o => { if (o.voters.includes(speakerId)) alreadyVoted = true; });
-                                
-                                if (!alreadyVoted) {
-                                    // 模糊匹配选项
-                                    const targetOpt = latestPoll.pollData.options.find(o => o.text === block.vote_poll || o.text.includes(block.vote_poll) || block.vote_poll.includes(o.text));
-                                    if (targetOpt) {
-                                        targetOpt.voters.push(speakerId);
-                                        latestPoll.pollData.votersCount++;
-                                        session.messages.push({
-                                            type: 'system',
-                                            content: `"${speakerName}" 参与了群投票`,
-                                            time: Date.now()
-                                        });
-                                    }
-                                }
-                            }
-                        }
-
                         // 寻找发言人的 ID，判断其是否拥有管理员权限
                         const spkFriend = this.wechatState.friendList.find(f => f.name === block.speaker || f.remark === block.speaker);
                         const isAdmin = spkFriend && session.admins && session.admins.includes(spkFriend.id);
@@ -18487,94 +18450,91 @@ ${greetingInstruction}`;
             this.playSong(this.musicPlaylist[randomIdx]);
             this.showToast('已加入一起听');
         },
-
-        // ================= 群活动与群投票核心逻辑 =================
-        openGroupActivitySelect() {
-            this.groupActivityMenu.show = true;
-            this.wechatState.showAttachMenu = false;
-        },
-        openPollCreateModal() {
-            this.groupActivityMenu.show = false;
-            this.pollCreateModal = {
+        
+        // --- 群投票逻辑 ---
+        openGroupVoteCreate() {
+            this.groupActivityModal.show = false;
+            // 预设默认时间为当前和明天
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 86400000);
+            const formatDT = (d) => {
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            };
+            this.groupVoteCreateModal = {
                 show: true,
                 title: '',
-                desc: '',
                 options: ['', ''],
-                endTime: ''
+                startTime: formatDT(now),
+                endTime: formatDT(tomorrow)
             };
         },
-        addPollOption() {
-            if (this.pollCreateModal.options.length >= 1000) return this.showToast('已达选项上限');
-            this.pollCreateModal.options.push('');
+        addVoteOption() {
+            if (this.groupVoteCreateModal.options.length >= 10) return this.showToast('最多添加10个选项');
+            this.groupVoteCreateModal.options.push('');
         },
-        removePollOption(idx) {
-            if (this.pollCreateModal.options.length <= 2) return this.showToast('最少需要保留两个选项');
-            this.pollCreateModal.options.splice(idx, 1);
+        removeVoteOption(idx) {
+            if (this.groupVoteCreateModal.options.length <= 2) return this.showToast('至少保留2个选项');
+            this.groupVoteCreateModal.options.splice(idx, 1);
         },
-        sendGroupPoll() {
-            if (!this.pollCreateModal.title.trim()) return this.showToast('请输入投票标题');
+        sendGroupVote() {
+            const title = this.groupVoteCreateModal.title.trim();
+            if (!title) return this.showToast('请输入投票标题');
+            const validOptions = this.groupVoteCreateModal.options.map(o => o.trim()).filter(Boolean);
+            if (validOptions.length < 2) return this.showToast('至少需要2个有效选项');
             
-            const validOptions = this.pollCreateModal.options.filter(o => o.trim() !== '');
-            if (validOptions.length < 2) return this.showToast('请至少填写两个有效选项');
-
             const session = this.wechatState.activeSession;
-            const pollData = {
-                title: this.pollCreateModal.title.trim(),
-                desc: this.pollCreateModal.desc.trim(),
-                endTime: this.pollCreateModal.endTime,
-                votersCount: 0,
-                options: validOptions.map(optText => ({
-                    id: 'opt_' + Math.random().toString(36).substr(2, 9),
-                    text: optText,
-                    voters: []
-                }))
-            };
-
             session.messages.push({
-                type: 'group_poll',
-                pollData: pollData,
+                type: 'group_vote',
+                title: title,
+                options: validOptions,
+                startTime: this.groupVoteCreateModal.startTime,
+                endTime: this.groupVoteCreateModal.endTime,
+                votes: {},
                 isSelf: true,
                 time: Date.now(),
                 avatar: this.getMaskById(session.maskId).avatar,
                 name: '我'
             });
-
             session.lastMessage = '[群投票]';
-            this.pollCreateModal.show = false;
+            this.groupVoteCreateModal.show = false;
             this.scrollToBottom();
             this.saveData();
-
-            // 发出投票后，强行向大模型注入系统通知，迫使其参与投票
-            setTimeout(() => {
-                const opsStr = validOptions.join(' / ');
-                this.triggerReceive(`[系统通知]：我刚刚发起了一个名为《${pollData.title}》的群投票，选项有：${opsStr}。请你根据人设，使用 JSON 中的 "vote_poll" 字段为你心仪的选项投上一票，并在对话中自然地讨论这个投票！`);
-            }, 1500);
+            this.showToast('群投票已发出。AI将在你点击接收后参与投票。');
+            // 注意：这里按要求故意不调用 triggerReceive()，等待玩家点击放大镜接收。
         },
-        hasVotedPoll(msg) {
-            if (!msg || !msg.pollData) return false;
-            return msg.pollData.options.some(o => o.voters.includes('mine'));
-        },
-        castPollVote(msg, targetOpt) {
-            // 前端只允许玩家进行单选
-            if (this.hasVotedPoll(msg)) return this.showToast('你已经投过票了');
-            targetOpt.voters.push('mine');
-            msg.pollData.votersCount++;
+        castVote(msg, opt) {
+            if (!msg.votes) msg.votes = {};
+            // 允许改票
+            msg.votes['mine'] = opt;
             this.saveData();
             this.showToast('投票成功');
         },
-        getSortedPollOptions(msg) {
-            if (!msg || !msg.pollData) return [];
-            // 复制一份数组来排序，避免修改原数据导致 Vue 响应式警告
-            return [...msg.pollData.options].sort((a, b) => b.voters.length - a.voters.length);
+        getSortedVoteOptions(msg) {
+            if (!msg.options) return [];
+            let totalVotes = Object.keys(msg.votes || {}).length;
+            let counts = {};
+            msg.options.forEach(o => counts[o] = 0);
+            Object.values(msg.votes || {}).forEach(v => {
+                if (counts[v] !== undefined) counts[v]++;
+            });
+            let result = msg.options.map(o => ({
+                name: o,
+                count: counts[o],
+                percent: totalVotes === 0 ? 0 : Math.round((counts[o] / totalVotes) * 100)
+            }));
+            // 票数从高到低排序，实现阶梯感
+            result.sort((a, b) => b.count - a.count);
+            return result;
         },
-        getPollPercentage(msg, opt) {
-            if (msg.pollData.votersCount === 0) return 0;
-            return Math.round((opt.voters.length / msg.pollData.votersCount) * 100);
-        },
-        viewPollDetails(msg) {
-            if (!msg || !msg.pollData) return;
-            this.pollDetailModal.pollMsg = msg;
-            this.pollDetailModal.show = true;
+        getVoteDetailList(msg) {
+            if (!msg || !msg.votes) return [];
+            let list = [];
+            for (let [userId, option] of Object.entries(msg.votes)) {
+                let name = userId === 'mine' ? '我' : this.getFriendName(userId);
+                let avatar = userId === 'mine' ? this.getMaskById(this.wechatState.activeSession.maskId).avatar : this.getFriendAvatar(userId);
+                list.push({ name, avatar, option });
+            }
+            return list;
         }
     }
 });
