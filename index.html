@@ -5228,7 +5228,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <!-- 正常视图模式 -->
                     <div v-else>
                         <div v-if="wechatState.sessions.length === 0 && wechatState.activeFilter !== 'All'" class="flex flex-col items-center justify-center h-40 text-gray-300 mt-10"><i class="far fa-comment-dots text-4xl mb-3 opacity-20"></i><p class="text-xs">暂无会话</p></div>
-                        <div v-else><div v-for="session in filteredWechatContacts" :key="session.id" @click="handleSessionClick(session)" @contextmenu.prevent="showChatListContextMenu($event, session)" @touchstart="startChatListLongPress($event, session)" @touchend="clearChatListLongPress" @touchmove="clearChatListLongPress" class="flex items-center p-4 active:bg-gray-50 transition border-b border-gray-50 last:border-0 relative cursor-pointer" :class="{'bg-gray-50': session.isPinned}"><div class="relative shrink-0 mr-3"><div class="w-[50px] h-[50px] rounded-full overflow-hidden wechat-avatar-ring"><div class="w-full h-full rounded-full bg-gray-100 overflow-hidden"><img :src="session.customAvatarTarget || session.avatar" class="w-full h-full object-cover"></div></div></div><div class="flex-1 min-w-0"><div class="flex justify-between items-baseline mb-1"><h3 class="text-[16px] font-semibold text-gray-900 truncate flex items-center gap-1">{{ session.name }} <i v-if="session.isPinned" class="fas fa-thumbtack text-[10px] text-gray-400 rotate-45"></i></h3><span class="text-[11px] text-gray-400 font-normal">{{ formatSessionTime(getSessionLastTime(session)) }}</span></div><div class="flex justify-between items-center"><p class="text-[13px] text-gray-500 truncate max-w-[80%]">{{ getSessionLastMessage(session) }}</p><div v-if="session.unreadCount > 0" class="min-w-[16px] h-4 px-[4px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{{ session.unreadCount > 99 ? '99+' : session.unreadCount }}</div></div></div></div></div>
+                        <div v-else><div v-for="session in filteredWechatContacts" :key="session.id" @click="handleSessionClick(session)" @contextmenu.prevent="showChatListContextMenu($event, session)" @touchstart="startChatListLongPress($event, session)" @touchend="clearChatListLongPress" @touchmove="clearChatListLongPress" class="flex items-center p-4 active:bg-gray-50 transition border-b border-gray-50 last:border-0 relative cursor-pointer" :class="{'bg-gray-50': session.isPinned}"><div class="relative shrink-0 mr-3"><div class="w-[50px] h-[50px] rounded-full overflow-hidden wechat-avatar-ring"><div class="w-full h-full rounded-full bg-gray-100 overflow-hidden"><img :src="session.customAvatarTarget || session.avatar" class="w-full h-full object-cover"></div></div></div><div class="flex-1 min-w-0"><div class="flex justify-between items-center mb-1"><h3 class="text-[16px] font-semibold text-gray-900 flex items-center gap-1 min-w-0 flex-1 pr-2"><span class="truncate">{{ session.name }}</span><i v-if="session.isPinned" class="fas fa-thumbtack text-[10px] text-gray-400 rotate-45 shrink-0"></i></h3><span class="text-[11px] text-gray-400 font-normal shrink-0">{{ formatSessionTime(getSessionLastTime(session)) }}</span></div><div class="flex justify-between items-center"><p class="text-[13px] text-gray-500 truncate max-w-[80%]">{{ getSessionLastMessage(session) }}</p><div v-if="session.unreadCount > 0" class="min-w-[16px] h-4 px-[4px] bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-sm">{{ session.unreadCount > 99 ? '99+' : session.unreadCount }}</div></div></div></div></div>
                     </div>
                 </div>
             </main>
@@ -6383,7 +6383,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.16 更新日志 (当前最新) -->
+                            <!-- v1.17 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.17 视觉与动态深度联动</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-12 15:12</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了聊天列表中当群聊名称或角色名字过长时，会导致名字和右侧时间戳重叠错位的 UI 样式 Bug，现在过长的名字将优雅地自动缩略隐藏。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>朋友圈与聊天界面的强联动！现在如果角色发布了朋友圈，或者角色查看并评论了你的朋友圈，系统都会在你们的单聊窗口中横插一条系统提示，让你第一时间感知到对方的社交动态。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>完善了更换专属头像时的互动机制。现在无论是你主动为角色更换头像，还是更换你自己的头像，系统都会立刻下发指令，迫使 AI 在接下来的聊天中对新的头像做出自然的人设反馈。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.16 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -16785,6 +16799,16 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     };
                     this.moments.unshift(moment);
                     this.saveData();
+                    
+                    let privateSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
+                    if (privateSession) {
+                        privateSession.messages.push({
+                            type: 'system',
+                            content: `[系统提示] ${friend.remark || friend.name} 刚刚发布了一条新的朋友圈`,
+                            time: Date.now()
+                        });
+                        this.saveData();
+                    }
 
                 } catch(e) {
                     console.error(`[生成朋友圈失败] ${friend.name}:`, e);
@@ -16839,6 +16863,16 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     };
                     this.moments.unshift(moment);
                     this.saveData();
+                    
+                    let privateSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
+                    if (privateSession) {
+                        privateSession.messages.push({
+                            type: 'system',
+                            content: `[系统提示] ${friend.remark || friend.name} 刚刚发布了一条新的朋友圈`,
+                            time: Date.now()
+                        });
+                        this.saveData();
+                    }
                 } catch(e) { console.error("Chat trigger moment failed", e); }
             }
         },
@@ -16880,6 +16914,18 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         text: commentText
                     });
                     this.saveData();
+                    
+                    if (moment.name === this.homeProfile.name) {
+                        let privateSession = this.wechatState.sessions.find(s => s.targetId === aiFriend.id && !s.isGroup);
+                        if (privateSession) {
+                            privateSession.messages.push({
+                                type: 'system',
+                                content: `[系统提示] ${aiFriend.remark || aiFriend.name} 刚刚查看并评论了你的朋友圈`,
+                                time: Date.now()
+                            });
+                            this.saveData();
+                        }
+                    }
                     
                     // 【新增】30% 概率触发角色看完朋友圈后来找你私聊
                     if (Math.random() < 0.3) {
@@ -16950,6 +16996,16 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         });
                         this.saveData();
                         this.showToast(`${aiFriend.name} 回复了你`);
+                        
+                        let privateSession = this.wechatState.sessions.find(s => s.targetId === aiFriend.id && !s.isGroup);
+                        if (privateSession) {
+                            privateSession.messages.push({
+                                type: 'system',
+                                content: `[系统提示] ${aiFriend.remark || aiFriend.name} 刚刚在朋友圈回复了你`,
+                                time: Date.now()
+                            });
+                            this.saveData();
+                        }
                     } catch(e) { console.error("Reply to comment failed", e); }
                 }
             }, 3000 + Math.random() * 2000);
@@ -16984,11 +17040,26 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         saveAvatarSetting() {
             const session = this.wechatState.activeSession;
             if(session) {
+                const changedSelf = session.customAvatarSelf !== this.avatarSettingModal.selfUrl;
+                const changedTarget = session.customAvatarTarget !== this.avatarSettingModal.targetUrl;
+                
                 session.customAvatarSelf = this.avatarSettingModal.selfUrl;
                 session.customAvatarTarget = this.avatarSettingModal.targetUrl;
                 this.saveData();
                 this.showToast('头像设置已保存');
                 this.avatarSettingModal.show = false;
+
+                if (!session.isGroup && (changedSelf || changedTarget)) {
+                    session.messages.push({
+                        type: 'system',
+                        content: `[系统提示] 本聊专属头像已更新`,
+                        time: Date.now()
+                    });
+                    this.scrollToBottom();
+                    setTimeout(() => {
+                        this.triggerReceive(`我刚刚更新了${changedTarget && changedSelf ? '我们俩的' : (changedTarget ? '你的' : '我的')}专属聊天头像！请观察现在的新头像，并对此做出符合人设的自然反应或评价。`);
+                    }, 1500);
+                }
             }
         },
         // Helper to get correct avatar based on override
