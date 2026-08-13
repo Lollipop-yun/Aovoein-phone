@@ -4280,7 +4280,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
 
                                     <!-- 【新增】群投票卡片 (iOS灰白ins风) -->
-                                    <div v-else-if="msg.type === 'group_vote'" class="bg-white border border-gray-200 rounded-[18px] w-[260px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] flex flex-col">
+                                    <div v-else-if="msg.type === 'group_vote'" class="bg-white border border-gray-200 rounded-[18px] w-[240px] max-w-[72vw] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] flex flex-col mx-0.5 mt-1">
                                         <div class="p-4 border-b border-gray-50 flex items-start gap-3 bg-gray-50/50">
                                             <div class="w-9 h-9 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center shrink-0 mt-0.5"><i class="fas fa-poll text-[16px]"></i></div>
                                             <div class="flex-1 min-w-0">
@@ -6512,7 +6512,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.19 更新日志 (当前最新) -->
+                            <!-- v1.20 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.20 群投票满员截止系统与 UI 修复</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-13 00:26</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了群投票卡片因为定死宽度导致的错位及覆盖头像 Bug。现已重写 CSS 类，保证气泡在任何屏幕下自适应收缩。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>解决了 AI 角色无法参与投票的严重漏洞。将上帝视角里的“当前已投票名单”暴露给大模型，让它知道自己还没投票，从而激发其主动执行投票指令的能力。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>全员投票进度判定。现在无论未达到截止时间，只要群内所有人（含玩家与所有角色）全部投完票，系统就会直接进行开奖结算，掐断剩余时间，并在公屏发布最高票的通报结果。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.19 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12034,7 +12048,11 @@ const app = createApp({
                 const activeVote = [...session.messages].reverse().find(m => m.type === 'group_vote' && !m.isEnded);
                 if (activeVote) {
                     const opts = activeVote.options.join(', ');
-                    voteContext = `\n【群投票进行中】：群里当前有一个未结束的投票《${activeVote.title}》。选项有：[${opts}]。如果你(当前说话的角色)还没投票，请必须在你的 JSON 返回中使用 "vote_for" 字段填入你要投的选项名称，并在 reply 聊天中谈论你的选择！注意：当前已有投票在进行，严禁再发起新的群投票！`;
+                    const votedIds = Object.keys(activeVote.votes || {});
+                    const votedNames = votedIds.map(id => id === 'mine' ? '我(玩家)' : this.getFriendName(id)).join('、');
+                    
+                    voteContext = `\n【群投票进行中】：群里当前有一个未结束的投票《${activeVote.title}》。选项有：[${opts}]。当前已完成投票的人有：[${votedNames || '暂无'}]。
+【极度重要】：如果你(当前说话的角色)还没投票，你必须且必定在返回的 JSON 中使用 "vote_for" 字段填入你要投的选项名称，投出你的一票！并在聊天 reply 中讨论你的选择！注意：已有投票进行时严禁再发起新投票！`;
                 }
             }
 
@@ -12320,7 +12338,7 @@ Structure:
       "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
       "change_group_name": "OPTIONAL: 填入你想修改的新群名(仅限群名修改权限开启时有效)",
-      "vote_for": "OPTIONAL: 填入你想投的选项名称 (如果当前群里有投票且你还没投，必须完全匹配选项文字)",
+      "vote_for": "OPTIONAL: 【必填项】如果你还没投票，填入你想投的选项名称 (必须完全匹配选项文字，没投票则必填！)",
       "create_group_vote": { "title": "投票标题", "options": ["选项1", "选项2"] }, // OPTIONAL: 如果你想主动发起一个群投票活跃气氛，填入此项
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
@@ -12715,10 +12733,27 @@ Structure:
                         const latestVote = [...session.messages].reverse().find(m => m.type === 'group_vote' && !m.isEnded);
                         if (latestVote) {
                             // 模糊匹配：防范大模型多加了空格或标点符号
-                            const matchOpt = latestVote.options.find(o => o.trim() === String(block.vote_for).trim() || String(block.vote_for).includes(o));
+                            const matchOpt = latestVote.options.find(o => o.trim() === String(block.vote_for).trim() || String(block.vote_for).includes(o) || o.includes(String(block.vote_for).trim()));
                             if (matchOpt) {
                                 if (!latestVote.votes) latestVote.votes = {};
                                 latestVote.votes[speakerId] = matchOpt;
+                                
+                                // 检查是否所有人均已投票
+                                const totalMembersCount = session.members.length + 1; // 所有NPC + 玩家
+                                const votedCount = Object.keys(latestVote.votes).length;
+                                if (votedCount >= totalMembersCount) {
+                                    latestVote.isEnded = true;
+                                    const options = this.getSortedVoteOptions(latestVote);
+                                    if (options.length > 0 && options[0].count > 0) {
+                                        const maxVotes = options[0].count;
+                                        const winners = options.filter(o => o.count === maxVotes).map(o => o.name).join('、');
+                                        session.messages.push({
+                                            type: 'system',
+                                            content: `[群投票结束] 《${latestVote.title}》 所有成员已投票完毕，投票自动结束！【${winners}】获得了最多票数 (${maxVotes}票)`,
+                                            time: Date.now()
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
@@ -18574,6 +18609,27 @@ ${greetingInstruction}`;
             if (!msg.votes) msg.votes = {};
             // 允许自由改票
             msg.votes['mine'] = opt;
+            
+            // 检查是否所有人均已投票
+            const session = this.wechatState.activeSession;
+            const totalMembersCount = session.members.length + 1;
+            const votedCount = Object.keys(msg.votes).length;
+            
+            if (votedCount >= totalMembersCount) {
+                msg.isEnded = true;
+                const options = this.getSortedVoteOptions(msg);
+                if (options.length > 0 && options[0].count > 0) {
+                    const maxVotes = options[0].count;
+                    const winners = options.filter(o => o.count === maxVotes).map(o => o.name).join('、');
+                    session.messages.push({
+                        type: 'system',
+                        content: `[群投票结束] 《${msg.title}》 所有成员已投票完毕，投票自动结束！【${winners}】获得了最多票数 (${maxVotes}票)`,
+                        time: Date.now()
+                    });
+                    this.scrollToBottom();
+                }
+            }
+            
             this.saveData();
             this.showToast('投票成功');
         },
