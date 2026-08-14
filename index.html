@@ -2237,7 +2237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     </transition>
 
     <!-- 主界面 (支持左右滑动分页) -->
-    <div class="h-full w-full flex flex-col pb-safe relative overflow-hidden transition-all duration-300 bg-center bg-cover" 
+    <div class="h-full w-full flex flex-col pb-safe relative overflow-hidden transition-[transform,opacity] duration-300 bg-center bg-cover" 
          :style="{ backgroundImage: themeConfig.wallpaper ? `url(${themeConfig.wallpaper})` : '', backgroundColor: themeConfig.wallpaper ? 'transparent' : '#f3f4f6' }"
          :class="[hideStatusBar ? 'pt-0' : 'pt-[44px]', {'scale-95 opacity-80': isAppOpen}]">
          
@@ -3996,7 +3996,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="flex-1 overflow-y-auto p-4 space-y-2 bg-[#fdfdfd] bg-cover bg-center" ref="chatContainer" @click="closeChatMenus"
                      :style="{ backgroundImage: wechatState.activeSession.wallpaper ? 'url(' + wechatState.activeSession.wallpaper + ')' : '' }">
                     
-                    <div v-for="(msg, i) in wechatState.activeSession.messages" :key="i" v-memo="[msg.content, msg.isRecalled, msg.isOpened, msg.isReceived, msg.isRefunded, msg.translation, msg.showTranslation, msg.isEnded, msg.isRevealed, msg.isExpanded, msg.isAccepted, msg.votes ? Object.keys(msg.votes).length : 0, msg.callData ? msg.callData.length : 0, swipeState.index === i, isMultiSelectMode ? selectedMessageIds.includes(msg) : false, wechatState.activeSession.avatarMode, wechatState.activeSession.timestampMode, wechatState.activeSession.showGroupTitle]">
+                    <div v-for="(msg, i) in wechatState.activeSession.messages" :key="i">
                         <!-- 时间旁白 -->
                         <div v-if="shouldShowTime(msg, i)" class="chat-timestamp-divider">
                             <span>{{ formatChatTime(msg.time) }}</span>
@@ -4580,7 +4580,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="text-sm">进入线下现实相处模式...</p>
                         </div>
                         
-                        <div v-for="(msg, i) in getOfflineMessages()" :key="i" class="relative group" v-memo="[msg.content, msg.segments ? msg.segments.length : 0, offlineState.isGenerating]">
+                        <div v-for="(msg, i) in getOfflineMessages()" :key="i" class="relative group">
                             
                             <!-- 1. 常规卡片样式 (或用户自己发的消息) -->
                             <div v-if="!msg.segments" class="bg-white rounded-[20px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-gray-100 relative offline-message-card">
@@ -6514,15 +6514,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.21 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-rose-400"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.21 渲染性能突破与投票逻辑加固</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-13 23:54</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.21 全局掉帧修复与 AI 投票闭环</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-14 22:48</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">优化(史诗级)：</span>彻底解决了由于聊天记录过长导致网页打字极度卡顿、掉帧的问题。我们在底层引入了 Vue 3 最新的 <code>v-memo</code> 虚拟 DOM 缓存技术，现在打字与渲染性能将丝滑无比。</li>
-                                    <li><span class="font-bold text-gray-800">修复：</span>修复了 AI 无法参与玩家发起的群投票的问题。现在 AI 能够清晰感知投票池的状态与发起者，并必定遵循指令投出自己的一票。</li>
-                                    <li><span class="font-bold text-gray-800">优化：</span>管理员的群头衔标签颜色由原本刺眼的微信绿调整为了更加柔和舒适的 iOS 亮绿色 (<code>#34c759</code>)。</li>
+                                    <li><span class="font-bold text-gray-800">性能爆炸优化：</span>极其重要！排查到了由于根节点挂载 <code>transition-all</code> 导致的时钟走动引发整个页面进行无限重排（Reflow）的灾难级 Bug。将其修改为按需的 <code>transform,opacity</code> 过滤后，网页卡顿掉帧的现象已被彻底根除，如丝般顺滑。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>重写了 Vue 的底层对象赋值逻辑（使用解构抛出新对象），彻底解决了由于深层响应式丢失，导致大模型明明执行了投票，卡片票数却死活不涨的灵异事件。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>觉得原本设定的管理员“微信绿”头衔太绿了？现已将其更换为一种极具高级感和威严感的“灰蓝色”，更贴合 iOS 的整体格调。</li>
                                 </ul>
                             </div>
 
@@ -11372,7 +11372,7 @@ const app = createApp({
                 bgColor = 'bg-[#ffb03a]'; // 完美复刻供图的橙黄色
                 titleText = info.customTitle || '群主';
             } else if (isAdmin) {
-                bgColor = 'bg-[#34c759]'; // iOS 舒适原声浅绿
+                bgColor = 'bg-[#7a8da9]'; // 优雅灰蓝 (修复原本太绿的问题)
                 titleText = info.customTitle || '管理员';
             } else {
                 if (info.customTitle) {
@@ -12065,8 +12065,8 @@ const app = createApp({
                     const votedIds = Object.keys(activeVote.votes || {});
                     const votedNames = votedIds.map(id => id === 'mine' ? '我(玩家)' : this.getFriendName(id)).join('、');
                     
-                    voteContext = `\n【群投票进行中(极度重要)】：群里当前有一个未结束的投票《${activeVote.title}》。选项有：[${opts}]。当前已完成投票的人有：[${votedNames || '暂无'}]。
-【强制指令】：无论这个投票是谁发起的，只要你(当前扮演的角色)还没投票，你就必须在返回的 JSON 中使用 "vote_for" 字段精确填入你要投的选项名称，参与投票！并在 reply 聊天中谈论你的选择！已有投票时严禁发起新投票！`;
+                    voteContext = `\n【群投票进行中】：群里当前有一个未结束的投票《${activeVote.title}》。选项有：[${opts}]。当前已完成投票的人有：[${votedNames || '暂无'}]。
+【极度重要】：如果你(当前说话的角色)还没投票，你必须且必定在你返回的 group_replies 数组对象中，使用 "vote_for" 字段填入你要投的选项名称，投出你的一票！并在 reply 聊天中讨论你的选择！注意：已有投票进行时严禁再发起新投票！`;
                 }
             }
 
@@ -12352,7 +12352,7 @@ Structure:
       "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
       "change_group_name": "OPTIONAL: 填入你想修改的新群名(仅限群名修改权限开启时有效)",
-      "vote_for": "OPTIONAL: 【强制必填项】只要你还没在这个群投票里投过票，就必须填入你想投的选项(严格复制选项文字)！不投也得投！",
+      "vote_for": "OPTIONAL: 【必填项】如果你还没投票，填入你想投的选项名称 (必须完全匹配选项文字，没投票则必填！)",
       "create_group_vote": { "title": "投票标题", "options": ["选项1", "选项2"] }, // OPTIONAL: 如果你想主动发起一个群投票活跃气氛，填入此项
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
@@ -12749,8 +12749,9 @@ Structure:
                             // 模糊匹配：防范大模型多加了空格或标点符号
                             const matchOpt = latestVote.options.find(o => o.trim() === String(block.vote_for).trim() || String(block.vote_for).includes(o) || o.includes(String(block.vote_for).trim()));
                             if (matchOpt) {
-                                if (!latestVote.votes) latestVote.votes = {};
-                                latestVote.votes[speakerId] = matchOpt;
+                                let newVotes = { ...(latestVote.votes || {}) };
+                                newVotes[speakerId] = matchOpt;
+                                latestVote.votes = newVotes; // 强制解构重写，唤醒 Vue 的深度响应式更新
                                 
                                 // 检查是否所有人均已投票
                                 const totalMembersCount = session.members.length + 1; // 所有NPC + 玩家
@@ -18620,9 +18621,11 @@ ${greetingInstruction}`;
         },
         castVote(msg, opt) {
             if (msg.isEnded) return this.showToast('该投票已结束');
-            if (!msg.votes) msg.votes = {};
+            
+            let newVotes = { ...(msg.votes || {}) };
             // 允许自由改票
-            msg.votes['mine'] = opt;
+            newVotes['mine'] = opt;
+            msg.votes = newVotes; // 强制解构重写，唤醒 Vue 的深度响应式更新
             
             // 检查是否所有人均已投票
             const session = this.wechatState.activeSession;
