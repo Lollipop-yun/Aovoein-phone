@@ -4052,7 +4052,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
                                 
                                 <!-- 气泡核心 -->
-                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' ? 'chat-bubble-image' : '', msg.type === 'sticker' ? 'chat-bubble-sticker' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file' || msg.type === 'red_packet' || msg.type === 'transfer' || msg.type === 'group_vote' || msg.type === 'group_chain') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
+                                <div class="chat-bubble" :class="[msg.isSelf ? 'chat-bubble-user' : 'chat-bubble-ai', msg.type === 'voice' ? 'chat-bubble-voice' : '', msg.type === 'image' || msg.type === 'fake_image' ? 'chat-bubble-image' : '', msg.type === 'sticker' ? 'chat-bubble-sticker' : '', msg.type === 'qinmi_invite' ? 'chat-bubble-qinmi' : '', msg.type === 'moment' ? 'chat-bubble-moment' : '', msg.type === 'location' ? 'chat-bubble-location' : '', (msg.type === 'taobao_forward' || msg.type === 'taobao_payment' || msg.type === 'taobao_order' || msg.type === 'food_delivery' || msg.type === 'food_payment' || msg.type === 'file' || msg.type === 'red_packet' || msg.type === 'transfer' || msg.type === 'group_vote') ? '!p-0 !bg-transparent !shadow-none' : '', msg.isReceived ? 'received' : '', (msg.quote && msg.type === 'voice') ? '!flex-col !items-stretch !gap-1.5 min-w-[180px]' : '']" 
                                      :style="(msg.type === 'voice' && !msg.quote) ? { width: (60 + Math.min(msg.duration, 60) * 4) + 'px' } : {}"
                                      @click="handleChatBubbleClick(msg)"
                                      @contextmenu.prevent="showChatContextMenu($event, msg, i)">
@@ -4315,28 +4315,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                             <div class="pt-3 flex justify-end">
                                                 <button @click.stop="voteDetailsModal.msg = msg; voteDetailsModal.show = true;" class="text-[11px] text-gray-500 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full font-bold active:bg-gray-200 transition shadow-sm">查看投票详情</button>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- 【新增】群接龙卡片 -->
-                                    <div v-else-if="msg.type === 'group_chain'" class="bg-white border border-gray-200 rounded-[12px] w-[250px] overflow-hidden shadow-sm flex flex-col mx-0.5 mt-1 pb-2">
-                                        <div class="px-4 py-3 flex flex-col gap-1 border-b border-gray-100">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center gap-1.5 text-orange-500"><i class="fas fa-link text-[12px]"></i><span class="text-[12px] font-bold">群接龙</span></div>
-                                                <span v-if="msg.isEnded" class="bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded text-[9px]">已结束</span>
-                                            </div>
-                                            <div class="text-[15px] font-bold text-gray-900 leading-snug mt-1 whitespace-pre-wrap">{{ msg.title }}</div>
-                                        </div>
-                                        <div class="px-4 py-3 space-y-1.5 max-h-[120px] overflow-hidden relative">
-                                            <div v-for="(item, idx) in msg.items.slice(0, 3)" :key="idx" class="text-[13px] text-gray-700 truncate">
-                                                <span class="text-gray-400 mr-1">{{ idx + 1 }}.</span> {{ item.username }} <span class="text-gray-500">{{ item.text }}</span>
-                                            </div>
-                                            <div v-if="msg.items.length > 3" class="text-[13px] text-gray-400">...等{{ msg.items.length }}人参与</div>
-                                        </div>
-                                        <div class="px-4 pt-1 mt-auto">
-                                            <button @click.stop="openChainDetails(msg)" class="w-full py-2 bg-gray-50 border border-gray-200 text-gray-600 rounded-lg text-[13px] font-bold active:bg-gray-100 transition shadow-sm">
-                                                {{ msg.isEnded ? '查看接龙详情' : (hasJoinedChain(msg, 'mine') ? '已参与接龙' : '参与接龙') }}
-                                            </button>
                                         </div>
                                     </div>
 
@@ -6235,7 +6213,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="flex items-center gap-3"><i class="fas fa-gift text-red-500 w-5 text-center text-lg"></i><span class="text-gray-900 font-medium">群抽奖</span></div>
                             <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                         </div>
-                        <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="openGroupChainCreate">
+                        <div class="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="showToast('群接龙开发中')">
                             <div class="flex items-center gap-3"><i class="fas fa-link text-green-500 w-5 text-center text-lg"></i><span class="text-gray-900 font-medium">群接龙</span></div>
                             <i class="fas fa-chevron-right text-gray-300 text-sm"></i>
                         </div>
@@ -6306,84 +6284,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span class="text-[13px] bg-blue-50 text-blue-600 px-2 py-1 rounded-md font-medium max-w-[120px] truncate">投给了: {{ v.option }}</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </transition>
-
-        <!-- 群接龙发起全屏界面 -->
-        <transition name="page-slide">
-            <div v-if="groupChainCreateModal.show" class="fixed inset-0 z-[116000] bg-white flex flex-col font-sans pb-safe">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-50">
-                    <button @click="groupChainCreateModal.show = false" class="text-[#576b95] text-[16px]">取消</button>
-                    <h1 class="font-bold text-[17px] text-gray-900">接龙</h1>
-                    <button @click="sendGroupChain" class="px-4 py-1.5 rounded-full text-[13px] font-bold transition" :class="groupChainCreateModal.title ? 'bg-[#07c160] text-white' : 'bg-gray-200 text-gray-400'" :disabled="!groupChainCreateModal.title">发送</button>
-                </header>
-                <div class="flex-1 overflow-y-auto px-5 py-6">
-                    <textarea v-model="groupChainCreateModal.title" placeholder="#接龙\n" class="w-full h-32 text-[16px] text-gray-900 outline-none resize-none mb-4"></textarea>
-                    
-                    <div class="flex justify-between items-center py-4 border-b border-t border-gray-100">
-                        <div class="flex items-center gap-2 text-gray-500 text-[14px]"><i class="far fa-clock"></i> 截止时间：</div>
-                        <input type="datetime-local" v-model="groupChainCreateModal.endTime" class="bg-transparent text-right text-[14px] text-gray-800 outline-none flex-1">
-                    </div>
-                    
-                    <div class="mt-6 space-y-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[12px] shrink-0 font-medium">例</div>
-                            <div class="flex-1 bg-gray-100/80 rounded-[8px] px-3 py-2.5 text-[14px] text-gray-400">可填写接龙格式</div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[12px] shrink-0 font-medium">1</div>
-                            <div class="flex-1 bg-gray-100/80 rounded-[8px] px-3 py-2.5 text-[14px] text-gray-800 font-medium">{{ getCharUsername('mine') }}</div>
-                        </div>
-                        <div class="w-8 h-8 rounded-full border border-gray-400 flex items-center justify-center text-gray-500"><i class="fas fa-plus text-sm"></i></div>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
-        <!-- 接龙参与详情弹窗 -->
-        <transition name="page-slide">
-            <div v-if="chainDetailsModal.show" class="fixed inset-0 z-[117000] bg-white flex flex-col font-sans pb-safe">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-50">
-                    <button @click="chainDetailsModal.show = false" class="text-[#576b95] text-[16px]">取消</button>
-                    <h1 class="font-bold text-[17px] text-gray-900">接龙</h1>
-                    <button @click="submitChainEntry" class="px-4 py-1.5 rounded-full text-[13px] font-bold transition" :class="chainDetailsModal.isAdding ? 'bg-[#07c160] text-white' : 'bg-gray-200 text-gray-400'" :disabled="!chainDetailsModal.isAdding">发送</button>
-                </header>
-                <div class="flex-1 overflow-y-auto px-5 py-6">
-                     <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-50">
-                         <div class="flex items-center gap-2 text-[12px] text-gray-500">
-                             <img :src="chainDetailsModal.msg.avatar" class="w-6 h-6 rounded-full object-cover">
-                             <span>由{{ chainDetailsModal.msg.name }}发起的接龙，共{{ chainDetailsModal.msg.items.length }}人参与</span>
-                         </div>
-                         <span class="text-[#576b95] text-[12px]">导出数据</span>
-                     </div>
-                     
-                     <div class="text-[17px] text-gray-900 font-bold mb-6 whitespace-pre-wrap">{{ chainDetailsModal.msg.title }}</div>
-                     
-                     <div class="flex items-center gap-2 text-[13px] text-gray-500 mb-6 pb-4 border-b border-gray-100">
-                         <i class="far fa-clock"></i> 截止时间：{{ formatChainTime(chainDetailsModal.msg.endTime) }}
-                     </div>
-                     
-                     <div class="space-y-3 mb-6">
-                         <div v-for="(item, idx) in chainDetailsModal.msg.items" :key="idx" class="flex items-center gap-3">
-                             <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[12px] shrink-0 font-medium">{{ idx + 1 }}</div>
-                             <div class="flex-1 bg-gray-100/80 rounded-[8px] px-3 py-2.5 text-[14px] text-gray-800 break-all">
-                                 <span class="font-medium">{{ item.username }}</span>
-                                 <span v-if="item.text" class="ml-1 text-gray-600">{{ item.text }}</span>
-                             </div>
-                         </div>
-                         <!-- 玩家新增模式 -->
-                         <div v-if="chainDetailsModal.isAdding" class="flex items-center gap-3 mt-2">
-                             <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-[12px] shrink-0 font-medium">{{ chainDetailsModal.msg.items.length + 1 }}</div>
-                             <div class="flex-1 bg-gray-100/80 rounded-[8px] px-3 py-2.5 text-[14px] text-gray-800 flex items-center gap-1">
-                                 <span class="shrink-0 font-medium">{{ getCharUsername('mine') }}</span>
-                                 <input v-model="chainDetailsModal.myEntry" placeholder="补充内容(选填)" class="flex-1 bg-transparent outline-none text-gray-600" autofocus>
-                             </div>
-                         </div>
-                     </div>
-                     <div v-if="!chainDetailsModal.msg.isEnded && !chainDetailsModal.isAdding && !hasJoinedChain(chainDetailsModal.msg, 'mine')" class="mt-6">
-                         <button @click="chainDetailsModal.isAdding = true" class="w-8 h-8 rounded-full border border-gray-400 flex items-center justify-center text-gray-500 active:bg-gray-100 transition"><i class="fas fa-plus text-sm"></i></button>
-                     </div>
                 </div>
             </div>
         </transition>
@@ -6612,21 +6512,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.22 更新日志 (当前最新) -->
-                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-sky-500"></div>
-                                <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.22 群活动大更新：群接龙实装</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-16 23:08</span>
-                                </div>
-                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">新增：</span>全套 iOS 灰白风“群接龙”系统上线！支持自定接龙标题与截止时间，接龙内容精确抓取角色的专属“网名”，并以原生质感的列表卡片呈现。</li>
-                                    <li><span class="font-bold text-gray-800">优化：</span>大模型现已全面掌握接龙玩法。无论是由玩家发起的接龙，还是大模型自主发起的接龙，它都会根据上下文踊跃排队接上自己的网名和内容。配合倒计时轮询，接龙到期后会在公屏自动通报参与结果。</li>
-                                    <li><span class="font-bold text-gray-800">优化：</span>管理员的头衔颜色从刺眼的绿色调整为了高级内敛的薄荷青绿 (<code>#48c2a9</code>)，更符合整体视觉格调。</li>
-                                </ul>
-                            </div>
-
-                            <!-- v1.21 更新日志 -->
+                            <!-- v1.21 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-rose-400"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7642,8 +7528,6 @@ const app = createApp({
             groupActivityModal: { show: false },
             groupVoteCreateModal: { show: false, title: '', options: ['', ''], startTime: '', endTime: '' },
             voteDetailsModal: { show: false, msg: null },
-            groupChainCreateModal: { show: false, title: '', endTime: '' },
-            chainDetailsModal: { show: false, msg: null, isAdding: false, myEntry: '' },
             diaryState: { 
                 showGenerate: false, // Legacy fallback
                 isWriting: false,
@@ -7794,10 +7678,7 @@ const app = createApp({
             this.wechatState.sessions.forEach(session => {
                 this.checkOfflineRecovery(session);
                 this.checkBackgroundActivity(session);
-                if (session.isGroup) {
-                    this.checkGroupVotes(session);
-                    this.checkGroupChains(session);
-                }
+                if (session.isGroup) this.checkGroupVotes(session);
             });
         }, 60000);
         
@@ -11491,7 +11372,7 @@ const app = createApp({
                 bgColor = 'bg-[#ffb03a]'; // 完美复刻供图的橙黄色
                 titleText = info.customTitle || '群主';
             } else if (isAdmin) {
-                bgColor = 'bg-[#48c2a9]'; // 还原参考图的高级薄荷青绿
+                bgColor = 'bg-[#7a8da9]'; // 优雅灰蓝 (修复原本太绿的问题)
                 titleText = info.customTitle || '管理员';
             } else {
                 if (info.customTitle) {
@@ -12187,14 +12068,6 @@ const app = createApp({
                     voteContext = `\n【群投票进行中】：群里当前有一个未结束的投票《${activeVote.title}》。选项有：[${opts}]。当前已完成投票的人有：[${votedNames || '暂无'}]。
 【极度重要】：如果你(当前说话的角色)还没投票，你必须且必定在你返回的 group_replies 数组对象中，使用 "vote_for" 字段填入你要投的选项名称，投出你的一票！并在 reply 聊天中讨论你的选择！注意：已有投票进行时严禁再发起新投票！`;
                 }
-
-                // 找到最近的一个群接龙
-                const activeChain = [...session.messages].reverse().find(m => m.type === 'group_chain' && !m.isEnded);
-                if (activeChain) {
-                    const joinedIds = activeChain.items.map(i => i.id);
-                    const joinedNames = activeChain.items.map(i => i.username).join('、');
-                    voteContext += `\n【群接龙进行中】：当前有一个未结束的接龙《${activeChain.title}》。已参与的人：[${joinedNames || '暂无'}]。如果你(当前说话的角色)还没参与，请必须使用 "join_chain" 字段追加你的接龙内容（如无需补充文字，填入"确认"即可），接龙会自动附上你的网名！`;
-                }
             }
 
             // --- 精准双时区计算逻辑 (完美拦截并自动转换旧版数字存档，杜绝夏令时错误) ---
@@ -12481,8 +12354,6 @@ Structure:
       "change_group_name": "OPTIONAL: 填入你想修改的新群名(仅限群名修改权限开启时有效)",
       "vote_for": "OPTIONAL: 【必填项】如果你还没投票，填入你想投的选项名称 (必须完全匹配选项文字，没投票则必填！)",
       "create_group_vote": { "title": "投票标题", "options": ["选项1", "选项2"] }, // OPTIONAL: 如果你想主动发起一个群投票活跃气氛，填入此项
-      "join_chain": "OPTIONAL: 【必填项】如果你还没参与接龙，填入你要补充的文字(不需要填你的名字，系统会自动加上)",
-      "create_group_chain": { "title": "接龙目的/标题" }, // OPTIONAL: 如果你想主动发起一个群接龙，填入此项
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
       "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
@@ -12853,38 +12724,8 @@ Structure:
                         }
                     }
                     
-                    // === 处理群接龙 (AI发起接龙) ===
-                    if (block.create_group_chain && block.create_group_chain.title) {
-                        session.messages.push({
-                            type: 'group_chain',
-                            title: block.create_group_chain.title,
-                            startTime: new Date().toISOString(),
-                            endTime: new Date(Date.now() + 86400000).toISOString().slice(0,16),
-                            items: [{ id: speakerId, username: this.getCharUsername(speakerId), text: '' }],
-                            isEnded: false,
-                            isSelf: false,
-                            time: Date.now(),
-                            avatar: speakerAvatar,
-                            name: speakerName
-                        });
-                        session.lastMessage = '[群接龙]';
-                    }
-
-                    // === 处理群接龙 (AI参与接龙) ===
-                    if (block.join_chain && session.isGroup) {
-                        const latestChain = [...session.messages].reverse().find(m => m.type === 'group_chain' && !m.isEnded);
-                        if (latestChain && !this.hasJoinedChain(latestChain, speakerId)) {
-                            let newItems = [...latestChain.items];
-                            newItems.push({
-                                id: speakerId,
-                                username: this.getCharUsername(speakerId),
-                                text: block.join_chain === '确认' ? '' : block.join_chain
-                            });
-                            latestChain.items = newItems; // 触发 Vue 更新
-                        }
-                    }
-
                     // === 处理群投票 (AI发起投票) ===
+                    if (block.create_group_vote && block.create_group_vote.title && Array.isArray(block.create_group_vote.options) && block.create_group_vote.options.length >= 2) {
                         session.messages.push({
                             type: 'group_vote',
                             title: block.create_group_vote.title,
@@ -17604,100 +17445,6 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 if (this.wechatState.activeSession?.id === session.id) this.scrollToBottom();
                 this.saveData();
             }
-        },
-        
-        getCharUsername(id) {
-            if (id === 'mine') {
-                const mask = this.getMaskById(this.wechatState.activeSession?.maskId);
-                return mask.username || mask.name || '我';
-            }
-            const f = this.wechatState.friendList.find(x => x.id === id);
-            return f ? (f.username || f.name) : '未知';
-        },
-        formatChainTime(ts) {
-            if (!ts) return '未设置';
-            try {
-                const d = new Date(ts);
-                return `${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            } catch(e) { return ts; }
-        },
-        checkGroupChains(session) {
-            if (!session || !session.messages) return;
-            let updated = false;
-            session.messages.forEach(msg => {
-                if (msg.type === 'group_chain' && !msg.isEnded && msg.endTime) {
-                    const endMs = new Date(msg.endTime).getTime();
-                    if (Date.now() >= endMs) {
-                        msg.isEnded = true;
-                        updated = true;
-                        session.messages.push({
-                            type: 'system',
-                            content: `[接龙结束] 《${msg.title.substring(0,10)}...》 截止时间已到，共 ${msg.items.length} 人参与接龙。`,
-                            time: Date.now()
-                        });
-                    }
-                }
-            });
-            if (updated) {
-                if (this.wechatState.activeSession?.id === session.id) this.scrollToBottom();
-                this.saveData();
-            }
-        },
-        openGroupChainCreate() {
-            this.groupActivityModal.show = false;
-            const now = new Date();
-            const tomorrow = new Date(now.getTime() + 86400000);
-            const formatDT = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            this.groupChainCreateModal = {
-                show: true,
-                title: '#接龙\n',
-                endTime: formatDT(tomorrow)
-            };
-        },
-        sendGroupChain() {
-            const title = this.groupChainCreateModal.title.trim();
-            if (!title) return this.showToast('请输入接龙内容');
-            const session = this.wechatState.activeSession;
-            session.messages.push({
-                type: 'group_chain',
-                title: title,
-                startTime: new Date().toISOString(),
-                endTime: this.groupChainCreateModal.endTime,
-                items: [{ id: 'mine', username: this.getCharUsername('mine'), text: '' }],
-                isEnded: false,
-                isSelf: true,
-                time: Date.now(),
-                avatar: this.getMaskById(session.maskId).avatar,
-                name: '我'
-            });
-            session.lastMessage = '[群接龙]';
-            this.groupChainCreateModal.show = false;
-            this.scrollToBottom();
-            this.saveData();
-            this.showToast('接龙已发出，点击放大镜即可让AI参与接龙');
-        },
-        openChainDetails(msg) {
-            this.chainDetailsModal = {
-                show: true,
-                msg: msg,
-                isAdding: false,
-                myEntry: ''
-            };
-        },
-        hasJoinedChain(msg, id) {
-            if (!msg || !msg.items) return false;
-            return msg.items.some(i => i.id === id);
-        },
-        submitChainEntry() {
-            if (!this.chainDetailsModal.msg || this.chainDetailsModal.msg.isEnded) return;
-            this.chainDetailsModal.msg.items.push({
-                id: 'mine',
-                username: this.getCharUsername('mine'),
-                text: this.chainDetailsModal.myEntry.trim()
-            });
-            this.saveData();
-            this.chainDetailsModal.show = false;
-            this.showToast('接龙成功');
         },
         
         // 核心：智能裁剪用户头像的边角料
