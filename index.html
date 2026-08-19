@@ -4578,9 +4578,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         <button @click="showStickerPanel = !showStickerPanel" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-yellow-500 transition shrink-0" :class="showStickerPanel ? 'text-yellow-500' : ''"><i class="far fa-smile text-xl"></i></button>
                         
                         <button v-if="inputMsg.trim().length > 0" @click="sendMessage" class="w-8 h-8 flex items-center justify-center text-gray-500 active:text-green-500 transition shrink-0"><i class="fas fa-check-circle text-2xl"></i></button>
-                        <!-- 接收按钮/取消回复 -->
-                        <button v-else-if="wechatState.activeSession?.isTyping" @click="cancelAiReply" class="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-500 transition shrink-0 active:scale-95" title="中止回复"><i class="fas fa-stop-circle text-xl"></i></button>
-                        <button v-else @click="triggerReceive" class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 transition shrink-0 active:scale-95" title="接收回复"><i class="far fa-comment-dots text-xl"></i></button>
+                        <!-- 停止/接收按钮 -->
+                        <button v-else-if="wechatState.activeSession?.isTyping" @click="cancelAiReply" class="w-7 h-7 flex items-center justify-center text-red-400 hover:text-red-500 transition shrink-0 active:scale-95"><i class="far fa-stop-circle text-xl"></i></button>
+                        <button v-else @click="triggerReceive" class="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 transition shrink-0 active:scale-95"><i class="far fa-comment-dots text-xl"></i></button>
                     </div>
                 </div>
             </div>
@@ -4695,9 +4695,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <!-- 输入区 -->
                                 <textarea v-model="offlineState.input" ref="offlineInputArea" @input="resizeOfflineInput" class="flex-1 bg-transparent text-[15px] text-gray-800 outline-none resize-none max-h-32 py-1 leading-relaxed w-full scrollbar-hide" rows="1" placeholder="输入描写... (回车换行)"></textarea>
                                 
-                                <!-- 接收按钮(放大镜)/中止按钮 -->
-                                <i v-if="offlineState.isGenerating" class="fas fa-stop-circle text-red-400 text-[18px] mx-2 shrink-0 self-center cursor-pointer active:scale-90 transition" @click="cancelAiReply" title="中止生成"></i>
-                                <i v-else class="fas fa-search text-gray-400 text-[18px] mx-2 shrink-0 self-center cursor-pointer active:scale-90 transition hover:text-black" @click="receiveOfflineMessage(false)" title="接收剧情"></i>
+                                <!-- 接收按钮(放大镜) -->
+                                <i class="fas fa-search text-gray-400 text-[18px] mx-2 shrink-0 self-center cursor-pointer active:scale-90 transition hover:text-black" @click="receiveOfflineMessage(false)" title="接收剧情"></i>
                                 
                                 <!-- 发送按钮(纸飞机) -->
                                 <i class="fas fa-paper-plane text-black text-[18px] ml-1 shrink-0 self-center cursor-pointer active:scale-90 transition opacity-80 hover:opacity-100" @click="offlineState.input.trim() ? sendOfflineMessage() : showToast('请输入内容')" title="发送剧情"></i>
@@ -5825,9 +5824,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                   placeholder="打字回复..."></textarea>
                         
                         <div class="flex items-center pb-0.5 pr-1 gap-2 shrink-0">
-                            <!-- 接收按钮 (纯轮廓放大镜)/中止按钮 -->
-                            <button v-if="!(voiceCallState.inputText || '').trim()" @click="voiceCallState.isAiTyping ? cancelAiReply() : receiveVoiceCallReply('normal')" class="text-gray-400 hover:text-white px-2 py-1 flex items-center justify-center shrink-0 active:scale-90 transition" :class="{'text-red-400 hover:text-red-500': voiceCallState.isAiTyping}" :title="voiceCallState.isAiTyping ? '中止生成' : '接收回复'">
-                                <i class="fas text-xl" :class="voiceCallState.isAiTyping ? 'fa-stop-circle' : 'fa-search'"></i>
+                            <!-- 接收按钮 (纯轮廓放大镜) -->
+                            <button v-if="!(voiceCallState.inputText || '').trim()" @click="receiveVoiceCallReply('normal')" class="text-gray-400 hover:text-white px-2 py-1 flex items-center justify-center shrink-0 active:scale-90 transition" :class="{'animate-pulse text-white': voiceCallState.isAiTyping}">
+                                <i class="fas text-xl" :class="voiceCallState.isAiTyping ? 'fa-spinner fa-spin' : 'fa-search'"></i>
                             </button>
                             <!-- 发送按钮 (纸飞机) -->
                             <button v-if="(voiceCallState.inputText || '').trim()" @click="sendVoiceCallText" class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shrink-0 active:scale-90 transition shadow-md">
@@ -6079,8 +6078,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                   placeholder="你的动作或语言..."></textarea>
                         
                         <div class="flex items-center pb-0.5 pr-1 gap-2 shrink-0">
-                            <button v-if="!(videoCallState.inputText || '').trim()" @click="videoCallState.isAiTyping ? cancelAiReply() : receiveVideoCallReply('normal')" class="text-gray-400 hover:text-white px-2 py-1 flex items-center justify-center shrink-0 active:scale-90 transition" :class="{'text-red-400 hover:text-red-500': videoCallState.isAiTyping}" :title="videoCallState.isAiTyping ? '中止生成' : '接收回复'">
-                                <i class="fas text-xl" :class="videoCallState.isAiTyping ? 'fa-stop-circle' : 'fa-search'"></i>
+                            <button v-if="!(videoCallState.inputText || '').trim()" @click="receiveVideoCallReply('normal')" class="text-gray-400 hover:text-white px-2 py-1 flex items-center justify-center shrink-0 active:scale-90 transition" :class="{'animate-pulse text-white': videoCallState.isAiTyping}">
+                                <i class="fas text-xl" :class="videoCallState.isAiTyping ? 'fa-spinner fa-spin' : 'fa-search'"></i>
                             </button>
                             <button v-if="(videoCallState.inputText || '').trim()" @click="sendVideoCallText" class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shrink-0 active:scale-90 transition shadow-md">
                                 <i class="fas fa-paper-plane text-xs"></i>
@@ -6372,11 +6371,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="text-[18px] text-gray-900 font-bold mb-4">#接龙</div>
                     <div v-if="groupChainParticipateModal.msg.purpose" class="text-[15px] text-gray-800 mb-6 whitespace-pre-wrap">{{ groupChainParticipateModal.msg.purpose }}</div>
                     
-                    <div class="flex items-center gap-2 border-t border-b border-gray-100 py-3 mb-6" :class="{'cursor-pointer active:bg-gray-50': groupChainParticipateModal.msg.isSelf && !groupChainParticipateModal.msg.isEnded}">
+                    <div class="flex items-center gap-2 border-t border-b border-gray-100 py-3 mb-6">
                         <i class="far fa-clock text-gray-400 text-sm"></i>
-                        <span v-if="groupChainParticipateModal.msg.isSelf && !groupChainParticipateModal.msg.isEnded" class="text-[13px] text-gray-500 shrink-0">截止时间：</span>
-                        <input v-if="groupChainParticipateModal.msg.isSelf && !groupChainParticipateModal.msg.isEnded" type="datetime-local" v-model="groupChainParticipateModal.msg.endTime" @change="saveData" class="bg-transparent text-[13px] text-gray-700 outline-none flex-1 font-medium">
-                        <span v-else class="text-[13px] text-gray-500">截止时间：{{ new Date(groupChainParticipateModal.msg.endTime).toLocaleString('zh-CN', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) }}</span>
+                        <span v-if="!groupChainParticipateModal.isEditingTime" class="text-[13px] text-gray-500 flex-1">截止时间：{{ new Date(groupChainParticipateModal.msg.endTime).toLocaleString('zh-CN', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) }}</span>
+                        <input v-else type="datetime-local" v-model="groupChainParticipateModal.editTimeValue" class="bg-transparent text-[13px] text-gray-700 outline-none flex-1">
+                        <div v-if="groupChainParticipateModal.msg.isSelf && !groupChainParticipateModal.msg.isEnded">
+                            <span v-if="!groupChainParticipateModal.isEditingTime" @click="groupChainParticipateModal.isEditingTime = true; groupChainParticipateModal.editTimeValue = groupChainParticipateModal.msg.endTime" class="text-blue-500 text-xs cursor-pointer px-2">修改</span>
+                            <span v-else @click="saveGroupChainTime" class="text-green-500 text-xs cursor-pointer px-2">保存</span>
+                        </div>
                     </div>
                     
                     <div v-if="groupChainParticipateModal.msg.example" class="bg-gray-50 rounded-xl p-3 flex items-start gap-3 mb-2">
@@ -6627,14 +6629,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.23 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-[#f87171]"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#fca5a5]"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.23 状态中止拦截与群接龙补全</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-19 17:19</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.23 动态打断与接龙权限管理</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-19 18:24</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">新增控制：</span>在全平台（主聊天、线下模式、音视频通话等）引入了强大的 <code>AbortController</code> 请求中止器机制。当 AI 正在输入时，原本的“接收”按钮会无缝切换为红色的“中止”按钮，点击即可随时掐断对大模型的请求，撤回并拦截本次生成。</li>
-                                    <li><span class="font-bold text-gray-800">机制完善：</span>进一步完善了【群接龙】功能。现在，群接龙的“发起人”可以在参与详情页面中，自由修改和延长接龙的截止时间（其余人只读不可点击），交互权限更加严谨。</li>
+                                    <li><span class="font-bold text-gray-800">新功能：</span>实装了“终止回复”功能！当点击接收按钮且 AI 正在输入时，原本的放大镜按钮会自动变成红色的停止键（<i class="far fa-stop-circle"></i>），随时点击可瞬间打断网络连接并取消本次回复，免去误点等待的痛苦。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>赋予了群接龙发起人修改时间的特权。如果你是接龙的发起人，可以在参与详情界面点击“修改”动态延长或缩短截止时间，时间到期后接龙会自动封盘。</li>
                                 </ul>
                             </div>
 
@@ -7670,7 +7672,8 @@ const app = createApp({
             groupVoteCreateModal: { show: false, title: '', options: ['', ''], startTime: '', endTime: '' },
             voteDetailsModal: { show: false, msg: null },
             groupChainCreateModal: { show: false, purpose: '', endTime: '', example: '', items: [] },
-            groupChainParticipateModal: { show: false, msg: null, isAdding: false, newItemText: '' },
+            groupChainParticipateModal: { show: false, msg: null, isAdding: false, newItemText: '', isEditingTime: false, editTimeValue: '' },
+            currentAbortController: null,
             diaryState: { 
                 showGenerate: false, // Legacy fallback
                 isWriting: false,
@@ -7721,8 +7724,7 @@ const app = createApp({
             offlineStyleModal: { show: false, isEditing: false, editForm: { id: null, title: '', content: '' } },
             offlineStylePresets:[], 
             offlinePerspectiveModal: { show: false, target: '' },
-            offlineBeautifyConfig: { show: false, tempCode: '', activeCSS: '', presets:[] },
-            activeAbortController: null,
+            offlineBeautifyConfig: { show: false, tempCode: '', activeCSS: '', presets:[] }
         }
     },
     computed: {
@@ -11922,20 +11924,6 @@ const app = createApp({
             });
             this.scrollToBottom();
         },
-        cancelAiReply() {
-            if (this.activeAbortController) {
-                this.activeAbortController.abort();
-                this.activeAbortController = null;
-            }
-            if (this.wechatState.activeSession) {
-                this.wechatState.activeSession.isTyping = false;
-            }
-            this.offlineState.isGenerating = false;
-            this.voiceCallState.isAiTyping = false;
-            this.videoCallState.isAiTyping = false;
-            this.saveData();
-            this.showToast('已取消本次请求');
-        },
         async triggerAutoReply(session) {
             // 如果缓存里有，直接抛出
             if (session.autoReplyCache) {
@@ -12684,23 +12672,25 @@ Structure:
                 }
             });
 
-            this.activeAbortController = new AbortController();
-            const signal = this.activeAbortController.signal;
-
             try {
+                if (this.currentAbortController) {
+                    this.currentAbortController.abort();
+                }
+                this.currentAbortController = new AbortController();
+
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
                 
                 const res = await fetch(`${url}/chat/completions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                    signal: this.currentAbortController.signal,
                     // 使用 temperature 参数
                     body: JSON.stringify({ 
                         model: this.apiConfig.selectedModel, 
                         messages: contextMessages,
                         temperature: this.apiConfig.temperature || 0.7 
-                    }),
-                    signal: signal
+                    })
                 });
 
                 if (!res.ok) throw new Error(`API Request Failed: ${res.status}`);
@@ -13499,12 +13489,13 @@ Structure:
                 }, delay + 300); // 这里的 delay 是上面文字循环累加出来的时间，+300 保证卡片绝对在最底下！
 
             } catch(e) {
-                if (e.name === 'AbortError') {
-                    console.log('请求被用户取消');
-                    return;
-                }
                 session.isTyping = false;
                 this.saveData();
+                
+                if (e.name === 'AbortError') {
+                    console.log('AI Reply Aborted');
+                    return;
+                }
                 
                 // --- 修改为：系统旁白提示 ---
                 session.messages.push({
@@ -13517,12 +13508,22 @@ Structure:
                 this.scrollToBottom();
                 // 不调用 this.saveData()，保证它不会被永久存盘
             } finally {
-                if (this.activeAbortController && this.activeAbortController.signal === signal) {
-                    this.activeAbortController = null;
+                if (this.currentAbortController) {
+                    this.currentAbortController = null;
                 }
             }
         },
-        
+        cancelAiReply() {
+            if (this.currentAbortController) {
+                this.currentAbortController.abort();
+                this.currentAbortController = null;
+            }
+            if (this.wechatState.activeSession) {
+                this.wechatState.activeSession.isTyping = false;
+                this.saveData();
+            }
+            this.showToast('已停止接收');
+        },
         // --- Diary Generation Logic (New) ---
         async generateDiary(friendId) {
             if (!this.apiConfig.apiKey) return this.showToast('请先配置 API Key');
@@ -15525,9 +15526,6 @@ ${this.offlineState.modeType === 'narrator'
                 messages.push({ role: 'user', content: '请紧接着上面你的剧情继续往下续写你的动作和语言。' });
             }
 
-            this.activeAbortController = new AbortController();
-            const signal = this.activeAbortController.signal;
-
             try {
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
@@ -15539,8 +15537,7 @@ ${this.offlineState.modeType === 'narrator'
                         model: this.apiConfig.selectedModel, 
                         messages: messages,
                         temperature: this.apiConfig.temperature || 0.8
-                    }),
-                    signal: signal
+                    })
                 });
 
                 if (!res.ok) throw new Error('API 请求失败');
@@ -15571,16 +15568,9 @@ ${this.offlineState.modeType === 'narrator'
                 this.scrollOfflineToBottom();
                 this.saveData();
             } catch (e) {
-                if (e.name === 'AbortError') {
-                    console.log('请求被用户取消');
-                    return;
-                }
                 this.showToast('生成失败: ' + e.message);
             } finally {
                 this.offlineState.isGenerating = false;
-                if (this.activeAbortController && this.activeAbortController.signal === signal) {
-                    this.activeAbortController = null;
-                }
             }
         },
         resizeOfflineInput(e) {
@@ -15625,9 +15615,6 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 { role: 'user', content: `这是最近的剧情上下文：\n${contextStr}\n\n请直接输出接下来【${mask.name}】（我）该做的回应：` }
             ];
 
-            this.activeAbortController = new AbortController();
-            const signal = this.activeAbortController.signal;
-
             try {
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
@@ -15639,8 +15626,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         model: this.apiConfig.selectedModel, 
                         messages: messages,
                         temperature: this.apiConfig.temperature || 0.8
-                    }),
-                    signal: signal
+                    })
                 });
 
                 if (!res.ok) throw new Error('API 请求失败');
@@ -15679,16 +15665,8 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 typeNext();
                 
             } catch (e) {
-                if (e.name === 'AbortError') {
-                    console.log('请求被用户取消');
-                    return;
-                }
                 this.offlineState.isGenerating = false;
                 this.showToast('代笔失败: ' + e.message);
-            } finally {
-                if (this.activeAbortController && this.activeAbortController.signal === signal) {
-                    this.activeAbortController = null;
-                }
             }
         },
         regenerateOfflineMessage() {
@@ -18117,9 +18095,6 @@ ${greetingInstruction}
   "hang_up": true OR false // 如果你想主动挂断电话，设为true
 }`;
 
-            this.activeAbortController = new AbortController();
-            const signal = this.activeAbortController.signal;
-
             try {
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
@@ -18134,8 +18109,7 @@ ${greetingInstruction}
                             { role: 'user', content: greetingType === 'normal' ? '轮到你说话了，请回复。' : '开始通话。' }
                         ],
                         temperature: 0.8
-                    }),
-                    signal: signal
+                    })
                 });
 
                 if (!res.ok) throw new Error('API Error');
@@ -18216,16 +18190,9 @@ ${greetingInstruction}
                     }
                 }
             } catch(e) {
-                if (e.name === 'AbortError') {
-                    console.log('请求被用户取消');
-                    return;
-                }
                 this.showToast('语音请求失败: ' + e.message);
             } finally {
                 this.voiceCallState.isAiTyping = false;
-                if (this.activeAbortController && this.activeAbortController.signal === signal) {
-                    this.activeAbortController = null;
-                }
             }
         },
         async playVoiceCallTTS(text, memberId = null) {
@@ -18520,9 +18487,6 @@ ${greetingInstruction}`;
   "hang_up": true OR false
 }`;
 
-            this.activeAbortController = new AbortController();
-            const signal = this.activeAbortController.signal;
-
             try {
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                 if (!url.endsWith('/v1')) url += '/v1';
@@ -18549,8 +18513,7 @@ ${greetingInstruction}`;
                             { role: 'user', content: userMessageContent }
                         ],
                         temperature: 0.8
-                    }),
-                    signal: signal
+                    })
                 });
 
                 if (!res.ok) throw new Error('API Error');
@@ -18631,16 +18594,9 @@ ${greetingInstruction}`;
                     }
                 }
             } catch(e) {
-                if (e.name === 'AbortError') {
-                    console.log('请求被用户取消');
-                    return;
-                }
                 this.showToast('请求失败: ' + e.message);
             } finally {
                 this.videoCallState.isAiTyping = false;
-                if (this.activeAbortController && this.activeAbortController.signal === signal) {
-                    this.activeAbortController = null;
-                }
             }
         },
         toggleVideoMicrophone() {
@@ -19009,8 +18965,18 @@ ${greetingInstruction}`;
                 show: true,
                 msg: msg,
                 isAdding: false,
-                newItemText: ''
+                newItemText: '',
+                isEditingTime: false,
+                editTimeValue: ''
             };
+        },
+        saveGroupChainTime() {
+            if (this.groupChainParticipateModal.msg && this.groupChainParticipateModal.editTimeValue) {
+                this.groupChainParticipateModal.msg.endTime = this.groupChainParticipateModal.editTimeValue;
+                this.groupChainParticipateModal.isEditingTime = false;
+                this.saveData();
+                this.showToast('截止时间已修改');
+            }
         },
         startAddChainItem() {
             if (this.groupChainParticipateModal.msg.isEnded) return this.showToast('该接龙已结束');
