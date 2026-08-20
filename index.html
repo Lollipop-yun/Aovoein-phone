@@ -2084,9 +2084,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         <input v-model="newContact.signature" placeholder="一句话个性签名..." class="w-full border-b border-dashed border-gray-300 pb-2 text-[13px] text-gray-500 outline-none bg-transparent italic">
                     </div>
 
-                    <div v-if="newContact.id" class="flex gap-3 mb-4">
-                        <button @click="exportContactAsJSON" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition border border-gray-200"><i class="fas fa-code"></i> Export JSON</button>
-                        <button @click="exportContactAsPNG" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition shadow-md"><i class="fas fa-image"></i> PNG Card</button>
+                    <div v-if="newContact.id" class="flex flex-col gap-3 mb-6">
+                        <div class="flex flex-col">
+                            <button @click="exportContactAsJSON" class="w-full py-3.5 bg-[#f8f9fa] text-gray-800 font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 active:scale-95 transition border border-gray-200 rounded-xl"><i class="fas fa-code"></i> 导出 JSON (仅角色基础设定)</button>
+                            <span class="text-[10px] text-gray-400 mt-1.5 text-center leading-tight">轻量化导出，仅包含纯净的角色基础资料面板设定。</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <button @click="exportContactAsPNG" class="w-full py-3.5 bg-[#111827] text-white font-bold text-[12px] tracking-wider flex items-center justify-center gap-2 active:scale-95 transition shadow-md rounded-xl"><i class="fas fa-image"></i> 导出 PNG (含绑定的局部世界书)</button>
+                            <span class="text-[10px] text-gray-400 mt-1.5 text-center leading-tight">深度打包导出。包含角色基础设定以及该角色单聊绑定的所有【局部世界书】。<br>导入此图片时系统将自动恢复设定并一键完成绑定。</span>
+                        </div>
                     </div>
 
                     <!-- 底部确认与取消按钮 -->
@@ -6627,7 +6633,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.26 更新日志 (当前最新) -->
+                            <!-- v1.27 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#22d3ee]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.27 世界书图片打包：深度设定迁移</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-20 18:31</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">机制强化：</span>重构了底层的 PNG 图片生成引擎和导入解析机制。现在如果你想把你的角色连同 ta 的专属背景设定分享给别人，可以直接导出包含局部世界书的 PNG 图片！</li>
+                                    <li><span class="font-bold text-gray-800">交互优化：</span>在联系人编辑资料页，我们明确划分了“JSON 纯净轻量导出”与“PNG 深度打包”两种格式。当你导入一张打包过世界书的 PNG 图片并点击保存角色后，系统会自动在你的世界书库里重建对应的文件夹和条目，并在单聊界面直接替你【一键绑定】完成，全程无感、即刻畅玩。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.26 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -8544,8 +8563,34 @@ const app = createApp({
         },
         async exportContactAsPNG() {
             try {
-                this.showToast('正在生成 Aovein OS 专属 PNG 角色卡...');
-                const dataStr = JSON.stringify(this.newContact);
+                this.showToast('正在生成 Aovein OS 专属 PNG 角色卡 (含世界书)...');
+                
+                // 收集绑定的局部世界书
+                let attachedWorldbooks = [];
+                let attachedFolders = [];
+                if (this.newContact.id) {
+                    const session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id && !s.isGroup);
+                    if (session) {
+                        let folderIds = session.boundWorldbookFolderIds || [];
+                        let fileIds = session.boundWorldbookFileIds || [];
+                        if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
+                        folderIds = [...new Set(folderIds)];
+                        
+                        // 获取文件夹信息
+                        attachedFolders = this.worldData.filter(i => i.type === 'folder' && folderIds.includes(i.id));
+                        
+                        // 获取文件（非全局，且在绑定列表里的或在绑定文件夹里的）
+                        attachedWorldbooks = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && !i.isGlobal && (folderIds.includes(i.parentId) || fileIds.includes(i.id)));
+                    }
+                }
+
+                const exportData = {
+                    ...this.newContact,
+                    aoveinAttachedWorldbooks: attachedWorldbooks,
+                    aoveinAttachedFolders: attachedFolders
+                };
+
+                const dataStr = JSON.stringify(exportData);
                 // Aovein OS 专属混淆标识头 (和酒馆隔绝)
                 const magicBytes = new TextEncoder().encode("AOVEIN_OS_DATA_V1:");
                 const jsonBytes = new TextEncoder().encode(dataStr);
@@ -10752,9 +10797,19 @@ const app = createApp({
                         try {
                             const jsonStr = new TextDecoder().decode(dataBytes);
                             const data = JSON.parse(jsonStr);
+                            
+                            const attachedBooks = data.aoveinAttachedWorldbooks || [];
+                            const attachedFolders = data.aoveinAttachedFolders || [];
+                            
                             this.newContact = { ...this.newContact, ...data, id: null };
+                            
+                            if (attachedBooks.length > 0) {
+                                this.newContact._tempAttachedBooks = attachedBooks;
+                                this.newContact._tempAttachedFolders = attachedFolders;
+                            }
+                            
                             this.addContactModal.show = true;
-                            this.showToast('Aovein 专属卡解析成功');
+                            this.showToast(`解析成功！${attachedBooks.length > 0 ? '附带'+attachedBooks.length+'条世界书，保存角色后自动绑定' : ''}`);
                         } catch(err) { this.showToast('Aovein 数据解析失败'); }
                     } else {
                         this.showToast('错误：该图片不是 Aovein 导出的角色卡');
@@ -13966,8 +14021,89 @@ Structure:
         async handleAddContactAvatar(e) { const f = e.target.files[0]; if(!f) return; try { this.newContact.avatar = await compressImage(f, 300); } catch(e){} },
         saveNewContact() {
             if(!this.newContact.name) return this.showToast('请输入姓名');
-            if (this.newContact.id) { const idx = this.wechatState.friendList.findIndex(f => f.id === this.newContact.id); if (idx !== -1) { this.wechatState.friendList[idx] = { ...this.newContact }; this.showToast('修改成功'); } } 
-            else { this.wechatState.friendList.push({ ...this.newContact, id: Date.now().toString() }); this.showToast('已添加朋友'); }
+            let friendId = this.newContact.id;
+            
+            if (friendId) { 
+                const idx = this.wechatState.friendList.findIndex(f => f.id === friendId); 
+                if (idx !== -1) { 
+                    this.wechatState.friendList[idx] = { ...this.newContact }; 
+                    this.showToast('修改成功'); 
+                } 
+            } 
+            else { 
+                friendId = Date.now().toString();
+                this.wechatState.friendList.push({ ...this.newContact, id: friendId }); 
+                this.showToast('已添加朋友'); 
+            }
+
+            // 处理导入的世界书一键入库与绑定逻辑
+            if (this.newContact._tempAttachedBooks && this.newContact._tempAttachedBooks.length > 0) {
+                let session = this.wechatState.sessions.find(s => s.targetId === friendId && !s.isGroup);
+                if (!session) {
+                    const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
+                    session = { 
+                        id: Date.now().toString() + Math.random().toString(), targetId: friendId, name: this.newContact.remark || this.newContact.name, 
+                        avatar: this.newContact.avatar, maskId: myMaskId, messages: [], lastMessage: '', time: Date.now(),
+                        isPinned: false, status: {}, statusHistory: [], wallpaper: '', groupId: null, 
+                        customAvatarSelf: '', customAvatarTarget: '', isBlocked: false, avatarMode: 'all',
+                        boundWorldbookFileIds: [], boundWorldbookFolderIds: []
+                    };
+                    if (myMaskId) this.wechatState.sessions.unshift(session);
+                }
+
+                if (session) {
+                    if (!session.boundWorldbookFileIds) session.boundWorldbookFileIds = [];
+                    if (!session.boundWorldbookFolderIds) session.boundWorldbookFolderIds = [];
+                    
+                    let folderIdMap = {};
+                    
+                    // 1. 恢复文件夹结构 (如果库里没有同名的，就新建)
+                    if (this.newContact._tempAttachedFolders) {
+                        this.newContact._tempAttachedFolders.forEach(oldFolder => {
+                            let exist = this.folders.find(f => f.name === oldFolder.name);
+                            if (exist) {
+                                folderIdMap[oldFolder.id] = exist.id;
+                            } else {
+                                const newFId = 'folder_' + Date.now().toString() + Math.random().toString().substr(2, 5);
+                                this.worldData.push({ id: newFId, type: 'folder', name: oldFolder.name, isActive: true });
+                                folderIdMap[oldFolder.id] = newFId;
+                            }
+                        });
+                    }
+                    
+                    // 2. 恢复条目并一键绑定到该会话
+                    this.newContact._tempAttachedBooks.forEach(oldBook => {
+                        let newParentId = folderIdMap[oldBook.parentId] || null;
+                        if (oldBook.parentId && !newParentId) {
+                            let defF = this.folders.find(f => f.name === '导入角色世界书');
+                            if (!defF) {
+                                const newFId = 'folder_' + Date.now().toString() + Math.random().toString().substr(2, 5);
+                                this.worldData.push({ id: newFId, type: 'folder', name: '导入角色世界书', isActive: true });
+                                defF = { id: newFId };
+                            }
+                            newParentId = defF.id;
+                        }
+                        
+                        const newId = Date.now().toString() + Math.random().toString().substr(2, 8);
+                        this.worldData.push({
+                            id: newId,
+                            type: 'file',
+                            name: oldBook.name,
+                            parentId: newParentId,
+                            isActive: true,
+                            content: oldBook.content,
+                            isGlobal: false,
+                            position: oldBook.position || '中'
+                        });
+                        
+                        // 建立绑定纽带
+                        session.boundWorldbookFileIds.push(newId);
+                    });
+                }
+                delete this.newContact._tempAttachedBooks;
+                delete this.newContact._tempAttachedFolders;
+            }
+
             this.addContactModal.show = false; this.saveData();
         },
         async autoFillProfile(field, isMask = false) {
