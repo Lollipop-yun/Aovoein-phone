@@ -6627,7 +6627,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.24 更新日志 (当前最新) -->
+                            <!-- v1.25 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#fbbf24]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.25 AI 沉默 Bug 终极修复</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-20 17:12</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">底层重构：</span>彻底修复了“发完红包点接收，AI 抢了红包却变哑巴，怎么点都没反应”的致命 Bug。原因是此前系统将“抢包通知”作为 AI 自己的发言传给了大模型，导致大模型以为自己已经回复完毕。现已将所有 <code>[系统/环境事件]</code> 强制划分为 User 视角发给大模型，AI 看到系统事件后会主动做出强烈的反馈！</li>
+                                    <li><span class="font-bold text-gray-800">体验优化：</span>加入了防沉默兜底机制，如果在群聊中连续多次点击“接收”按钮，系统会施加强制提示词，鞭策 AI 们针对刚才的红包/事件进行吐槽和讨论。即使 AI 因为某些原因真的无话可说，界面也会弹出“大家似乎不知道该说什么”的提示，而不再是毫无反应的假死状态。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.24 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#fca5a5]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12049,7 +12062,13 @@ const app = createApp({
                 this.scrollToBottom();
                 this.saveData();
                 // 抢完红包后，强行给大模型注入反应要求，打破沉默
-                if (!injectedPrompt) injectedPrompt = "大家刚刚抢了你发的红包，请在接下来的聊天中对这个红包做出自然的反应（例如感谢老板、吐槽自己手气、调侃手气最佳等）！";
+                if (!injectedPrompt) injectedPrompt = "【环境剧本提示】：大家刚刚抢了玩家发的红包，请必须在接下来的 reply 数组中对这个红包做出自然的反应（例如感谢老板、吐槽自己手气差、调侃手气王等）！绝对不能不说话！";
+            } else if (session.isGroup && !injectedPrompt && session.messages.length > 0) {
+                // 如果是再次手动点击接收，且最后一条消息是抢红包系统提示，继续鞭策AI发言
+                const lastMsg = session.messages[session.messages.length - 1];
+                if (lastMsg && lastMsg.type === 'system' && lastMsg.content.includes('领取了') && lastMsg.content.includes('红包')) {
+                    injectedPrompt = "【环境剧本提示】：大家刚才抢完了红包，请针对抢红包的结果（谁是手气最佳，谁最倒霉）互相吐槽调侃一下，活跃群内气氛！必须有人发言！";
+                }
             }
             // -----------------------------------------------------
 
@@ -12679,6 +12698,9 @@ Structure:
                         }
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: finalContent });
                         
+                    } else if (m.type === 'system') {
+                        // 【核心修复】：将系统旁白/环境事件强制归属为 user 角色，迫使大模型对其做出反应，防止大模型以为自己已经回复了而引发沉默！
+                        contextMessages.push({ role: 'user', content: `[系统或环境提示事件]: ${m.content}` });
                     } else {
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: m.content });
                     }
@@ -12757,6 +12779,12 @@ Structure:
 
                 let delay = 0;
                 
+                // 【提示】：如果大模型由于某种原因输出了空数组，给用户一个反馈
+                if (replyBlocks.length === 0 || (replyBlocks.length === 1 && !replyBlocks[0].reply && !replyBlocks[0].action && !replyBlocks[0].thought)) {
+                    this.showToast('大家似乎不知道该说什么，保持了沉默...');
+                    return;
+                }
+
                 replyBlocks.forEach((block) => {
                     let rawSegments = Array.isArray(block.reply) ? block.reply :[block.reply || ""];
                     
@@ -18107,7 +18135,7 @@ ${greetingInstruction}
   "group_replies":[
     {
       "speaker": "说话的角色名字(必须是群成员)",
-      "reply": ["你要说的第一句话", "第二句话"], // 必须是数组！可以说多句
+      "reply": ["你要说的第一句话", "第二句话"], // 必须是数组！可以说多句。绝对不允许为空数组，必须有人发言！
       "hang_up": true OR false // 如果你想主动挂断电话，设为true
     }
   ]
