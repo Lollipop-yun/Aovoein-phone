@@ -6627,7 +6627,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.25 更新日志 (当前最新) -->
+                            <!-- v1.26 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.26 红包金额感知增强 (上帝视角注入)</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-20 17:48</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">机制强化：</span>完美解决了 AI 角色对红包金额“不敏感”或“胡编乱造”的问题（明明抢了100多块却说只抢了1分钱）。</li>
+                                    <li><span class="font-bold text-gray-800">细节把控：</span>为了保证沉浸感，群聊的 UI 界面和系统通知依然**不会**暴露任何人抢到的具体金额（保留盲盒感）。但是，底层会在发送给大模型的上下文里，隐秘地挂载一张“上帝视角数据表”，让 AI 清清楚楚地知道自己究竟抢了多少钱，从而做出极为真实的吐槽或炫耀。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.25 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#fbbf24]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12676,7 +12689,12 @@ Structure:
                     } else if (m.type === 'fake_image') {
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[Sent a fake photo with description: ${m.content}]` });
                     } else if (m.type === 'red_packet') {
-                        contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[Red Packet: ${m.note}]` });
+                        let rpInfo = `[发出了一个微信红包: "${m.note}"]`;
+                        if (m.claims && m.claims.length > 0) {
+                            const claimDetails = m.claims.map(c => `${c.name}抢到${c.amount}元${c.isBest ? '(手气最佳)' : ''}`).join('，');
+                            rpInfo += `\n【系统隐秘备注(仅你可见)：该红包的真实领取情况为 -> ${claimDetails}。请你务必根据你实际抢到的精确金额做出反应！比如抢得少(几毛几分)就大肆吐槽，抢得多就得意洋洋！】`;
+                        }
+                        contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: rpInfo });
                     } else if (m.type === 'transfer') {
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[Transfer: ${m.amount}]` });
                     } else if (m.type === 'qinmi_invite') {
