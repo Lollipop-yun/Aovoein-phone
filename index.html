@@ -6627,7 +6627,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.23 更新日志 (当前最新) -->
+                            <!-- v1.24 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#fca5a5]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.24 群红包分发逻辑与错误修复</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-20 16:51</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">机制修复：</span>完美重构了群红包的抢包判定机制。现在，点击底部的“接收”按钮推进剧情时，玩家本人将不再参与抢红包，红包会由 AI 群成员们瓜分；只有当你“主动点击红包卡片”时，你才会被加入抢包池并有可能抢到红包。</li>
+                                    <li><span class="font-bold text-gray-800">错误处理说明：</span>优化了底层抢完红包后的防沉默提示词触发逻辑。需要注意的是，如果你在请求时遇到了 <code>API Request Failed: 503</code> 报错，这其实代表你配置的大模型服务商（API 提供方）当前服务器崩溃、限流或不可用，属于服务器网络波动，并非系统本地 Bug，稍后再试或更换通道即可。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.23 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#fca5a5]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -12016,7 +12029,7 @@ const app = createApp({
                         msg.isClaimedByAI = true; // 标记系统已处理
                         if (!msg.claims || msg.claims.length === 0) {
                             if (session.isGroup) {
-                                this.generateGroupRedPacketClaims(msg, session);
+                                this.generateGroupRedPacketClaims(msg, session, false); // 接收消息触发的领包，不包含玩家
                                 hasNewClaims = true;
                             } else {
                                 if (msg.isSelf) {
@@ -16169,7 +16182,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             return myClaim ? myClaim.amount : null;
         },
 
-        generateGroupRedPacketClaims(rpMsg, session) {
+        generateGroupRedPacketClaims(rpMsg, session, includeUser = false) {
             if (rpMsg.claims && rpMsg.claims.length > 0) return; // 防止重复生成
 
             const totalAmount = parseFloat(rpMsg.amount);
@@ -16180,8 +16193,12 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 const f = this.wechatState.friendList.find(x => x.id === id);
                 return f && !(session.muted && session.muted.includes(id));
             });
-            // 【核心规则】：无论谁发红包，玩家必在抢包池里！
-            candidates.push('mine');
+            // 只有当参数允许时（玩家主动点击了红包），才把玩家加入抢包池
+            if (includeUser) {
+                candidates.push('mine');
+            }
+            
+            if (candidates.length === 0) return; // 没有任何人可以抢
             
             // 打乱顺序，抽出手快的几个人
             candidates.sort(() => 0.5 - Math.random());
@@ -16228,7 +16245,11 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             
             // 发送系统通知（注入上下文给AI看）
             let claimerNames = rpMsg.claims.map(c => c.name).join('、');
-            let text = `${claimerNames} 领取了${rpMsg.isSelf ? '你' : rpMsg.name}的红包。\n红包已被领完，${bestClaimer.name} 是手气王。`;
+            let text = `${claimerNames} 领取了${rpMsg.isSelf ? '你' : rpMsg.name}的红包。`;
+            // 只有真正被领完了，才显示红包已被领完和手气王
+            if ((rpMsg.claims.length >= count || rpMsg.claims.length >= candidates.length) && bestClaimer) {
+                text += `\n红包已被领完，${bestClaimer.name} 是手气王。`;
+            }
             
             session.messages.push({ type: 'system', content: text, time: Date.now() });
         },
@@ -16331,7 +16352,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 // 如果该红包还没生成抢包名单（例如AI主动发的，或你刚发的），立刻生成
                 if (!msg.claims || msg.claims.length === 0) {
                     if (session.isGroup) {
-                        this.generateGroupRedPacketClaims(msg, session);
+                        this.generateGroupRedPacketClaims(msg, session, true); // 玩家主动点击红包，包含玩家
                     } else {
                         // 单聊名单生成
                         if (msg.isSelf) {
