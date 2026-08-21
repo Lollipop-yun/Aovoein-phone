@@ -1718,22 +1718,11 @@ document.addEventListener("DOMContentLoaded", () => {
     <transition name="scale">
         <div v-if="statusModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="statusModal.show = false">
             <!-- 加上了 aovein-status-card 专属选择器，用于接收美化 CSS -->
-            <div class="aovein-status-card bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative" @click.stop>
+            <div class="aovein-status-card bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[85vh]" @click.stop>
                 <!-- 左上角美化按钮 -->
                 <div class="absolute top-4 left-4 text-gray-400 cursor-pointer active:scale-95 transition" @click="statusBeautifyConfig.show = true; statusModal.show = false;"><i class="fas fa-palette text-xl"></i></div>
                 
-                <!-- 新增左下角历史心声翻页按钮 -->
-                <div v-if="currentStatusHistory && currentStatusHistory.length > 1" class="absolute bottom-4 left-4 flex items-center gap-2.5 bg-gray-50/80 backdrop-blur px-3 py-1.5 rounded-full border border-gray-100 shadow-sm z-10">
-                    <i class="fas fa-chevron-left text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="prevStatusHistory"></i>
-                    <span class="text-[10px] text-gray-400 font-mono font-bold">{{ currentStatusHistory.length - statusHistoryIndex }} / {{ currentStatusHistory.length }}</span>
-                    <i class="fas fa-chevron-right text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="nextStatusHistory"></i>
-                </div>
-                
-                <!-- 右下角删除心声按钮 -->
-                <div class="absolute bottom-4 right-4 text-gray-300 hover:text-red-400 cursor-pointer transition p-2 active:scale-90" @click="deleteCurrentStatus">
-                    <i class="far fa-trash-alt text-lg"></i>
-                </div>
-                <div class="text-center mb-6">
+                <div class="text-center mb-6 mt-2 shrink-0">
                     <div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg relative cursor-pointer group" @click="wechatState.activeSession?.isGroup ? triggerGroupMemberAvatarUpload() : null">
                         <img :src="getChatAvatar({isSelf: false, name: currentStatus.name, avatar: currentStatus.avatar})" class="w-full h-full object-cover">
                         <div v-if="wechatState.activeSession?.isGroup" class="absolute bottom-0 left-0 w-full bg-black/40 text-white text-[9px] py-0.5 text-center font-bold">群内换头</div>
@@ -1741,11 +1730,26 @@ document.addEventListener("DOMContentLoaded", () => {
                     <h3 class="text-xl font-bold text-gray-900">{{ currentStatus.name || wechatState.activeSession?.name }}</h3>
                     <p class="text-xs text-gray-400 mt-1">Current State</p>
                 </div>
-                <div class="space-y-4 text-sm">
+                
+                <!-- 内容区 -->
+                <div class="space-y-4 text-sm flex-1 overflow-y-auto scrollbar-hide pb-2">
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">动作</div><div class="text-gray-800">{{ currentStatus.action || '无' }}</div></div>
-                    <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800 italic">"{{ currentStatus.thought || '...' }}"</div></div>
+                    <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800">"{{ currentStatus.thought || '...' }}"</div></div>
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">穿着</div><div class="text-gray-800">{{ currentStatus.outfit || '未知' }}</div></div>
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">{{ currentStatus.note || '无随笔' }}</div></div>
+                </div>
+
+                <!-- 底部操作栏：历史翻页与删除 -->
+                <div class="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between shrink-0">
+                    <div v-if="currentStatusHistory && currentStatusHistory.length > 1" class="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 shadow-sm">
+                        <i class="fas fa-chevron-left text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="prevStatusHistory"></i>
+                        <span class="text-[10px] text-gray-500 font-mono font-bold">{{ currentStatusHistory.length - statusHistoryIndex }} / {{ currentStatusHistory.length }}</span>
+                        <i class="fas fa-chevron-right text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="nextStatusHistory"></i>
+                    </div>
+                    <div v-else></div>
+                    <div class="text-gray-300 hover:text-red-400 cursor-pointer transition p-2 active:scale-90" @click="deleteCurrentStatus">
+                        <i class="far fa-trash-alt text-lg"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1760,7 +1764,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="flex gap-3 items-center">
                     <input type="file" ref="statusImportInput" accept=".json,.txt,.docx" class="hidden" @change="handleStatusBeautifyImport">
                     <button @click="triggerStatusBeautifyImport" class="text-gray-600"><i class="fas fa-file-import"></i></button>
-                    <button @click="exportStatusBeautify" class="text-gray-600"><i class="fas fa-file-export"></i></button>
                 </div>
             </header>
             
@@ -1783,8 +1786,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div class="space-y-2 text-xs">
                             <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">动作</div><div class="text-gray-800">喝了一口咖啡</div></div>
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800 italic">"这咖啡怎么这么苦..."</div></div>
+                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800">"这咖啡怎么这么苦..."</div></div>
                             <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">穿着</div><div class="text-gray-800">黑色风衣</div></div>
+                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">原来少爷也是怕苦的，真是可爱。</div></div>
                         </div>
                     </div>
                 </div>
@@ -1840,12 +1844,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div v-if="statusBeautifyConfig.presets.length === 0" class="p-6 text-center text-gray-400 text-xs">暂无预设</div>
                         <div v-else class="divide-y divide-gray-50">
                             <div v-for="(preset, idx) in statusBeautifyConfig.presets" :key="idx" class="p-4 flex items-center justify-between">
-                                <div class="flex flex-col max-w-[60%]">
+                                <div class="flex flex-col max-w-[50%]">
                                     <span class="font-bold text-gray-700 text-[13px] truncate">{{ preset.name }}</span>
                                     <span class="text-[10px] text-gray-400 truncate mt-0.5">包含 CSS & Prompt</span>
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <button @click="loadStatusBeautifyPreset(preset)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center active:bg-gray-200"><i class="fas fa-check text-[10px]"></i></button>
+                                    <button @click="loadStatusBeautifyPreset(preset)" class="w-7 h-7 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center active:bg-blue-100"><i class="fas fa-check text-[10px]"></i></button>
+                                    <button @click="exportStatusBeautifyPreset(preset)" class="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:bg-green-100"><i class="fas fa-file-export text-[10px]"></i></button>
                                     <button @click="deleteStatusBeautifyPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:bg-red-100"><i class="fas fa-trash text-[10px]"></i></button>
                                 </div>
                             </div>
@@ -6673,7 +6678,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.29 更新日志 (当前最新) -->
+                            <!-- v1.30 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.30 心声UI微调与字体解析修复</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-21 15:55</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">UI优化：</span>心声卡片的历史翻页按钮已移至卡片底部的常规流中，再也不会出现按钮遮挡心声随笔文字的情况了。</li>
+                                    <li><span class="font-bold text-gray-800">UI修复：</span>去除了心声蓝色字体的强制 CSS，目前心声文字颜色已经回归和动作、穿着等保持一致的深灰色。并在美化预览区补全了对“随笔”字段的预览。</li>
+                                    <li><span class="font-bold text-gray-800">交互优化：</span>将心声美化的导出按钮迁移至“预设库”内，现在可以直接点击预设后面的导出按钮来分享你做好的主题啦。</li>
+                                    <li><span class="font-bold text-gray-800">Bug修复：</span>彻底修复了主题App中，直接通过 URL 网络链接加载字体并保存为预设后，列表里该预设无法展示出所选字体样式的 Bug（自动补全分配字体家族）。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.29 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#10b981]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -8435,7 +8455,8 @@ const app = createApp({
             this.showToast('已恢复默认样式');
         },
         copyStatusBeautifyDefault() {
-            const defaultCss = `/* Aovein 专属代码：心声卡片美化 */\n.aovein-status-card {\n    background-color: #ffffff !important;\n    border: 1px solid #f3f4f6 !important;\n    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;\n}\n\n.aovein-status-card h3 {\n    color: #1f2937 !important;\n    letter-spacing: 1px !important;\n}\n\n.aovein-status-card .italic {\n    color: #6366f1 !important;\n    font-style: normal !important;\n    font-weight: 600 !important;\n}`;
+            // 修复：去除了自带的 .italic 蓝色字体覆盖，回归深灰色
+            const defaultCss = `/* Aovein 专属代码：心声卡片美化 */\n.aovein-status-card {\n    background-color: #ffffff !important;\n    border: 1px solid #f3f4f6 !important;\n    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;\n}\n\n.aovein-status-card h3 {\n    color: #1f2937 !important;\n    letter-spacing: 1px !important;\n}`;
             this.statusBeautifyConfig.tempCode = defaultCss;
             this.copyToClipboard(defaultCss);
             this.showToast('源码已填入框内，并复制到剪切板');
@@ -8460,6 +8481,21 @@ const app = createApp({
             this.updateDynamicStyles();
             this.saveData();
             this.showToast(`已应用预设: ${preset.name}`);
+        },
+        exportStatusBeautifyPreset(preset) {
+            const exportObj = {
+                type: "Aovein_Status_Style",
+                code: preset.css || '',
+                prompt: preset.prompt || ''
+            };
+            const b = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a');
+            a.href = u;
+            a.download = `Aovein_Status_Style_${preset.name}.json`;
+            a.click();
+            URL.revokeObjectURL(u);
+            this.showToast('预设已导出为 JSON 文件');
         },
         deleteStatusBeautifyPreset(idx) {
             this.showConfirm('确定删除此预设吗？', () => {
@@ -14848,8 +14884,13 @@ Structure:
             this.showInput("预设名称", "", "", (n) => { 
                 if(n) { 
                     // 修复：必须获取正在预览的字体(或者当前生效的字体)，避免存成默认字体
-                    const family = this.previewFontFamily || this.themeConfig.fontFamily;
-                    const url = this.fontInputUrl || this.themeConfig.fontUrl;
+                    let family = this.previewFontFamily || this.themeConfig.fontFamily;
+                    let url = this.fontInputUrl || this.themeConfig.fontUrl;
+                    
+                    // 修复从URL直接保存导致没有生成 FontFamily 的问题
+                    if (url && !this.previewFontFamily) {
+                        family = 'CustomFont_' + Date.now();
+                    }
                     
                     this.fontPresets.push({ 
                         name: n, 
