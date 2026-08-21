@@ -1719,11 +1719,17 @@ document.addEventListener("DOMContentLoaded", () => {
         <div v-if="statusModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="statusModal.show = false">
             <!-- 加上了 aovein-status-card 专属选择器，用于接收美化 CSS -->
             <div class="aovein-status-card bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative" @click.stop>
-                <!-- 新增左上角的美化按钮 -->
+                <!-- 左上角美化按钮 -->
                 <div class="absolute top-4 left-4 text-gray-400 cursor-pointer active:scale-95 transition" @click="statusBeautifyConfig.show = true; statusModal.show = false;"><i class="fas fa-palette text-xl"></i></div>
-                <div class="absolute top-4 right-4 text-gray-400 cursor-pointer" @click="openStatusHistory"><i class="far fa-clock text-xl"></i></div>
                 
-                <!-- 新增右下角删除心声按钮 -->
+                <!-- 新增左下角历史心声翻页按钮 -->
+                <div v-if="currentStatusHistory && currentStatusHistory.length > 1" class="absolute bottom-4 left-4 flex items-center gap-2.5 bg-gray-50/80 backdrop-blur px-3 py-1.5 rounded-full border border-gray-100 shadow-sm z-10">
+                    <i class="fas fa-chevron-left text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="prevStatusHistory"></i>
+                    <span class="text-[10px] text-gray-400 font-mono font-bold">{{ currentStatusHistory.length - statusHistoryIndex }} / {{ currentStatusHistory.length }}</span>
+                    <i class="fas fa-chevron-right text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="nextStatusHistory"></i>
+                </div>
+                
+                <!-- 右下角删除心声按钮 -->
                 <div class="absolute bottom-4 right-4 text-gray-300 hover:text-red-400 cursor-pointer transition p-2 active:scale-90" @click="deleteCurrentStatus">
                     <i class="far fa-trash-alt text-lg"></i>
                 </div>
@@ -1750,20 +1756,25 @@ document.addEventListener("DOMContentLoaded", () => {
         <div v-if="statusBeautifyConfig.show" class="fixed inset-0 z-[65000] bg-[#f4f4f6] flex flex-col font-sans">
             <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-200 shrink-0 shadow-sm z-10">
                 <button @click="statusBeautifyConfig.show = false; statusModal.show = true;" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-lg"></i></button>
-                <h1 class="font-bold text-[16px] text-gray-900">心声卡片美化</h1>
+                <h1 class="font-bold text-[16px] text-gray-900">心声生成与美化</h1>
                 <div class="flex gap-3 items-center">
-                    <!-- 隐藏的导入 Input -->
                     <input type="file" ref="statusImportInput" accept=".json,.txt,.docx" class="hidden" @change="handleStatusBeautifyImport">
                     <button @click="triggerStatusBeautifyImport" class="text-gray-600"><i class="fas fa-file-import"></i></button>
                     <button @click="exportStatusBeautify" class="text-gray-600"><i class="fas fa-file-export"></i></button>
                 </div>
             </header>
             
+            <!-- 新增 Tabs -->
+            <div class="flex bg-gray-200/80 p-1 rounded-xl mx-4 mt-4 shrink-0 shadow-inner">
+                <button @click="statusBeautifyConfig.currentTab = 'css'" class="flex-1 py-1.5 text-[13px] font-bold rounded-lg transition" :class="statusBeautifyConfig.currentTab === 'css' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'">CSS代码</button>
+                <button @click="statusBeautifyConfig.currentTab = 'prompt'" class="flex-1 py-1.5 text-[13px] font-bold rounded-lg transition" :class="statusBeautifyConfig.currentTab === 'prompt' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'">提示词</button>
+                <button @click="statusBeautifyConfig.currentTab = 'preset'" class="flex-1 py-1.5 text-[13px] font-bold rounded-lg transition" :class="statusBeautifyConfig.currentTab === 'preset' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'">预设库</button>
+            </div>
+            
             <div class="flex-1 overflow-y-auto pb-safe flex flex-col p-4 gap-4">
                 <!-- 动态预览区 -->
                 <div class="bg-white rounded-[20px] p-4 border border-gray-100 shadow-sm shrink-0">
                     <div class="text-xs text-gray-400 mb-4 text-center font-bold tracking-widest">效果预览</div>
-                    <!-- 将预览外壳也包裹上 .aovein-status-card 从而能实时响应 CSS -->
                     <div class="aovein-status-card bg-white w-full rounded-[20px] overflow-hidden shadow-md p-5 relative border border-gray-100">
                         <div class="text-center mb-4">
                             <div class="w-14 h-14 rounded-full bg-gray-200 mx-auto mb-2"><i class="fas fa-user flex items-center justify-center h-full text-gray-400 text-xl"></i></div>
@@ -1778,8 +1789,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
 
-                <!-- 代码编辑区 -->
-                <div class="flex flex-col shrink-0">
+                <!-- CSS 标签页 -->
+                <div v-if="statusBeautifyConfig.currentTab === 'css'" class="flex flex-col shrink-0 animate-fade-in">
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-[11px] font-bold text-gray-500 tracking-wider">Aovein 专属美化代码 (CSS)</span>
                         <div class="flex gap-3">
@@ -1789,22 +1800,54 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <textarea v-model="statusBeautifyConfig.tempCode" placeholder="请填入 CSS 代码...\n注意：必须使用 .aovein-status-card 选择器" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
                     
-                    <div class="flex gap-2 mb-2 shrink-0">
-                        <button @click="applyStatusBeautify" class="flex-1 bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">应用并保存</button>
-                        <button @click="saveStatusBeautifyPreset" class="w-24 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-xs font-bold active:bg-gray-50 transition shadow-sm">保存预设</button>
-                    </div>
+                    <button @click="applyStatusBeautify" class="w-full bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">应用 CSS 样式</button>
                 </div>
 
-                <!-- 预设列表 -->
-                <div class="bg-white rounded-[20px] overflow-hidden shadow-sm border border-gray-100 shrink-0 mb-10">
-                    <div class="p-3 border-b border-gray-50 bg-gray-50/50 text-[11px] font-bold text-gray-400 tracking-wider">我的卡片预设</div>
-                    <div v-if="statusBeautifyConfig.presets.length === 0" class="p-6 text-center text-gray-400 text-xs">暂无预设</div>
-                    <div v-else class="divide-y divide-gray-50">
-                        <div v-for="(preset, idx) in statusBeautifyConfig.presets" :key="idx" class="p-4 flex items-center justify-between">
-                            <span class="font-bold text-gray-700 text-[13px] truncate">{{ preset.name }}</span>
-                            <div class="flex items-center gap-3">
-                                <button @click="loadStatusBeautifyPreset(preset)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center active:bg-gray-200"><i class="fas fa-check text-[10px]"></i></button>
-                                <button @click="deleteStatusBeautifyPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:bg-red-100"><i class="fas fa-trash text-[10px]"></i></button>
+                <!-- 提示词 标签页 -->
+                <div v-if="statusBeautifyConfig.currentTab === 'prompt'" class="flex flex-col shrink-0 animate-fade-in">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500 tracking-wider">心声内容提示词 (Prompt)</span>
+                    </div>
+                    <textarea v-model="statusBeautifyConfig.tempPrompt" placeholder="在这里告诉AI，心声卡片应该生成什么内容...\n例如：'请不要输出动作和穿着，把所有内容集中在 note 字段写成一首关于玩家的短诗...'" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-[13px] border border-gray-200 outline-none resize-none mb-3 leading-relaxed"></textarea>
+                    
+                    <button @click="applyStatusPrompt" class="w-full bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">应用生成提示词</button>
+                </div>
+
+                <!-- 预设库 标签页 -->
+                <div v-if="statusBeautifyConfig.currentTab === 'preset'" class="flex flex-col shrink-0 animate-fade-in">
+                    <!-- 保存当前预设区 -->
+                    <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 mb-4">
+                        <div class="text-[11px] font-bold text-gray-500 mb-2 tracking-widest">保存当前搭配 (CSS + 提示词)</div>
+                        <div class="flex gap-2">
+                            <input v-model="statusBeautifyConfig.presetNameInput" placeholder="输入新预设名称" class="flex-1 bg-gray-50 px-3 py-2 rounded-xl text-xs border border-gray-200 outline-none">
+                            <button @click="saveStatusBeautifyPreset" class="px-4 bg-black text-white rounded-xl text-xs font-bold active:scale-95 transition shadow-md">保存</button>
+                        </div>
+                    </div>
+
+                    <!-- 随机开关 -->
+                    <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 mb-4 flex items-center justify-between">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-[14px] text-gray-900">每次随机生成</span>
+                            <span class="text-[10px] text-gray-400 mt-0.5">开启后，每次心声将从预设库中随机抽取一个组合生成</span>
+                        </div>
+                        <input type="checkbox" id="status-random-toggle" class="switch-checkbox" v-model="statusBeautifyConfig.isRandom" @change="saveData">
+                        <label for="status-random-toggle" class="switch-label"><div class="switch-button"></div></label>
+                    </div>
+
+                    <!-- 预设列表 -->
+                    <div class="bg-white rounded-[20px] overflow-hidden shadow-sm border border-gray-100 shrink-0 mb-10">
+                        <div class="p-3 border-b border-gray-50 bg-gray-50/50 text-[11px] font-bold text-gray-400 tracking-wider">预设库</div>
+                        <div v-if="statusBeautifyConfig.presets.length === 0" class="p-6 text-center text-gray-400 text-xs">暂无预设</div>
+                        <div v-else class="divide-y divide-gray-50">
+                            <div v-for="(preset, idx) in statusBeautifyConfig.presets" :key="idx" class="p-4 flex items-center justify-between">
+                                <div class="flex flex-col max-w-[60%]">
+                                    <span class="font-bold text-gray-700 text-[13px] truncate">{{ preset.name }}</span>
+                                    <span class="text-[10px] text-gray-400 truncate mt-0.5">包含 CSS & Prompt</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button @click="loadStatusBeautifyPreset(preset)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center active:bg-gray-200"><i class="fas fa-check text-[10px]"></i></button>
+                                    <button @click="deleteStatusBeautifyPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:bg-red-100"><i class="fas fa-trash text-[10px]"></i></button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -6630,7 +6673,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.28 更新日志 (当前最新) -->
+                            <!-- v1.29 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#10b981]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.29 心声面板彻底重构 (抽盲盒模式)</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-21 15:35</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">UI重构：</span>心声面板美化设置现已重构为纯正 iOS 卡片流分栏，支持 CSS代码、提示词、预设库三个选项卡，极度美观清爽。右上角的历史记录入口被移除，现已改为在心声卡片左下角通过 <code>&lt;</code> <code>&gt;</code> 按钮优雅翻阅历史心声。</li>
+                                    <li><span class="font-bold text-gray-800">内容解禁：</span>新增“提示词”自定义功能。你现在可以完全改变 AI 输出心声的格式，告别死板的“动作、穿着、心声、随笔”四要素，让 AI 根据你的要求写诗、报幕或者展现隐藏属性。</li>
+                                    <li><span class="font-bold text-gray-800">随机盲盒生成：</span>终极杀器功能！开启“每次随机生成”后，AI 每次发言都会从你的预设库中随机抽取一套【CSS样式 + 提示词规则】。你甚至可以设定一套专门在生气时掉落的红色卡片，或是一套专门写短诗的黑色卡片，每次交流都像在抽盲盒！</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.28 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#ec4899]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7544,8 +7601,13 @@ const app = createApp({
             // 新增：心声卡片美化数据
             statusBeautifyConfig: { 
                 show: false, 
+                currentTab: 'css',
                 tempCode: '', 
+                tempPrompt: '',
                 activeCSS: '', 
+                activePrompt: '',
+                isRandom: false,
+                presetNameInput: '',
                 presets: [] 
             },
              // 群管理弹窗
@@ -7641,6 +7703,7 @@ const app = createApp({
             statusModal: { show: false }, statusHistoryModal: { show: false },
             currentStatus: { action: '', thought: '', outfit: '', note: '' },
             currentStatusHistory: [], 
+            statusHistoryIndex: 0,
             
             // Favorites & History Selection
             favorites: [], 
@@ -8348,6 +8411,11 @@ const app = createApp({
             this.showToast('管理员添加成功');
         },
         // ================= 心声卡片专属美化逻辑 =================
+        applyStatusPrompt() {
+            this.statusBeautifyConfig.activePrompt = this.statusBeautifyConfig.tempPrompt;
+            this.saveData();
+            this.showToast('心声提示词已成功应用');
+        },
         applyStatusBeautify() {
             const code = this.statusBeautifyConfig.tempCode;
             // 校验 Aovein 专属代码限制
@@ -8373,24 +8441,59 @@ const app = createApp({
             this.showToast('源码已填入框内，并复制到剪切板');
         },
         saveStatusBeautifyPreset() {
-            if(!this.statusBeautifyConfig.tempCode) return this.showToast('代码为空');
-            this.showInput('保存心声美化预设', '', '给这个预设起个备注名', (name) => {
-                if(name) {
-                    this.statusBeautifyConfig.presets.unshift({ name: name, css: this.statusBeautifyConfig.tempCode });
-                    this.saveData();
-                    this.showToast('预设已保存');
-                }
+            const name = this.statusBeautifyConfig.presetNameInput.trim();
+            if(!name) return this.showToast('请输入预设名称');
+            this.statusBeautifyConfig.presets.unshift({ 
+                name: name, 
+                css: this.statusBeautifyConfig.tempCode,
+                prompt: this.statusBeautifyConfig.tempPrompt
             });
+            this.statusBeautifyConfig.presetNameInput = '';
+            this.saveData();
+            this.showToast('预设已保存');
         },
         loadStatusBeautifyPreset(preset) {
-            this.statusBeautifyConfig.tempCode = preset.css;
-            this.applyStatusBeautify();
+            this.statusBeautifyConfig.tempCode = preset.css || '';
+            this.statusBeautifyConfig.tempPrompt = preset.prompt || '';
+            this.statusBeautifyConfig.activeCSS = preset.css || '';
+            this.statusBeautifyConfig.activePrompt = preset.prompt || '';
+            this.updateDynamicStyles();
+            this.saveData();
+            this.showToast(`已应用预设: ${preset.name}`);
         },
         deleteStatusBeautifyPreset(idx) {
             this.showConfirm('确定删除此预设吗？', () => {
                 this.statusBeautifyConfig.presets.splice(idx, 1);
                 this.saveData();
                 this.showToast('已删除');
+            });
+        },
+        deleteCurrentStatus() {
+            this.showConfirm('确定删除当前这条心声，退回上一条记录吗？', () => {
+                const session = this.wechatState.activeSession;
+                if (!session || !session.statusHistory || session.statusHistory.length === 0) return;
+                
+                // 核心修复：删除当前浏览指向的那一条心声
+                session.statusHistory.splice(this.statusHistoryIndex, 1);
+                
+                // 将 status 指针回退到新的对应条，或置为空状态
+                if (session.statusHistory.length > 0) {
+                    if (this.statusHistoryIndex >= session.statusHistory.length) {
+                        this.statusHistoryIndex = session.statusHistory.length - 1;
+                    }
+                    session.status = session.statusHistory[0]; // 默认全局status仍保持最新的0
+                    this.currentStatus = session.statusHistory[this.statusHistoryIndex];
+                    this.statusBeautifyConfig.activeCSS = this.currentStatus.customCss || this.statusBeautifyConfig.tempCode;
+                } else {
+                    session.status = { action: '无', thought: '暂无心声', outfit: '未知', note: '无' };
+                    this.currentStatus = session.status;
+                    this.statusHistoryIndex = 0;
+                    this.statusBeautifyConfig.activeCSS = this.statusBeautifyConfig.tempCode;
+                }
+                
+                this.updateDynamicStyles();
+                this.saveData();
+                this.showToast('已删除该条心声');
             });
         },
         exportStatusBeautify() {
@@ -12575,6 +12678,21 @@ const app = createApp({
             }
             // ============================
 
+            // --- 心声卡片定制(Prompt + CSS) 随机抽取 ---
+            let currentStatusPrompt = this.statusBeautifyConfig.activePrompt;
+            let currentStatusCss = this.statusBeautifyConfig.activeCSS;
+            
+            if (this.statusBeautifyConfig.isRandom && this.statusBeautifyConfig.presets && this.statusBeautifyConfig.presets.length > 0) {
+                const chosenPreset = this.statusBeautifyConfig.presets[Math.floor(Math.random() * this.statusBeautifyConfig.presets.length)];
+                currentStatusPrompt = chosenPreset.prompt || '';
+                currentStatusCss = chosenPreset.css || '';
+            }
+            
+            let statusInstruction = currentStatusPrompt 
+                ? `\n【极其重要的心声(状态卡片)定制指令】：\n${currentStatusPrompt}\n(请严格遵照上述指示，你可以打破原有的固定格式，随意支配、填写或留空 action, thought, outfit, note 四个字段，来达到上述指令要求的最终排版效果)`
+                : '';
+            // ============================
+
 // == 【群组权限与身份认知构建】 ==
             let roleIdentity = "";
             let groupNoticeContext = "";
@@ -12643,6 +12761,7 @@ ${relationContext}
 ${groupNoticeContext}
 ${voteContext}
 ${chainContext}
+${statusInstruction}
 </ENVIRONMENT_CONTEXT>
 
 IMPORTANT: You must output ONLY a valid JSON object. No Markdown. No other text.
@@ -13396,12 +13515,17 @@ Structure:
                     }
                     // ======================================
                     let statusObj = null;
-                    if (block.thought || block.action) {
-                        statusObj = { time: Date.now(), action: block.action, thought: block.thought, outfit: block.outfit, note: block.note, avatar: speakerAvatar, name: speakerName };
+                    if (block.thought || block.action || block.note || block.outfit) {
+                        statusObj = { time: Date.now(), action: block.action, thought: block.thought, outfit: block.outfit, note: block.note, avatar: speakerAvatar, name: speakerName, customCss: currentStatusCss };
                         session.status = statusObj;
                         if(!session.statusHistory) session.statusHistory =[];
                         session.statusHistory.unshift(statusObj); 
+                        
+                        // 生成完毕后，强行将视图切回最新的这一条，并应用它专属的CSS
                         this.currentStatus = statusObj; 
+                        this.statusHistoryIndex = 0;
+                        this.statusBeautifyConfig.activeCSS = currentStatusCss;
+                        this.updateDynamicStyles();
                     }
 
                     // === 赋予 AI 发送图片 (真实生图/伪图) 和 表情包 的能力 ===
@@ -13914,9 +14038,28 @@ Structure:
         },
         openStatusModal() {
             if(!this.wechatState.activeSession) return;
-            this.currentStatus = this.wechatState.activeSession.status || { action: '无', thought: '...', outfit: '未知', note: '无' };
+            this.statusHistoryIndex = 0; // 打开时默认展示最新一条
             this.currentStatusHistory = this.wechatState.activeSession.statusHistory || [];
+            this.currentStatus = this.currentStatusHistory.length > 0 ? this.currentStatusHistory[0] : { action: '无', thought: '...', outfit: '未知', note: '无' };
+            this.statusBeautifyConfig.activeCSS = this.currentStatus.customCss || this.statusBeautifyConfig.tempCode;
+            this.updateDynamicStyles();
             this.statusModal.show = true;
+        },
+        prevStatusHistory() {
+            if (this.statusHistoryIndex < this.currentStatusHistory.length - 1) {
+                this.statusHistoryIndex++;
+                this.currentStatus = this.currentStatusHistory[this.statusHistoryIndex];
+                this.statusBeautifyConfig.activeCSS = this.currentStatus.customCss || this.statusBeautifyConfig.tempCode;
+                this.updateDynamicStyles();
+            }
+        },
+        nextStatusHistory() {
+            if (this.statusHistoryIndex > 0) {
+                this.statusHistoryIndex--;
+                this.currentStatus = this.currentStatusHistory[this.statusHistoryIndex];
+                this.statusBeautifyConfig.activeCSS = this.currentStatus.customCss || this.statusBeautifyConfig.tempCode;
+                this.updateDynamicStyles();
+            }
         },
         openStatusHistory() { 
             this.isStatusMultiSelectMode = false;
