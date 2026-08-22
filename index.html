@@ -142,6 +142,21 @@
             to { opacity: 1; transform: translate(-50%, -50%); filter: blur(0); }
         }
 
+        @keyframes wiggle {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-1.5deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(1.5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-wiggle {
+            animation: wiggle 0.35s infinite ease-in-out;
+            transform-origin: center center;
+        }
+        .desktop-item-dropzone { transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease; }
+        .desktop-item-dropzone.is-dragged { opacity: 0.6; transform: scale(1.08); z-index: 50; }
+        .desktop-item-dropzone.is-hovered { transform: scale(0.92); }
+
         .splash-fade-out {
             opacity: 0 !important;
             filter: blur(8px);
@@ -2343,49 +2358,90 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
 
-                    <!-- 下方 App 与小部件矩阵 -->
-                    <div class="w-full px-8 grid grid-cols-2 gap-6 mb-auto z-10 items-start shrink-0" style="font-size: var(--custom-font-size)">
-                        <div class="flex flex-col items-center">
-                            <h3 @click="editHomeConfig('widgetTitle', '修改左侧标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeConfig.widgetTitle }}</h3>
-                            <div class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full">
-                                <div v-for="id in ['wechat', 'themes', 'worldbook', 'settings']" :key="id" class="flex flex-col items-center gap-1.5 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(id)}" @click="handleAppClick(id)">
-                                    <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden">
-                                        <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
-                                        <i v-else :class="getDefaultIconClass(id)"></i>
-                                    </div>
-                                    <span class="text-[10px] font-bold" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(id) }}</span>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- 下方 App 与小部件矩阵 (全动态支持拖拽) -->
+                    <div class="w-full px-6 flex flex-wrap gap-x-4 gap-y-6 mb-auto z-10 items-start justify-center shrink-0 relative" style="font-size: var(--custom-font-size)">
+                        <div v-for="(item, idx) in desktopLayout" :key="item.id" 
+                             :class="[item.w === 'half' ? 'w-[calc(50%-8px)]' : (item.w === 'quarter' ? 'w-[calc(25%-12px)]' : 'w-full'), 'relative desktop-item-dropzone', draggedDesktopIndex === idx ? 'is-dragged' : '', hoverDesktopIndex === idx ? 'is-hovered' : '']"
+                             :data-index="idx"
+                             @touchstart="onDesktopItemTouchStart($event, idx)"
+                             @touchmove="onDesktopItemTouchMove"
+                             @touchend="onDesktopItemTouchEnd">
+                             
+                             <div class="flex flex-col items-center w-full relative" :class="isHomeEditing ? 'animate-wiggle' : ''">
+                                
+                                <!-- 删除组件按钮 -->
+                                <div v-if="isHomeEditing" @click.stop="removeDesktopItem(idx)" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
 
-                        <div class="flex flex-col items-center">
-                            <div class="flex gap-2 justify-center items-end mt-2">
-                                <div class="flex flex-col items-center relative w-16">
-                                    <div @click="editCustomWidget(0, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[0].bubble }}</div>
-                                    <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="triggerWidgetImageUpload(0)">
-                                        <img v-if="customWidgets[0].image" :src="customWidgets[0].image" class="w-full h-full object-cover">
-                                        <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图1</div>
+                                <!-- 类型 1：App 网格 -->
+                                <template v-if="item.type === 'app_grid'">
+                                    <h3 @click="!isHomeEditing && editDesktopItem(idx, 'title', '修改网格标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2 w-full text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ item.title }}</h3>
+                                    <div class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full">
+                                        <div v-for="appId in item.apps" :key="appId" class="flex flex-col items-center gap-1.5 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(appId)}" @click="!isHomeEditing && handleAppClick(appId)">
+                                            <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden">
+                                                <img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover">
+                                                <i v-else :class="getDefaultIconClass(appId)"></i>
+                                            </div>
+                                            <span class="text-[10px] font-bold" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(appId) }}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex flex-col items-center relative w-16">
-                                    <div @click="editCustomWidget(1, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[1].bubble }}</div>
-                                    <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="triggerWidgetImageUpload(1)">
-                                        <img v-if="customWidgets[1].image" :src="customWidgets[1].image" class="w-full h-full object-cover">
-                                        <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图2</div>
+                                </template>
+
+                                <!-- 类型 2：双拼气泡 -->
+                                <template v-else-if="item.type === 'bubbles'">
+                                    <div class="flex gap-2 justify-center items-end mt-2 w-full">
+                                        <div class="flex flex-col items-center relative w-16">
+                                            <div @click="!isHomeEditing && editDesktopItem(idx, 'bubble1', '气泡文字1')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ item.bubble1 }}</div>
+                                            <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="!isHomeEditing && triggerDesktopPhotoUpload(idx, 'img1')">
+                                                <img v-if="item.img1" :src="item.img1" class="w-full h-full object-cover">
+                                                <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图1</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex flex-col items-center relative w-16">
+                                            <div @click="!isHomeEditing && editDesktopItem(idx, 'bubble2', '气泡文字2')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ item.bubble2 }}</div>
+                                            <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="!isHomeEditing && triggerDesktopPhotoUpload(idx, 'img2')">
+                                                <img v-if="item.img2" :src="item.img2" class="w-full h-full object-cover">
+                                                <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图2</div>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 天数记录 -->
-                            <div class="relative mt-6 min-w-[120px] max-w-[240px] w-fit px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] cursor-pointer active:scale-95 transition border-2 border-white" @click="editHomeConfig('rightWidgetTitle', '修改天数')">
-                                <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                                    <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                                </div>
-                                <span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center break-words whitespace-pre-wrap leading-snug" :style="{color: themeConfig.fontColor}">{{ homeConfig.rightWidgetTitle || '6440天' }}</span>
-                                <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                                    <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                                </div>
-                            </div>
+                                </template>
+
+                                <!-- 类型 3：天数记录 -->
+                                <template v-else-if="item.type === 'days'">
+                                    <div class="relative min-w-[120px] max-w-[240px] w-fit px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] cursor-pointer active:scale-95 transition border-2 border-white mx-auto mt-2" @click="!isHomeEditing && editDesktopItem(idx, 'title', '修改相伴天数')">
+                                        <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
+                                        <span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center break-words whitespace-pre-wrap leading-snug" :style="{color: themeConfig.fontColor}">{{ item.title || '相伴天数' }}</span>
+                                        <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
+                                    </div>
+                                </template>
+
+                                <!-- 类型 4：文字便签 -->
+                                <template v-else-if="item.type === 'text_memo'">
+                                    <div class="w-full bg-white/60 backdrop-blur-xl rounded-[20px] p-4 shadow-sm border border-white cursor-pointer min-h-[100px]" @click="!isHomeEditing && editDesktopItem(idx, 'text', '修改便签内容', 'textarea')">
+                                        <div class="text-[13px] font-bold text-gray-800 whitespace-pre-wrap leading-relaxed">{{ item.text || '点击写下你的提醒或备忘...' }}</div>
+                                    </div>
+                                </template>
+
+                                <!-- 类型 5：正方形大相框 -->
+                                <template v-else-if="item.type === 'large_photo'">
+                                    <div class="w-full aspect-square rounded-[24px] overflow-hidden bg-white/60 backdrop-blur-md shadow-sm border-[3px] border-white cursor-pointer relative" @click="!isHomeEditing && triggerDesktopPhotoUpload(idx, 'img1')">
+                                        <img v-if="item.img1" :src="item.img1" class="w-full h-full object-cover">
+                                        <i v-else class="fas fa-image text-gray-400 text-3xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></i>
+                                    </div>
+                                </template>
+
+                                <!-- 类型 6：单应用快捷入口 -->
+                                <template v-else-if="item.type === 'single_app'">
+                                    <div class="flex flex-col items-center gap-1.5 home-icon cursor-pointer w-full mt-2" :class="{'home-icon-custom': hasCustomIcon(item.appId)}" @click="!isHomeEditing && handleAppClick(item.appId)">
+                                        <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden mx-auto">
+                                            <img v-if="hasCustomIcon(item.appId)" :src="getAppIcon(item.appId)" class="w-full h-full object-cover">
+                                            <i v-else :class="getDefaultIconClass(item.appId)"></i>
+                                        </div>
+                                        <span class="text-[10px] font-bold w-full text-center truncate" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(item.appId) }}</span>
+                                    </div>
+                                </template>
+
+                             </div>
                         </div>
                     </div>
                 </div>
@@ -2588,9 +2644,19 @@ document.addEventListener("DOMContentLoaded", () => {
              
          </div> <!-- 闭合滑动分页容器 -->
 
-         <!-- 底部Dock栏 -->
-         <div class="dock-container w-[92%] left-[4%] h-24 flex items-center justify-around px-4 absolute bottom-4 shrink-0 z-20 shadow-sm bg-white/60 backdrop-blur-md">
-            <div v-for="id in ['icity', 'forum', 'check', 'taobao']" :key="id" class="flex flex-col items-center gap-1 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(id)}" @click="id === 'taobao' ? openApp('taobao') : showToast('仅作为展示')">
+         <!-- 顶部编辑控制栏 -->
+         <transition name="page-slide">
+             <div v-if="isHomeEditing" class="absolute top-0 left-0 w-full h-[90px] pt-10 px-6 bg-white/80 backdrop-blur-xl z-[1000] flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.03)] border-b border-white">
+                 <div @click="showWidgetStoreModal = true" class="w-8 h-8 bg-gray-200/50 rounded-full flex items-center justify-center text-gray-800 text-lg active:scale-90 transition cursor-pointer"><i class="fas fa-plus"></i></div>
+                 <div class="text-[15px] font-bold text-gray-800 tracking-wider">编辑主屏幕</div>
+                 <div @click="isHomeEditing = false; saveData()" class="px-4 py-1.5 bg-black text-white rounded-full text-xs font-bold active:scale-95 transition cursor-pointer">完成</div>
+             </div>
+         </transition>
+
+         <!-- 底部Dock栏 (加入长按触发编辑) -->
+         <div class="dock-container w-[92%] left-[4%] h-24 flex items-center justify-around px-4 absolute bottom-4 shrink-0 z-20 shadow-sm bg-white/60 backdrop-blur-md"
+              @touchstart="startDockLongPress" @touchend="clearDockLongPress" @touchmove="clearDockLongPress">
+            <div v-for="id in ['icity', 'forum', 'check', 'taobao']" :key="id" class="flex flex-col items-center gap-1 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(id)}" @click="!isHomeEditing && (id === 'taobao' ? openApp('taobao') : showToast('仅作为展示'))">
                 <div class="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-lg overflow-hidden">
                     <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
                     <i v-else :class="getDefaultIconClass(id)"></i>
@@ -6678,7 +6744,34 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.31 更新日志 (当前最新) -->
+                            <!-- v1.33 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#ec4899]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.33 修复更新日志断层乌龙2.0</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-22 17:05</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了上一轮给出的更新日志替换代码中，再次发生了定位标签错误（把替换目标写成了 v1.30）导致代码无法正确查找到并替换的乌龙事件。我保证下次一定先看清你代码里最新的版本号再写替换代码😭。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.32 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#f59e0b]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.32 重磅：桌面小部件与拖拽重排</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-22 16:52</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">桌面编辑系统：</span>长按屏幕底部的固定 Dock 栏（约 0.8 秒），即可进入 iOS 风格的桌面编辑模式。屏幕顶部会滑出毛玻璃操作栏，桌面组件将产生果冻抖动动画效果。此时你可以点击左上角红色减号删除不需要的组件。</li>
+                                    <li><span class="font-bold text-gray-800">随意拖动换位：</span>在编辑模式下，长按任意一个桌面小部件或应用网格即可进入抓取状态，滑动手指并拖到另一个组件上方松手，两者就会在屏幕上互换位置！</li>
+                                    <li><span class="font-bold text-gray-800">小组件商店：</span>主题 App 中新增了“小组件商店”（也可在桌面编辑模式下点击左上角 <code>+</code> 号唤出）。你可以在此自由添加包括“便签留言板”、“大相框相册”、“系统应用集”等在内的各种精美装饰模块。</li>
+                                    <li><span class="font-bold text-gray-800">主题美化修复：</span>修复了主题选项卡中预览画面的错误。现在的转账和红包提示已经完美同步为你正在使用的灰白 iOS 卡片流 UI。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.31 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7150,6 +7243,12 @@ document.addEventListener("DOMContentLoaded", () => {
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">NPC 形象库</div><div class="text-[11px] text-gray-400 mt-0.5">管理商城、论坛使用的 NPC 头像与网名</div></div>
         </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
     </div>
+
+    <div @click="navigateThemes('widget_store')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
+        <div class="flex items-center gap-4"><i class="fas fa-puzzle-piece text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
+            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">小组件商店</div><div class="text-[11px] text-gray-400 mt-0.5">为你的桌面添加全新小部件</div></div>
+        </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+    </div>
     
     <div @click="navigateThemes('home_preset')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
         <div class="flex items-center gap-4"><i class="fas fa-mobile-screen text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
@@ -7265,11 +7364,31 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div class="w-9 h-9 rounded-full bg-blue-100 overflow-hidden shrink-0 border border-gray-100"><i class="fas fa-user flex h-full items-center justify-center text-blue-400"></i></div>
                                 <div class="chat-bubble chat-bubble-user text-sm max-w-[70%] shadow-sm">界面终于变长了，现在下面也不会被挡住了。</div>
                             </div>
-                            <div class="chat-bubble chat-bubble-redpacket !p-0 w-[180px] rounded-lg self-end mt-2 shadow-sm">
-                                <div class="p-3 flex items-center gap-3"><i class="fas fa-wallet text-white text-2xl"></i><div class="flex flex-col"><span class="text-white text-[15px] font-bold">恭喜发财</span><span class="text-white/80 text-[11px] mt-0.5">微信红包</span></div></div>
+                            <!-- 预览：修复为 iOS 新版红包与转账 UI -->
+                            <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-2">
+                                <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
+                                    <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border bg-red-50 text-red-500 border-red-100"><i class="fas fa-envelope text-lg"></i></div>
+                                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                        <div class="text-[14px] font-bold text-gray-900 truncate">恭喜发财，大吉大利</div>
+                                        <div class="text-[11px] mt-0.5 text-red-500">微信红包</div>
+                                    </div>
+                                </div>
+                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
+                                    <span>Red Packet</span><i class="fas fa-chevron-right text-[8px] opacity-50"></i>
+                                </div>
                             </div>
-                            <div class="chat-bubble chat-bubble-transfer !p-0 w-[180px] rounded-lg self-end mt-1 shadow-sm mb-4">
-                                <div class="p-3 flex items-center gap-3"><i class="fas fa-exchange-alt text-white text-2xl"></i><div class="flex flex-col"><span class="text-white text-[15px] font-bold">微信转账</span><span class="text-white/80 text-[11px] mt-0.5">¥520.00</span></div></div>
+                            
+                            <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-1 mb-4">
+                                <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
+                                    <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border bg-orange-50 text-orange-500 border-orange-100"><i class="fas fa-exchange-alt"></i></div>
+                                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                                        <div class="text-[16px] font-bold text-gray-900 font-mono tracking-tight">¥520.00</div>
+                                        <div class="text-[11px] mt-0.5 text-orange-500">转账给你</div>
+                                    </div>
+                                </div>
+                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
+                                    <span>Transfer</span><i class="fas fa-chevron-right text-[8px] opacity-50"></i>
+                                </div>
                             </div>
                         </div>
                         
@@ -7439,7 +7558,65 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </transition>
 
+    <!-- 桌面小组件商店 -->
+    <transition name="app-slide">
+        <div v-if="themesPage === 'widget_store' || showWidgetStoreModal" class="fixed inset-0 z-[1200] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+            <header class="bg-white/90 backdrop-blur-md h-[90px] pt-10 flex items-center justify-between px-4 border-b border-gray-200 sticky top-0 z-10 shrink-0 shadow-sm">
+                <button @click="closeWidgetStore" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:scale-95 transition"><i class="fas" :class="showWidgetStoreModal ? 'fa-chevron-down' : 'fa-chevron-left'"></i></button>
+                <h1 class="font-bold text-gray-900 text-[17px]">小组件商店</h1>
+                <div class="w-8"></div>
+            </header>
+            <div class="flex-1 overflow-y-auto p-5 space-y-4">
+                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-th-large text-blue-500 mr-1"></i>核心应用网格</div>
+                        <div class="text-[11px] text-gray-400">包含微信等4个应用。占据半排。</div>
+                    </div>
+                    <button @click="addDesktopItem('app_grid')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                </div>
+                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-heart text-pink-500 mr-1"></i>双拼气泡头像</div>
+                        <div class="text-[11px] text-gray-400">两个小头像气泡组合。占据半排。</div>
+                    </div>
+                    <button @click="addDesktopItem('bubbles')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                </div>
+                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-calendar-day text-orange-500 mr-1"></i>相伴天数记录</div>
+                        <div class="text-[11px] text-gray-400">带有胶囊装潢的天数器。占据全排。</div>
+                    </div>
+                    <button @click="addDesktopItem('days')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                </div>
+                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-sticky-note text-yellow-500 mr-1"></i>便签留言板</div>
+                        <div class="text-[11px] text-gray-400">纯文字透明毛玻璃便签。占据全排。</div>
+                    </div>
+                    <button @click="addDesktopItem('text_memo')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                </div>
+                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="pr-2">
+                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-images text-purple-500 mr-1"></i>大画幅相框</div>
+                        <div class="text-[11px] text-gray-400">展示单张正方形大照片。占据半排。</div>
+                    </div>
+                    <button @click="addDesktopItem('large_photo')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                </div>
+                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="pr-2">
+                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-square-root-alt text-teal-500 mr-1"></i>单个应用入口</div>
+                        <div class="text-[11px] text-gray-400">独立的小正方形应用快捷入口。可组合摆放。</div>
+                    </div>
+                    <button @click="addDesktopItem('single_app')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                </div>
+            </div>
+        </div>
+    </transition>
+
 </main></div></transition>
+
+    <!-- 用于桌面组件上传图片的统一 input -->
+    <input type="file" ref="desktopPhotoInput" accept="image/*" class="hidden" @change="handleDesktopPhotoUpload">
     
     <!-- 世界书 App -->
     <transition name="app-slide">
@@ -7671,7 +7848,18 @@ const app = createApp({
 
             previewFontFamily: '', 
             appList: Object.keys(DEFAULT_APPS), appCustomization: {}, tempIconUrls: {}, uploadingAppId: null,
+            
+            // 桌面排列功能新变量
             homeScreenPresets:[],
+            desktopLayout: [],
+            isHomeEditing: false,
+            showWidgetStoreModal: false,
+            draggedDesktopIndex: -1,
+            hoverDesktopIndex: -1,
+            dockLongPressTimer: null,
+            desktopPhotoUploadIndex: -1,
+            desktopPhotoTargetField: '',
+
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
             translateLangModal: { show: false, type: 'source' },
@@ -15367,7 +15555,147 @@ Structure:
             setTimeout(() => {
                 if(typeof this.injectPresetFonts === 'function') this.injectPresetFonts();
             }, 1000);
+
+            // 【非常重要】：将老版本写死在 HTML 的主页配置升级为动态数组
+            if (!this.desktopLayout || this.desktopLayout.length === 0) {
+                this.desktopLayout = [
+                    { id: 'app_grid_1', type: 'app_grid', apps: ['wechat', 'themes', 'worldbook', 'settings'], title: this.homeConfig?.widgetTitle || '主应用', w: 'half' },
+                    { id: 'widget_bubbles_1', type: 'bubbles', w: 'half', bubble1: this.customWidgets?.[0]?.bubble || '状态', img1: this.customWidgets?.[0]?.image || '', bubble2: this.customWidgets?.[1]?.bubble || '心情', img2: this.customWidgets?.[1]?.image || '' },
+                    { id: 'widget_days_1', type: 'days', title: this.homeConfig?.rightWidgetTitle || '6440天', w: 'full' }
+                ];
+                this.saveData();
+            }
         },
+
+        // --- 桌面拖动重排与商店功能 ---
+        startDockLongPress(e) {
+            this.clearDockLongPress();
+            this.dockLongPressTimer = setTimeout(() => {
+                if (!this.isHomeEditing) {
+                    this.isHomeEditing = true;
+                    if(navigator.vibrate) navigator.vibrate(40);
+                }
+            }, 800);
+        },
+        clearDockLongPress() {
+            if (this.dockLongPressTimer) {
+                clearTimeout(this.dockLongPressTimer);
+                this.dockLongPressTimer = null;
+            }
+        },
+        onDesktopItemTouchStart(e, idx) {
+            if(!this.isHomeEditing) return;
+            this.draggedDesktopIndex = idx;
+            this.hoverDesktopIndex = idx;
+        },
+        onDesktopItemTouchMove(e) {
+            if(!this.isHomeEditing || this.draggedDesktopIndex === -1) return;
+            e.preventDefault(); 
+            const touch = e.touches[0];
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if(targetEl) {
+                const dropzone = targetEl.closest('.desktop-item-dropzone');
+                if(dropzone) {
+                    const targetIdx = parseInt(dropzone.getAttribute('data-index'));
+                    if(!isNaN(targetIdx) && targetIdx !== this.hoverDesktopIndex) {
+                        this.hoverDesktopIndex = targetIdx;
+                    }
+                }
+            }
+        },
+        onDesktopItemTouchEnd() {
+            if(this.draggedDesktopIndex !== -1 && this.hoverDesktopIndex !== -1 && this.draggedDesktopIndex !== this.hoverDesktopIndex) {
+                const items = this.desktopLayout;
+                const temp = items[this.draggedDesktopIndex];
+                items[this.draggedDesktopIndex] = items[this.hoverDesktopIndex];
+                items[this.hoverDesktopIndex] = temp;
+                this.saveData();
+            }
+            this.draggedDesktopIndex = -1;
+            this.hoverDesktopIndex = -1;
+        },
+        editDesktopItem(idx, field, promptText, inputType = 'text') {
+            this.showInput(promptText, this.desktopLayout[idx][field], '请输入内容', (val) => {
+                if(val) {
+                    this.desktopLayout[idx][field] = val;
+                    this.saveData();
+                }
+            }, inputType);
+        },
+        triggerDesktopPhotoUpload(idx, targetField = 'image') {
+            this.desktopPhotoUploadIndex = idx;
+            this.desktopPhotoTargetField = targetField;
+            if(this.$refs.desktopPhotoInput) this.$refs.desktopPhotoInput.click();
+        },
+        async handleDesktopPhotoUpload(e) {
+            const f = e.target.files[0];
+            if(!f || this.desktopPhotoUploadIndex === -1) return;
+            try {
+                const url = await compressImage(f, 600);
+                this.desktopLayout[this.desktopPhotoUploadIndex][this.desktopPhotoTargetField] = url;
+                this.saveData();
+            } catch(e){}
+            e.target.value = '';
+            this.desktopPhotoUploadIndex = -1;
+        },
+        removeDesktopItem(idx) {
+            this.showConfirm('确定从桌面移除这个组件吗？', () => {
+                this.desktopLayout.splice(idx, 1);
+                this.saveData();
+            });
+        },
+        openWidgetStore() {
+            this.showWidgetStoreModal = true;
+        },
+        closeWidgetStore() {
+            this.showWidgetStoreModal = false;
+            if(this.themesPage === 'widget_store') this.navigateThemes('back');
+        },
+        addDesktopItem(type) {
+            const uid = type + '_' + Date.now();
+            let newItem = { id: uid, type: type, w: 'full' };
+            
+            if (type === 'app_grid') {
+                newItem.apps = ['wechat', 'settings']; // 默认只带两个
+                newItem.title = '新建应用集';
+                newItem.w = 'half';
+                this.showInput('给这个网格取个名字', '工具', '', (val) => {
+                    newItem.title = val || '应用';
+                    this.desktopLayout.push(newItem);
+                    this.saveData();
+                    this.closeWidgetStore();
+                });
+                return;
+            } else if (type === 'bubbles') {
+                newItem.bubble1 = '状态'; newItem.img1 = '';
+                newItem.bubble2 = '心情'; newItem.img2 = '';
+                newItem.w = 'half';
+            } else if (type === 'days') {
+                newItem.title = '相伴天数';
+            } else if (type === 'text_memo') {
+                newItem.text = '留在这里的碎碎念...';
+            } else if (type === 'large_photo') {
+                newItem.img1 = '';
+                newItem.w = 'half';
+            } else if (type === 'single_app') {
+                newItem.w = 'quarter';
+                newItem.appId = 'memo'; // 默认是备忘录
+                this.showInput('输入App代码', 'memo', '如: memo, album, jinjiang, taobao', (val) => {
+                    newItem.appId = val || 'memo';
+                    this.desktopLayout.push(newItem);
+                    this.saveData();
+                    this.closeWidgetStore();
+                });
+                return;
+            }
+            
+            this.desktopLayout.push(newItem);
+            this.saveData();
+            this.closeWidgetStore();
+            this.showToast('已添加到桌面底端');
+        },
+        // --- 结束 ---
+
         async toggleDataProtection() {
             if (this.dataProtection) {
                 if (navigator.storage && navigator.storage.persist) {
