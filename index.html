@@ -2511,19 +2511,19 @@ document.addEventListener("DOMContentLoaded", () => {
                  <!-- 第二排分栏结构 -->
                  <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
                      <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph3')}">
-                                 <img v-if="hasCustomIcon('ph3')" :src="getAppIcon('ph3')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-star text-gray-400 text-xl"></i>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('memo')}">
+                                 <img v-if="hasCustomIcon('memo')" :src="getAppIcon('memo')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-clipboard-list text-gray-400 text-xl"></i>
                              </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph3') }}</span>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('memo') }}</span>
                          </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph4')}">
-                                 <img v-if="hasCustomIcon('ph4')" :src="getAppIcon('ph4')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-moon text-gray-400 text-xl"></i>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('album')}">
+                                 <img v-if="hasCustomIcon('album')" :src="getAppIcon('album')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-images text-gray-400 text-xl"></i>
                              </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph4') }}</span>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('album') }}</span>
                          </div>
                          <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
                              <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph5')}">
@@ -6678,7 +6678,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.30 更新日志 (当前最新) -->
+                            <!-- v1.31 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.31 幽灵弹窗拦截与新应用占位</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-22 16:16</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">Bug修复：</span>完美修复了某些极端情况下，用户关闭网页时记录了弹窗展示的状态，导致下一次一打开网页直接弹脸各类美化设置界面的“幽灵弹窗”Bug。现已在系统冷启动时强制注入了清理屏障。</li>
+                                    <li><span class="font-bold text-gray-800">新应用入驻：</span>第二屏桌面的占位符进行了一批更迭，正式为“备忘录”与“相册”两个全新系统级 App 分配了席位和专属默认图标，即将迎来属于它们的新功能。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.30 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7549,8 +7562,8 @@ const DEFAULT_APPS = {
     'game_center': { name: '游戏大厅', iconClass: 'fas fa-gamepad' },
     'sms': { name: '短信', iconClass: 'fas fa-comment-sms' },
     'jinjiang': { name: '晋江小说', iconClass: 'fas fa-book-reader' },
-    'ph3': { name: '占位', iconClass: 'fas fa-star' },
-    'ph4': { name: '占位', iconClass: 'fas fa-moon' },
+    'memo': { name: '备忘录', iconClass: 'fas fa-clipboard-list' },
+    'album': { name: '相册', iconClass: 'fas fa-images' },
     'ph5': { name: '占位', iconClass: 'fas fa-cloud' },
     'ph6': { name: '占位', iconClass: 'fas fa-leaf' }
 };
@@ -15331,6 +15344,16 @@ Structure:
             this.globalNotification.show = false;
             this.toast.show = false;
             this.offlineState.show = false; // 修复一进微信就出现线下模式的BUG
+            
+            // 修复：强行关闭所有美化相关弹窗，防止一打开网页就弹脸
+            if(this.statusBeautifyConfig) this.statusBeautifyConfig.show = false;
+            if(this.offlineBeautifyConfig) this.offlineBeautifyConfig.show = false;
+            if(this.chatlistBeautifyConfig) this.chatlistBeautifyConfig.show = false;
+            if(this.notificationBeautifyConfig) this.notificationBeautifyConfig.show = false;
+            if(this.voiceCallTheme) this.voiceCallTheme.showModal = false;
+            if(this.videoCallSettings) this.videoCallSettings.showModal = false;
+            if(this.globalImageSettings) this.globalImageSettings.show = false;
+            
             this.closeAllMenus();
 
             // 恢复系统级数据防清理状态
