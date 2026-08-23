@@ -156,6 +156,7 @@
         .desktop-item-dropzone { transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease; }
         .desktop-item-dropzone.is-dragged { opacity: 0.6; transform: scale(1.08); z-index: 50; }
         .desktop-item-dropzone.is-hovered { transform: scale(0.92); }
+        .desktop-list-move { transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
 
         .splash-fade-out {
             opacity: 0 !important;
@@ -2359,7 +2360,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <!-- 下方 App 与小部件矩阵 (全动态支持拖拽) -->
-                    <div class="w-full px-6 flex flex-wrap gap-x-4 gap-y-6 mb-auto z-10 items-start justify-center shrink-0 relative" style="font-size: var(--custom-font-size)">
+                    <transition-group name="desktop-list" tag="div" class="w-full px-6 flex flex-wrap gap-x-4 gap-y-6 mb-auto z-10 items-start content-start justify-start shrink-0 relative" style="font-size: var(--custom-font-size)">
                         <div v-for="(item, idx) in desktopLayout" :key="item.id" 
                              :class="[item.w === 'half' ? 'w-[calc(50%-8px)]' : (item.w === 'quarter' ? 'w-[calc(25%-12px)]' : 'w-full'), 'relative desktop-item-dropzone', draggedDesktopIndex === idx ? 'is-dragged' : '', hoverDesktopIndex === idx ? 'is-hovered' : '']"
                              :data-index="idx"
@@ -2372,9 +2373,18 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <!-- 删除组件按钮 -->
                                 <div v-if="isHomeEditing" @click.stop="removeDesktopItem(idx)" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
 
-                                <!-- 新增类型：自定义小组件商店渲染 -->
-                                <template v-if="item.type === 'custom_builder'">
-                                    <div class="w-full relative custom-widget-container" v-html="item.html"></div>
+                                <!-- 类型 1：App 网格 (已废弃但保留兼容) -->
+                                <template v-if="item.type === 'app_grid'">
+                                    <h3 @click="!isHomeEditing && editDesktopItem(idx, 'title', '修改网格标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2 w-full text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ item.title }}</h3>
+                                    <div class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full">
+                                        <div v-for="appId in item.apps" :key="appId" class="flex flex-col items-center gap-1.5 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(appId)}" @click="!isHomeEditing && handleAppClick(appId)">
+                                            <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden">
+                                                <img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover">
+                                                <i v-else :class="getDefaultIconClass(appId)"></i>
+                                            </div>
+                                            <span class="text-[10px] font-bold" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(appId) }}</span>
+                                        </div>
+                                    </div>
                                 </template>
 
                                 <!-- 类型 2：双拼气泡 -->
@@ -2424,7 +2434,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <!-- 类型 6：单应用快捷入口 -->
                                 <template v-else-if="item.type === 'single_app'">
                                     <div class="flex flex-col items-center gap-1.5 home-icon cursor-pointer w-full mt-2" :class="{'home-icon-custom': hasCustomIcon(item.appId)}" @click="!isHomeEditing && handleAppClick(item.appId)">
-                                        <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden mx-auto">
+                                        <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden mx-auto relative z-10">
                                             <img v-if="hasCustomIcon(item.appId)" :src="getAppIcon(item.appId)" class="w-full h-full object-cover">
                                             <i v-else :class="getDefaultIconClass(item.appId)"></i>
                                         </div>
@@ -2432,145 +2442,174 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
                                 </template>
 
+                                <!-- 类型 7：高定 HTML 自定义小组件 -->
+                                <template v-else-if="item.type === 'custom_widget'">
+                                    <div class="w-full relative" v-html="item.html"></div>
+                                </template>
+
                              </div>
                         </div>
-                    </div>
+                    </transition-group>
                 </div>
              </div> <!-- 第一页结束 -->
 
-             <!-- ================= 第二页 ================= -->
+             <!-- ================= 第二页 (现在支持编辑和拖动) ================= -->
              <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-8 px-5">
-                 
-                 <!-- 顶部灰白卡片 (支持编辑模式下抖动隐藏) -->
-                 <div v-if="page2Visibility.topCard" class="w-[90%] max-w-[340px] bg-white rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] mt-6 relative flex flex-col items-center pb-4 pt-12 border border-gray-100 transition-all" :class="isHomeEditing ? 'animate-wiggle' : ''">
-                     
-                     <div v-if="isHomeEditing" @click.stop="page2Visibility.topCard = false; saveData()" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
+                 <transition-group name="desktop-list" tag="div" class="w-full flex flex-wrap gap-x-4 gap-y-6 items-start content-start justify-start shrink-0 relative mt-6" style="font-size: var(--custom-font-size)">
+                     <div v-for="(item, idx) in page2Layout" :key="item.id"
+                          :class="[item.w === 'half' ? 'w-[calc(50%-8px)]' : (item.w === 'quarter' ? 'w-[calc(25%-12px)]' : 'w-full'), 'relative desktop-item-dropzone', draggedPage2Index === idx ? 'is-dragged' : '', hoverPage2Index === idx ? 'is-hovered' : '']"
+                          :data-index="idx"
+                          @touchstart="onPage2ItemTouchStart($event, idx)"
+                          @touchmove="onPage2ItemTouchMove"
+                          @touchend="onPage2ItemTouchEnd">
+                          
+                          <div class="flex flex-col items-center w-full relative" :class="isHomeEditing ? 'animate-wiggle' : ''">
+                              <div v-if="isHomeEditing" @click.stop="removePage2Item(idx)" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
 
-                     <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[80px] h-[80px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-50 cursor-pointer z-10 flex items-center justify-center" @click="!isHomeEditing && triggerPage2AvatarUpload()">
-                         <img v-if="page2Profile.avatar" :src="page2Profile.avatar" class="w-full h-full object-cover">
-                         <i v-else class="fas fa-user text-gray-300 text-3xl"></i>
-                     </div>
-                     
-                     <div class="absolute -top-7 left-[calc(50%+46px)] px-3.5 py-1 bg-white border border-gray-100 rounded-full text-gray-500 text-[11px] font-bold shadow-sm cursor-pointer z-20" @click="!isHomeEditing && editPage2Profile('status')">
-                         {{ page2Profile.status }}
-                     </div>
-                     <div class="absolute -top-2 left-[calc(50%+42px)] w-2 h-2 bg-white border border-gray-100 rounded-full z-20 shadow-sm"></div>
-                     
-                     <div class="w-full px-5 flex justify-between items-center mb-3">
-                         <div class="flex gap-2 text-gray-500 font-bold text-[11px]">
-                             <div class="bg-gray-100 px-3 py-1 rounded-full">{{ weatherTemp }}</div>
-                             <div class="bg-gray-100 px-3 py-1 rounded-full">{{ statusBar.batteryLevel }}%</div>
-                         </div>
-                         <div class="flex gap-1.5">
-                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]"><i class="fas fa-wifi"></i></div>
-                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]"><i class="fas fa-broadcast-tower"></i></div>
-                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[13px]"><i class="fab fa-bluetooth-b"></i></div>
-                         </div>
-                     </div>
-                     <div class="flex items-center gap-2 mb-4">
-                         <span class="text-gray-700 font-bold text-[12px] tracking-wide">{{ page2Profile.name }}</span>
-                         <span class="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer font-bold active:scale-95 transition" @click="!isHomeEditing && editPage2Profile('name')">修改</span>
-                     </div>
-                     <div class="w-[92%] bg-gray-50 border border-gray-100 rounded-xl py-2.5 flex justify-around items-center text-gray-400 text-[11px] font-bold">
-                         <div class="flex items-center gap-1.5"><i class="far fa-edit"></i> 修改资料</div>
-                         <div class="w-[1.5px] h-3 bg-gray-200"></div>
-                         <div class="flex items-center gap-1.5"><i class="fas fa-sun"></i> 我的等级</div>
-                         <div class="w-[1.5px] h-3 bg-gray-200"></div>
-                         <div class="flex items-center gap-1.5"><i class="far fa-image"></i> 存为照片</div>
-                     </div>
-                 </div>
-
-                 <!-- 第一排分栏结构 -->
-                 <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
-                     <!-- 左侧小卡片 -->
-                     <div v-if="page2Visibility.leftWidget" class="w-[145px] h-full bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] py-2.5 px-3 flex flex-col items-center justify-between border border-gray-100 relative transition-all" :class="isHomeEditing ? 'animate-wiggle' : ''">
-                         <div v-if="isHomeEditing" @click.stop="page2Visibility.leftWidget = false; saveData()" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
-                         
-                         <div class="w-full flex justify-between items-center">
-                             <div class="px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 text-[9px] font-bold cursor-pointer" @click="!isHomeEditing && editPage2Widget('title')">{{ page2Widget.title }}</div>
-                             <div class="flex gap-1 text-gray-300 text-[11px]"><i class="far fa-heart"></i><i class="far fa-heart"></i></div>
-                             <div class="w-[16px] h-[16px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-times"></i></div>
-                         </div>
-                         <div class="text-gray-400 text-[10px] font-bold">{{ formatAMPM(statusBar.time) }}</div>
-                         <div class="w-full flex items-center justify-between px-1">
-                             <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-left"></i></div>
-                             <div class="w-[55px] h-[55px] bg-gray-50 rounded-[12px] overflow-hidden cursor-pointer border border-gray-100" @click="!isHomeEditing && triggerPage2WidgetImgUpload()">
-                                 <img v-if="page2Widget.image" :src="page2Widget.image" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-image flex h-full items-center justify-center text-gray-300 text-xl"></i>
-                             </div>
-                             <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-right"></i></div>
-                         </div>
-                         <div class="flex items-center gap-1 text-gray-500 text-[9px] font-bold cursor-pointer" @click="!isHomeEditing && editPage2Widget('msg')">
-                             <i class="fas fa-mobile-alt text-[10px] text-gray-300"></i><span class="truncate max-w-[80px]">{{ page2Widget.msg }}</span>
-                         </div>
-                         <div class="w-full flex gap-2 px-1">
-                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold">同意</button>
-                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold">拒絕</button>
-                         </div>
-                     </div>
-                     
-                     <!-- 第一排右侧 App 动态拖拽网格 (前4个) -->
-                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5 relative">
-                         <div v-for="(appId, localIdx) in page2Apps.slice(0, 4)" :key="appId" 
-                              class="flex flex-col items-center gap-1 cursor-pointer transition-all desktop-item-dropzone"
-                              :class="[isHomeEditing ? 'animate-wiggle' : 'active:scale-95', draggedPage2AppIdx === localIdx ? 'is-dragged' : '', hoverPage2AppIdx === localIdx ? 'is-hovered' : '']"
-                              :data-index="localIdx"
-                              @touchstart="onPage2AppTouchStart($event, localIdx)" @touchmove="onPage2AppTouchMove" @touchend="onPage2AppTouchEnd"
-                              @click="!isHomeEditing && handleAppClick(appId)">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appId)}">
-                                 <img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover">
-                                 <i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500 truncate w-full text-center">{{ getAppName(appId) }}</span>
-                         </div>
-                     </div>
-                 </div>
-
-                 <!-- 第二排分栏结构 -->
-                 <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
-                     <!-- 第二排左侧 App 动态拖拽网格 (后4个) -->
-                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5 relative">
-                         <div v-for="(appId, localIdx) in page2Apps.slice(4, 8)" :key="appId" 
-                              class="flex flex-col items-center gap-1 cursor-pointer transition-all desktop-item-dropzone"
-                              :class="[isHomeEditing ? 'animate-wiggle' : 'active:scale-95', draggedPage2AppIdx === (localIdx + 4) ? 'is-dragged' : '', hoverPage2AppIdx === (localIdx + 4) ? 'is-hovered' : '']"
-                              :data-index="localIdx + 4"
-                              @touchstart="onPage2AppTouchStart($event, localIdx + 4)" @touchmove="onPage2AppTouchMove" @touchend="onPage2AppTouchEnd"
-                              @click="!isHomeEditing && handleAppClick(appId)">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appId)}">
-                                 <img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover">
-                                 <i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500 truncate w-full text-center">{{ getAppName(appId) }}</span>
-                         </div>
-                     </div>
-
-                     <!-- 右侧虚线框卡片 -->
-                     <div v-if="page2Visibility.rightWidget" class="w-[145px] h-full relative flex items-center justify-center transition-all" :class="isHomeEditing ? 'animate-wiggle' : ''">
-                         <div v-if="isHomeEditing" @click.stop="page2Visibility.rightWidget = false; saveData()" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-40 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
-                         
-                         <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
-                         
-                         <div class="w-[125px] h-full bg-white rounded-[20px] border-[1.5px] border-dashed border-gray-300 flex flex-col items-center pt-2.5 pb-1.5 px-2 relative z-20 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                             <div class="w-full flex justify-between items-center px-1 text-gray-400">
-                                 <div class="flex items-center gap-1"><span class="text-[9px] font-bold">{{ statusBar.batteryLevel }}%</span><div class="w-[16px] h-[8px] border-[1px] border-gray-300 rounded-[2px] p-[1px] relative flex items-center"><div class="h-full rounded-[1px] transition-all" :class="statusBar.isCharging ? 'bg-green-400' : 'bg-gray-300'" :style="{ width: statusBar.batteryLevel + '%' }"></div></div></div>
-                                 <div class="flex gap-1.5 text-[10px]"><i class="fas fa-wifi"></i><i class="far fa-heart"></i></div>
-                             </div>
-                             
-                             <div class="relative mt-2">
-                                 <div class="w-[80px] h-[80px] bg-gray-50 rounded-[16px] overflow-hidden cursor-pointer border border-gray-100" @click="!isHomeEditing && triggerPage2Widget2AvatarUpload()">
-                                     <img v-if="page2Widget2.avatar" :src="page2Widget2.avatar" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-user flex h-full items-center justify-center text-gray-300 text-3xl"></i>
+                              <!-- 第二页顶部名片 -->
+                              <template v-if="item.type === 'page2_profile'">
+                                 <div class="w-full bg-white rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] relative flex flex-col items-center pb-4 pt-12 border border-gray-100 mt-8 mb-2">
+                                     <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[80px] h-[80px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-50 cursor-pointer z-10 flex items-center justify-center" @click="!isHomeEditing && triggerPage2AvatarUpload()">
+                                         <img v-if="page2Profile.avatar" :src="page2Profile.avatar" class="w-full h-full object-cover">
+                                         <i v-else class="fas fa-user text-gray-300 text-3xl"></i>
+                                     </div>
+                                     <div class="absolute -top-7 left-[calc(50%+46px)] px-3.5 py-1 bg-white border border-gray-100 rounded-full text-gray-500 text-[11px] font-bold shadow-sm cursor-pointer z-20" @click="!isHomeEditing && editPage2Profile('status')">
+                                         {{ page2Profile.status }}
+                                     </div>
+                                     <div class="absolute -top-2 left-[calc(50%+42px)] w-2 h-2 bg-white border border-gray-100 rounded-full z-20 shadow-sm"></div>
+                                     
+                                     <div class="w-full px-5 flex justify-between items-center mb-3">
+                                         <div class="flex gap-2 text-gray-500 font-bold text-[11px]">
+                                             <div class="bg-gray-100 px-3 py-1 rounded-full">{{ weatherTemp }}</div>
+                                             <div class="bg-gray-100 px-3 py-1 rounded-full">{{ statusBar.batteryLevel }}%</div>
+                                         </div>
+                                         <div class="flex gap-1.5">
+                                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
+                                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                                 <i class="relative z-10 fas fa-wifi"></i>
+                                             </div>
+                                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
+                                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                                 <i class="relative z-10 fas fa-broadcast-tower"></i>
+                                             </div>
+                                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[13px]">
+                                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                                 <i class="relative z-10 fab fa-bluetooth-b"></i>
+                                             </div>
+                                         </div>
+                                     </div>
+                                     <div class="flex items-center gap-2 mb-4">
+                                         <span class="text-gray-700 font-bold text-[12px] tracking-wide">{{ page2Profile.name }}</span>
+                                         <span class="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer font-bold active:scale-95 transition" @click="!isHomeEditing && editPage2Profile('name')">修改</span>
+                                     </div>
+                                     <div class="w-[92%] bg-gray-50 border border-gray-100 rounded-xl py-2.5 flex justify-around items-center text-gray-400 text-[11px] font-bold">
+                                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="!isHomeEditing && showToast('功能开发中')">
+                                             <i class="far fa-edit"></i> 修改资料
+                                         </div>
+                                         <div class="w-[1.5px] h-3 bg-gray-200"></div>
+                                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="!isHomeEditing && showToast('当前等级: Lv.1')">
+                                             <i class="fas fa-sun"></i> 我的等级
+                                         </div>
+                                         <div class="w-[1.5px] h-3 bg-gray-200"></div>
+                                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="!isHomeEditing && showToast('已存为照片')">
+                                             <i class="far fa-image"></i> 存为照片
+                                         </div>
+                                     </div>
                                  </div>
-                                 <div class="absolute -right-4 top-2 px-2 py-0.5 bg-white border border-gray-100 rounded-full text-gray-500 text-[9px] font-bold shadow-sm cursor-pointer z-30" @click="!isHomeEditing && editPage2Widget2('status')">
-                                     {{ page2Widget2.status }}
+                              </template>
+
+                              <!-- 第二页部件 1 -->
+                              <template v-else-if="item.type === 'page2_widget1'">
+                                 <div class="w-full h-[145px] bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] py-2.5 px-3 flex flex-col items-center justify-between border border-gray-100">
+                                     <div class="w-full flex justify-between items-center">
+                                         <div class="px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 text-[9px] font-bold cursor-pointer" @click="!isHomeEditing && editPage2Widget('title')">{{ page2Widget.title }}</div>
+                                         <div class="flex gap-1 text-gray-300 text-[11px]">
+                                             <i class="far fa-heart"></i>
+                                             <i class="far fa-heart"></i>
+                                         </div>
+                                         <div class="w-[16px] h-[16px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-times"></i></div>
+                                     </div>
+                                     <div class="text-gray-400 text-[10px] font-bold">{{ formatAMPM(statusBar.time) }}</div>
+                                     <div class="w-full flex items-center justify-between px-1">
+                                         <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-left"></i></div>
+                                         <div class="w-[55px] h-[55px] bg-gray-50 rounded-[12px] overflow-hidden cursor-pointer border border-gray-100" @click="!isHomeEditing && triggerPage2WidgetImgUpload()">
+                                             <img v-if="page2Widget.image" :src="page2Widget.image" class="w-full h-full object-cover">
+                                             <i v-else class="fas fa-image flex h-full items-center justify-center text-gray-300 text-xl"></i>
+                                         </div>
+                                         <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-right"></i></div>
+                                     </div>
+                                     <div class="flex items-center gap-1 text-gray-500 text-[9px] font-bold cursor-pointer" @click="!isHomeEditing && editPage2Widget('msg')">
+                                         <i class="fas fa-mobile-alt text-[10px] text-gray-300"></i>
+                                         <span class="truncate max-w-[80px]">{{ page2Widget.msg }}</span>
+                                     </div>
+                                     <div class="w-full flex gap-2 px-1">
+                                         <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="!isHomeEditing && showToast('已同意')">同意</button>
+                                         <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="!isHomeEditing && showToast('已拒绝')">拒絕</button>
+                                     </div>
                                  </div>
-                             </div>
-                             
-                             <div class="mt-auto mb-0 w-9 h-[18px] bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-[10px]"><i class="fas fa-paw"></i></div>
-                         </div>
-                         <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
+                              </template>
+
+                              <!-- 第二页部件 2 -->
+                              <template v-else-if="item.type === 'page2_widget2'">
+                                 <div class="w-full h-[145px] relative flex items-center justify-center">
+                                     <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
+                                         <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
+                                     </div>
+                                     <div class="w-[125px] h-full bg-white rounded-[20px] border-[1.5px] border-dashed border-gray-300 flex flex-col items-center pt-2.5 pb-1.5 px-2 relative z-20 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                                         <div class="w-full flex justify-between items-center px-1 text-gray-400">
+                                             <div class="flex items-center gap-1">
+                                                 <span class="text-[9px] font-bold">{{ statusBar.batteryLevel }}%</span>
+                                                 <div class="w-[16px] h-[8px] border-[1px] border-gray-300 rounded-[2px] p-[1px] relative flex items-center">
+                                                     <div class="h-full rounded-[1px] transition-all" :class="statusBar.isCharging ? 'bg-green-400' : 'bg-gray-300'" :style="{ width: statusBar.batteryLevel + '%' }"></div>
+                                                     <div class="absolute -right-[2px] top-1/2 -translate-y-1/2 w-[1px] h-[3px] bg-gray-300 rounded-r-[1px]"></div>
+                                                 </div>
+                                             </div>
+                                             <div class="flex gap-1.5 text-[10px]">
+                                                 <i class="fas fa-wifi"></i>
+                                                 <i class="far fa-heart"></i>
+                                             </div>
+                                         </div>
+                                         
+                                         <div class="relative mt-2">
+                                             <div class="w-[80px] h-[80px] bg-gray-50 rounded-[16px] overflow-hidden cursor-pointer border border-gray-100" @click="!isHomeEditing && triggerPage2Widget2AvatarUpload()">
+                                                 <img v-if="page2Widget2.avatar" :src="page2Widget2.avatar" class="w-full h-full object-cover">
+                                                 <i v-else class="fas fa-user flex h-full items-center justify-center text-gray-300 text-3xl"></i>
+                                             </div>
+                                             <div class="absolute -right-4 top-2 px-2 py-0.5 bg-white border border-gray-100 rounded-full text-gray-500 text-[9px] font-bold shadow-sm cursor-pointer z-30" @click="!isHomeEditing && editPage2Widget2('status')">
+                                                 {{ page2Widget2.status }}
+                                             </div>
+                                             <div class="absolute right-0 top-6 w-1.5 h-1.5 bg-white border border-gray-100 rounded-full z-30 shadow-sm"></div>
+                                         </div>
+                                         
+                                         <div class="mt-auto mb-0 w-9 h-[18px] bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-[10px] cursor-pointer active:scale-95 transition" @click="!isHomeEditing && showToast('🐾 喵~')">
+                                             <i class="fas fa-paw"></i>
+                                         </div>
+                                     </div>
+                                     <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
+                                         <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
+                                     </div>
+                                 </div>
+                              </template>
+
+                              <!-- 单应用图标 -->
+                              <template v-else-if="item.type === 'single_app'">
+                                  <div class="flex flex-col items-center gap-1.5 home-icon cursor-pointer w-full mt-2" :class="{'home-icon-custom': hasCustomIcon(item.appId)}" @click="!isHomeEditing && handleAppClick(item.appId)">
+                                      <div class="w-[46px] h-[46px] rounded-2xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden mx-auto relative z-10">
+                                          <img v-if="hasCustomIcon(item.appId)" :src="getAppIcon(item.appId)" class="w-full h-full object-cover">
+                                          <i v-else :class="getDefaultIconClass(item.appId)"></i>
+                                      </div>
+                                      <span class="text-[10px] font-bold w-full text-center truncate" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(item.appId) }}</span>
+                                  </div>
+                              </template>
+
+                              <!-- 自定义 HTML 组件 -->
+                              <template v-else-if="item.type === 'custom_widget'">
+                                  <div class="w-full relative" v-html="item.html"></div>
+                              </template>
+
+                          </div>
                      </div>
-                 </div>
+                 </transition-group>
              </div> <!-- 闭合第二页 -->
              
          </div> <!-- 闭合滑动分页容器 -->
@@ -6679,14 +6718,14 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.34 桌面全面解绑与高级自定义组件</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-23 16:12</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.34 桌面全面解耦与自定义组件重构</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-23 18:17</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">全自由桌面：</span>打碎了原本绑死的“4应用网格”。现在桌面上所有的 App 都是独立的实体，你可以将它们**一个一个地拖拽**，自由穿插在便签、相框等小组件之间！如果你的旧版桌面有旧的网格，系统会自动帮你解绑拆分成单独的 App 以兼容新版。</li>
-                                    <li><span class="font-bold text-gray-800">第二页编辑：</span>第二页的灰白卡片、心情卡片现在全部支持在长按编辑模式下点击 <code>-</code> 隐藏或删除。第二页的 8 个应用图标也已支持长按并相互拖拽换位。</li>
-                                    <li><span class="font-bold text-gray-800">手搓代码组件：</span>小组件商店迎来重磅级更新！新增“高级自定义组件”入口，现在你可以完全跳出模板的限制，直接输入 HTML 与 Tailwind CSS 代码，自由设计、预览并添加到桌面上。</li>
-                                    <li><span class="font-bold text-gray-800">UI 修复：</span>完美修复了“主题美化”选项卡中预览画面时，红包与转账卡片被外部 flex 容器挤压变形的 Bug。</li>
+                                    <li><span class="font-bold text-gray-800">修复：</span>修复了“主题美化”效果预览界面中，红包和转账卡片高度被挤压变形的 UI 问题。</li>
+                                    <li><span class="font-bold text-gray-800">重构：</span>重构了“小组件商店”。现在抛弃了固定的呆板组件，采用了类似心声美化界面的“高定”设计！你可以直接编写 HTML 和 CSS 代码来自定义属于你的专属桌面小组件，并实时预览效果、保存为预设。</li>
+                                    <li><span class="font-bold text-gray-800">优化：</span>桌面图标彻底解耦。抛弃了以前 4 个 App 绑在一起移动的网格设定，现在所有 App 都是独立个体，可以一个一个自由拖拽重排，并且加入了丝滑的拖拽归位动画。</li>
+                                    <li><span class="font-bold text-gray-800">新增：</span>第二页桌面（副屏）现已全面开放编辑！长按即可对第二页的各类卡片和应用进行随意拖拽、换位和删除操作。</li>
                                 </ul>
                             </div>
 
@@ -7311,7 +7350,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div class="chat-bubble chat-bubble-user text-sm max-w-[70%] shadow-sm">界面终于变长了，现在下面也不会被挡住了。</div>
                             </div>
                             <!-- 预览：修复为 iOS 新版红包与转账 UI -->
-                            <!-- 加入 shrink-0 防止被 flex 容器挤压变形 -->
                             <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-2 shrink-0">
                                 <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
                                     <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border bg-red-50 text-red-500 border-red-100"><i class="fas fa-envelope text-lg"></i></div>
@@ -7320,12 +7358,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="text-[11px] mt-0.5 text-red-500">微信红包</div>
                                     </div>
                                 </div>
-                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between shrink-0">
+                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
                                     <span>Red Packet</span><i class="fas fa-chevron-right text-[8px] opacity-50"></i>
                                 </div>
                             </div>
                             
-                            <!-- 加入 shrink-0 防止被 flex 容器挤压变形 -->
                             <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-1 mb-4 shrink-0">
                                 <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
                                     <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border bg-orange-50 text-orange-500 border-orange-100"><i class="fas fa-exchange-alt"></i></div>
@@ -7334,7 +7371,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="text-[11px] mt-0.5 text-orange-500">转账给你</div>
                                     </div>
                                 </div>
-                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between shrink-0">
+                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
                                     <span>Transfer</span><i class="fas fa-chevron-right text-[8px] opacity-50"></i>
                                 </div>
                             </div>
@@ -7506,71 +7543,97 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </transition>
 
-    <!-- 桌面小组件商店 -->
+    <!-- 桌面小组件商店 (重构版) -->
     <transition name="app-slide">
-        <div v-if="themesPage === 'widget_store' || showWidgetStoreModal" class="fixed inset-0 z-[1200] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
+        <div v-if="themesPage === 'widget_store' || showWidgetStoreModal" class="fixed inset-0 z-[1200] bg-[#f4f4f6] flex flex-col font-sans pb-safe">
             <header class="bg-white/90 backdrop-blur-md h-[90px] pt-10 flex items-center justify-between px-4 border-b border-gray-200 sticky top-0 z-10 shrink-0 shadow-sm">
                 <button @click="closeWidgetStore" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:scale-95 transition"><i class="fas" :class="showWidgetStoreModal ? 'fa-chevron-down' : 'fa-chevron-left'"></i></button>
-                <h1 class="font-bold text-gray-900 text-[17px]">小组件商店</h1>
+                <h1 class="font-bold text-gray-900 text-[17px]">高定小组件商店</h1>
                 <div class="w-8"></div>
             </header>
-            <div class="flex-1 overflow-y-auto p-5 space-y-4">
-                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
+            <div class="flex-1 overflow-y-auto p-4 gap-4 flex flex-col">
+                <!-- 原生内置小组件 (可折叠或放上面) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between shrink-0">
                     <div>
-                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-th-large text-blue-500 mr-1"></i>核心应用网格</div>
-                        <div class="text-[11px] text-gray-400">包含微信等4个应用。占据半排。</div>
+                        <div class="font-bold text-[14px] text-gray-900 mb-1">系统内置基础组件库</div>
+                        <div class="text-[10px] text-gray-400">天数、相册、应用等传统占位组件</div>
                     </div>
-                    <button @click="addDesktopItem('app_grid')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
-                </div>
-                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-heart text-pink-500 mr-1"></i>双拼气泡头像</div>
-                        <div class="text-[11px] text-gray-400">两个小头像气泡组合。占据半排。</div>
-                    </div>
-                    <button @click="addDesktopItem('bubbles')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
-                </div>
-                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-calendar-day text-orange-500 mr-1"></i>相伴天数记录</div>
-                        <div class="text-[11px] text-gray-400">带有胶囊装潢的天数器。占据全排。</div>
-                    </div>
-                    <button @click="addDesktopItem('days')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
-                </div>
-                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div>
-                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-sticky-note text-yellow-500 mr-1"></i>便签留言板</div>
-                        <div class="text-[11px] text-gray-400">纯文字透明毛玻璃便签。占据全排。</div>
-                    </div>
-                    <button @click="addDesktopItem('text_memo')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
-                </div>
-                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div class="pr-2">
-                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-images text-purple-500 mr-1"></i>大画幅相框</div>
-                        <div class="text-[11px] text-gray-400">展示单张正方形大照片。占据半排。</div>
-                    </div>
-                    <button @click="addDesktopItem('large_photo')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
-                </div>
-                <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex items-center justify-between">
-                    <div class="pr-2">
-                        <div class="font-bold text-[15px] text-gray-900 mb-1"><i class="fas fa-square-root-alt text-teal-500 mr-1"></i>单个应用入口</div>
-                        <div class="text-[11px] text-gray-400">独立的小正方形应用快捷入口。可组合摆放。</div>
-                    </div>
-                    <button @click="addDesktopItem('single_app')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                    <button @click="showLegacyWidgetModal = true" class="px-4 py-1.5 bg-gray-100 text-gray-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">打开列表</button>
                 </div>
 
-                <!-- 手搓自定义代码商店入口 -->
-                <div class="mt-4 border-t border-gray-200 pt-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[13px] font-bold text-gray-600 tracking-widest">高级自定义组件 (手搓代码)</span>
-                        <button @click="addDesktopItem('custom_builder')" class="px-4 py-1.5 bg-black text-white font-bold text-xs rounded-full active:scale-95 transition shadow-sm">添加到桌面</button>
+                <!-- 预览区 -->
+                <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 shrink-0 mt-2">
+                    <div class="text-xs text-gray-400 mb-2 text-center font-bold tracking-widest">效果预览</div>
+                    <div class="bg-white rounded-2xl shadow-sm p-4 min-h-[100px] flex flex-col items-center justify-center relative overflow-hidden" v-html="customWidgetConfig.tempHtml">
                     </div>
-                    <textarea v-model="customWidgetBuilder.html" placeholder="在这里写入 HTML 与 Tailwind CSS 代码，渲染属于你的专属小组件..." class="w-full h-40 bg-white p-3.5 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none shadow-inner"></textarea>
-                    <div class="text-[10px] text-gray-400 mt-2 px-1 leading-relaxed">
-                        支持任意 HTML 标签，支持完整的 Tailwind CSS 类名控制样式。<br>
-                        例如：&lt;div class="w-full h-full bg-white rounded-2xl shadow flex items-center justify-center font-bold text-gray-500"&gt;自定义组件&lt;/div&gt;
+                </div>
+
+                <!-- 代码编辑区 -->
+                <div class="flex flex-col shrink-0">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500 tracking-wider">HTML 代码</span>
+                    </div>
+                    <textarea v-model="customWidgetConfig.tempHtml" placeholder="输入你想展现的 HTML 内容结构..." class="w-full h-24 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
+                    
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-gray-500 tracking-wider">CSS 代码 (作用于全局，请加特殊类名)</span>
+                    </div>
+                    <textarea v-model="customWidgetConfig.tempCss" @input="updateDynamicStyles" placeholder="输入 CSS 代码...\n例如: \n.my-custom-widget { background: #000; color: #fff; }" class="w-full h-24 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
+                    
+                    <div class="flex gap-2 mb-2 shrink-0">
+                        <button @click="addCustomWidgetToDesktop" class="flex-1 bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">添加到桌面</button>
+                        <button @click="saveCustomWidgetPreset" class="w-24 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl text-xs font-bold active:bg-gray-50 transition shadow-sm">保存预设</button>
+                    </div>
+                </div>
+
+                <!-- 预设列表 -->
+                <div class="bg-white rounded-[20px] overflow-hidden shadow-sm border border-gray-100 shrink-0 mb-10">
+                    <div class="p-3 border-b border-gray-50 bg-gray-50/50 text-[11px] font-bold text-gray-400 tracking-wider">我保存的组件预设</div>
+                    <div v-if="customWidgetConfig.presets.length === 0" class="p-6 text-center text-gray-400 text-xs">暂无预设</div>
+                    <div v-else class="divide-y divide-gray-50">
+                        <div v-for="(preset, idx) in customWidgetConfig.presets" :key="idx" class="p-4 flex items-center justify-between">
+                            <span class="font-bold text-gray-700 text-[13px] truncate">{{ preset.name }}</span>
+                            <div class="flex items-center gap-3">
+                                <button @click="loadCustomWidgetPreset(preset)" class="w-7 h-7 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center active:bg-blue-100" title="编辑预览"><i class="fas fa-edit text-[10px]"></i></button>
+                                <button @click="addPresetWidgetToDesktop(preset)" class="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:bg-green-100" title="直接添加到桌面"><i class="fas fa-plus text-[10px]"></i></button>
+                                <button @click="deleteCustomWidgetPreset(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:bg-red-100"><i class="fas fa-trash text-[10px]"></i></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- 原生内置小组件列表弹窗 -->
+            <transition name="scale">
+                <div v-if="showLegacyWidgetModal" class="fixed inset-0 z-[1210] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-5 flex flex-col font-sans max-h-[80vh]">
+                        <h3 class="text-center font-bold text-gray-900 text-lg mb-4 shrink-0">系统内置组件</h3>
+                        <div class="flex-1 overflow-y-auto space-y-3 pb-2">
+                            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex items-center justify-between">
+                                <div><div class="font-bold text-[14px] text-gray-900 mb-1"><i class="fas fa-heart text-pink-500 mr-1"></i>双拼气泡头像</div></div>
+                                <button @click="addDesktopItem('bubbles'); showLegacyWidgetModal = false" class="px-3 py-1.5 bg-black text-white font-bold text-[11px] rounded-full active:scale-95 transition shrink-0">添加</button>
+                            </div>
+                            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex items-center justify-between">
+                                <div><div class="font-bold text-[14px] text-gray-900 mb-1"><i class="fas fa-calendar-day text-orange-500 mr-1"></i>相伴天数记录</div></div>
+                                <button @click="addDesktopItem('days'); showLegacyWidgetModal = false" class="px-3 py-1.5 bg-black text-white font-bold text-[11px] rounded-full active:scale-95 transition shrink-0">添加</button>
+                            </div>
+                            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex items-center justify-between">
+                                <div><div class="font-bold text-[14px] text-gray-900 mb-1"><i class="fas fa-sticky-note text-yellow-500 mr-1"></i>便签留言板</div></div>
+                                <button @click="addDesktopItem('text_memo'); showLegacyWidgetModal = false" class="px-3 py-1.5 bg-black text-white font-bold text-[11px] rounded-full active:scale-95 transition shrink-0">添加</button>
+                            </div>
+                            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex items-center justify-between">
+                                <div><div class="font-bold text-[14px] text-gray-900 mb-1"><i class="fas fa-images text-purple-500 mr-1"></i>大画幅相框</div></div>
+                                <button @click="addDesktopItem('large_photo'); showLegacyWidgetModal = false" class="px-3 py-1.5 bg-black text-white font-bold text-[11px] rounded-full active:scale-95 transition shrink-0">添加</button>
+                            </div>
+                            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex items-center justify-between">
+                                <div><div class="font-bold text-[14px] text-gray-900 mb-1"><i class="fas fa-square-root-alt text-teal-500 mr-1"></i>单个应用入口</div></div>
+                                <button @click="addDesktopItem('single_app'); showLegacyWidgetModal = false" class="px-3 py-1.5 bg-black text-white font-bold text-[11px] rounded-full active:scale-95 transition shrink-0">添加</button>
+                            </div>
+                        </div>
+                        <button @click="showLegacyWidgetModal = false" class="w-full mt-2 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm shadow-sm active:scale-95 transition">关闭</button>
+                    </div>
+                </div>
+            </transition>
         </div>
     </transition>
 
@@ -7769,6 +7832,11 @@ const app = createApp({
             timestampModeModal: { show: false },
             groupManageModal: { show: false }, groupAdminModal: { show: false, isAdding: false, selectedIds:[] }, takeoutModal: { show: false, activeTab: 'home', note: '', selectedItem: null, storeList:[], searchKeyword: '', isSearching: false, searchResults: [], hotSales: [], isGeneratingDesc: false, cartItems: [] },
             headerClickTimer: null,
+            customWidgetConfig: { show: false, tempHtml: '', tempCss: '', presets: [] },
+            showLegacyWidgetModal: false,
+            page2Layout: [],
+            draggedPage2Index: -1,
+            hoverPage2Index: -1,
             // 新增：心声卡片美化数据
             statusBeautifyConfig: { 
                 show: false, 
@@ -7820,13 +7888,6 @@ const app = createApp({
             dockLongPressTimer: null,
             desktopPhotoUploadIndex: -1,
             desktopPhotoTargetField: '',
-            
-            // 第二页编辑与拖拽新变量
-            page2Apps: ['couple_space', 'game_center', 'sms', 'jinjiang', 'memo', 'album', 'ph5', 'ph6'],
-            draggedPage2AppIdx: -1,
-            hoverPage2AppIdx: -1,
-            page2Visibility: { topCard: true, leftWidget: true, rightWidget: true },
-            customWidgetBuilder: { html: '<div class="w-full h-[100px] bg-white/60 backdrop-blur-md rounded-2xl shadow flex items-center justify-center font-bold text-gray-500 border border-white">自定义组件</div>' },
 
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
@@ -10585,7 +10646,8 @@ const app = createApp({
                 const statusCss = this.statusBeautifyConfig?.activeCSS || '';
                 const chatlistCss = this.chatlistBeautifyConfig?.activeCSS || '';
                 const notifCss = this.notificationBeautifyConfig?.activeCSS || '';
-                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss + '\n' + statusCss + '\n' + chatlistCss + '\n' + notifCss;
+                const customWidgetCss = this.customWidgetConfig?.tempCss || '';
+                styleTag.innerHTML = bubbleCss + '\n' + themeCss + '\n' + offlineCss + '\n' + voiceCss + '\n' + statusCss + '\n' + chatlistCss + '\n' + notifCss + '\n' + customWidgetCss;
             }
         },
         resetBeautify(type) {
@@ -15524,35 +15586,33 @@ Structure:
                 if(typeof this.injectPresetFonts === 'function') this.injectPresetFonts();
             }, 1000);
 
-            // 【非常重要】：将老版本写死在 HTML 的主页配置升级为动态数组
+            // 【非常重要】：将老版本写死在 HTML 的主页配置升级为动态数组，拆分解耦独立APP
             if (!this.desktopLayout || this.desktopLayout.length === 0) {
                 this.desktopLayout = [
-                    { id: 'single_wechat', type: 'single_app', appId: 'wechat', w: 'quarter' },
-                    { id: 'single_themes', type: 'single_app', appId: 'themes', w: 'quarter' },
-                    { id: 'single_worldbook', type: 'single_app', appId: 'worldbook', w: 'quarter' },
-                    { id: 'single_settings', type: 'single_app', appId: 'settings', w: 'quarter' },
+                    { id: 'app_wechat', type: 'single_app', appId: 'wechat', w: 'quarter' },
+                    { id: 'app_themes', type: 'single_app', appId: 'themes', w: 'quarter' },
+                    { id: 'app_worldbook', type: 'single_app', appId: 'worldbook', w: 'quarter' },
+                    { id: 'app_settings', type: 'single_app', appId: 'settings', w: 'quarter' },
                     { id: 'widget_bubbles_1', type: 'bubbles', w: 'half', bubble1: this.customWidgets?.[0]?.bubble || '状态', img1: this.customWidgets?.[0]?.image || '', bubble2: this.customWidgets?.[1]?.bubble || '心情', img2: this.customWidgets?.[1]?.image || '' },
                     { id: 'widget_days_1', type: 'days', title: this.homeConfig?.rightWidgetTitle || '6440天', w: 'full' }
                 ];
                 this.saveData();
-            } else {
-                // 兼容逻辑：把用户原来旧版的 app_grid 解绑拆碎为单独的 app
-                let newLayout = [];
-                let hasMigrated = false;
-                this.desktopLayout.forEach(item => {
-                    if (item.type === 'app_grid') {
-                        hasMigrated = true;
-                        (item.apps || []).forEach(appId => {
-                            newLayout.push({ id: 'single_app_' + Date.now() + Math.random(), type: 'single_app', appId: appId, w: 'quarter' });
-                        });
-                    } else {
-                        newLayout.push(item);
-                    }
-                });
-                if (hasMigrated) {
-                    this.desktopLayout = newLayout;
-                    this.saveData();
-                }
+            }
+            if (!this.page2Layout || this.page2Layout.length === 0) {
+                this.page2Layout = [
+                    { id: 'p2_top', type: 'page2_profile', w: 'full' },
+                    { id: 'p2_w1', type: 'page2_widget1', w: 'half' },
+                    { id: 'p2_a1', type: 'single_app', appId: 'couple_space', w: 'quarter' },
+                    { id: 'p2_a2', type: 'single_app', appId: 'game_center', w: 'quarter' },
+                    { id: 'p2_a3', type: 'single_app', appId: 'sms', w: 'quarter' },
+                    { id: 'p2_a4', type: 'single_app', appId: 'jinjiang', w: 'quarter' },
+                    { id: 'p2_a5', type: 'single_app', appId: 'memo', w: 'quarter' },
+                    { id: 'p2_a6', type: 'single_app', appId: 'album', w: 'quarter' },
+                    { id: 'p2_a7', type: 'single_app', appId: 'ph5', w: 'quarter' },
+                    { id: 'p2_a8', type: 'single_app', appId: 'ph6', w: 'quarter' },
+                    { id: 'p2_w2', type: 'page2_widget2', w: 'half' }
+                ];
+                this.saveData();
             }
         },
 
@@ -15633,6 +15693,85 @@ Structure:
                 this.saveData();
             });
         },
+        onPage2ItemTouchStart(e, idx) {
+            if(!this.isHomeEditing) return;
+            this.draggedPage2Index = idx;
+            this.hoverPage2Index = idx;
+        },
+        onPage2ItemTouchMove(e) {
+            if(!this.isHomeEditing || this.draggedPage2Index === -1) return;
+            e.preventDefault(); 
+            const touch = e.touches[0];
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if(targetEl) {
+                const dropzone = targetEl.closest('.desktop-item-dropzone');
+                if(dropzone) {
+                    const targetIdx = parseInt(dropzone.getAttribute('data-index'));
+                    if(!isNaN(targetIdx) && targetIdx !== this.hoverPage2Index) {
+                        this.hoverPage2Index = targetIdx;
+                    }
+                }
+            }
+        },
+        onPage2ItemTouchEnd() {
+            if(this.draggedPage2Index !== -1 && this.hoverPage2Index !== -1 && this.draggedPage2Index !== this.hoverPage2Index) {
+                const items = this.page2Layout;
+                const temp = items[this.draggedPage2Index];
+                items[this.draggedPage2Index] = items[this.hoverPage2Index];
+                items[this.hoverPage2Index] = temp;
+                this.saveData();
+            }
+            this.draggedPage2Index = -1;
+            this.hoverPage2Index = -1;
+        },
+        removePage2Item(idx) {
+            this.showConfirm('确定从第二页移除这个组件吗？', () => {
+                this.page2Layout.splice(idx, 1);
+                this.saveData();
+            });
+        },
+        saveCustomWidgetPreset() {
+            if(!this.customWidgetConfig.tempHtml) return this.showToast('HTML 代码不能为空');
+            this.showInput('保存组件预设', '', '请输入组件名称', (name) => {
+                if(name) {
+                    this.customWidgetConfig.presets.push({ name: name, html: this.customWidgetConfig.tempHtml, css: this.customWidgetConfig.tempCss });
+                    this.updateDynamicStyles();
+                    this.saveData();
+                    this.showToast('预设已保存');
+                }
+            });
+        },
+        loadCustomWidgetPreset(preset) {
+            this.customWidgetConfig.tempHtml = preset.html;
+            this.customWidgetConfig.tempCss = preset.css;
+            this.updateDynamicStyles();
+            this.saveData();
+            this.showToast(`已加载预设: ${preset.name}`);
+        },
+        addCustomWidgetToDesktop() {
+            if(!this.customWidgetConfig.tempHtml) return this.showToast('HTML 代码不能为空');
+            const uid = 'custom_' + Date.now();
+            this.desktopLayout.push({ id: uid, type: 'custom_widget', w: 'full', html: this.customWidgetConfig.tempHtml });
+            this.updateDynamicStyles();
+            this.saveData();
+            this.closeWidgetStore();
+            this.showToast('组件已添加到桌面第一页底端');
+        },
+        addPresetWidgetToDesktop(preset) {
+            const uid = 'custom_' + Date.now();
+            this.desktopLayout.push({ id: uid, type: 'custom_widget', w: 'full', html: preset.html });
+            this.customWidgetConfig.tempCss += '\n' + preset.css;
+            this.updateDynamicStyles();
+            this.saveData();
+            this.closeWidgetStore();
+            this.showToast('预设组件已添加到桌面第一页底端');
+        },
+        deleteCustomWidgetPreset(idx) {
+            this.showConfirm('确定删除此组件预设吗？', () => {
+                this.customWidgetConfig.presets.splice(idx, 1);
+                this.saveData();
+            });
+        },
         openWidgetStore() {
             this.showWidgetStoreModal = true;
         },
@@ -15678,48 +15817,10 @@ Structure:
                 return;
             }
             
-            if (type === 'custom_builder') {
-                if (!this.customWidgetBuilder.html.trim()) return this.showToast('代码不能为空');
-                newItem.html = this.customWidgetBuilder.html;
-            }
-
             this.desktopLayout.push(newItem);
             this.saveData();
             this.closeWidgetStore();
             this.showToast('已添加到桌面底端');
-        },
-
-        // --- 第二页 App 拖拽重排逻辑 ---
-        onPage2AppTouchStart(e, idx) {
-            if(!this.isHomeEditing) return;
-            this.draggedPage2AppIdx = idx;
-            this.hoverPage2AppIdx = idx;
-        },
-        onPage2AppTouchMove(e) {
-            if(!this.isHomeEditing || this.draggedPage2AppIdx === -1) return;
-            e.preventDefault(); 
-            const touch = e.touches[0];
-            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-            if(targetEl) {
-                const dropzone = targetEl.closest('.desktop-item-dropzone');
-                if(dropzone) {
-                    const targetIdx = parseInt(dropzone.getAttribute('data-index'));
-                    if(!isNaN(targetIdx) && targetIdx !== this.hoverPage2AppIdx) {
-                        this.hoverPage2AppIdx = targetIdx;
-                    }
-                }
-            }
-        },
-        onPage2AppTouchEnd() {
-            if(this.draggedPage2AppIdx !== -1 && this.hoverPage2AppIdx !== -1 && this.draggedPage2AppIdx !== this.hoverPage2AppIdx) {
-                const items = this.page2Apps;
-                const temp = items[this.draggedPage2AppIdx];
-                items[this.draggedPage2AppIdx] = items[this.hoverPage2AppIdx];
-                items[this.hoverPage2AppIdx] = temp;
-                this.saveData();
-            }
-            this.draggedPage2AppIdx = -1;
-            this.hoverPage2AppIdx = -1;
         },
         // --- 结束 ---
 
