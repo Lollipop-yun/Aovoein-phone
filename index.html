@@ -2372,18 +2372,9 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <!-- 删除组件按钮 -->
                                 <div v-if="isHomeEditing" @click.stop="removeDesktopItem(idx)" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
 
-                                <!-- 类型 1：App 网格 -->
-                                <template v-if="item.type === 'app_grid'">
-                                    <h3 @click="!isHomeEditing && editDesktopItem(idx, 'title', '修改网格标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2 w-full text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ item.title }}</h3>
-                                    <div class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full">
-                                        <div v-for="appId in item.apps" :key="appId" class="flex flex-col items-center gap-1.5 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(appId)}" @click="!isHomeEditing && handleAppClick(appId)">
-                                            <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden">
-                                                <img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover">
-                                                <i v-else :class="getDefaultIconClass(appId)"></i>
-                                            </div>
-                                            <span class="text-[10px] font-bold" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(appId) }}</span>
-                                        </div>
-                                    </div>
+                                <!-- 新增类型：自定义小组件商店渲染 -->
+                                <template v-if="item.type === 'custom_builder'">
+                                    <div class="w-full relative custom-widget-container" v-html="item.html"></div>
                                 </template>
 
                                 <!-- 类型 2：双拼气泡 -->
@@ -2450,15 +2441,17 @@ document.addEventListener("DOMContentLoaded", () => {
              <!-- ================= 第二页 ================= -->
              <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-8 px-5">
                  
-                 <!-- 顶部灰白卡片 -->
-                 <div class="w-[90%] max-w-[340px] bg-white rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] mt-6 relative flex flex-col items-center pb-4 pt-12 border border-gray-100">
+                 <!-- 顶部灰白卡片 (支持编辑模式下抖动隐藏) -->
+                 <div v-if="page2Visibility.topCard" class="w-[90%] max-w-[340px] bg-white rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] mt-6 relative flex flex-col items-center pb-4 pt-12 border border-gray-100 transition-all" :class="isHomeEditing ? 'animate-wiggle' : ''">
                      
-                     <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[80px] h-[80px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-50 cursor-pointer z-10 flex items-center justify-center" @click="triggerPage2AvatarUpload">
+                     <div v-if="isHomeEditing" @click.stop="page2Visibility.topCard = false; saveData()" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
+
+                     <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[80px] h-[80px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-50 cursor-pointer z-10 flex items-center justify-center" @click="!isHomeEditing && triggerPage2AvatarUpload()">
                          <img v-if="page2Profile.avatar" :src="page2Profile.avatar" class="w-full h-full object-cover">
                          <i v-else class="fas fa-user text-gray-300 text-3xl"></i>
                      </div>
                      
-                     <div class="absolute -top-7 left-[calc(50%+46px)] px-3.5 py-1 bg-white border border-gray-100 rounded-full text-gray-500 text-[11px] font-bold shadow-sm cursor-pointer z-20" @click="editPage2Profile('status')">
+                     <div class="absolute -top-7 left-[calc(50%+46px)] px-3.5 py-1 bg-white border border-gray-100 rounded-full text-gray-500 text-[11px] font-bold shadow-sm cursor-pointer z-20" @click="!isHomeEditing && editPage2Profile('status')">
                          {{ page2Profile.status }}
                      </div>
                      <div class="absolute -top-2 left-[calc(50%+42px)] w-2 h-2 bg-white border border-gray-100 rounded-full z-20 shadow-sm"></div>
@@ -2469,175 +2462,113 @@ document.addEventListener("DOMContentLoaded", () => {
                              <div class="bg-gray-100 px-3 py-1 rounded-full">{{ statusBar.batteryLevel }}%</div>
                          </div>
                          <div class="flex gap-1.5">
-                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
-                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                 <i class="relative z-10 fas fa-wifi"></i>
-                             </div>
-                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
-                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                 <i class="relative z-10 fas fa-broadcast-tower"></i>
-                             </div>
-                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[13px]">
-                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                 <i class="relative z-10 fab fa-bluetooth-b"></i>
-                             </div>
+                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]"><i class="fas fa-wifi"></i></div>
+                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]"><i class="fas fa-broadcast-tower"></i></div>
+                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[13px]"><i class="fab fa-bluetooth-b"></i></div>
                          </div>
                      </div>
                      <div class="flex items-center gap-2 mb-4">
                          <span class="text-gray-700 font-bold text-[12px] tracking-wide">{{ page2Profile.name }}</span>
-                         <span class="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer font-bold active:scale-95 transition" @click="editPage2Profile('name')">修改</span>
+                         <span class="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer font-bold active:scale-95 transition" @click="!isHomeEditing && editPage2Profile('name')">修改</span>
                      </div>
                      <div class="w-[92%] bg-gray-50 border border-gray-100 rounded-xl py-2.5 flex justify-around items-center text-gray-400 text-[11px] font-bold">
-                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('功能开发中')">
-                             <i class="far fa-edit"></i> 修改资料
-                         </div>
+                         <div class="flex items-center gap-1.5"><i class="far fa-edit"></i> 修改资料</div>
                          <div class="w-[1.5px] h-3 bg-gray-200"></div>
-                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('当前等级: Lv.1')">
-                             <i class="fas fa-sun"></i> 我的等级
-                         </div>
+                         <div class="flex items-center gap-1.5"><i class="fas fa-sun"></i> 我的等级</div>
                          <div class="w-[1.5px] h-3 bg-gray-200"></div>
-                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('已存为照片')">
-                             <i class="far fa-image"></i> 存为照片
-                         </div>
+                         <div class="flex items-center gap-1.5"><i class="far fa-image"></i> 存为照片</div>
                      </div>
                  </div>
 
                  <!-- 第一排分栏结构 -->
                  <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
-                     <div class="w-[145px] h-full bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] py-2.5 px-3 flex flex-col items-center justify-between border border-gray-100">
+                     <!-- 左侧小卡片 -->
+                     <div v-if="page2Visibility.leftWidget" class="w-[145px] h-full bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] py-2.5 px-3 flex flex-col items-center justify-between border border-gray-100 relative transition-all" :class="isHomeEditing ? 'animate-wiggle' : ''">
+                         <div v-if="isHomeEditing" @click.stop="page2Visibility.leftWidget = false; saveData()" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-30 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
+                         
                          <div class="w-full flex justify-between items-center">
-                             <div class="px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 text-[9px] font-bold cursor-pointer" @click="editPage2Widget('title')">{{ page2Widget.title }}</div>
-                             <div class="flex gap-1 text-gray-300 text-[11px]">
-                                 <i class="far fa-heart"></i>
-                                 <i class="far fa-heart"></i>
-                             </div>
+                             <div class="px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 text-[9px] font-bold cursor-pointer" @click="!isHomeEditing && editPage2Widget('title')">{{ page2Widget.title }}</div>
+                             <div class="flex gap-1 text-gray-300 text-[11px]"><i class="far fa-heart"></i><i class="far fa-heart"></i></div>
                              <div class="w-[16px] h-[16px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-times"></i></div>
                          </div>
                          <div class="text-gray-400 text-[10px] font-bold">{{ formatAMPM(statusBar.time) }}</div>
                          <div class="w-full flex items-center justify-between px-1">
                              <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-left"></i></div>
-                             <div class="w-[55px] h-[55px] bg-gray-50 rounded-[12px] overflow-hidden cursor-pointer border border-gray-100" @click="triggerPage2WidgetImgUpload">
+                             <div class="w-[55px] h-[55px] bg-gray-50 rounded-[12px] overflow-hidden cursor-pointer border border-gray-100" @click="!isHomeEditing && triggerPage2WidgetImgUpload()">
                                  <img v-if="page2Widget.image" :src="page2Widget.image" class="w-full h-full object-cover">
                                  <i v-else class="fas fa-image flex h-full items-center justify-center text-gray-300 text-xl"></i>
                              </div>
                              <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-right"></i></div>
                          </div>
-                         <div class="flex items-center gap-1 text-gray-500 text-[9px] font-bold cursor-pointer" @click="editPage2Widget('msg')">
-                             <i class="fas fa-mobile-alt text-[10px] text-gray-300"></i>
-                             <span class="truncate max-w-[80px]">{{ page2Widget.msg }}</span>
+                         <div class="flex items-center gap-1 text-gray-500 text-[9px] font-bold cursor-pointer" @click="!isHomeEditing && editPage2Widget('msg')">
+                             <i class="fas fa-mobile-alt text-[10px] text-gray-300"></i><span class="truncate max-w-[80px]">{{ page2Widget.msg }}</span>
                          </div>
                          <div class="w-full flex gap-2 px-1">
-                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="showToast('已同意')">同意</button>
-                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="showToast('已拒绝')">拒絕</button>
+                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold">同意</button>
+                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold">拒絕</button>
                          </div>
                      </div>
                      
-                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('情侣空间')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('couple_space')}">
-                                 <img v-if="hasCustomIcon('couple_space')" :src="getAppIcon('couple_space')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-heart text-gray-400 text-2xl"></i>
+                     <!-- 第一排右侧 App 动态拖拽网格 (前4个) -->
+                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5 relative">
+                         <div v-for="(appId, localIdx) in page2Apps.slice(0, 4)" :key="appId" 
+                              class="flex flex-col items-center gap-1 cursor-pointer transition-all desktop-item-dropzone"
+                              :class="[isHomeEditing ? 'animate-wiggle' : 'active:scale-95', draggedPage2AppIdx === localIdx ? 'is-dragged' : '', hoverPage2AppIdx === localIdx ? 'is-hovered' : '']"
+                              :data-index="localIdx"
+                              @touchstart="onPage2AppTouchStart($event, localIdx)" @touchmove="onPage2AppTouchMove" @touchend="onPage2AppTouchEnd"
+                              @click="!isHomeEditing && handleAppClick(appId)">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appId)}">
+                                 <img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover">
+                                 <i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i>
                              </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('couple_space') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('游戏大厅')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('game_center')}">
-                                 <img v-if="hasCustomIcon('game_center')" :src="getAppIcon('game_center')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-gamepad text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('game_center') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('短信功能待接入')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('sms')}">
-                                 <img v-if="hasCustomIcon('sms')" :src="getAppIcon('sms')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-comment-sms text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('sms') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="openApp('jinjiang')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
-                                 <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-book-reader text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
+                             <span class="text-[10px] font-bold text-gray-500 truncate w-full text-center">{{ getAppName(appId) }}</span>
                          </div>
                      </div>
                  </div>
 
                  <!-- 第二排分栏结构 -->
                  <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
-                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('memo')}">
-                                 <img v-if="hasCustomIcon('memo')" :src="getAppIcon('memo')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-clipboard-list text-gray-400 text-xl"></i>
+                     <!-- 第二排左侧 App 动态拖拽网格 (后4个) -->
+                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5 relative">
+                         <div v-for="(appId, localIdx) in page2Apps.slice(4, 8)" :key="appId" 
+                              class="flex flex-col items-center gap-1 cursor-pointer transition-all desktop-item-dropzone"
+                              :class="[isHomeEditing ? 'animate-wiggle' : 'active:scale-95', draggedPage2AppIdx === (localIdx + 4) ? 'is-dragged' : '', hoverPage2AppIdx === (localIdx + 4) ? 'is-hovered' : '']"
+                              :data-index="localIdx + 4"
+                              @touchstart="onPage2AppTouchStart($event, localIdx + 4)" @touchmove="onPage2AppTouchMove" @touchend="onPage2AppTouchEnd"
+                              @click="!isHomeEditing && handleAppClick(appId)">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appId)}">
+                                 <img v-if="hasCustomIcon(appId)" :src="getAppIcon(appId)" class="w-full h-full object-cover">
+                                 <i v-else :class="getDefaultIconClass(appId) + ' text-gray-400 text-xl'"></i>
                              </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('memo') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('album')}">
-                                 <img v-if="hasCustomIcon('album')" :src="getAppIcon('album')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-images text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('album') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph5')}">
-                                 <img v-if="hasCustomIcon('ph5')" :src="getAppIcon('ph5')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-cloud text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph5') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph6')}">
-                                 <img v-if="hasCustomIcon('ph6')" :src="getAppIcon('ph6')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-leaf text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph6') }}</span>
+                             <span class="text-[10px] font-bold text-gray-500 truncate w-full text-center">{{ getAppName(appId) }}</span>
                          </div>
                      </div>
 
-                     <!-- 右侧：虚线框卡片 (灰白色调) -->
-                     <div class="w-[145px] h-full relative flex items-center justify-center">
+                     <!-- 右侧虚线框卡片 -->
+                     <div v-if="page2Visibility.rightWidget" class="w-[145px] h-full relative flex items-center justify-center transition-all" :class="isHomeEditing ? 'animate-wiggle' : ''">
+                         <div v-if="isHomeEditing" @click.stop="page2Visibility.rightWidget = false; saveData()" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur-md rounded-full flex items-center justify-center text-gray-500 text-xs z-40 shadow-sm cursor-pointer"><i class="fas fa-minus"></i></div>
                          
-                         <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                             <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                         </div>
+                         <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
                          
                          <div class="w-[125px] h-full bg-white rounded-[20px] border-[1.5px] border-dashed border-gray-300 flex flex-col items-center pt-2.5 pb-1.5 px-2 relative z-20 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                              <div class="w-full flex justify-between items-center px-1 text-gray-400">
-                                 <div class="flex items-center gap-1">
-                                     <span class="text-[9px] font-bold">{{ statusBar.batteryLevel }}%</span>
-                                     <div class="w-[16px] h-[8px] border-[1px] border-gray-300 rounded-[2px] p-[1px] relative flex items-center">
-                                         <div class="h-full rounded-[1px] transition-all" :class="statusBar.isCharging ? 'bg-green-400' : 'bg-gray-300'" :style="{ width: statusBar.batteryLevel + '%' }"></div>
-                                         <div class="absolute -right-[2px] top-1/2 -translate-y-1/2 w-[1px] h-[3px] bg-gray-300 rounded-r-[1px]"></div>
-                                     </div>
-                                 </div>
-                                 <div class="flex gap-1.5 text-[10px]">
-                                     <i class="fas fa-wifi"></i>
-                                     <i class="far fa-heart"></i>
-                                 </div>
+                                 <div class="flex items-center gap-1"><span class="text-[9px] font-bold">{{ statusBar.batteryLevel }}%</span><div class="w-[16px] h-[8px] border-[1px] border-gray-300 rounded-[2px] p-[1px] relative flex items-center"><div class="h-full rounded-[1px] transition-all" :class="statusBar.isCharging ? 'bg-green-400' : 'bg-gray-300'" :style="{ width: statusBar.batteryLevel + '%' }"></div></div></div>
+                                 <div class="flex gap-1.5 text-[10px]"><i class="fas fa-wifi"></i><i class="far fa-heart"></i></div>
                              </div>
                              
                              <div class="relative mt-2">
-                                 <div class="w-[80px] h-[80px] bg-gray-50 rounded-[16px] overflow-hidden cursor-pointer border border-gray-100" @click="triggerPage2Widget2AvatarUpload">
+                                 <div class="w-[80px] h-[80px] bg-gray-50 rounded-[16px] overflow-hidden cursor-pointer border border-gray-100" @click="!isHomeEditing && triggerPage2Widget2AvatarUpload()">
                                      <img v-if="page2Widget2.avatar" :src="page2Widget2.avatar" class="w-full h-full object-cover">
                                      <i v-else class="fas fa-user flex h-full items-center justify-center text-gray-300 text-3xl"></i>
                                  </div>
-                                 <div class="absolute -right-4 top-2 px-2 py-0.5 bg-white border border-gray-100 rounded-full text-gray-500 text-[9px] font-bold shadow-sm cursor-pointer z-30" @click="editPage2Widget2('status')">
+                                 <div class="absolute -right-4 top-2 px-2 py-0.5 bg-white border border-gray-100 rounded-full text-gray-500 text-[9px] font-bold shadow-sm cursor-pointer z-30" @click="!isHomeEditing && editPage2Widget2('status')">
                                      {{ page2Widget2.status }}
                                  </div>
-                                 <div class="absolute right-0 top-6 w-1.5 h-1.5 bg-white border border-gray-100 rounded-full z-30 shadow-sm"></div>
                              </div>
                              
-                             <div class="mt-auto mb-0 w-9 h-[18px] bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-[10px] cursor-pointer active:scale-95 transition" @click="showToast('🐾 喵~')">
-                                 <i class="fas fa-paw"></i>
-                             </div>
+                             <div class="mt-auto mb-0 w-9 h-[18px] bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-[10px]"><i class="fas fa-paw"></i></div>
                          </div>
-
-                         <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                             <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                         </div>
+                         <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
                      </div>
                  </div>
              </div> <!-- 闭合第二页 -->
@@ -6744,7 +6675,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.33 更新日志 (当前最新) -->
+                            <!-- v1.34 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.34 桌面全面解绑与高级自定义组件</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-08-23 16:12</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">全自由桌面：</span>打碎了原本绑死的“4应用网格”。现在桌面上所有的 App 都是独立的实体，你可以将它们**一个一个地拖拽**，自由穿插在便签、相框等小组件之间！如果你的旧版桌面有旧的网格，系统会自动帮你解绑拆分成单独的 App 以兼容新版。</li>
+                                    <li><span class="font-bold text-gray-800">第二页编辑：</span>第二页的灰白卡片、心情卡片现在全部支持在长按编辑模式下点击 <code>-</code> 隐藏或删除。第二页的 8 个应用图标也已支持长按并相互拖拽换位。</li>
+                                    <li><span class="font-bold text-gray-800">手搓代码组件：</span>小组件商店迎来重磅级更新！新增“高级自定义组件”入口，现在你可以完全跳出模板的限制，直接输入 HTML 与 Tailwind CSS 代码，自由设计、预览并添加到桌面上。</li>
+                                    <li><span class="font-bold text-gray-800">UI 修复：</span>完美修复了“主题美化”选项卡中预览画面时，红包与转账卡片被外部 flex 容器挤压变形的 Bug。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.33 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#ec4899]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7365,7 +7311,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <div class="chat-bubble chat-bubble-user text-sm max-w-[70%] shadow-sm">界面终于变长了，现在下面也不会被挡住了。</div>
                             </div>
                             <!-- 预览：修复为 iOS 新版红包与转账 UI -->
-                            <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-2">
+                            <!-- 加入 shrink-0 防止被 flex 容器挤压变形 -->
+                            <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-2 shrink-0">
                                 <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
                                     <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border bg-red-50 text-red-500 border-red-100"><i class="fas fa-envelope text-lg"></i></div>
                                     <div class="flex-1 min-w-0 flex flex-col justify-center">
@@ -7373,12 +7320,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="text-[11px] mt-0.5 text-red-500">微信红包</div>
                                     </div>
                                 </div>
-                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
+                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between shrink-0">
                                     <span>Red Packet</span><i class="fas fa-chevron-right text-[8px] opacity-50"></i>
                                 </div>
                             </div>
                             
-                            <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-1 mb-4">
+                            <!-- 加入 shrink-0 防止被 flex 容器挤压变形 -->
+                            <div class="bg-white border border-gray-200 rounded-[14px] w-[220px] overflow-hidden shadow-sm flex flex-col self-end mt-1 mb-4 shrink-0">
                                 <div class="p-3 border-b border-gray-50 flex items-center gap-3 bg-white">
                                     <div class="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 border bg-orange-50 text-orange-500 border-orange-100"><i class="fas fa-exchange-alt"></i></div>
                                     <div class="flex-1 min-w-0 flex flex-col justify-center">
@@ -7386,7 +7334,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                         <div class="text-[11px] mt-0.5 text-orange-500">转账给你</div>
                                     </div>
                                 </div>
-                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between">
+                                <div class="px-3 py-1.5 bg-gray-50/80 text-[10px] font-bold text-gray-400 flex items-center justify-between shrink-0">
                                     <span>Transfer</span><i class="fas fa-chevron-right text-[8px] opacity-50"></i>
                                 </div>
                             </div>
@@ -7608,6 +7556,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="text-[11px] text-gray-400">独立的小正方形应用快捷入口。可组合摆放。</div>
                     </div>
                     <button @click="addDesktopItem('single_app')" class="px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs rounded-full active:scale-95 transition shrink-0">添加</button>
+                </div>
+
+                <!-- 手搓自定义代码商店入口 -->
+                <div class="mt-4 border-t border-gray-200 pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[13px] font-bold text-gray-600 tracking-widest">高级自定义组件 (手搓代码)</span>
+                        <button @click="addDesktopItem('custom_builder')" class="px-4 py-1.5 bg-black text-white font-bold text-xs rounded-full active:scale-95 transition shadow-sm">添加到桌面</button>
+                    </div>
+                    <textarea v-model="customWidgetBuilder.html" placeholder="在这里写入 HTML 与 Tailwind CSS 代码，渲染属于你的专属小组件..." class="w-full h-40 bg-white p-3.5 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none shadow-inner"></textarea>
+                    <div class="text-[10px] text-gray-400 mt-2 px-1 leading-relaxed">
+                        支持任意 HTML 标签，支持完整的 Tailwind CSS 类名控制样式。<br>
+                        例如：&lt;div class="w-full h-full bg-white rounded-2xl shadow flex items-center justify-center font-bold text-gray-500"&gt;自定义组件&lt;/div&gt;
+                    </div>
                 </div>
             </div>
         </div>
@@ -7859,6 +7820,13 @@ const app = createApp({
             dockLongPressTimer: null,
             desktopPhotoUploadIndex: -1,
             desktopPhotoTargetField: '',
+            
+            // 第二页编辑与拖拽新变量
+            page2Apps: ['couple_space', 'game_center', 'sms', 'jinjiang', 'memo', 'album', 'ph5', 'ph6'],
+            draggedPage2AppIdx: -1,
+            hoverPage2AppIdx: -1,
+            page2Visibility: { topCard: true, leftWidget: true, rightWidget: true },
+            customWidgetBuilder: { html: '<div class="w-full h-[100px] bg-white/60 backdrop-blur-md rounded-2xl shadow flex items-center justify-center font-bold text-gray-500 border border-white">自定义组件</div>' },
 
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
@@ -15559,11 +15527,32 @@ Structure:
             // 【非常重要】：将老版本写死在 HTML 的主页配置升级为动态数组
             if (!this.desktopLayout || this.desktopLayout.length === 0) {
                 this.desktopLayout = [
-                    { id: 'app_grid_1', type: 'app_grid', apps: ['wechat', 'themes', 'worldbook', 'settings'], title: this.homeConfig?.widgetTitle || '主应用', w: 'half' },
+                    { id: 'single_wechat', type: 'single_app', appId: 'wechat', w: 'quarter' },
+                    { id: 'single_themes', type: 'single_app', appId: 'themes', w: 'quarter' },
+                    { id: 'single_worldbook', type: 'single_app', appId: 'worldbook', w: 'quarter' },
+                    { id: 'single_settings', type: 'single_app', appId: 'settings', w: 'quarter' },
                     { id: 'widget_bubbles_1', type: 'bubbles', w: 'half', bubble1: this.customWidgets?.[0]?.bubble || '状态', img1: this.customWidgets?.[0]?.image || '', bubble2: this.customWidgets?.[1]?.bubble || '心情', img2: this.customWidgets?.[1]?.image || '' },
                     { id: 'widget_days_1', type: 'days', title: this.homeConfig?.rightWidgetTitle || '6440天', w: 'full' }
                 ];
                 this.saveData();
+            } else {
+                // 兼容逻辑：把用户原来旧版的 app_grid 解绑拆碎为单独的 app
+                let newLayout = [];
+                let hasMigrated = false;
+                this.desktopLayout.forEach(item => {
+                    if (item.type === 'app_grid') {
+                        hasMigrated = true;
+                        (item.apps || []).forEach(appId => {
+                            newLayout.push({ id: 'single_app_' + Date.now() + Math.random(), type: 'single_app', appId: appId, w: 'quarter' });
+                        });
+                    } else {
+                        newLayout.push(item);
+                    }
+                });
+                if (hasMigrated) {
+                    this.desktopLayout = newLayout;
+                    this.saveData();
+                }
             }
         },
 
@@ -15689,10 +15678,48 @@ Structure:
                 return;
             }
             
+            if (type === 'custom_builder') {
+                if (!this.customWidgetBuilder.html.trim()) return this.showToast('代码不能为空');
+                newItem.html = this.customWidgetBuilder.html;
+            }
+
             this.desktopLayout.push(newItem);
             this.saveData();
             this.closeWidgetStore();
             this.showToast('已添加到桌面底端');
+        },
+
+        // --- 第二页 App 拖拽重排逻辑 ---
+        onPage2AppTouchStart(e, idx) {
+            if(!this.isHomeEditing) return;
+            this.draggedPage2AppIdx = idx;
+            this.hoverPage2AppIdx = idx;
+        },
+        onPage2AppTouchMove(e) {
+            if(!this.isHomeEditing || this.draggedPage2AppIdx === -1) return;
+            e.preventDefault(); 
+            const touch = e.touches[0];
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            if(targetEl) {
+                const dropzone = targetEl.closest('.desktop-item-dropzone');
+                if(dropzone) {
+                    const targetIdx = parseInt(dropzone.getAttribute('data-index'));
+                    if(!isNaN(targetIdx) && targetIdx !== this.hoverPage2AppIdx) {
+                        this.hoverPage2AppIdx = targetIdx;
+                    }
+                }
+            }
+        },
+        onPage2AppTouchEnd() {
+            if(this.draggedPage2AppIdx !== -1 && this.hoverPage2AppIdx !== -1 && this.draggedPage2AppIdx !== this.hoverPage2AppIdx) {
+                const items = this.page2Apps;
+                const temp = items[this.draggedPage2AppIdx];
+                items[this.draggedPage2AppIdx] = items[this.hoverPage2AppIdx];
+                items[this.hoverPage2AppIdx] = temp;
+                this.saveData();
+            }
+            this.draggedPage2AppIdx = -1;
+            this.hoverPage2AppIdx = -1;
         },
         // --- 结束 ---
 
