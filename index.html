@@ -2295,554 +2295,450 @@ document.addEventListener("DOMContentLoaded", () => {
          <!-- 滑动分页容器 -->
          <div class="flex-1 w-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-hide">
              
-             <!-- ================= 桌面 1 ================= -->
+             <!-- ================= 桌面1 (经典布局) ================= -->
              <template v-if="themeConfig.activeDesktop !== 'desktop2'">
-                 <!-- 第一页 -->
-                 <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px]">
-                     <div class="w-full flex flex-col items-center skin-text-container">
-                        
-                        <!-- 顶部名片 -->
-                        <div class="w-[90%] z-20 mt-2 mb-2 shrink-0">
-                            <div class="bg-white/90 backdrop-blur-sm rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div class="flex gap-3">
-                                        <div class="w-[52px] h-[52px] border border-gray-100 rounded-lg p-0.5 flex flex-col items-center justify-between shrink-0 cursor-pointer active:scale-95 transition bg-white">
-                                            <div class="w-full h-[70%] rounded-md overflow-hidden bg-gray-50 relative" @click.stop="triggerCardAvatarUpload">
-                                                <img v-if="cardProfile.avatar" :src="cardProfile.avatar" class="w-full h-full object-cover grayscale opacity-80">
-                                                <i v-else class="fas fa-user text-gray-300 text-xl flex h-full items-center justify-center"></i>
-                                            </div>
-                                            <span class="text-[8px] opacity-60 scale-90 origin-bottom font-medium truncate w-full text-center" @click.stop="editCardProfile('status')">{{ cardProfile.status }}</span>
+             <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px]">
+                 <div class="w-full flex flex-col items-center skin-text-container">
+                    <!-- 顶部名片 -->
+                    <div class="w-[90%] z-20 mt-2 mb-2 shrink-0">
+                        <div class="bg-white/90 backdrop-blur-sm rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex gap-3">
+                                    <div class="w-[52px] h-[52px] border border-gray-100 rounded-lg p-0.5 flex flex-col items-center justify-between shrink-0 cursor-pointer active:scale-95 transition bg-white">
+                                        <!-- 补充了 @click.stop="triggerCardAvatarUpload" 触发本地相册 -->
+                                        <div class="w-full h-[70%] rounded-md overflow-hidden bg-gray-50 relative" @click.stop="triggerCardAvatarUpload">
+                                            <img v-if="cardProfile.avatar" :src="cardProfile.avatar" class="w-full h-full object-cover grayscale opacity-80">
+                                            <i v-else class="fas fa-user text-gray-300 text-xl flex h-full items-center justify-center"></i>
                                         </div>
-                                        <div class="flex flex-col pt-0.5" style="font-size: var(--custom-font-size)">
-                                            <h2 @click="editCardProfile('name')" class="text-[14px] font-bold tracking-wider mb-0.5 cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">{{ cardProfile.name }}</h2>
-                                            <p @click="editCardProfile('id')" class="text-[10px] opacity-60 font-mono tracking-wide cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">@ {{ cardProfile.id }}</p>
-                                        </div>
+                                        <span class="text-[8px] opacity-60 scale-90 origin-bottom font-medium truncate w-full text-center" @click.stop="editCardProfile('status')">{{ cardProfile.status }}</span>
                                     </div>
-                                    <div class="flex items-center gap-1 text-[10px] opacity-60 font-medium pt-1" :style="{color: themeConfig.fontColor}">
-                                        <span>{{ displayDate.dateString }}</span>
-                                        <i class="fas fa-heart text-[8px]"></i>
-                                        <span>{{ displayDate.dayString }}</span>
+                                    <div class="flex flex-col pt-0.5" style="font-size: var(--custom-font-size)">
+                                        <h2 @click="editCardProfile('name')" class="text-[14px] font-bold tracking-wider mb-0.5 cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">{{ cardProfile.name }}</h2>
+                                        <p @click="editCardProfile('id')" class="text-[10px] opacity-60 font-mono tracking-wide cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">@ {{ cardProfile.id }}</p>
                                     </div>
                                 </div>
-                                <div @click="editCardProfile('bio')" class="text-[12px] leading-relaxed font-medium tracking-wide text-justify cursor-pointer active:opacity-50 border-t border-gray-50/20 pt-2" :style="{color: themeConfig.fontColor, fontSize: 'calc(var(--custom-font-size) * 0.9)'}">{{ cardProfile.bio }}</div>
-                            </div>
-                        </div>
-
-                        <!-- 中部个人信息 -->
-                        <div class="flex flex-col items-center w-full mb-3 z-10 shrink-0" style="font-size: var(--custom-font-size)">
-                            <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-gray-200 to-white shadow-lg mb-2 cursor-pointer active:scale-95 transition" @click="triggerHomeAvatarUpload">
-                                <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 relative">
-                                    <img v-if="homeProfile.avatar" :src="homeProfile.avatar" class="w-full h-full object-cover">
-                                    <i v-else class="fas fa-user text-gray-300 text-3xl flex h-full items-center justify-center"></i>
+                                <div class="flex items-center gap-1 text-[10px] opacity-60 font-medium pt-1" :style="{color: themeConfig.fontColor}">
+                                    <span>{{ displayDate.dateString }}</span>
+                                    <i class="fas fa-heart text-[8px]"></i>
+                                    <span>{{ displayDate.dayString }}</span>
                                 </div>
                             </div>
-                            <h2 @click="editHomeProfile('name')" class="text-lg font-bold tracking-wide cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeProfile.name }}</h2>
-                            <p @click="editHomeProfile('id')" class="text-xs opacity-80 mt-1 font-mono tracking-wider cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">@{{ homeProfile.id }}</p>
-                            <p @click="editHomeProfile('bio')" class="text-[10px] opacity-80 mt-2 tracking-[0.1em] cursor-pointer active:opacity-50 transition px-8 text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ homeProfile.bio }}</p>
-                            <div @click="editHomeProfile('location')" class="mt-3 flex items-center gap-1 text-xs opacity-80 cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">
-                                <i class="fas fa-map-marker-alt"></i><span>{{ homeProfile.location }}</span>
-                            </div>
-                        </div>
-
-                        <!-- 下方 App 与小部件矩阵 -->
-                        <div class="w-full px-8 grid grid-cols-2 gap-6 mb-auto z-10 items-start shrink-0" style="font-size: var(--custom-font-size)">
-                            <div class="flex flex-col items-center">
-                                <h3 @click="editHomeConfig('widgetTitle', '修改左侧标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeConfig.widgetTitle }}</h3>
-                                <div class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full">
-                                    <div v-for="id in ['wechat', 'themes', 'worldbook', 'settings']" :key="id" class="flex flex-col items-center gap-1.5 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(id)}" @click="handleAppClick(id)">
-                                        <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden">
-                                            <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
-                                            <i v-else :class="getDefaultIconClass(id)"></i>
-                                        </div>
-                                        <span class="text-[10px] font-bold" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(id) }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col items-center">
-                                <div class="flex gap-2 justify-center items-end mt-2">
-                                    <div class="flex flex-col items-center relative w-16">
-                                        <div @click="editCustomWidget(0, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[0].bubble }}</div>
-                                        <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="triggerWidgetImageUpload(0)">
-                                            <img v-if="customWidgets[0].image" :src="customWidgets[0].image" class="w-full h-full object-cover">
-                                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图1</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col items-center relative w-16">
-                                        <div @click="editCustomWidget(1, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[1].bubble }}</div>
-                                        <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="triggerWidgetImageUpload(1)">
-                                            <img v-if="customWidgets[1].image" :src="customWidgets[1].image" class="w-full h-full object-cover">
-                                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图2</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- 天数记录 -->
-                                <div class="relative mt-6 min-w-[120px] max-w-[240px] w-fit px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] cursor-pointer active:scale-95 transition border-2 border-white" @click="editHomeConfig('rightWidgetTitle', '修改天数')">
-                                    <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                                        <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                                    </div>
-                                    <span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center break-words whitespace-pre-wrap leading-snug" :style="{color: themeConfig.fontColor}">{{ homeConfig.rightWidgetTitle || '6440天' }}</span>
-                                    <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                                        <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                     </div>
-                 </div> <!-- 第一页结束 -->
-
-                 <!-- 第二页 -->
-                 <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-8 px-5">
-                     
-                     <!-- 顶部灰白卡片 -->
-                     <div class="w-[90%] max-w-[340px] bg-white rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] mt-6 relative flex flex-col items-center pb-4 pt-12 border border-gray-100">
-                         
-                         <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[80px] h-[80px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-50 cursor-pointer z-10 flex items-center justify-center" @click="triggerPage2AvatarUpload">
-                             <img v-if="page2Profile.avatar" :src="page2Profile.avatar" class="w-full h-full object-cover">
-                             <i v-else class="fas fa-user text-gray-300 text-3xl"></i>
-                         </div>
-                         
-                         <div class="absolute -top-7 left-[calc(50%+46px)] px-3.5 py-1 bg-white border border-gray-100 rounded-full text-gray-500 text-[11px] font-bold shadow-sm cursor-pointer z-20" @click="editPage2Profile('status')">
-                             {{ page2Profile.status }}
-                         </div>
-                         <div class="absolute -top-2 left-[calc(50%+42px)] w-2 h-2 bg-white border border-gray-100 rounded-full z-20 shadow-sm"></div>
-                         
-                         <div class="w-full px-5 flex justify-between items-center mb-3">
-                             <div class="flex gap-2 text-gray-500 font-bold text-[11px]">
-                                 <div class="bg-gray-100 px-3 py-1 rounded-full">{{ weatherTemp }}</div>
-                                 <div class="bg-gray-100 px-3 py-1 rounded-full">{{ statusBar.batteryLevel }}%</div>
-                             </div>
-                             <div class="flex gap-1.5">
-                                 <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
-                                     <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                     <i class="relative z-10 fas fa-wifi"></i>
-                                 </div>
-                                 <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
-                                     <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                     <i class="relative z-10 fas fa-broadcast-tower"></i>
-                                 </div>
-                                 <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[13px]">
-                                     <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                     <i class="relative z-10 fab fa-bluetooth-b"></i>
-                                 </div>
-                             </div>
-                         </div>
-                         <div class="flex items-center gap-2 mb-4">
-                             <span class="text-gray-700 font-bold text-[12px] tracking-wide">{{ page2Profile.name }}</span>
-                             <span class="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer font-bold active:scale-95 transition" @click="editPage2Profile('name')">修改</span>
-                         </div>
-                         <div class="w-[92%] bg-gray-50 border border-gray-100 rounded-xl py-2.5 flex justify-around items-center text-gray-400 text-[11px] font-bold">
-                             <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('功能开发中')">
-                                 <i class="far fa-edit"></i> 修改资料
-                             </div>
-                             <div class="w-[1.5px] h-3 bg-gray-200"></div>
-                             <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('当前等级: Lv.1')">
-                                 <i class="fas fa-sun"></i> 我的等级
-                             </div>
-                             <div class="w-[1.5px] h-3 bg-gray-200"></div>
-                             <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('已存为照片')">
-                                 <i class="far fa-image"></i> 存为照片
-                             </div>
-                         </div>
-                     </div>
-
-                     <!-- 第一排分栏结构 -->
-                     <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
-                         <div class="w-[145px] h-full bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] py-2.5 px-3 flex flex-col items-center justify-between border border-gray-100">
-                             <div class="w-full flex justify-between items-center">
-                                 <div class="px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 text-[9px] font-bold cursor-pointer" @click="editPage2Widget('title')">{{ page2Widget.title }}</div>
-                                 <div class="flex gap-1 text-gray-300 text-[11px]">
-                                     <i class="far fa-heart"></i>
-                                     <i class="far fa-heart"></i>
-                                 </div>
-                                 <div class="w-[16px] h-[16px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-times"></i></div>
-                             </div>
-                             <div class="text-gray-400 text-[10px] font-bold">{{ formatAMPM(statusBar.time) }}</div>
-                             <div class="w-full flex items-center justify-between px-1">
-                                 <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-left"></i></div>
-                                 <div class="w-[55px] h-[55px] bg-gray-50 rounded-[12px] overflow-hidden cursor-pointer border border-gray-100" @click="triggerPage2WidgetImgUpload">
-                                     <img v-if="page2Widget.image" :src="page2Widget.image" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-image flex h-full items-center justify-center text-gray-300 text-xl"></i>
-                                 </div>
-                                 <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-right"></i></div>
-                             </div>
-                             <div class="flex items-center gap-1 text-gray-500 text-[9px] font-bold cursor-pointer" @click="editPage2Widget('msg')">
-                                 <i class="fas fa-mobile-alt text-[10px] text-gray-300"></i>
-                                 <span class="truncate max-w-[80px]">{{ page2Widget.msg }}</span>
-                             </div>
-                             <div class="w-full flex gap-2 px-1">
-                                 <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="showToast('已同意')">同意</button>
-                                 <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="showToast('已拒绝')">拒絕</button>
-                             </div>
-                         </div>
-                         
-                         <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('情侣空间')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('couple_space')}">
-                                     <img v-if="hasCustomIcon('couple_space')" :src="getAppIcon('couple_space')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-heart text-gray-400 text-2xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('couple_space') }}</span>
-                             </div>
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('游戏大厅')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('game_center')}">
-                                     <img v-if="hasCustomIcon('game_center')" :src="getAppIcon('game_center')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-gamepad text-gray-400 text-xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('game_center') }}</span>
-                             </div>
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('短信功能待接入')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('sms')}">
-                                     <img v-if="hasCustomIcon('sms')" :src="getAppIcon('sms')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-comment-sms text-gray-400 text-xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('sms') }}</span>
-                             </div>
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="openApp('jinjiang')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
-                                     <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-book-reader text-gray-400 text-xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
-                             </div>
-                         </div>
-                     </div>
-
-                     <!-- 第二排分栏结构 -->
-                     <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
-                         <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('memo')}">
-                                     <img v-if="hasCustomIcon('memo')" :src="getAppIcon('memo')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-clipboard-list text-gray-400 text-xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('memo') }}</span>
-                             </div>
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('album')}">
-                                     <img v-if="hasCustomIcon('album')" :src="getAppIcon('album')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-images text-gray-400 text-xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('album') }}</span>
-                             </div>
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph5')}">
-                                     <img v-if="hasCustomIcon('ph5')" :src="getAppIcon('ph5')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-cloud text-gray-400 text-xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph5') }}</span>
-                             </div>
-                             <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                                 <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph6')}">
-                                     <img v-if="hasCustomIcon('ph6')" :src="getAppIcon('ph6')" class="w-full h-full object-cover">
-                                     <i v-else class="fas fa-leaf text-gray-400 text-xl"></i>
-                                 </div>
-                                 <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph6') }}</span>
-                             </div>
-                         </div>
-
-                         <!-- 右侧：虚线框卡片 (灰白色调) -->
-                         <div class="w-[145px] h-full relative flex items-center justify-center">
-                             
-                             <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                                 <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                             </div>
-                             
-                             <div class="w-[125px] h-full bg-white rounded-[20px] border-[1.5px] border-dashed border-gray-300 flex flex-col items-center pt-2.5 pb-1.5 px-2 relative z-20 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                                 <div class="w-full flex justify-between items-center px-1 text-gray-400">
-                                     <div class="flex items-center gap-1">
-                                         <span class="text-[9px] font-bold">{{ statusBar.batteryLevel }}%</span>
-                                         <div class="w-[16px] h-[8px] border-[1px] border-gray-300 rounded-[2px] p-[1px] relative flex items-center">
-                                             <div class="h-full rounded-[1px] transition-all" :class="statusBar.isCharging ? 'bg-green-400' : 'bg-gray-300'" :style="{ width: statusBar.batteryLevel + '%' }"></div>
-                                             <div class="absolute -right-[2px] top-1/2 -translate-y-1/2 w-[1px] h-[3px] bg-gray-300 rounded-r-[1px]"></div>
-                                         </div>
-                                     </div>
-                                     <div class="flex gap-1.5 text-[10px]">
-                                         <i class="fas fa-wifi"></i>
-                                         <i class="far fa-heart"></i>
-                                     </div>
-                                 </div>
-                                 
-                                 <div class="relative mt-2">
-                                     <div class="w-[80px] h-[80px] bg-gray-50 rounded-[16px] overflow-hidden cursor-pointer border border-gray-100" @click="triggerPage2Widget2AvatarUpload">
-                                         <img v-if="page2Widget2.avatar" :src="page2Widget2.avatar" class="w-full h-full object-cover">
-                                         <i v-else class="fas fa-user flex h-full items-center justify-center text-gray-300 text-3xl"></i>
-                                     </div>
-                                     <div class="absolute -right-4 top-2 px-2 py-0.5 bg-white border border-gray-100 rounded-full text-gray-500 text-[9px] font-bold shadow-sm cursor-pointer z-30" @click="editPage2Widget2('status')">
-                                         {{ page2Widget2.status }}
-                                     </div>
-                                     <div class="absolute right-0 top-6 w-1.5 h-1.5 bg-white border border-gray-100 rounded-full z-30 shadow-sm"></div>
-                                 </div>
-                                 
-                                 <div class="mt-auto mb-0 w-9 h-[18px] bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-[10px] cursor-pointer active:scale-95 transition" @click="showToast('🐾 喵~')">
-                                     <i class="fas fa-paw"></i>
-                                 </div>
-                             </div>
-
-                             <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
-                                 <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
-                             </div>
-                         </div>
-                     </div>
-                 </div> <!-- 闭合第二页 -->
-             </template>
-
-             <!-- ================= 桌面 2 (全新灰白 Ins 风) ================= -->
-             <template v-else>
-                 <!-- 桌面2：第一页 -->
-                 <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-8 px-5">
-                    <!-- IG Profile Widget -->
-                    <div class="w-full bg-white/90 backdrop-blur-md rounded-3xl p-5 shadow-sm border border-gray-100 mb-4">
-                        <div class="flex items-center justify-between mb-4">
-                            <div class="relative w-16 h-16 rounded-full p-1 border-2 border-dashed border-gray-300">
-                                <img :src="homeProfile.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'" class="w-full h-full rounded-full object-cover cursor-pointer" @click="triggerHomeAvatarUpload">
-                                <div class="absolute bottom-0 right-0 bg-white rounded-full text-gray-500 text-xs shadow-sm"><i class="fas fa-plus-circle"></i></div>
-                            </div>
-                            <div class="flex gap-4 text-center">
-                                <div><div class="font-bold text-gray-800 text-sm">18</div><div class="text-[10px] text-gray-400">Posts</div></div>
-                                <div><div class="font-bold text-gray-800 text-sm">189W</div><div class="text-[10px] text-gray-400">Followers</div></div>
-                                <div><div class="font-bold text-gray-800 text-sm">520</div><div class="text-[10px] text-gray-400">Following</div></div>
-                            </div>
-                        </div>
-                        <div class="text-xs text-gray-600 mb-3 whitespace-pre-wrap cursor-pointer" @click="editHomeProfile('bio')">{{ homeProfile.bio || 'すでに幸福の花のつぼみとなりました\n+☆ ﾟ. * ﾟ. ☆☆ ﾟ. * ﾟ. ☆' }}</div>
-                        <button class="w-full py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 mb-4 active:bg-gray-100" @click="editHomeProfile('name')">Edit Profile</button>
-                        <div class="flex justify-between items-center px-1">
-                            <div class="flex flex-col items-center gap-1"><div class="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center text-xl text-gray-400 bg-gray-50 cursor-pointer active:scale-95"><i class="fas fa-plus"></i></div><span class="text-[10px] text-gray-500">New</span></div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-12 h-12 rounded-full border border-gray-200 bg-gray-100 overflow-hidden"><img :src="cardProfile.avatar || 'https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'" class="w-full h-full object-cover opacity-70"></div><span class="text-[10px] text-gray-500">ㅎㅇ...</span></div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-12 h-12 rounded-full border border-gray-200 bg-gray-100 overflow-hidden"><img :src="customWidgets[0].image || 'https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'" class="w-full h-full object-cover opacity-70"></div><span class="text-[10px] text-gray-500">행복</span></div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-12 h-12 rounded-full border border-gray-200 bg-gray-100 overflow-hidden"><img :src="customWidgets[1].image || 'https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'" class="w-full h-full object-cover opacity-70"></div><span class="text-[10px] text-gray-500">-ㅅ-</span></div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-12 h-12 rounded-full border border-gray-200 bg-gray-100 overflow-hidden"><img :src="page2Widget.image || 'https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'" class="w-full h-full object-cover opacity-70"></div><span class="text-[10px] text-gray-500">Good</span></div>
+                            <div @click="editCardProfile('bio')" class="text-[12px] leading-relaxed font-medium tracking-wide text-justify cursor-pointer active:opacity-50 border-t border-gray-50/20 pt-2" :style="{color: themeConfig.fontColor, fontSize: 'calc(var(--custom-font-size) * 0.9)'}">{{ cardProfile.bio }}</div>
                         </div>
                     </div>
 
-                    <!-- Input Widget -->
-                    <div class="w-full bg-white/90 backdrop-blur-md rounded-3xl p-4 shadow-sm border border-gray-100 mb-6">
-                        <div class="flex justify-around items-center text-xs font-bold text-gray-400 mb-3 px-4">
-                            <span class="flex items-center gap-1 cursor-pointer active:opacity-50"><i class="fas fa-ellipsis-h text-[8px]"></i> Likes</span>
-                            <span class="cursor-pointer active:opacity-50">Normal</span>
-                            <span class="bg-gray-100 px-3 py-1 rounded-full text-gray-600 flex items-center gap-1 cursor-pointer active:scale-95"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Lives</span>
+                    <!-- 中部个人信息 -->
+                    <div class="flex flex-col items-center w-full mb-3 z-10 shrink-0" style="font-size: var(--custom-font-size)">
+                        <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-gray-200 to-white shadow-lg mb-2 cursor-pointer active:scale-95 transition" @click="triggerHomeAvatarUpload">
+                            <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 relative">
+                                <img v-if="homeProfile.avatar" :src="homeProfile.avatar" class="w-full h-full object-cover">
+                                <i v-else class="fas fa-user text-gray-300 text-3xl flex h-full items-center justify-center"></i>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-b from-gray-500 to-gray-200 shrink-0"></div>
-                            <div class="flex-1 bg-gray-100 h-8 rounded-full border border-gray-200 flex items-center px-3 text-gray-400 text-xs cursor-text">|</div>
-                        </div>
-                        <div class="flex justify-between items-center px-2">
-                            <div class="flex gap-4 text-gray-400 text-lg"><i class="far fa-moon cursor-pointer active:text-gray-600"></i><i class="far fa-heart cursor-pointer active:text-gray-600"></i></div>
-                            <button class="px-4 py-1.5 bg-gray-100 border border-gray-200 rounded-full text-xs font-bold text-gray-500 active:scale-95">Sand</button>
+                        <h2 @click="editHomeProfile('name')" class="text-lg font-bold tracking-wide cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeProfile.name }}</h2>
+                        <p @click="editHomeProfile('id')" class="text-xs opacity-80 mt-1 font-mono tracking-wider cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">@{{ homeProfile.id }}</p>
+                        <p @click="editHomeProfile('bio')" class="text-[10px] opacity-80 mt-2 tracking-[0.1em] cursor-pointer active:opacity-50 transition px-8 text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ homeProfile.bio }}</p>
+                        <div @click="editHomeProfile('location')" class="mt-3 flex items-center gap-1 text-xs opacity-80 cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">
+                            <i class="fas fa-map-marker-alt"></i><span>{{ homeProfile.location }}</span>
                         </div>
                     </div>
-                    
-                    <div class="text-xs font-bold text-gray-800 mb-4 z-10 drop-shadow-md">Top Widgets⁺</div>
 
-                    <!-- Bottom Area -->
-                    <div class="w-full relative flex h-40">
-                        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-[110%] h-24 bg-gray-200/50 backdrop-blur-sm rounded-[40px] border-[3px] border-white shadow-inner flex items-center justify-between px-8 z-0">
-                            <div class="flex flex-col gap-1 items-center opacity-30">
-                                <div class="flex gap-1"><div class="w-5 h-5 rounded bg-gray-400"></div><div class="w-5 h-5 rounded bg-gray-400"></div></div>
-                                <div class="flex gap-1"><div class="w-5 h-5 rounded bg-gray-400"></div><div class="w-5 h-5 rounded bg-gray-400"></div></div>
+                    <!-- 下方 App 与小部件矩阵 -->
+                    <div class="w-full px-8 grid grid-cols-2 gap-6 mb-auto z-10 items-start shrink-0" style="font-size: var(--custom-font-size)">
+                        <div class="flex flex-col items-center">
+                            <h3 @click="editHomeConfig('widgetTitle', '修改左侧标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeConfig.widgetTitle }}</h3>
+                            <div class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full">
+                                <div v-for="id in ['wechat', 'themes', 'worldbook', 'settings']" :key="id" class="flex flex-col items-center gap-1.5 home-icon cursor-pointer" :class="{'home-icon-custom': hasCustomIcon(id)}" @click="handleAppClick(id)">
+                                    <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden">
+                                        <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
+                                        <i v-else :class="getDefaultIconClass(id)"></i>
+                                    </div>
+                                    <span class="text-[10px] font-bold" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(id) }}</span>
+                                </div>
                             </div>
-                            <div class="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 cursor-pointer active:scale-95"><i class="fas fa-pause"></i></div>
-                            <div class="w-10 h-10 flex items-center justify-center text-gray-400 text-xs font-mono font-bold">{{ statusBar.time || '1:37' }}</div>
                         </div>
-                        
-                        <div class="w-full flex justify-between z-10 px-2 relative h-full">
-                            <div class="grid grid-cols-2 gap-x-4 gap-y-2 content-start pt-2">
-                                <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('wechat')">
-                                    <div class="w-14 h-14 bg-gray-700 rounded-2xl border-2 border-white shadow-md relative overflow-hidden flex items-center justify-center">
-                                        <i class="fas fa-star absolute top-1 left-1 text-[8px] text-white"></i>
-                                        <img v-if="hasCustomIcon('wechat')" :src="getAppIcon('wechat')" class="w-full h-full object-cover">
-                                        <i v-else class="fas fa-comment text-white text-2xl"></i>
+
+                        <div class="flex flex-col items-center">
+                            <div class="flex gap-2 justify-center items-end mt-2">
+                                <div class="flex flex-col items-center relative w-16">
+                                    <div @click="editCustomWidget(0, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[0].bubble }}</div>
+                                    <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="triggerWidgetImageUpload(0)">
+                                        <img v-if="customWidgets[0].image" :src="customWidgets[0].image" class="w-full h-full object-cover">
+                                        <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图1</div>
                                     </div>
-                                    <span class="text-[10px] font-bold text-gray-800 drop-shadow-md">wechat</span>
                                 </div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('forum')">
-                                    <div class="w-14 h-14 bg-gray-700 rounded-2xl border-2 border-white shadow-md relative overflow-hidden flex items-center justify-center">
-                                        <i class="fas fa-star absolute top-1 left-1 text-[8px] text-white"></i>
-                                        <img v-if="hasCustomIcon('forum')" :src="getAppIcon('forum')" class="w-full h-full object-cover">
-                                        <i v-else class="fas fa-users text-white text-2xl"></i>
+                                <div class="flex flex-col items-center relative w-16">
+                                    <div @click="editCustomWidget(1, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[1].bubble }}</div>
+                                    <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="triggerWidgetImageUpload(1)">
+                                        <img v-if="customWidgets[1].image" :src="customWidgets[1].image" class="w-full h-full object-cover">
+                                        <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图2</div>
                                     </div>
-                                    <span class="text-[10px] font-bold text-gray-800 drop-shadow-md">QQ</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('taobao')">
-                                    <div class="w-14 h-14 bg-gray-700 rounded-2xl border-2 border-white shadow-md relative overflow-hidden flex items-center justify-center">
-                                        <i class="fas fa-star absolute top-1 left-1 text-[8px] text-white"></i>
-                                        <img v-if="hasCustomIcon('taobao')" :src="getAppIcon('taobao')" class="w-full h-full object-cover">
-                                        <i v-else class="fas fa-book-open text-white text-2xl"></i>
-                                    </div>
-                                    <span class="text-[10px] font-bold text-gray-800 drop-shadow-md">redbook</span>
-                                </div>
-                                <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('settings')">
-                                    <div class="w-14 h-14 bg-gray-700 rounded-2xl border-2 border-white shadow-md relative overflow-hidden flex items-center justify-center">
-                                        <i class="fas fa-star absolute top-1 left-1 text-[8px] text-white"></i>
-                                        <img v-if="hasCustomIcon('settings')" :src="getAppIcon('settings')" class="w-full h-full object-cover">
-                                        <i v-else class="fas fa-cog text-white text-2xl"></i>
-                                    </div>
-                                    <span class="text-[10px] font-bold text-gray-800 drop-shadow-md">設置</span>
                                 </div>
                             </div>
                             
-                            <div class="w-[140px] h-[140px] bg-white rounded-2xl shadow-lg border border-gray-100 flex relative -mt-4 cursor-pointer active:scale-95 transition">
-                                <div class="w-4 h-full flex flex-col justify-evenly items-center border-r border-gray-100 py-2 bg-white">
-                                    <div v-for="i in 8" :key="i" class="w-2.5 h-1.5 rounded-full bg-gray-300 shadow-inner"></div>
+                            <!-- 天数记录 -->
+                            <div class="relative mt-6 min-w-[120px] max-w-[240px] w-fit px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] cursor-pointer active:scale-95 transition border-2 border-white" @click="editHomeConfig('rightWidgetTitle', '修改天数')">
+                                <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
+                                    <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
                                 </div>
-                                <div class="flex-1 p-2 flex flex-col">
-                                    <div class="flex-1 bg-gray-100 rounded-lg overflow-hidden border border-gray-200" @click="triggerWidgetImageUpload(0)">
-                                        <img :src="customWidgets[0].image || 'https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'" class="w-full h-full object-cover opacity-90">
-                                    </div>
-                                    <div class="h-6 flex items-center justify-center text-gray-400 text-[10px] gap-1 tracking-widest" @click="editCustomWidget(0, 'bubble')">
-                                        <span>--------</span><i class="fas fa-star text-[8px] text-gray-300"></i><span>--------</span>
-                                    </div>
+                                <span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center break-words whitespace-pre-wrap leading-snug" :style="{color: themeConfig.fontColor}">{{ homeConfig.rightWidgetTitle || '6440天' }}</span>
+                                <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
+                                    <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
                                 </div>
                             </div>
                         </div>
                     </div>
                  </div>
+             </div> <!-- 第一页结束 -->
 
-                 <!-- 桌面2：第二页 -->
-                 <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-8 px-5">
-                    <div class="flex w-full gap-4 mb-6">
-                        <!-- Top Left Apps -->
-                        <div class="grid grid-cols-2 gap-4 content-start">
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('themes')">
-                                <div class="w-14 h-14 bg-white rounded-[18px] shadow-sm border border-gray-100 flex items-center justify-center text-3xl text-black overflow-hidden">
-                                    <img v-if="hasCustomIcon('themes')" :src="getAppIcon('themes')" class="w-full h-full object-cover">
-                                    <i v-else class="fab fa-app-store-ios"></i>
-                                </div>
-                                <span class="text-[11px] font-bold text-gray-800 drop-shadow-md">App Store</span>
-                            </div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('worldbook')">
-                                <div class="w-14 h-14 bg-white rounded-[18px] shadow-sm border border-gray-100 flex items-center justify-center text-2xl text-black overflow-hidden">
-                                    <img v-if="hasCustomIcon('worldbook')" :src="getAppIcon('worldbook')" class="w-full h-full object-cover">
-                                    <i v-else class="fas fa-address-book"></i>
-                                </div>
-                                <span class="text-[11px] font-bold text-gray-800 drop-shadow-md">通讯录</span>
-                            </div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('icity')">
-                                <div class="w-14 h-14 bg-white rounded-[18px] shadow-sm border border-gray-100 flex items-center justify-center text-2xl text-black overflow-hidden">
-                                    <img v-if="hasCustomIcon('icity')" :src="getAppIcon('icity')" class="w-full h-full object-cover">
-                                    <i v-else class="far fa-clock"></i>
-                                </div>
-                                <span class="text-[11px] font-bold text-gray-800 drop-shadow-md">时钟</span>
-                            </div>
-                            <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="handleAppClick('check')">
-                                <div class="w-14 h-14 bg-white rounded-[18px] shadow-sm border border-gray-100 flex items-center justify-center text-2xl text-black overflow-hidden">
-                                    <img v-if="hasCustomIcon('check')" :src="getAppIcon('check')" class="w-full h-full object-cover">
-                                    <i v-else class="fas fa-cloud-sun"></i>
-                                </div>
-                                <span class="text-[11px] font-bold text-gray-800 drop-shadow-md">天气</span>
-                            </div>
-                        </div>
+             <!-- 第二页 -->
+             <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-8 px-5">
+                 
+                 <!-- 顶部灰白卡片 -->
+                 <div class="w-[90%] max-w-[340px] bg-white rounded-[28px] shadow-[0_4px_20px_rgba(0,0,0,0.04)] mt-6 relative flex flex-col items-center pb-4 pt-12 border border-gray-100">
+                     
+                     <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[80px] h-[80px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-50 cursor-pointer z-10 flex items-center justify-center" @click="triggerPage2AvatarUpload">
+                         <img v-if="page2Profile.avatar" :src="page2Profile.avatar" class="w-full h-full object-cover">
+                         <i v-else class="fas fa-user text-gray-300 text-3xl"></i>
+                     </div>
+                     
+                     <div class="absolute -top-7 left-[calc(50%+46px)] px-3.5 py-1 bg-white border border-gray-100 rounded-full text-gray-500 text-[11px] font-bold shadow-sm cursor-pointer z-20" @click="editPage2Profile('status')">
+                         {{ page2Profile.status }}
+                     </div>
+                     <div class="absolute -top-2 left-[calc(50%+42px)] w-2 h-2 bg-white border border-gray-100 rounded-full z-20 shadow-sm"></div>
+                     
+                     <div class="w-full px-5 flex justify-between items-center mb-3">
+                         <div class="flex gap-2 text-gray-500 font-bold text-[11px]">
+                             <div class="bg-gray-100 px-3 py-1 rounded-full">{{ weatherTemp }}</div>
+                             <div class="bg-gray-100 px-3 py-1 rounded-full">{{ statusBar.batteryLevel }}%</div>
+                         </div>
+                         <div class="flex gap-1.5">
+                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
+                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                 <i class="relative z-10 fas fa-wifi"></i>
+                             </div>
+                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[10px]">
+                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                 <i class="relative z-10 fas fa-broadcast-tower"></i>
+                             </div>
+                             <div class="relative w-[26px] h-[26px] flex items-center justify-center text-gray-400 text-[13px]">
+                                 <svg class="absolute inset-0 text-gray-100 w-full h-full scale-[1.1]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                 <i class="relative z-10 fab fa-bluetooth-b"></i>
+                             </div>
+                         </div>
+                     </div>
+                     <div class="flex items-center gap-2 mb-4">
+                         <span class="text-gray-700 font-bold text-[12px] tracking-wide">{{ page2Profile.name }}</span>
+                         <span class="text-[9px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full cursor-pointer font-bold active:scale-95 transition" @click="editPage2Profile('name')">修改</span>
+                     </div>
+                     <div class="w-[92%] bg-gray-50 border border-gray-100 rounded-xl py-2.5 flex justify-around items-center text-gray-400 text-[11px] font-bold">
+                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('功能开发中')">
+                             <i class="far fa-edit"></i> 修改资料
+                         </div>
+                         <div class="w-[1.5px] h-3 bg-gray-200"></div>
+                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('当前等级: Lv.1')">
+                             <i class="fas fa-sun"></i> 我的等级
+                         </div>
+                         <div class="w-[1.5px] h-3 bg-gray-200"></div>
+                         <div class="flex items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="showToast('已存为照片')">
+                             <i class="far fa-image"></i> 存为照片
+                         </div>
+                     </div>
+                 </div>
 
-                        <!-- Top Right Polaroid -->
-                        <div class="flex-1 bg-white/80 backdrop-blur-sm rounded-3xl p-3 shadow-sm border border-gray-100 relative overflow-hidden flex flex-col justify-between cursor-pointer active:scale-[0.98] transition">
-                            <div class="absolute top-2 right-2 text-[10px] text-gray-400 font-bold bg-white px-2 py-0.5 rounded-full shadow-sm">o ° . ° o</div>
-                            <div class="flex justify-end mt-4 pr-2">
-                                <div class="w-16 h-20 bg-white p-1 pb-4 rounded shadow-sm border border-gray-200 rotate-6" @click.stop="triggerPage2AvatarUpload">
-                                    <div class="w-full h-full bg-gray-100 overflow-hidden"><img :src="page2Profile.avatar || 'https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'" class="w-full h-full object-cover opacity-90"></div>
-                                </div>
-                            </div>
-                            <div class="flex justify-start -mt-6">
-                                <div class="w-14 h-16 bg-white p-1 pb-3 rounded shadow-sm border border-gray-200 -rotate-6" @click.stop="triggerPage2WidgetImgUpload">
-                                    <div class="w-full h-full bg-gray-100 overflow-hidden"><img :src="page2Widget.image || 'https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'" class="w-full h-full object-cover opacity-90"></div>
-                                </div>
-                            </div>
-                            <div class="text-[10px] font-bold text-gray-600 mt-2 text-center w-full" @click.stop="editPage2Widget('msg')">{{ page2Widget.msg || 'i luv u <3...' }}</div>
-                            <div class="text-[10px] text-gray-300 mt-1 self-center tracking-widest font-bold">Top Widgets⁺</div>
-                        </div>
-                    </div>
+                 <!-- 第一排分栏结构 -->
+                 <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
+                     <div class="w-[145px] h-full bg-white rounded-[24px] shadow-[0_2px_10px_rgba(0,0,0,0.03)] py-2.5 px-3 flex flex-col items-center justify-between border border-gray-100">
+                         <div class="w-full flex justify-between items-center">
+                             <div class="px-2 py-0.5 bg-gray-100 rounded-full text-gray-500 text-[9px] font-bold cursor-pointer" @click="editPage2Widget('title')">{{ page2Widget.title }}</div>
+                             <div class="flex gap-1 text-gray-300 text-[11px]">
+                                 <i class="far fa-heart"></i>
+                                 <i class="far fa-heart"></i>
+                             </div>
+                             <div class="w-[16px] h-[16px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-times"></i></div>
+                         </div>
+                         <div class="text-gray-400 text-[10px] font-bold">{{ formatAMPM(statusBar.time) }}</div>
+                         <div class="w-full flex items-center justify-between px-1">
+                             <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-left"></i></div>
+                             <div class="w-[55px] h-[55px] bg-gray-50 rounded-[12px] overflow-hidden cursor-pointer border border-gray-100" @click="triggerPage2WidgetImgUpload">
+                                 <img v-if="page2Widget.image" :src="page2Widget.image" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-image flex h-full items-center justify-center text-gray-300 text-xl"></i>
+                             </div>
+                             <div class="w-4 h-4 rounded-full border-[1.5px] border-gray-200 flex items-center justify-center text-gray-300 text-[7px]"><i class="fas fa-arrow-right"></i></div>
+                         </div>
+                         <div class="flex items-center gap-1 text-gray-500 text-[9px] font-bold cursor-pointer" @click="editPage2Widget('msg')">
+                             <i class="fas fa-mobile-alt text-[10px] text-gray-300"></i>
+                             <span class="truncate max-w-[80px]">{{ page2Widget.msg }}</span>
+                         </div>
+                         <div class="w-full flex gap-2 px-1">
+                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="showToast('已同意')">同意</button>
+                             <button class="flex-1 py-1 bg-gray-100 text-gray-500 rounded-full text-[9px] font-bold active:scale-95 transition" @click="showToast('已拒绝')">拒絕</button>
+                         </div>
+                     </div>
+                     
+                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('情侣空间')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('couple_space')}">
+                                 <img v-if="hasCustomIcon('couple_space')" :src="getAppIcon('couple_space')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-heart text-gray-400 text-2xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('couple_space') }}</span>
+                         </div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('游戏大厅')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('game_center')}">
+                                 <img v-if="hasCustomIcon('game_center')" :src="getAppIcon('game_center')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-gamepad text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('game_center') }}</span>
+                         </div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('短信功能待接入')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('sms')}">
+                                 <img v-if="hasCustomIcon('sms')" :src="getAppIcon('sms')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-comment-sms text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('sms') }}</span>
+                         </div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="openApp('jinjiang')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
+                                 <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-book-reader text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
+                         </div>
+                     </div>
+                 </div>
 
-                    <!-- Middle Widget -->
-                    <div class="w-full bg-white/90 backdrop-blur-md rounded-[30px] p-5 shadow-sm border border-gray-100 mb-4">
-                        <div class="flex gap-4 h-full relative">
-                            <div class="flex flex-col justify-between w-1/2">
-                                <div class="bg-gray-100 rounded-lg p-2 text-xs text-gray-500 font-bold flex items-center shadow-inner cursor-pointer" @click="editHomeConfig('widgetTitle', '修改标题')">
-                                    <span class="truncate max-w-[80px]">{{ homeConfig.widgetTitle || '四葉のクローバー' }}</span><div class="w-px h-3 bg-gray-300 mx-2 shrink-0"></div><i class="fas fa-search text-gray-400 shrink-0"></i>
-                                </div>
-                                <div class="flex gap-2 mt-4">
-                                    <div class="w-8 h-8 rounded border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 bg-gray-50 shadow-sm cursor-pointer active:bg-gray-100">07</div>
-                                    <div class="w-8 h-8 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-400 bg-gray-50 shadow-sm cursor-pointer active:bg-gray-100"><i class="far fa-star"></i></div>
-                                    <div class="w-8 h-8 rounded border border-gray-200 flex items-center justify-center text-xs text-gray-400 bg-gray-50 shadow-sm cursor-pointer active:bg-gray-100"><i class="fas fa-plus"></i></div>
-                                    <div class="w-8 h-8 rounded border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-600 bg-gray-50 shadow-sm cursor-pointer active:bg-gray-100">05</div>
-                                </div>
-                            </div>
-                            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white border border-gray-200 shadow-sm z-10 flex items-center justify-center text-2xl text-gray-400 overflow-hidden cursor-pointer active:scale-95 transition" @click="triggerPage2Widget2AvatarUpload">
-                                <img :src="page2Widget2.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'" class="w-full h-full object-cover">
-                            </div>
-                            <div class="flex flex-col justify-between items-end w-1/2">
-                                <div class="border border-gray-200 rounded text-[10px] text-gray-600 font-bold px-3 py-1.5 shadow-sm bg-white cursor-pointer active:scale-95" @click="editPage2Profile('name')">{{ page2Profile.name || 'あいしてる :★' }}</div>
-                                <i class="fas fa-mouse-pointer text-gray-300 text-sm -ml-4 rotate-[-20deg]"></i>
-                                <div class="border border-gray-200 rounded text-[10px] text-gray-500 px-3 py-1.5 shadow-sm mt-1 bg-white cursor-pointer active:scale-95" @click="editPage2Widget2('status')">{{ page2Widget2.status || 'nothing here' }}</div>
-                            </div>
-                        </div>
-                    </div>
+                 <!-- 第二排分栏结构 -->
+                 <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
+                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('memo')}">
+                                 <img v-if="hasCustomIcon('memo')" :src="getAppIcon('memo')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-clipboard-list text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('memo') }}</span>
+                         </div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('album')}">
+                                 <img v-if="hasCustomIcon('album')" :src="getAppIcon('album')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-images text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('album') }}</span>
+                         </div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph5')}">
+                                 <img v-if="hasCustomIcon('ph5')" :src="getAppIcon('ph5')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-cloud text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph5') }}</span>
+                         </div>
+                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph6')}">
+                                 <img v-if="hasCustomIcon('ph6')" :src="getAppIcon('ph6')" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-leaf text-gray-400 text-xl"></i>
+                             </div>
+                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph6') }}</span>
+                         </div>
+                     </div>
 
-                    <div class="text-xs font-bold text-gray-800 mb-2 drop-shadow-md">Top Widgets⁺</div>
+                     <!-- 右侧：虚线框卡片 (灰白色调) -->
+                     <div class="w-[145px] h-full relative flex items-center justify-center">
+                         
+                         <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
+                             <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
+                         </div>
+                         
+                         <div class="w-[125px] h-full bg-white rounded-[20px] border-[1.5px] border-dashed border-gray-300 flex flex-col items-center pt-2.5 pb-1.5 px-2 relative z-20 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                             <div class="w-full flex justify-between items-center px-1 text-gray-400">
+                                 <div class="flex items-center gap-1">
+                                     <span class="text-[9px] font-bold">{{ statusBar.batteryLevel }}%</span>
+                                     <div class="w-[16px] h-[8px] border-[1px] border-gray-300 rounded-[2px] p-[1px] relative flex items-center">
+                                         <div class="h-full rounded-[1px] transition-all" :class="statusBar.isCharging ? 'bg-green-400' : 'bg-gray-300'" :style="{ width: statusBar.batteryLevel + '%' }"></div>
+                                         <div class="absolute -right-[2px] top-1/2 -translate-y-1/2 w-[1px] h-[3px] bg-gray-300 rounded-r-[1px]"></div>
+                                     </div>
+                                 </div>
+                                 <div class="flex gap-1.5 text-[10px]">
+                                     <i class="fas fa-wifi"></i>
+                                     <i class="far fa-heart"></i>
+                                 </div>
+                             </div>
+                             
+                             <div class="relative mt-2">
+                                 <div class="w-[80px] h-[80px] bg-gray-50 rounded-[16px] overflow-hidden cursor-pointer border border-gray-100" @click="triggerPage2Widget2AvatarUpload">
+                                     <img v-if="page2Widget2.avatar" :src="page2Widget2.avatar" class="w-full h-full object-cover">
+                                     <i v-else class="fas fa-user flex h-full items-center justify-center text-gray-300 text-3xl"></i>
+                                 </div>
+                                 <div class="absolute -right-4 top-2 px-2 py-0.5 bg-white border border-gray-100 rounded-full text-gray-500 text-[9px] font-bold shadow-sm cursor-pointer z-30" @click="editPage2Widget2('status')">
+                                     {{ page2Widget2.status }}
+                                 </div>
+                                 <div class="absolute right-0 top-6 w-1.5 h-1.5 bg-white border border-gray-100 rounded-full z-30 shadow-sm"></div>
+                             </div>
+                             
+                             <div class="mt-auto mb-0 w-9 h-[18px] bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-[10px] cursor-pointer active:scale-95 transition" @click="showToast('🐾 喵~')">
+                                 <i class="fas fa-paw"></i>
+                             </div>
+                         </div>
 
-                    <div class="flex w-full gap-4">
-                        <!-- Bottom Left Text -->
-                        <div class="flex-1 bg-white/90 backdrop-blur-md rounded-3xl p-4 shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-1.5 relative cursor-pointer active:scale-[0.98] transition" @click="editHomeConfig('rightWidgetTitle', '修改文案(换行分割)')">
-                            <span class="text-[11px] text-gray-400">{{ (homeConfig.rightWidgetTitle || '隐晦诗\n终身雨季\n可我需要你\n泛滥成灾的谎言\n模糊的爱意\n破碎记忆\n汇成海').split('\n')[0] || '隐晦诗' }}</span>
-                            <span class="text-[11px] text-gray-400">{{ (homeConfig.rightWidgetTitle || '隐晦诗\n终身雨季\n可我需要你\n泛滥成灾的谎言\n模糊的爱意\n破碎记忆\n汇成海').split('\n')[1] || '终身雨季' }}</span>
-                            <span class="text-[11px] text-gray-500 font-bold">{{ (homeConfig.rightWidgetTitle || '隐晦诗\n终身雨季\n可我需要你\n泛滥成灾的谎言\n模糊的爱意\n破碎记忆\n汇成海').split('\n')[2] || '可我需要你' }}</span>
-                            <div class="flex items-center gap-2 w-full justify-center">
-                                <i class="fas fa-cloud text-gray-300 text-[10px]"></i>
-                                <span class="text-[13px] font-bold text-gray-800 truncate max-w-[80px]">{{ (homeConfig.rightWidgetTitle || '隐晦诗\n终身雨季\n可我需要你\n泛滥成灾的谎言\n模糊的爱意\n破碎记忆\n汇成海').split('\n')[3] || '泛滥成灾的谎言' }}</span>
-                                <i class="fas fa-cloud text-gray-300 text-[10px]"></i>
-                            </div>
-                            <span class="text-[11px] text-gray-400">{{ (homeConfig.rightWidgetTitle || '隐晦诗\n终身雨季\n可我需要你\n泛滥成灾的谎言\n模糊的爱意\n破碎记忆\n汇成海').split('\n')[4] || '模糊的爱意' }}</span>
-                            <span class="text-[11px] text-gray-400">{{ (homeConfig.rightWidgetTitle || '隐晦诗\n终身雨季\n可我需要你\n泛滥成灾的谎言\n模糊的爱意\n破碎记忆\n汇成海').split('\n')[5] || '破碎记忆' }}</span>
-                            <span class="text-[11px] text-gray-300">{{ (homeConfig.rightWidgetTitle || '隐晦诗\n终身雨季\n可我需要你\n泛滥成灾的谎言\n模糊的爱意\n破碎记忆\n汇成海').split('\n')[6] || '汇成海' }}</span>
-                        </div>
+                         <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));">
+                             <img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80">
+                         </div>
+                     </div>
+                 </div>
+             </div> <!-- 闭合第二页 -->
+             </template>
 
-                        <!-- Bottom Right Folders -->
-                        <div class="w-[120px] grid grid-cols-2 gap-3 content-start">
-                            <div class="aspect-square bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-1 p-2 cursor-pointer active:scale-95 transition" @click="showToast('打开工具文件夹')">
-                                <div class="grid grid-cols-2 gap-1 w-full flex-1">
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-robot"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="far fa-user"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-camera"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"></div>
-                                </div>
-                                <span class="text-[9px] font-bold text-gray-600">工具</span>
-                            </div>
-                            <div class="aspect-square bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-1 p-2 cursor-pointer active:scale-95 transition" @click="showToast('打开社交文件夹')">
-                                <div class="grid grid-cols-2 gap-1 w-full flex-1">
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-comment"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-heart"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"></div>
-                                </div>
-                                <span class="text-[9px] font-bold text-gray-600">社交</span>
-                            </div>
-                            <div class="aspect-square bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-1 p-2 cursor-pointer active:scale-95 transition" @click="showToast('打开日常文件夹')">
-                                <div class="grid grid-cols-2 gap-1 w-full flex-1">
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-star"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-moon"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-sun"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"></div>
-                                </div>
-                                <span class="text-[9px] font-bold text-gray-600">日常</span>
-                            </div>
-                            <div class="aspect-square bg-white/90 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-1 p-2 cursor-pointer active:scale-95 transition" @click="showToast('打开游戏文件夹')">
-                                <div class="grid grid-cols-2 gap-1 w-full flex-1">
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-gamepad"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-dice"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"><i class="fas fa-puzzle-piece"></i></div>
-                                    <div class="bg-gray-100 rounded flex items-center justify-center text-gray-400 text-[8px]"></div>
-                                </div>
-                                <span class="text-[9px] font-bold text-gray-600">游戏</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Vertical Japanese text overlay on the right -->
-                    <div class="absolute top-10 right-2 w-4 text-[10px] text-gray-500/60 font-serif leading-tight writing-vertical-rl pointer-events-none drop-shadow-sm" style="writing-mode: vertical-rl;">
-                        悲しい顔をしないままします
-                    </div>
+             <!-- ================= 桌面2 (INS 灰白风) ================= -->
+             <template v-else>
+                 <!-- 桌面2: 第一页 (INS风主页) -->
+                 <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-4 px-4">
+                     <div class="w-full max-w-[360px] bg-white/95 backdrop-blur-md rounded-[32px] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-white">
+                         <!-- 顶部头像与数据 -->
+                         <div class="flex justify-between items-center mb-4">
+                             <div class="relative w-20 h-20 rounded-full border-2 border-gray-100 p-0.5 cursor-pointer active:scale-95 transition" @click="triggerD2Upload(desktop2Profile, 'avatar')">
+                                 <div class="w-full h-full rounded-full overflow-hidden bg-gray-50 border border-gray-100">
+                                     <img v-if="desktop2Profile.avatar" :src="desktop2Profile.avatar" class="w-full h-full object-cover">
+                                     <i v-else class="fas fa-user text-gray-300 text-2xl flex h-full items-center justify-center"></i>
+                                 </div>
+                                 <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full border border-gray-200 flex items-center justify-center text-gray-500 shadow-sm"><i class="fas fa-plus text-[10px]"></i></div>
+                                 <div class="absolute -top-1 -left-2 bg-white rounded-full px-2 py-0.5 border border-gray-200 flex items-center gap-1 shadow-sm"><i class="fas fa-heart text-gray-600 text-[10px]"></i><i class="fas fa-heart text-gray-300 text-[10px]"></i></div>
+                             </div>
+                             <div class="flex gap-4 text-center">
+                                 <div @click="editDesktop2Text(desktop2Profile.stats, 'posts', 'Posts')" class="cursor-pointer active:opacity-50"><div class="font-bold text-gray-800 text-[16px]">{{ desktop2Profile.stats.posts }}</div><div class="text-[10px] text-gray-400 mt-0.5">Posts</div></div>
+                                 <div @click="editDesktop2Text(desktop2Profile.stats, 'followers', 'Followers')" class="cursor-pointer active:opacity-50"><div class="font-bold text-gray-800 text-[16px]">{{ desktop2Profile.stats.followers }}</div><div class="text-[10px] text-gray-400 mt-0.5">Followers</div></div>
+                                 <div @click="editDesktop2Text(desktop2Profile.stats, 'following', 'Following')" class="cursor-pointer active:opacity-50"><div class="font-bold text-gray-800 text-[16px]">{{ desktop2Profile.stats.following }}</div><div class="text-[10px] text-gray-400 mt-0.5">Following</div></div>
+                             </div>
+                         </div>
+                         <!-- 签名 -->
+                         <div class="mb-4 cursor-pointer active:opacity-50" @click="editDesktop2Text(desktop2Profile, 'name', '修改签名1')">
+                             <div class="text-[13px] font-bold text-gray-700 tracking-wide">{{ desktop2Profile.name }}</div>
+                             <div class="text-[12px] text-gray-400 mt-1">{{ desktop2Profile.subText }}</div>
+                         </div>
+                         <!-- 按钮 -->
+                         <div class="w-full py-2 bg-white border border-gray-200 rounded-xl text-center text-[13px] font-bold text-gray-500 shadow-sm mb-6 active:bg-gray-50 cursor-pointer">Edit Profile</div>
+                         <!-- 动态圆圈 (Stories) -->
+                         <div class="flex justify-between items-center mb-6">
+                             <div v-for="(story, idx) in desktop2Profile.stories" :key="idx" class="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95" @click="triggerD2Upload(desktop2Profile.stories[idx], 'img')">
+                                 <div class="w-[60px] h-[60px] rounded-full border border-gray-200 p-0.5">
+                                     <div class="w-full h-full rounded-full overflow-hidden bg-gray-50 flex items-center justify-center border border-gray-100 text-gray-400 text-xl">
+                                         <img v-if="story.img" :src="story.img" class="w-full h-full object-cover">
+                                         <i v-else-if="idx===0" class="fas fa-plus text-gray-500"></i>
+                                     </div>
+                                 </div>
+                                 <span class="text-[10px] font-bold text-gray-500" @click.stop="editDesktop2Array(desktop2Profile.stories, idx, 'label', '修改Story标签')">{{ story.label }}</span>
+                             </div>
+                         </div>
+                         <!-- Likes / Normal / Lives 区域 -->
+                         <div class="bg-[#f8f9fa] rounded-[24px] p-4 border border-gray-100 shadow-inner mb-6">
+                             <div class="flex items-center justify-between px-2 mb-3">
+                                 <div class="w-4 h-1 bg-gray-300 rounded-full"></div>
+                                 <div class="flex gap-6 text-[13px] font-bold text-gray-400">
+                                     <span>Likes</span><span class="text-gray-800">Normal</span><span class="bg-white px-2 py-0.5 rounded-full border border-gray-200 shadow-sm flex items-center gap-1"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>Lives</span>
+                                 </div>
+                             </div>
+                             <div class="flex items-center gap-2">
+                                 <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-300 to-gray-50 shrink-0 shadow-sm"></div>
+                                 <div class="flex-1 h-8 bg-gray-200/50 rounded-full border border-gray-200"></div>
+                             </div>
+                             <div class="flex justify-between items-center mt-3 px-2">
+                                 <div class="flex gap-3 text-gray-400 text-lg"><i class="far fa-moon"></i><i class="far fa-heart"></i></div>
+                                 <div class="px-4 py-1.5 bg-white border border-gray-200 rounded-full text-[12px] font-bold text-gray-500 shadow-sm">Sand</div>
+                             </div>
+                         </div>
+                         <!-- 底部小组件与APP区 -->
+                         <div class="text-center font-bold text-[12px] text-gray-800 mb-4">Top Widgets⁺</div>
+                         <div class="flex justify-between items-end relative h-[140px]">
+                             <div class="grid grid-cols-2 gap-4">
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95" @click="openApp('wechat')"><div class="w-14 h-14 bg-gray-600 rounded-2xl flex justify-end p-1 shadow-md relative overflow-hidden"><i class="fas fa-star text-white text-[10px] absolute top-1 left-1"></i><img v-if="hasCustomIcon('wechat')" :src="getAppIcon('wechat')" class="w-full h-full object-cover absolute inset-0 opacity-80 mix-blend-screen"></div><span class="text-[11px] font-bold text-gray-800">wechat</span></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-14 h-14 bg-gray-500 rounded-2xl flex justify-end p-1 shadow-md relative overflow-hidden"><i class="fas fa-star text-white text-[10px] absolute top-1 left-1"></i></div><span class="text-[11px] font-bold text-gray-800">QQ</span></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-14 h-14 bg-gray-700 rounded-2xl flex justify-end p-1 shadow-md relative overflow-hidden"><i class="fas fa-star text-white text-[10px] absolute top-1 left-1"></i></div><span class="text-[11px] font-bold text-gray-800">redbook</span></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95" @click="openApp('settings')"><div class="w-14 h-14 bg-gray-400 rounded-2xl flex justify-end p-1 shadow-md relative overflow-hidden"><i class="fas fa-star text-white text-[10px] absolute top-1 left-1"></i><img v-if="hasCustomIcon('settings')" :src="getAppIcon('settings')" class="w-full h-full object-cover absolute inset-0 opacity-80 mix-blend-screen"></div><span class="text-[11px] font-bold text-gray-800">设置</span></div>
+                             </div>
+                             <!-- 右侧笔记本Widget -->
+                             <div class="w-[140px] h-[140px] bg-white rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-gray-100 absolute -right-2 bottom-0 flex p-3 cursor-pointer active:scale-95 transition" @click="triggerD2Upload(desktop2Profile, 'notebookImg')">
+                                 <!-- 螺旋环 -->
+                                 <div class="w-3 h-full flex flex-col justify-between py-1 shrink-0 z-10 -ml-1">
+                                     <div v-for="i in 8" :key="i" class="w-4 h-1.5 bg-gray-300 rounded-full shadow-sm border border-gray-400"></div>
+                                 </div>
+                                 <div class="flex-1 bg-gray-50 rounded-xl ml-1 overflow-hidden border border-gray-100 relative flex items-center justify-center">
+                                     <img v-if="desktop2Profile.notebookImg" :src="desktop2Profile.notebookImg" class="w-full h-full object-cover">
+                                     <i v-else class="fas fa-image text-gray-300 text-2xl"></i>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <!-- 桌面2: 第二页 (INS风功能页) -->
+                 <div class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px] pt-4 px-4">
+                     <div class="w-full max-w-[360px] flex flex-col gap-5">
+                         <!-- 顶部网格与宝丽来 -->
+                         <div class="flex gap-4">
+                             <div class="grid grid-cols-2 gap-4 flex-1">
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl"><i class="fab fa-app-store text-black"></i></div><span class="text-[11px] font-bold text-gray-800">App Store</span></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl"><i class="fas fa-address-book text-black"></i></div><span class="text-[11px] font-bold text-gray-800">通讯录</span></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl"><i class="far fa-clock text-black"></i></div><span class="text-[11px] font-bold text-gray-800">时钟</span></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl"><i class="fas fa-cloud-sun text-black"></i></div><span class="text-[11px] font-bold text-gray-800">天气</span></div>
+                             </div>
+                             <!-- 宝丽来组件 -->
+                             <div class="w-[140px] bg-white/60 backdrop-blur-md rounded-3xl p-3 border border-white shadow-sm flex flex-col gap-2 relative">
+                                 <div class="text-[10px] font-bold text-gray-800 text-center">Top Widgets⁺</div>
+                                 <div class="bg-white p-1.5 pb-4 rounded-xl shadow-sm cursor-pointer border border-gray-100 transform -rotate-2" @click="triggerD2Upload(desktop2Profile, 'polaroidImg1')">
+                                     <div class="w-full h-16 bg-gray-100 overflow-hidden rounded-lg"><img v-if="desktop2Profile.polaroidImg1" :src="desktop2Profile.polaroidImg1" class="w-full h-full object-cover"></div>
+                                 </div>
+                                 <div class="bg-white p-1.5 pb-4 rounded-xl shadow-sm cursor-pointer border border-gray-100 transform rotate-3 -mt-6 ml-4" @click="triggerD2Upload(desktop2Profile, 'polaroidImg2')">
+                                     <div class="w-full h-16 bg-gray-100 overflow-hidden rounded-lg"><img v-if="desktop2Profile.polaroidImg2" :src="desktop2Profile.polaroidImg2" class="w-full h-full object-cover"></div>
+                                     <div class="text-[8px] text-center mt-1 text-gray-500">i luv u &lt;3...</div>
+                                 </div>
+                             </div>
+                         </div>
+                         
+                         <!-- 中部控制台 -->
+                         <div class="bg-white/80 backdrop-blur-xl rounded-[32px] p-5 shadow-[0_8px_30px_rgba(0,0,0,0.05)] border border-white relative">
+                             <div class="flex justify-between items-center gap-4 mb-4">
+                                 <div class="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center shadow-sm cursor-pointer active:bg-gray-50" @click="editDesktop2Text(desktop2Profile, 'searchKeyword', '修改搜索词')">
+                                     <span class="text-[13px] text-gray-500 font-bold flex-1 truncate">{{ desktop2Profile.searchKeyword }}</span>
+                                     <div class="w-px h-4 bg-gray-300 mx-2"></div>
+                                     <i class="fas fa-search text-gray-400"></i>
+                                 </div>
+                                 <div class="px-3 py-2 bg-white border border-gray-200 rounded-xl shadow-sm text-[12px] font-bold text-gray-500 flex items-center gap-1 active:bg-gray-50 cursor-pointer">
+                                     あいしてる :★
+                                 </div>
+                             </div>
+                             <div class="flex justify-between items-end">
+                                 <div class="flex gap-2">
+                                     <div class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center font-bold text-gray-600 shadow-sm">07</div>
+                                     <div class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 text-lg shadow-sm"><i class="far fa-star"></i></div>
+                                     <div class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 text-lg shadow-sm"><i class="fas fa-plus"></i></div>
+                                     <div class="w-10 h-10 bg-white border border-gray-200 rounded-xl flex items-center justify-center font-bold text-gray-600 shadow-sm">05</div>
+                                 </div>
+                                 <div class="px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[12px] font-bold text-gray-400 mt-4 active:bg-gray-50 cursor-pointer">
+                                     nothing here
+                                 </div>
+                             </div>
+                             <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-16 h-16 bg-gray-200 rounded-full border-4 border-white shadow-lg flex items-center justify-center overflow-hidden z-10 cursor-pointer" @click="triggerD2Upload(desktop2Profile, 'avatar')">
+                                 <img v-if="desktop2Profile.avatar" :src="desktop2Profile.avatar" class="w-full h-full object-cover">
+                                 <i v-else class="fas fa-cat text-gray-400 text-2xl"></i>
+                             </div>
+                         </div>
+                         <div class="text-center font-bold text-[12px] text-gray-800 -mt-2">Top Widgets⁺</div>
+
+                         <!-- 底部卡片 -->
+                         <div class="flex gap-4 mb-10">
+                             <div class="flex-1 bg-white/80 backdrop-blur-xl rounded-3xl p-5 shadow-sm border border-white flex flex-col items-center text-gray-500 font-bold text-[13px] leading-relaxed relative">
+                                 <i class="fas fa-cloud absolute left-2 top-1/2 text-white text-2xl opacity-50 drop-shadow-sm"></i>
+                                 <i class="fas fa-cloud absolute right-2 top-1/3 text-white text-2xl opacity-50 drop-shadow-sm"></i>
+                                 <div v-for="(line, idx) in desktop2Profile.textList" :key="idx" class="cursor-pointer active:text-black transition" :class="{'text-gray-800 text-[14px]': idx===3}" @click="editDesktop2Array(desktop2Profile.textList, idx, null, '修改诗句')">{{ line }}</div>
+                             </div>
+                             <div class="w-[140px] grid grid-cols-2 gap-3 content-start">
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95" @click="openApp('wechat')"><div class="w-14 h-14 bg-white/60 backdrop-blur border border-white rounded-2xl flex items-center justify-center shadow-sm relative overflow-hidden"><div class="grid grid-cols-2 gap-1 p-2 w-full h-full"><div class="bg-gray-300 rounded-md"></div><div class="bg-gray-300 rounded-md"></div><div class="bg-gray-400 rounded-md flex items-center justify-center text-[8px] text-white"><i class="fas fa-hourglass-half"></i></div><div class="bg-gray-200 rounded-md"></div></div></div></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-14 h-14 bg-white/60 backdrop-blur border border-white rounded-2xl flex items-center justify-center shadow-sm"><i class="fas fa-user-friends text-gray-400 text-xl"></i></div><span class="text-[11px] font-bold text-gray-800">社交</span></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-14 h-14 bg-white/60 backdrop-blur border border-white rounded-2xl flex items-center justify-center shadow-sm"><i class="fas fa-camera text-gray-400 text-xl"></i></div></div>
+                                 <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95"><div class="w-14 h-14 bg-white/60 backdrop-blur border border-white rounded-2xl flex items-center justify-center shadow-sm"><i class="fas fa-gamepad text-gray-400 text-xl"></i></div><span class="text-[11px] font-bold text-gray-800">游戏</span></div>
+                             </div>
+                         </div>
+                     </div>
                  </div>
              </template>
-             
          </div> <!-- 闭合滑动分页容器 -->
 
          <!-- 底部Dock栏 -->
@@ -2866,6 +2762,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <input type="file" ref="page2AvatarInput" accept="image/*" class="hidden" @change="handlePage2AvatarChange">
         <input type="file" ref="page2WidgetImgInput" accept="image/*" class="hidden" @change="handlePage2WidgetImgChange">
         <input type="file" ref="page2Widget2AvatarInput" accept="image/*" class="hidden" @change="handlePage2Widget2AvatarChange">
+        <input type="file" ref="d2ImgInput" accept="image/*" class="hidden" @change="handleD2Upload">
 
     </div> <!-- 【修复致命Bug！！！】：彻底闭合主界面 -->
     
@@ -6937,15 +6834,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.32 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-[#06b6d4]"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-slate-800"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.32 桌面预设新增 iOS 灰白 Ins 风双系统桌面</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-02 22:47</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.32 iOS 灰白 Ins 风桌面二实装</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-02 21:41</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">新增功能：</span>在主题商店的“主屏预设”界面新增了“系统内置桌面切换”功能卡片，可以在“桌面 1 (经典版)”和“桌面 2 (灰白 Ins 风)”之间一键无缝切换，数据完全互通。</li>
-                                    <li><span class="font-bold text-gray-800">UI 重构：</span>实装了全新的第二套桌面 UI（iOS 灰白 Ins 风）。支持了精美的 IG Profile 数据卡片、极简音乐播放控件模拟、圆角相框小组件、竖排日文点缀以及文件夹收纳网格视图。</li>
-                                    <li><span class="font-bold text-gray-800">交互优化：</span>第二套全新桌面完美继承了底层的所有数据流。点击各卡片对应的区域依然可以触发快捷修改图片、修改签名、跳转应用等操作，美观与实用并存。</li>
+                                    <li><span class="font-bold text-gray-800">全新桌面布局：</span>在主题 App 的“主屏预设”置顶处，新增了桌面 1 / 桌面 2 风格切换功能。</li>
+                                    <li><span class="font-bold text-gray-800">高级组件：</span>桌面 2 完美复刻了极简 INS 风的相册布局、动态故事圆环、宝丽来折叠拍立得以及动态诗句本。</li>
+                                    <li><span class="font-bold text-gray-800">自定义支持：</span>新桌面上的所有图片、粉丝关注数据、心情签名、搜索词、甚至宝丽来的配文，全部支持自由点击修改和图片上传，并已完美接入桌面预设的存档系统中。</li>
                                 </ul>
                             </div>
 
@@ -7430,7 +7327,22 @@ document.addEventListener("DOMContentLoaded", () => {
 </div>
 </div></transition>
 
-        
+        <!-- 主屏幕预设管理页 -->
+        <transition name="page-slide">
+            <div v-if="themesPage === 'home_preset'" class="absolute inset-0 p-4 pb-20 overflow-y-auto">
+                <input type="file" ref="homePresetImportInput" accept=".json" class="hidden" @change="importHomePreset">
+                <div class="space-y-4">
+                    <!-- 桌面风格切换 -->
+                    <div class="bg-white rounded-[20px] p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
+                        <div class="text-[13px] font-bold text-gray-500 tracking-widest uppercase">Select Layout</div>
+                        <div class="flex bg-gray-100 p-1 rounded-xl">
+                            <button @click="themeConfig.activeDesktop = 'desktop1'; saveData()" class="flex-1 py-2 text-[13px] font-bold rounded-lg transition" :class="themeConfig.activeDesktop !== 'desktop2' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'">桌面 1</button>
+                            <button @click="themeConfig.activeDesktop = 'desktop2'; saveData()" class="flex-1 py-2 text-[13px] font-bold rounded-lg transition" :class="themeConfig.activeDesktop === 'desktop2' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'">桌面 2</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button @click="saveHomePreset" class="flex-1 bg-gray-900 text-white py-3.5 rounded-2xl font-bold shadow-md active:scale-95 transition">保存当前为预设</button>
                         <button @click="$refs.homePresetImportInput.click()" class="flex-1 bg-white text-gray-700 border border-gray-200 py-3.5 rounded-2xl font-bold shadow-sm active:scale-95 transition flex items-center justify-center gap-2"><i class="fas fa-file-import"></i> 导入预设</button>
                     </div>
                     <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
@@ -7916,7 +7828,18 @@ const app = createApp({
             muteScheduleModal: { show: false, start: '23:00', end: '08:00' },
             chatSearchModal: { show: false, keyword: '', results:[] },
             globalSearchModal: { show: false, keyword: '', contacts: [], groups: [], histories:[] },
-            themeConfig: { wallpaper: '', fontFamily: '', fontUrl: '', fontSize: 1.0, fontColor: '#000000', isDarkMode: false, activeDesktop: 'desktop1' }, fontPresets:[], fontInputUrl: '',
+            themeConfig: { activeDesktop: 'desktop1', wallpaper: '', fontFamily: '', fontUrl: '', fontSize: 1.0, fontColor: '#000000', isDarkMode: false }, fontPresets:[], fontInputUrl: '',
+            desktop2Profile: {
+                avatar: '',
+                name: 'すでに幸福の花のつぼみとなりました',
+                subText: '+☆ * . * . * ☆ ☆ * . * . * ☆',
+                stats: { posts: '18', followers: '189W', following: '520' },
+                stories: [{img:'', label:'New'}, {img:'', label:'ㅎㅇ...'}, {img:'', label:'행복'}, {img:'', label:'-ㅅ-'}, {img:'', label:'Good'}],
+                notebookImg: '',
+                polaroidImg1: '', polaroidImg2: '',
+                textList: ['隐晦诗', '终身雨季', '可我需要你', '泛滥成灾的谎言', '模糊的爱意', '破碎记忆', '汇成海'],
+                searchKeyword: '四葉のクローバー'
+            },
             npcLibraryTab: 'avatar', npcAvatars: [], npcAvatarInputUrl: '', isNpcMultiSelect: false, selectedNpcAvatars: [], npcNames: [], npcNameInput: '',
             npcNames: [], npcNameInput: '', npcTab: 'avatar', isNpcNameMultiSelect: false, selectedNpcNames: [],
             chatlistBeautifyConfig: { activeCSS: '', tempCode: '', presets: [] },
@@ -14947,6 +14870,7 @@ Structure:
                         page2Widget: JSON.parse(JSON.stringify(this.page2Widget)),
                         page2Widget2: JSON.parse(JSON.stringify(this.page2Widget2)),
                         homeConfig: JSON.parse(JSON.stringify(this.homeConfig)),
+                        desktop2Profile: JSON.parse(JSON.stringify(this.desktop2Profile)),
                         customWidgets: JSON.parse(JSON.stringify(this.customWidgets)),
                         appCustomization: JSON.parse(JSON.stringify(this.appCustomization)),
                         themeConfig: JSON.parse(JSON.stringify(this.themeConfig))
@@ -14965,6 +14889,7 @@ Structure:
                 if (preset.page2Widget) this.page2Widget = JSON.parse(JSON.stringify(preset.page2Widget));
                 if (preset.page2Widget2) this.page2Widget2 = JSON.parse(JSON.stringify(preset.page2Widget2));
                 if (preset.homeConfig) this.homeConfig = JSON.parse(JSON.stringify(preset.homeConfig));
+                if (preset.desktop2Profile) this.desktop2Profile = JSON.parse(JSON.stringify(preset.desktop2Profile));
                 if (preset.customWidgets) this.customWidgets = JSON.parse(JSON.stringify(preset.customWidgets));
                 if (preset.appCustomization) this.appCustomization = JSON.parse(JSON.stringify(preset.appCustomization));
                 if (preset.themeConfig) this.themeConfig = JSON.parse(JSON.stringify(preset.themeConfig));
@@ -15425,6 +15350,36 @@ Structure:
         triggerPage2Widget2AvatarUpload() { if(this.$refs.page2Widget2AvatarInput) this.$refs.page2Widget2AvatarInput.click(); },
         async handlePage2Widget2AvatarChange(e) { const f=e.target.files[0]; if(!f)return; try { this.page2Widget2.avatar = await compressImage(f, 300); this.saveData(); } catch(e){} },
         editPage2Widget2(f) { this.showInput('修改心情气泡', this.page2Widget2[f], "请输入...", (v) => { if(v){ this.page2Widget2[f]=v; this.saveData(); } }); },
+        editDesktop2Text(obj, key, title) {
+            if (key === null) {
+                this.showInput(title, obj, '请输入...', (v) => { if(v) { /* 数组基础类型修改由 Array方法处理 */ } });
+            } else {
+                this.showInput(title, obj[key], '请输入...', (v) => { if(v) { obj[key] = v; this.saveData(); } });
+            }
+        },
+        editDesktop2Array(arr, idx, key, title) {
+            let currentVal = key ? arr[idx][key] : arr[idx];
+            this.showInput(title, currentVal, '请输入...', (v) => { 
+                if(v) { 
+                    if(key) arr[idx][key] = v; 
+                    else arr[idx] = v; 
+                    this.saveData(); 
+                } 
+            }); 
+        },
+        triggerD2Upload(targetObj, targetKey) {
+            this._d2Target = { obj: targetObj, key: targetKey };
+            if(this.$refs.d2ImgInput) this.$refs.d2ImgInput.click();
+        },
+        async handleD2Upload(e) {
+            const f = e.target.files[0]; if(!f) return;
+            try {
+                const url = await compressImage(f, 800);
+                this._d2Target.obj[this._d2Target.key] = url;
+                this.saveData();
+            } catch(err){}
+            e.target.value = '';
+        },
         // -----------------------------
 
         formatAMPM(timeStr) {
