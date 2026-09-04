@@ -1960,18 +1960,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </header>
             
-            <!-- 分组 Tab -->
+            <!-- 分组 Tab (已与多选模式强绑定) -->
             <div class="bg-white px-2 py-2 flex gap-2 overflow-x-auto border-b border-gray-100 scrollbar-hide shrink-0" @click.stop>
                 <div v-for="group in stickerGroups" :key="group.id" 
                      class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-2 relative"
                      :class="activeStickerGroupId === group.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'"
-                     @click="handleGroupClick(group)"
-                     @touchstart="startStickerGroupLongPress($event, group)"
-                     @touchend="clearStickerGroupLongPress"
-                     @touchmove="clearStickerGroupLongPress"
-                     @contextmenu.prevent="showStickerGroupDelete(group)">
+                     @click="handleGroupClick(group)">
                     {{ group.name }}
-                    <div v-if="stickerGroupEditId === group.id && group.id !== 'all'" 
+                    <div v-if="isStickerMultiSelect && group.id !== 'all'" 
                          @click.stop="deleteStickerGroup(group.id)"
                          class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md">
                          <i class="fas fa-times text-[8px]"></i>
@@ -4754,29 +4750,37 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </transition>
 
-                    <!-- 附件菜单 (全新网格布局) -->
+                    <!-- 附件菜单 (全新两页分页滑动网格布局) -->
                     <transition name="app-slide">
-                        <div v-if="wechatState.showAttachMenu" class="chat-attach-menu">
-                            <!-- 功能图标项 (全部灰色) -->
-                            <!-- 相册 (支持 Vision) -->
-                            <div class="attach-item" @click="triggerImageUpload"><div class="attach-icon-box"><i class="fas fa-images text-gray-600"></i></div><span class="attach-label">相册</span></div>
-                            <!-- 拍摄 (文字转灰色图) -->
-                            <div class="attach-item" @click="openFakeImageInput"><div class="attach-icon-box"><i class="fas fa-camera text-gray-600"></i></div><span class="attach-label">拍摄</span></div>
-                            <div class="attach-item" @click="startVideoCall"><div class="attach-icon-box"><i class="fas fa-video text-gray-600"></i></div><span class="attach-label">视频通话</span></div>
-                            <div class="attach-item" @click="openLocationModal"><div class="attach-icon-box"><i class="fas fa-map-marker-alt text-gray-600"></i></div><span class="attach-label">位置</span></div>
-                            <div class="attach-item" @click="startVoiceCall"><div class="attach-icon-box"><i class="fas fa-phone text-gray-600"></i></div><span class="attach-label">语音通话</span></div>
-                            <!-- 自定义灰色红包图标 (Cute Rounded - Swapped Colors) -->
-                            <div class="attach-item" @click="openRedPacketModal"><div class="attach-icon-box !bg-white border border-gray-200 text-gray-600 !rounded-2xl">
-                                <i class="fas fa-wallet text-lg"></i>
-                            </div><span class="attach-label">红包</span></div>
-                            <div class="attach-item" @click="openFileModal"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
-                            <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
-                            <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
-                            <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
-                            <div v-if="!wechatState.activeSession?.isGroup" class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
-                            <div v-else class="attach-item" @click="groupActivityModal.show = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-flag text-gray-600"></i></div><span class="attach-label">群活动</span></div>
-                            <!-- 线下模式 (灰色咖啡杯) -->
-                            <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
+                        <div v-if="wechatState.showAttachMenu" class="absolute bottom-[65px] left-1/2 -translate-x-1/2 w-[95%] bg-white/98 backdrop-blur-xl rounded-[24px] shadow-[0_-5px_30px_rgba(0,0,0,0.15)] border border-gray-100 z-50 pt-5 pb-3 overflow-hidden"
+                             @touchstart="handleAttachMenuTouchStart"
+                             @touchend="handleAttachMenuTouchEnd">
+                            <div class="flex transition-transform duration-300 ease-out" :style="{ transform: `translateX(-${(wechatState.attachMenuPage || 0) * 100}%)` }">
+                                <!-- 第一页 (8 个功能) -->
+                                <div class="min-w-full grid grid-cols-4 gap-y-5 gap-x-2 px-3 content-start h-[175px]">
+                                    <div class="attach-item" @click="triggerImageUpload"><div class="attach-icon-box"><i class="fas fa-images text-gray-600"></i></div><span class="attach-label">相册</span></div>
+                                    <div class="attach-item" @click="openFakeImageInput"><div class="attach-icon-box"><i class="fas fa-camera text-gray-600"></i></div><span class="attach-label">拍摄</span></div>
+                                    <div class="attach-item" @click="startVideoCall"><div class="attach-icon-box"><i class="fas fa-video text-gray-600"></i></div><span class="attach-label">视频通话</span></div>
+                                    <div class="attach-item" @click="openLocationModal"><div class="attach-icon-box"><i class="fas fa-map-marker-alt text-gray-600"></i></div><span class="attach-label">位置</span></div>
+                                    <div class="attach-item" @click="startVoiceCall"><div class="attach-icon-box"><i class="fas fa-phone text-gray-600"></i></div><span class="attach-label">语音通话</span></div>
+                                    <div class="attach-item" @click="openRedPacketModal"><div class="attach-icon-box !bg-white border border-gray-200 text-gray-600 !rounded-2xl"><i class="fas fa-wallet text-lg"></i></div><span class="attach-label">红包</span></div>
+                                    <div class="attach-item" @click="openFileModal"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
+                                    <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
+                                </div>
+                                <!-- 第二页 (剩余 4 个功能) -->
+                                <div class="min-w-full grid grid-cols-4 gap-y-5 gap-x-2 px-3 content-start h-[175px]">
+                                    <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
+                                    <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
+                                    <div v-if="!wechatState.activeSession?.isGroup" class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
+                                    <div v-else class="attach-item" @click="groupActivityModal.show = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-flag text-gray-600"></i></div><span class="attach-label">群活动</span></div>
+                                    <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
+                                </div>
+                            </div>
+                            <!-- 分页指示器 -->
+                            <div class="flex justify-center gap-1.5 mt-2">
+                                <div class="w-1.5 h-1.5 rounded-full transition-colors cursor-pointer" :class="(wechatState.attachMenuPage || 0) === 0 ? 'bg-gray-400' : 'bg-gray-200'" @click="wechatState.attachMenuPage = 0"></div>
+                                <div class="w-1.5 h-1.5 rounded-full transition-colors cursor-pointer" :class="(wechatState.attachMenuPage || 0) === 1 ? 'bg-gray-400' : 'bg-gray-200'" @click="wechatState.attachMenuPage = 1"></div>
+                            </div>
                         </div>
                     </transition>
 
@@ -4846,7 +4850,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div v-else class="flex items-center gap-2 px-2 py-2">
                         <transition name="fade"><div v-if="replyingTo" class="absolute bottom-full left-0 w-full bg-gray-100 p-2 text-xs text-gray-500 border-t border-gray-200 flex justify-between items-center z-10"><span>引用: {{ replyingTo.content }}</span><button @click="replyingTo=null"><i class="fas fa-times"></i></button></div></transition>
                         
-                        <button @click.stop="wechatState.showAttachMenu = !wechatState.showAttachMenu" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800 transition shrink-0"><i class="fas fa-paperclip text-xl"></i></button>
+                        <button @click.stop="wechatState.showAttachMenu = !wechatState.showAttachMenu; wechatState.attachMenuPage = 0;" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800 transition shrink-0"><i class="fas fa-paperclip text-xl"></i></button>
                         <button @click="openVoiceInput" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-black transition active:scale-95 shrink-0"><i class="fas fa-microphone text-xl"></i></button>
                         
                         <textarea v-model="inputMsg" ref="chatInputArea" @input="resizeInput" @keydown.enter.prevent="sendMessage" class="flex-1 bg-gray-100 rounded-2xl py-2 px-3 text-sm border-none outline-none min-w-0 resize-none max-h-32" rows="1" placeholder="Aa..."></textarea>
@@ -5451,8 +5455,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
 
-                    <!-- 卡片 5：危险操作区 -->
+                    <!-- 卡片 5：导入导出及危险操作区 -->
                     <div class="bg-white rounded-[16px] overflow-hidden shadow-sm divide-y divide-gray-100">
+                        <button @click="exportSessionChatHistory" class="w-full text-blue-500 font-bold text-[15px] py-4 text-center active:bg-gray-50 transition">导出聊天记录</button>
+                        <button @click="$refs.chatHistoryImportInput.click()" class="w-full text-blue-500 font-bold text-[15px] py-4 text-center active:bg-gray-50 transition">导入聊天记录</button>
                         <button @click="confirmClearChatHistory" class="w-full text-red-500 font-bold text-[15px] py-4 text-center active:bg-gray-50 transition">清空聊天记录</button>
                         <button @click="wechatState.activeSession.isGroup ? confirmDismissGroup() : confirmDeleteFriend()" class="w-full text-red-500 font-bold text-[15px] py-4 text-center active:bg-gray-50 transition">
                             {{ wechatState.activeSession.isGroup ? '解散并退出群聊' : '删除好友' }}
@@ -5461,6 +5467,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 </div>
             </div>
+
+            <!-- 隐藏的聊天记录导入 Input -->
+            <input type="file" ref="chatHistoryImportInput" accept=".json" class="hidden" @change="importSessionChatHistory">
 
             <!-- 红包详情页 (完美复刻原版UI) -->
             <div v-if="wechatState.activeNav === 'red-packet-detail'" class="flex-1 flex flex-col red-packet-bg absolute inset-0 z-50">
@@ -6903,7 +6912,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.35 更新日志 (当前最新) -->
+                            <!-- v1.36 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.36 附件翻页与专属聊天记录导入</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-04 22:15</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">表情包分组操作优化：</span>废弃了繁琐的长按呼出逻辑，现在表情包的分组删除红叉已经与右上角的“多选(打钩)”模式完全绑定，开启多选即可快捷整理分组，更加符合直觉逻辑。</li>
+                                    <li><span class="font-bold text-gray-800">附件菜单两页布局：</span>由于聊天附件菜单功能逐渐增多，现在已将其彻底重构为两页等高的分页布局。第一页包含常规 8 个功能，第二页包含扩展 4 个功能，你可以通过向左滑动或点击底部小圆点进行优雅翻页。</li>
+                                    <li><span class="font-bold text-gray-800">单聊记录云游：</span>在角色的聊天设置面板底部（清空记录上方），新增了“导出聊天记录”和“导入聊天记录”按钮。你现在可以将与某位特定角色的聊天记录单独导出为一份独立的 JSON 进行长久保存；需要时直接覆盖导入该角色，瞬间找回丢失的回忆！</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.35 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#f43f5e]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7935,7 +7958,7 @@ const app = createApp({
             pushConfig: { enabled: false }, // 新增推送设置
             githubConfig: { token: '', repo: '', filename: 'AoveinOS_Backup.json', autoBackup: false, frequency: 24, lastBackupTime: 0 },
             storageStats: { total: '0 KB', items:[] }, showSettingsDisclaimer: false,
-            swipeState: { startX: 0, startY: 0, x: 0, index: -1, isSwiping: false },
+            swipeState: { startX: 0, startY: 0, x: 0, index: -1, isSwiping: false, attachStartX: 0 },
             
             // 新增弹窗控制变量
             githubFreqModal: { show: false },
@@ -11866,21 +11889,67 @@ const app = createApp({
             e.target.value = '';
         },
 
-        // ----------------- 表情包导入导出、分组与移动 -----------------
-        startStickerGroupLongPress(e, group) {
-            if (group.id === 'all') return;
-            this.clearStickerGroupLongPress();
-            this.longPressTimer = setTimeout(() => {
-                this.showStickerGroupDelete(group);
-            }, 500);
+        // ----------------- 附件菜单翻页与聊天记录导入导出 -----------------
+        handleAttachMenuTouchStart(e) {
+            this.swipeState.attachStartX = e.touches[0].clientX;
         },
-        clearStickerGroupLongPress() {
-            if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+        handleAttachMenuTouchEnd(e) {
+            const diffX = e.changedTouches[0].clientX - this.swipeState.attachStartX;
+            // 只要滑动超过 40 像素就视为翻页
+            if (diffX > 40) {
+                this.wechatState.attachMenuPage = 0;
+            } else if (diffX < -40) {
+                this.wechatState.attachMenuPage = 1;
+            }
         },
-        showStickerGroupDelete(group) {
-            if (group.id === 'all') return;
-            this.stickerGroupEditId = group.id;
+        exportSessionChatHistory() {
+            const session = this.wechatState.activeSession;
+            if (!session || !session.messages || session.messages.length === 0) return this.showToast('聊天记录为空，无法导出');
+            
+            this.showInput('导出聊天记录', `${session.name}_聊天记录_${Date.now()}`, '文件名(不带后缀)', (val) => {
+                if (val) {
+                    const exportData = {
+                        type: "Aovein_Chat_History",
+                        sessionId: session.id,
+                        targetId: session.targetId,
+                        messages: session.messages
+                    };
+                    const b = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
+                    const u = URL.createObjectURL(b);
+                    const a = document.createElement('a');
+                    a.href = u; a.download = `${val}.json`; a.click(); URL.revokeObjectURL(u);
+                    this.showToast('聊天记录导出成功');
+                }
+            });
         },
+        importSessionChatHistory(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.type === 'Aovein_Chat_History' && Array.isArray(data.messages)) {
+                        this.showConfirm(`确定要导入吗？这将会完全覆盖并清空你当前与该角色的所有聊天记录！`, () => {
+                            const session = this.wechatState.activeSession;
+                            session.messages = data.messages;
+                            session.lastMessage = session.messages.length > 0 ? this.getSessionLastMessage(session) : '...';
+                            this.saveData();
+                            this.scrollToBottom();
+                            this.showToast(`成功导入 ${data.messages.length} 条聊天记录`);
+                        });
+                    } else {
+                        this.showToast('导入失败：不是有效的聊天记录文件');
+                    }
+                } catch(err) {
+                    this.showToast('文件解析失败');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        },
+
+        // ----------------- 表情包分组与移动 -----------------
         deleteStickerGroup(groupId) {
             this.showConfirm('确定删除此分组吗？其中的表情将被移入"未分组"。', () => {
                 this.stickerGroups = this.stickerGroups.filter(g => g.id !== groupId);
