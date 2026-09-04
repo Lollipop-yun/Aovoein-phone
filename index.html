@@ -1963,10 +1963,19 @@ document.addEventListener("DOMContentLoaded", () => {
             <!-- 分组 Tab -->
             <div class="bg-white px-2 py-2 flex gap-2 overflow-x-auto border-b border-gray-100 scrollbar-hide shrink-0">
                 <div v-for="group in stickerGroups" :key="group.id" 
-                     class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-2"
+                     class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-2 relative"
                      :class="activeStickerGroupId === group.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'"
-                     @click="handleGroupClick(group)">
+                     @click="handleGroupClick(group)"
+                     @touchstart="startStickerGroupLongPress($event, group)"
+                     @touchend="clearStickerGroupLongPress"
+                     @touchmove="clearStickerGroupLongPress"
+                     @contextmenu.prevent="showStickerGroupDelete(group)">
                     {{ group.name }}
+                    <div v-if="stickerGroupEditId === group.id && group.id !== 'all'" 
+                         @click.stop="deleteStickerGroup(group.id)"
+                         class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md">
+                         <i class="fas fa-times text-[8px]"></i>
+                    </div>
                 </div>
                 <div @click="addStickerGroup" class="w-8 h-7 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 cursor-pointer shrink-0"><i class="fas fa-plus text-xs"></i></div>
             </div>
@@ -1987,14 +1996,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div v-if="filteredStickers.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无表情</div>
             </div>
 
-            <!-- 删除与导出底部栏 -->
-            <div v-if="isStickerMultiSelect" class="bg-white border-t border-gray-100 p-4 pb-safe shadow-lg flex gap-3">
-                <button @click="exportSelectedStickers" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-sm">导出为 JSON</button>
-                <button @click="deleteSelectedStickers" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-sm">删除所选 ({{selectedStickerIds.length}})</button>
+            <!-- 删除与导出移动底部栏 -->
+            <div v-if="isStickerMultiSelect" class="bg-white border-t border-gray-100 p-4 pb-safe shadow-lg flex gap-2">
+                <button @click="exportSelectedStickers" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px]">导出</button>
+                <button @click="openStickerMoveModal" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-[13px]">移动到</button>
+                <button @click="deleteSelectedStickers" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-[13px]">删除 ({{selectedStickerIds.length}})</button>
             </div>
 
             <input type="file" ref="stickerUploadInput" accept="image/*" class="hidden" multiple @change="handleStickerUpload">
-            <input type="file" ref="stickerDocxImportInput" accept=".json,.txt,.docx" class="hidden" @change="handleStickerDocxImport">
+            <input type="file" ref="stickerDocxImportInput" accept=".json,.txt,.docx,.png" class="hidden" @change="handleStickerDocxImport">
+            
+            <!-- 移动分组弹窗 -->
+            <transition name="app-slide">
+                <div v-if="stickerMoveModal.show" class="fixed inset-0 z-[60000]">
+                    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="stickerMoveModal.show = false"></div>
+                    <div class="ios-list-modal">
+                        <div class="ios-list-header">移动到分组 <button class="absolute right-4 text-blue-500 font-normal text-sm" @click="stickerMoveModal.show = false">取消</button></div>
+                        <div class="ios-list-content p-0 bg-white">
+                            <div v-for="g in stickerGroups.filter(x => x.id !== 'all')" :key="g.id" class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="moveSelectedStickersToGroup(g.id)">
+                                <span class="text-gray-900 font-medium">{{ g.name }}</span>
+                            </div>
+                            <div class="p-4 border-b border-gray-50 flex items-center justify-between cursor-pointer active:bg-gray-50" @click="moveSelectedStickersToGroup('unclassified')">
+                                <span class="text-gray-900 font-medium">未分组</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
         </div>
     </transition>
 
@@ -6858,7 +6886,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.32 更新日志 (当前最新) -->
+                            <!-- v1.33 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#f43f5e]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.33 表情包 PNG 隐写术与管理优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-04 12:08</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">表情包 PNG 隐写与流转：</span>新增了导出/导入为 PNG 卡片的功能。现在你可以像导出角色卡一样，把勾选的所有表情包及其备注隐写在一张图片内发送给别人，对方保存该图片后导入表情库即可瞬间恢复！</li>
+                                    <li><span class="font-bold text-gray-800">分组名智能绑定：</span>无论是通过 JSON 还是 PNG 导入表情包，系统在解析时将自动读取导出的分组名称，如果本地没有这个分组，将会自动替你建立同名分组并无缝关联。</li>
+                                    <li><span class="font-bold text-gray-800">删除表情包分组：</span>现在长按某个表情包的分组名称，会在右上角浮现红色小叉。点击该小叉可删除该分组。非常人性化的一点是，为了防止数据丢失，删除分组后，其内部的所有表情包不会随之销毁，而是被系统自动移入系统兜底分组——“未分组”当中。</li>
+                                    <li><span class="font-bold text-gray-800">灵活移动管理：</span>多选表情包底部的管理菜单栏中，新增了“移动到”选项，点击可将打勾的表情包批量转移至现有分组或自动生成的“未分组”当中。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.32 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#f59e0b]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -7980,6 +8023,8 @@ const app = createApp({
 
             // Sticker System
             showStickerManager: false,
+            stickerMoveModal: { show: false },
+            stickerGroupEditId: null,
             showStickerPanel: false,
             isStickerMultiSelect: false,
             selectedStickerIds: [],
@@ -11774,18 +11819,128 @@ const app = createApp({
             e.target.value = '';
         },
 
-        // ----------------- 表情包导入导出 -----------------
-        exportSelectedStickers() {
+        // ----------------- 表情包导入导出、分组与移动 -----------------
+        startStickerGroupLongPress(e, group) {
+            if (group.id === 'all') return;
+            this.clearStickerGroupLongPress();
+            this.longPressTimer = setTimeout(() => {
+                this.showStickerGroupDelete(group);
+            }, 500);
+        },
+        clearStickerGroupLongPress() {
+            if (this.longPressTimer) { clearTimeout(this.longPressTimer); this.longPressTimer = null; }
+        },
+        showStickerGroupDelete(group) {
+            if (group.id === 'all') return;
+            this.stickerGroupEditId = group.id;
+        },
+        deleteStickerGroup(groupId) {
+            this.showConfirm('确定删除此分组吗？其中的表情将被移入"未分组"。', () => {
+                this.stickerGroups = this.stickerGroups.filter(g => g.id !== groupId);
+                let unclass = this.stickerGroups.find(g => g.id === 'unclassified');
+                if (!unclass) {
+                    this.stickerGroups.push({ id: 'unclassified', name: '未分组' });
+                }
+                this.stickers.forEach(s => {
+                    if (s.groupId === groupId) s.groupId = 'unclassified';
+                });
+                if (this.activeStickerGroupId === groupId) this.activeStickerGroupId = 'all';
+                this.stickerGroupEditId = null;
+                this.saveData();
+                this.showToast('分组已删除，表情已移入"未分组"');
+            });
+        },
+        openStickerMoveModal() {
             if (this.selectedStickerIds.length === 0) return this.showToast('未选择表情包');
-            const selected = this.stickers.filter(s => this.selectedStickerIds.includes(s.id));
-            const exportData = { type: "Aovein_Stickers", data: selected.map(s => ({ url: s.url, desc: s.desc })) };
-            const b = new Blob([JSON.stringify(exportData, null, 2)], {type: 'application/json'});
-            const u = URL.createObjectURL(b);
-            const a = document.createElement('a');
-            a.href = u; a.download = `Aovein_Stickers_${Date.now()}.json`; a.click(); URL.revokeObjectURL(u);
-            this.showToast('导出成功');
+            this.stickerMoveModal = { show: true };
+        },
+        moveSelectedStickersToGroup(groupId) {
+            if (groupId === 'unclassified') {
+                let unclass = this.stickerGroups.find(g => g.id === 'unclassified');
+                if (!unclass) {
+                    this.stickerGroups.push({ id: 'unclassified', name: '未分组' });
+                }
+            }
+            this.stickers.forEach(s => {
+                if (this.selectedStickerIds.includes(s.id)) {
+                    s.groupId = groupId;
+                }
+            });
+            this.stickerMoveModal.show = false;
             this.isStickerMultiSelect = false;
             this.selectedStickerIds = [];
+            this.saveData();
+            this.showToast('移动成功');
+        },
+        exportSelectedStickers() {
+            if (this.selectedStickerIds.length === 0) return this.showToast('未选择表情包');
+            this.showInput('导出表情包', `Aovein_Stickers_${Date.now()}`, '文件名(不带后缀)', (val) => {
+                this.executeStickerExport(val, 'json');
+            }, 'text', {
+                text: '导出 PNG卡片',
+                action: () => {
+                    this.executeStickerExport(this.inputModal.value, 'png');
+                    this.inputModal.show = false;
+                }
+            });
+        },
+        executeStickerExport(name, format) {
+            const filename = name || `Aovein_Stickers_${Date.now()}`;
+            const selected = this.stickers.filter(s => this.selectedStickerIds.includes(s.id));
+            const exportData = { 
+                type: "Aovein_Stickers", 
+                data: selected.map(s => {
+                    const g = this.stickerGroups.find(x => x.id === s.groupId);
+                    return { url: s.url, desc: s.desc, groupName: g ? g.name : '未分组' };
+                }) 
+            };
+            const jsonStr = JSON.stringify(exportData, null, 2);
+            
+            if (format === 'json') {
+                const b = new Blob([jsonStr], {type: 'application/json'});
+                const u = URL.createObjectURL(b);
+                const a = document.createElement('a');
+                a.href = u; a.download = `${filename}.json`; a.click(); URL.revokeObjectURL(u);
+                this.showToast('JSON 导出成功');
+                this.isStickerMultiSelect = false;
+                this.selectedStickerIds = [];
+            } else if (format === 'png') {
+                this.showToast('正在生成 PNG 表情包卡片...');
+                const magicBytes = new TextEncoder().encode("AOVEIN_STICKERS_V1:");
+                const jsonBytes = new TextEncoder().encode(jsonStr);
+                
+                const coverUrl = selected[0]?.url || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg';
+                
+                const processPngBlob = (blob) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const arrayBuffer = reader.result;
+                        const combined = new Uint8Array(arrayBuffer.byteLength + magicBytes.length + jsonBytes.length);
+                        combined.set(new Uint8Array(arrayBuffer), 0);
+                        combined.set(magicBytes, arrayBuffer.byteLength);
+                        combined.set(jsonBytes, arrayBuffer.byteLength + magicBytes.length);
+                        const finalBlob = new Blob([combined], { type: 'image/png' });
+                        const url = URL.createObjectURL(finalBlob);
+                        const a = document.createElement('a'); a.href = url; a.download = `${filename}.png`; a.click(); URL.revokeObjectURL(url);
+                        this.showToast('PNG 卡片导出成功');
+                        this.isStickerMultiSelect = false;
+                        this.selectedStickerIds = [];
+                    };
+                    reader.readAsArrayBuffer(blob);
+                };
+
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width; canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => { processPngBlob(blob); }, 'image/png');
+                };
+                img.onerror = () => this.showToast('封面图跨域受限，无法生成 PNG，请改用 JSON 导出');
+                img.src = coverUrl;
+            }
         },
         handleStickerDocxImport(e) {
             const file = e.target.files[0];
@@ -11812,24 +11967,64 @@ const app = createApp({
                 this.showToast(`成功导入 ${count} 个表情包`);
             };
 
+            const importParsedData = (parsed) => {
+                if (parsed.type === 'Aovein_Stickers' && Array.isArray(parsed.data)) {
+                    parsed.data.forEach(s => {
+                        let gId = this.activeStickerGroupId === 'all' ? 'all' : this.activeStickerGroupId;
+                        if (s.groupName) {
+                            let g = this.stickerGroups.find(x => x.name === s.groupName);
+                            if (!g) {
+                                gId = 'group_' + Date.now() + Math.random();
+                                this.stickerGroups.push({ id: gId, name: s.groupName });
+                            } else {
+                                gId = g.id;
+                            }
+                        }
+                        this.stickers.unshift({
+                            id: Date.now().toString() + Math.random(), 
+                            url: s.url, 
+                            desc: s.desc || '未命名',
+                            groupId: gId
+                        });
+                    });
+                    this.saveData();
+                    this.showToast(`成功导入 ${parsed.data.length} 个表情包`);
+                } else { 
+                    this.showToast('导入失败：格式不匹配'); 
+                }
+            };
+
             if (ext === 'json') {
                 const reader = new FileReader();
                 reader.onload = (ev) => {
-                    try {
-                        const parsed = JSON.parse(ev.target.result);
-                        if (parsed.type === 'Aovein_Stickers' && Array.isArray(parsed.data)) {
-                            parsed.data.forEach(s => {
-                                this.stickers.unshift({
-                                    id: Date.now().toString() + Math.random(), url: s.url, desc: s.desc || '未命名',
-                                    groupId: this.activeStickerGroupId === 'all' ? 'all' : this.activeStickerGroupId
-                                });
-                            });
-                            this.saveData();
-                            this.showToast(`成功导入 ${parsed.data.length} 个表情包`);
-                        } else { this.showToast('导入失败：不是有效的表情包 JSON'); }
-                    } catch(err) { this.showToast('JSON 解析失败'); }
+                    try { importParsedData(JSON.parse(ev.target.result)); } catch(err) { this.showToast('JSON 解析失败'); }
                 };
                 reader.readAsText(file);
+            } else if (ext === 'png') {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const buffer = ev.target.result;
+                    const uint8 = new Uint8Array(buffer);
+                    const magic = new TextEncoder().encode("AOVEIN_STICKERS_V1:");
+                    let magicIdx = -1;
+                    for (let i = uint8.length - magic.length; i >= 0; i--) {
+                        let match = true;
+                        for (let j = 0; j < magic.length; j++) {
+                            if (uint8[i+j] !== magic[j]) { match = false; break; }
+                        }
+                        if (match) { magicIdx = i; break; }
+                    }
+                    if (magicIdx > -1) {
+                        const dataBytes = uint8.slice(magicIdx + magic.length);
+                        try {
+                            const jsonStr = new TextDecoder().decode(dataBytes);
+                            importParsedData(JSON.parse(jsonStr));
+                        } catch(err) { this.showToast('PNG 数据解析失败'); }
+                    } else {
+                        this.showToast('错误：图片内未找到表情包数据');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
             } else if (ext === 'txt') {
                 const reader = new FileReader();
                 reader.onload = (ev) => processText(ev.target.result);
@@ -14309,6 +14504,7 @@ Structure:
             this.groupSelectModal.show = false;
             this.activeMomentMenuId = null;
             this.wechatState.showGroupMentionPanel = false; // 【新增】点击空白处关闭@弹窗
+            this.stickerGroupEditId = null; // 解除表情包分组的小叉号
         },
         openStatusModal() {
             if(!this.wechatState.activeSession) return;
