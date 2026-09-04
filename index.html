@@ -1947,13 +1947,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- 表情包管理全屏弹窗 -->
     <transition name="app-slide">
-        <div v-if="showStickerManager" class="fixed inset-0 z-[50000] bg-gray-50 flex flex-col">
-            <header class="bg-white h-[90px] pt-10 px-4 flex items-center justify-between border-b border-gray-100 sticky top-0 z-10 relative">
+        <div v-if="showStickerManager" class="fixed inset-0 z-[50000] bg-gray-50 flex flex-col" @click="stickerGroupEditId = null">
+            <header class="bg-white h-[90px] pt-10 px-4 flex items-center justify-between border-b border-gray-100 sticky top-0 z-10 relative" @click.stop>
                 <button @click="showStickerManager = false" class="w-8 h-8 flex items-center justify-center text-black z-10"><i class="fas fa-chevron-left"></i></button>
                 <h1 class="text-[17px] font-bold absolute left-1/2 -translate-x-1/2 w-full text-center pointer-events-none">表情管理</h1>
                 <div class="flex items-center gap-3 z-10">
                     <button @click="triggerStickerUpload" class="text-black"><i class="fas fa-image text-lg"></i></button>
-                    <!-- 导入按钮 (TXT/DOCX/JSON) -->
+                    <!-- 导入按钮 (TXT/DOCX/JSON/PNG) -->
                     <button @click="$refs.stickerDocxImportInput.click()" class="text-black"><i class="fas fa-file-import text-lg"></i></button>
                     <button @click="openUrlImportModal" class="text-black"><i class="fas fa-link text-lg"></i></button>
                     <button @click="toggleStickerMultiSelect" :class="isStickerMultiSelect ? 'text-red-500' : 'text-black'"><i class="fas fa-check-square text-lg"></i></button>
@@ -1961,7 +1961,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </header>
             
             <!-- 分组 Tab -->
-            <div class="bg-white px-2 py-2 flex gap-2 overflow-x-auto border-b border-gray-100 scrollbar-hide shrink-0">
+            <div class="bg-white px-2 py-2 flex gap-2 overflow-x-auto border-b border-gray-100 scrollbar-hide shrink-0" @click.stop>
                 <div v-for="group in stickerGroups" :key="group.id" 
                      class="px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-2 relative"
                      :class="activeStickerGroupId === group.id ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'"
@@ -1981,26 +1981,28 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <!-- 表情列表 -->
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex-1 overflow-y-auto p-4" @click.stop>
                 <div class="grid grid-cols-4 gap-4">
                     <div v-for="sticker in filteredStickers" :key="sticker.id" 
-                         class="aspect-square rounded-lg bg-white p-2 border border-gray-100 relative shadow-sm flex items-center justify-center"
+                         class="aspect-square rounded-lg bg-white p-2 border border-gray-100 relative shadow-sm flex items-center justify-center cursor-pointer active:scale-95 transition"
                          @click="handleStickerClick(sticker)">
                         <img :src="sticker.url" class="w-full h-full object-contain">
-                        <!-- 多选勾选框 -->
-                        <div v-if="isStickerMultiSelect" class="absolute top-1 right-1 w-5 h-5 rounded-full border border-gray-300 bg-white flex items-center justify-center" :class="{'bg-black border-black': selectedStickerIds.includes(sticker.id)}">
-                            <i v-if="selectedStickerIds.includes(sticker.id)" class="fas fa-check text-white text-[10px]"></i>
+                        <!-- 多选勾选框 (原生 SVG 修复不显示对勾的 Bug) -->
+                        <div v-if="isStickerMultiSelect" class="absolute top-1 right-1 w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center overflow-hidden" 
+                             :style="selectedStickerIds.includes(sticker.id) ? 'background-color: #000; border-color: #000;' : 'background-color: #fff;'">
+                            <svg v-if="selectedStickerIds.includes(sticker.id)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-2.5 h-2.5 fill-white"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>
                         </div>
                     </div>
                 </div>
                 <div v-if="filteredStickers.length === 0" class="text-center text-gray-400 mt-20 text-xs">暂无表情</div>
             </div>
 
-            <!-- 删除与导出移动底部栏 -->
-            <div v-if="isStickerMultiSelect" class="bg-white border-t border-gray-100 p-4 pb-safe shadow-lg flex gap-2">
-                <button @click="exportSelectedStickers" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px]">导出</button>
-                <button @click="openStickerMoveModal" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-[13px]">移动到</button>
-                <button @click="deleteSelectedStickers" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-[13px]">删除 ({{selectedStickerIds.length}})</button>
+            <!-- 删除与导出移动底部栏 (加入全选) -->
+            <div v-if="isStickerMultiSelect" class="bg-white border-t border-gray-100 p-4 pb-safe shadow-lg flex gap-2" @click.stop>
+                <button @click="toggleSelectAllStickers" class="flex-1 bg-gray-100 text-gray-800 py-3 rounded-xl font-bold text-[13px] border border-gray-200 active:bg-gray-200 transition">全选</button>
+                <button @click="exportSelectedStickers" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition">导出</button>
+                <button @click="openStickerMoveModal" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition">移动到</button>
+                <button @click="deleteSelectedStickers" class="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition">删除 ({{selectedStickerIds.length}})</button>
             </div>
 
             <input type="file" ref="stickerUploadInput" accept="image/*" class="hidden" multiple @change="handleStickerUpload">
@@ -6886,7 +6888,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.33 更新日志 (当前最新) -->
+                            <!-- v1.34 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.34 表情包全选与交互体验修复</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-04 18:37</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">全选功能实装：</span>在多选表情包的管理菜单栏中，新增了“全选”按钮。点击后可以一键勾选当前分组下的所有表情包，再次点击可取消全选，极大方便了批量导出、移动和删除操作。</li>
+                                    <li><span class="font-bold text-gray-800">UI 逻辑修复：</span>修复了勾选表情包时勾选框可能显示空白、没有出现勾号符号的迷惑性 Bug。现在采用了纯原生的内联 SVG 与强制背景色渲染，确保每一张被勾选的图片都会出现清晰的纯黑实心白色对勾。</li>
+                                    <li><span class="font-bold text-gray-800">消除误触：</span>优化了表情包分组的删除交互，现在长按分组呼出红叉后，只需点击屏幕的任意空白区域，即可让红叉安全消失，避免不小心删掉分组的尴尬。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.33 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#f43f5e]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -11849,6 +11865,26 @@ const app = createApp({
                 this.saveData();
                 this.showToast('分组已删除，表情已移入"未分组"');
             });
+        },
+        toggleSelectAllStickers() {
+            // 获取当前分类下过滤出的所有表情包
+            const currentList = this.filteredStickers;
+            if (currentList.length === 0) return;
+            
+            // 判断当前列表里的 ID 是否都已经存在于 selectedStickerIds 中
+            const allSelected = currentList.every(s => this.selectedStickerIds.includes(s.id));
+            
+            if (allSelected) {
+                // 如果全都选了，就取消当前列表中的所有勾选
+                this.selectedStickerIds = this.selectedStickerIds.filter(id => !currentList.find(s => s.id === id));
+            } else {
+                // 如果没有全选，就全选当前列表
+                currentList.forEach(s => {
+                    if (!this.selectedStickerIds.includes(s.id)) {
+                        this.selectedStickerIds.push(s.id);
+                    }
+                });
+            }
         },
         openStickerMoveModal() {
             if (this.selectedStickerIds.length === 0) return this.showToast('未选择表情包');
