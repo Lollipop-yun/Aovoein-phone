@@ -1981,7 +1981,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <!-- 表情列表 -->
-            <div class="flex-1 overflow-y-auto p-4" @click.stop>
+            <div class="flex-1 overflow-y-auto p-4" @click="stickerGroupEditId = null">
                 <div class="grid grid-cols-4 gap-4">
                     <div v-for="sticker in filteredStickers" :key="sticker.id" 
                          class="aspect-square rounded-lg bg-white p-2 border border-gray-100 relative shadow-sm flex items-center justify-center cursor-pointer active:scale-95 transition"
@@ -2008,6 +2008,21 @@ document.addEventListener("DOMContentLoaded", () => {
             <input type="file" ref="stickerUploadInput" accept="image/*" class="hidden" multiple @change="handleStickerUpload">
             <input type="file" ref="stickerDocxImportInput" accept=".json,.txt,.docx,.png" class="hidden" @change="handleStickerDocxImport">
             
+            <!-- 表情包导出选项弹窗 -->
+            <transition name="scale">
+                <div v-if="stickerExportModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div class="bg-white/95 backdrop-blur-xl w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col gap-4 border border-gray-100">
+                        <h3 class="text-lg font-bold text-center text-gray-900">导出表情包 ({{ selectedStickerIds.length }}个)</h3>
+                        <input v-model="stickerExportModal.name" placeholder="请输入文件名(不带后缀)" class="w-full bg-gray-100/80 p-3.5 rounded-xl text-[15px] font-medium text-gray-800 border border-gray-200/50 outline-none text-center shadow-inner focus:border-gray-400 transition" />
+                        <div class="flex gap-3 mt-2">
+                            <button @click="executeStickerExport('json')" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition shadow-md">导出 JSON</button>
+                            <button @click="executeStickerExport('png')" class="flex-1 bg-blue-500 text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition shadow-md">导出 PNG卡片</button>
+                        </div>
+                        <button @click="stickerExportModal.show = false" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-[13px] active:scale-95 transition shadow-sm mt-1">取消</button>
+                    </div>
+                </div>
+            </transition>
+
             <!-- 移动分组弹窗 -->
             <transition name="app-slide">
                 <div v-if="stickerMoveModal.show" class="fixed inset-0 z-[60000]">
@@ -6888,7 +6903,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.34 更新日志 (当前最新) -->
+                            <!-- v1.35 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#f43f5e]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.35 表情包视觉识图与导出交互优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-04 20:02</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">表情包真·识图能力：</span>全面打通表情包与视觉大模型的链路！现在发送表情包时，不仅仅是把“文字描述”传给AI，而是直接把这只猫猫/狗狗的具体图片扔给大模型看。角色将能够真正“看见”你发的表情包细节并对画面做出反应！</li>
+                                    <li><span class="font-bold text-gray-800">导出菜单重构：</span>点击导出后，不再使用容易误触的原生输入框，而是弹出独立的高级菜单，让你优雅地输入文件名并自由选择“导出 JSON”还是“导出 PNG卡片”。</li>
+                                    <li><span class="font-bold text-gray-800">PNG 卡片封面拼贴：</span>修复了以往导出 PNG 卡片时只用第一张图做封面的问题。现在导出多张表情包时，系统会自动利用底层引擎抓取前 4 张表情包，在本地瞬间拼贴生成一张“四宫格预览图”作为 PNG 卡片的封面，一目了然！</li>
+                                    <li><span class="font-bold text-gray-800">空白区取消编辑：</span>修复了长按分组后，点击屏幕下方表情包空白区域无法取消红色小叉的盲区 Bug。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.34 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -8040,6 +8070,7 @@ const app = createApp({
             // Sticker System
             showStickerManager: false,
             stickerMoveModal: { show: false },
+            stickerExportModal: { show: false, name: '' },
             stickerGroupEditId: null,
             showStickerPanel: false,
             isStickerMultiSelect: false,
@@ -11910,18 +11941,11 @@ const app = createApp({
         },
         exportSelectedStickers() {
             if (this.selectedStickerIds.length === 0) return this.showToast('未选择表情包');
-            this.showInput('导出表情包', `Aovein_Stickers_${Date.now()}`, '文件名(不带后缀)', (val) => {
-                this.executeStickerExport(val, 'json');
-            }, 'text', {
-                text: '导出 PNG卡片',
-                action: () => {
-                    this.executeStickerExport(this.inputModal.value, 'png');
-                    this.inputModal.show = false;
-                }
-            });
+            this.stickerExportModal.name = `Aovein_Stickers_${Date.now()}`;
+            this.stickerExportModal.show = true;
         },
-        executeStickerExport(name, format) {
-            const filename = name || `Aovein_Stickers_${Date.now()}`;
+        async executeStickerExport(format) {
+            const filename = this.stickerExportModal.name || `Aovein_Stickers_${Date.now()}`;
             const selected = this.stickers.filter(s => this.selectedStickerIds.includes(s.id));
             const exportData = { 
                 type: "Aovein_Stickers", 
@@ -11931,6 +11955,7 @@ const app = createApp({
                 }) 
             };
             const jsonStr = JSON.stringify(exportData, null, 2);
+            this.stickerExportModal.show = false;
             
             if (format === 'json') {
                 const b = new Blob([jsonStr], {type: 'application/json'});
@@ -11941,11 +11966,9 @@ const app = createApp({
                 this.isStickerMultiSelect = false;
                 this.selectedStickerIds = [];
             } else if (format === 'png') {
-                this.showToast('正在生成 PNG 表情包卡片...');
+                this.showToast('正在生成 PNG 表情包卡片拼图...');
                 const magicBytes = new TextEncoder().encode("AOVEIN_STICKERS_V1:");
                 const jsonBytes = new TextEncoder().encode(jsonStr);
-                
-                const coverUrl = selected[0]?.url || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg';
                 
                 const processPngBlob = (blob) => {
                     const reader = new FileReader();
@@ -11965,17 +11988,38 @@ const app = createApp({
                     reader.readAsArrayBuffer(blob);
                 };
 
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width; canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    canvas.toBlob((blob) => { processPngBlob(blob); }, 'image/png');
-                };
-                img.onerror = () => this.showToast('封面图跨域受限，无法生成 PNG，请改用 JSON 导出');
-                img.src = coverUrl;
+                // 生成九宫格/四宫格拼图作为封面
+                const canvas = document.createElement('canvas');
+                canvas.width = 600; canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f3f4f6';
+                ctx.fillRect(0, 0, 600, 600);
+
+                const items = selected.slice(0, 4);
+                let loaded = 0;
+
+                if (items.length === 0) return this.showToast('没有可导出的表情');
+
+                items.forEach((item, i) => {
+                    const img = new Image();
+                    img.crossOrigin = 'Anonymous';
+                    img.onload = () => {
+                        let x = 0, y = 0, size = 600;
+                        if (items.length > 1) {
+                            size = 280;
+                            x = (i % 2) * 300 + 10;
+                            y = Math.floor(i / 2) * 300 + 10;
+                        }
+                        ctx.drawImage(img, x, y, size, size);
+                        loaded++;
+                        if (loaded === items.length) canvas.toBlob(processPngBlob, 'image/png');
+                    };
+                    img.onerror = () => {
+                        loaded++;
+                        if (loaded === items.length) canvas.toBlob(processPngBlob, 'image/png');
+                    };
+                    img.src = item.url;
+                });
             }
         },
         handleStickerDocxImport(e) {
@@ -13406,7 +13450,17 @@ Structure:
                              ] 
                          });
                     } else if (m.type === 'sticker') {
-                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[发送了表情包: ${m.desc || '未命名'}]` });
+                         if (m.content && (m.content.startsWith('http') || m.content.startsWith('data:'))) {
+                             contextMessages.push({ 
+                                 role: m.isSelf ? 'user' : 'assistant', 
+                                 content: [
+                                     { type: "text", text: `[发送了表情包: ${m.desc || '未命名'}]` },
+                                     { type: "image_url", image_url: { url: m.content } }
+                                 ] 
+                             });
+                         } else {
+                             contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[发送了表情包: ${m.desc || '未命名'}]` });
+                         }
                     } else if (m.type === 'moment') { 
                         contextMessages.push({ role: m.isSelf ? 'user' : 'assistant', content: `[Shared a moment: ${m.momentData.content}]` });
                     } else if (m.type === 'fake_image') {
