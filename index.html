@@ -2649,7 +2649,7 @@ document.addEventListener("DOMContentLoaded", () => {
              <div v-if="desktopStyle === 2" class="w-full h-full shrink-0 snap-center flex flex-col overflow-hidden relative px-4 pt-2 pb-[96px] gap-2.5">
                 <div class="w-full bg-white/90 backdrop-blur-2xl rounded-[32px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white flex flex-col shrink-0">
                     <div class="w-full flex items-center justify-between mb-3">
-                        <div class="relative w-[65px] h-[65px] shrink-0 cursor-pointer active:opacity-70 transition" @click="openUniversalAvatarSelector(url => { desktop2.profile.avatar = url; saveData(); })">
+                        <div class="relative w-[65px] h-[65px] shrink-0 cursor-pointer active:opacity-70 transition" @click="triggerD2Avatar('profile.avatar')">
                             <div class="w-full h-full rounded-full border-2 border-dashed border-gray-300 p-1 flex items-center justify-center relative">
                                 <img :src="desktop2.profile.avatar" class="w-full h-full rounded-full object-cover grayscale opacity-90">
                                 <i class="fas fa-heart absolute -top-1 -left-1 text-gray-800 text-lg drop-shadow-md"></i>
@@ -2679,7 +2679,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="bg-gray-100 px-3 py-1 rounded-full text-[12px] font-bold text-gray-500 flex items-center gap-1.5 shadow-inner"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Lives</div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-300 shrink-0 border border-gray-100 shadow-inner overflow-hidden cursor-pointer active:opacity-70 transition" @click="openUniversalAvatarSelector(url => { desktop2.middleAvatar = url; saveData(); })"><img :src="desktop2.middleAvatar" class="w-full h-full object-cover grayscale opacity-90"></div>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-300 shrink-0 border border-gray-100 shadow-inner overflow-hidden cursor-pointer active:opacity-70 transition" @click="triggerD2Avatar('middleAvatar')"><img :src="desktop2.middleAvatar" class="w-full h-full object-cover grayscale opacity-90"></div>
                         <div class="flex-1 h-9 bg-gray-100/80 rounded-[12px] border border-gray-200/60 shadow-inner flex items-center px-3 text-gray-400">|</div>
                     </div>
                     <div class="flex justify-between items-center px-1">
@@ -2696,7 +2696,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     
-                    <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-xl rounded-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative p-2.5 pl-6 flex flex-col justify-center cursor-pointer active:scale-95 transition" @click="$refs.d2BinderImgInput.click()">
+                    <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-xl rounded-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative p-2.5 pl-6 flex flex-col justify-center cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('binderImage')">
                         <div class="absolute left-0 top-0 h-full flex flex-col justify-evenly py-3 -translate-x-1.5"><div v-for="i in 8" :key="i" class="flex items-center relative"><div class="binder-ring"></div><div class="binder-hole"></div></div></div>
                         <div class="w-full bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 rounded-[10px] flex flex-col items-center">
                             <div class="w-full aspect-square bg-gray-100 overflow-hidden rounded-[4px]"><img :src="desktop2.binderImage" class="w-full h-full object-cover grayscale"></div>
@@ -2720,19 +2720,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="absolute inset-0 opacity-[0.15] pointer-events-none" style="background-image: radial-gradient(#6b7280 1px, transparent 1px); background-size: 10px 10px;"></div>
                         <div class="absolute top-9 left-6 z-20 flex items-center justify-center">
                             <div class="absolute -left-4 w-[20px] h-[20px] pointer-events-none" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90"></div>
-                            <div class="w-8 h-8 rounded-full border-[1.5px] border-white shadow-sm overflow-hidden bg-gray-100 relative z-10 cursor-pointer active:scale-90 transition" @click="openUniversalAvatarSelector(url => { desktop2.p2Avatar = url; saveData(); })"><img :src="desktop2.p2Avatar" class="w-full h-full object-cover grayscale"></div>
+                            <div class="w-8 h-8 rounded-full border-[1.5px] border-white shadow-sm overflow-hidden bg-gray-100 relative z-10 cursor-pointer active:scale-90 transition" @click="triggerD2Avatar('p2Avatar')"><img :src="desktop2.p2Avatar" class="w-full h-full object-cover grayscale"></div>
                             <div class="absolute -right-4 w-[20px] h-[20px] pointer-events-none" style="transform: scaleX(-1); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90"></div>
                             <div class="absolute -top-7 -right-4 bg-gray-100/90 px-2 py-0.5 rounded-full text-[8px] font-bold text-gray-600 shadow-sm z-30 backdrop-blur-sm border border-gray-200 whitespace-nowrap cursor-pointer active:scale-90 transition" @click="editD2Text('修改颜文字', 'p2Kaomoji', desktop2.p2Kaomoji)">{{ desktop2.p2Kaomoji }}</div>
                         </div>
-                        <div class="absolute top-3 right-1 transform rotate-3 bg-white p-1 pb-4 rounded-[6px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 w-[85px] z-10 cursor-pointer active:scale-95 transition" @click="$refs.d2P2Img1Input.click()">
+                        <div class="absolute top-3 right-1 transform rotate-3 bg-white p-1 pb-4 rounded-[6px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 w-[85px] z-10 cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('p2Img1')">
                             <div class="w-full aspect-[4/5] bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img1" class="w-full h-full object-cover grayscale"></div>
                         </div>
-                        <div class="absolute bottom-2 left-1.5 transform -rotate-3 bg-white p-1 pb-3 rounded-[6px] shadow-[0_8px_15px_rgba(0,0,0,0.08)] border border-gray-100 w-[80px] z-20 cursor-pointer active:scale-95 transition" @click="$refs.d2P2Img2Input.click()">
+                        <div class="absolute bottom-2 left-1.5 transform -rotate-3 bg-white p-1 pb-3 rounded-[6px] shadow-[0_8px_15px_rgba(0,0,0,0.08)] border border-gray-100 w-[80px] z-20 cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('p2Img2')">
                             <div class="w-full aspect-square bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img2" class="w-full h-full object-cover grayscale"></div>
                             <div class="absolute bottom-0.5 left-0 w-full text-center text-[8px] font-bold text-gray-800 tracking-tighter" @click.stop="editD2Text('修改拍立得文字', 'p2Text', desktop2.p2Text)">{{ desktop2.p2Text }}</div>
                         </div>
                         <div class="absolute bottom-3 right-2 w-[40px] h-[16px] bg-gray-200/80 rounded-full shadow-inner border border-gray-300/50 flex items-center justify-center z-30 backdrop-blur-sm transform rotate-[-5deg]">
-                            <div class="w-3.5 h-3.5 bg-white shadow-sm border border-gray-100 cursor-pointer active:scale-90 transition overflow-hidden rounded-[2px]" @click.stop="$refs.d2P2BandAidInput.click()"><img :src="desktop2.p2BandAidImg" class="w-full h-full object-cover grayscale"></div>
+                            <div class="w-3.5 h-3.5 bg-white shadow-sm border border-gray-100 cursor-pointer active:scale-90 transition overflow-hidden rounded-[2px]" @click.stop="triggerD2Avatar('p2BandAidImg')"><img :src="desktop2.p2BandAidImg" class="w-full h-full object-cover grayscale"></div>
                         </div>
                     </div>
                 </div>
@@ -2753,7 +2753,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="w-[30px] h-[30px] border border-gray-100 bg-white rounded-[6px] flex items-center justify-center text-[12px] text-gray-400 shadow-sm"><i class="fas fa-plus"></i></div>
                             <div class="w-[30px] h-[30px] border border-gray-100 bg-white rounded-[6px] flex items-center justify-center text-[11px] font-bold text-gray-800 shadow-sm">{{ desktop2Date.day }}</div>
                         </div>
-                        <div class="absolute left-[58%] -bottom-1 -translate-x-1/2 z-30 cursor-pointer active:scale-90 transition" @click="openUniversalAvatarSelector(url => { desktop2.p2MidAvatar = url; saveData(); })">
+                        <div class="absolute left-[58%] -bottom-1 -translate-x-1/2 z-30 cursor-pointer active:scale-90 transition" @click="triggerD2Avatar('p2MidAvatar')">
                             <div class="w-[52px] h-[52px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-100"><img :src="desktop2.p2MidAvatar" class="w-full h-full object-cover grayscale opacity-90"></div>
                         </div>
                         <div class="border border-gray-200 rounded-[6px] px-2 py-1.5 text-[10px] font-bold text-gray-500 bg-white shadow-sm cursor-pointer ml-auto" @click="editD2Text('修改右下角文本', 'p2BottomRightText', desktop2.p2BottomRightText)">{{ desktop2.p2BottomRightText }}</div>
@@ -2847,10 +2847,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <!-- 居中群头像区域 -->
                     <div class="flex flex-col items-center justify-center">
-                        <div class="w-20 h-20 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shadow-sm cursor-pointer" @click="openUniversalAvatarSelector(url => { groupProfileModal.avatar = url; })">
+                        <div class="w-20 h-20 rounded-full bg-gray-100 overflow-hidden border border-gray-200 shadow-sm cursor-pointer" @click="triggerGroupAvatarUpload2">
                             <img :src="groupProfileModal.avatar" class="w-full h-full object-cover">
                         </div>
-                        <span class="text-[14px] text-[#4f6b9e] mt-3 cursor-pointer" @click="openUniversalAvatarSelector(url => { groupProfileModal.avatar = url; })">编辑群头像</span>
+                        <span class="text-[14px] text-[#4f6b9e] mt-3 cursor-pointer" @click="triggerGroupAvatarUpload2">编辑群头像</span>
                     </div>
 
                     <!-- 群名与权限卡片 -->
@@ -2934,6 +2934,75 @@ document.addEventListener("DOMContentLoaded", () => {
         <input type="file" ref="groupAvatarInput2" accept="image/*" class="hidden" @change="handleGroupAvatarChange2">
         <input type="file" ref="groupMemberAvatarInput" accept="image/*" class="hidden" @change="handleGroupMemberAvatarChange">
         
+        <!-- 通用头像/图片来源选择弹窗 -->
+        <transition name="app-slide">
+            <div v-if="universalAvatarConfig.showSourceModal" class="fixed inset-0 z-[150000]">
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="universalAvatarConfig.showSourceModal = false"></div>
+                <div class="absolute bottom-0 w-full bg-[#f2f2f6] rounded-t-2xl overflow-hidden pb-safe font-sans">
+                    <div class="bg-white divide-y divide-gray-100 text-center text-[16px] font-medium text-gray-900">
+                        <div class="p-4 text-xs text-gray-400 font-normal">选择图片来源</div>
+                        <div @click="selectUniversalAvatarSource('url')" class="p-4 cursor-pointer active:bg-gray-50">填写 URL 直链</div>
+                        <div @click="selectUniversalAvatarSource('local')" class="p-4 cursor-pointer active:bg-gray-50 text-blue-600">从本地相册上传</div>
+                    </div>
+                    <div class="bg-white mt-2 p-4 text-center font-bold text-gray-800 cursor-pointer active:bg-gray-50" @click="universalAvatarConfig.showSourceModal = false">取消</div>
+                </div>
+                <!-- 隐藏的全局文件选择器 -->
+                <input type="file" ref="universalFileInput" accept="image/*" class="hidden" @change="handleUniversalFileChange">
+            </div>
+        </transition>
+
+        <!-- 通用头像 1:1 自由拖拽缩放裁剪台 -->
+        <transition name="scale">
+            <div v-if="universalAvatarConfig.showCropper" class="fixed inset-0 z-[150000] flex flex-col bg-black text-white font-sans">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between shrink-0 z-10 border-b border-gray-800 bg-[#1c1c1e]">
+                    <button @click="universalAvatarConfig.showCropper = false" class="text-white text-[16px] active:opacity-50 font-medium">取消</button>
+                    <h1 class="font-bold text-[17px] tracking-wider">裁剪图片 (1:1)</h1>
+                    <button @click="confirmUniversalCrop" class="text-[#07c160] font-bold text-[16px] active:opacity-50">完成</button>
+                </header>
+                
+                <div class="flex-1 relative flex items-center justify-center overflow-hidden bg-black">
+                    <!-- 黑色遮罩层，挖出 300x300 的高亮可视区域 -->
+                    <div class="absolute inset-0 z-20 pointer-events-none" style="box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.7);"></div>
+                    <div class="absolute w-[300px] h-[300px] border-2 border-white z-30 pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.7)]">
+                        <div class="absolute inset-0 border border-white/30 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                            <div class="border-r border-b border-white/30"></div><div class="border-r border-b border-white/30"></div><div class="border-b border-white/30"></div>
+                            <div class="border-r border-b border-white/30"></div><div class="border-r border-b border-white/30"></div><div class="border-b border-white/30"></div>
+                            <div class="border-r border-white/30"></div><div class="border-r border-white/30"></div><div></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 触控拖拽驱动层 -->
+                    <div class="w-[300px] h-[300px] relative z-10 flex items-center justify-center cursor-move"
+                         @touchstart.prevent="startDragCrop"
+                         @touchmove.prevent="doDragCrop"
+                         @touchend.prevent="stopDragCrop"
+                         @mousedown.prevent="startDragCrop"
+                         @mousemove.prevent="doDragCrop"
+                         @mouseup.prevent="stopDragCrop"
+                         @mouseleave.prevent="stopDragCrop">
+                        <!-- 真实被移动缩放的图片 -->
+                        <img ref="cropImageElement" :src="universalAvatarConfig.tempRawUrl" 
+                             class="absolute max-w-none origin-center pointer-events-none"
+                             :style="{ 
+                                 transform: `translate(${universalAvatarConfig.translateX}px, ${universalAvatarConfig.translateY}px) scale(${universalAvatarConfig.scale})`,
+                                 width: universalAvatarConfig.baseWidth + 'px',
+                                 height: universalAvatarConfig.baseHeight + 'px',
+                                 willChange: 'transform'
+                             }">
+                    </div>
+                </div>
+
+                <div class="h-[120px] pb-safe px-8 flex flex-col items-center justify-center gap-5 shrink-0 bg-[#1c1c1e]">
+                    <div class="w-full flex items-center gap-4">
+                        <i class="fas fa-image text-gray-500 text-sm"></i>
+                        <input type="range" min="1" max="3" step="0.05" v-model.number="universalAvatarConfig.scale" class="flex-1 h-1 bg-gray-700 rounded-lg appearance-none outline-none slider-thumb">
+                        <i class="fas fa-image text-white text-lg"></i>
+                    </div>
+                    <button @click="resetCrop" class="text-[12px] text-gray-300 font-bold bg-gray-800 px-5 py-1.5 rounded-full active:bg-gray-700 transition tracking-widest"><i class="fas fa-undo mr-1"></i> 重置</button>
+                </div>
+            </div>
+        </transition>
+
         <!-- 角色人际关系网全屏界面 -->
         <transition name="page-slide">
             <div v-if="relationshipModal.show" class="fixed inset-0 z-[116000] bg-[#f2f2f6] flex flex-col font-sans pb-safe">
@@ -4767,13 +4836,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div class="attach-item" @click="openFileModal"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
                                     <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                                 </div>
-                                <!-- 第二页 (剩余 4 个功能) -->
+                                <!-- 第二页 (剩余 5 个功能) -->
                                 <div class="min-w-full grid grid-cols-4 gap-y-5 gap-x-2 px-3 content-start h-[175px]">
                                     <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
                                     <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
                                     <div v-if="!wechatState.activeSession?.isGroup" class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
                                     <div v-else class="attach-item" @click="groupActivityModal.show = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-flag text-gray-600"></i></div><span class="attach-label">群活动</span></div>
                                     <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
+                                    <div class="attach-item" @click="showToast('功能开发中，敬请期待')"><div class="attach-icon-box"><i class="fas fa-wallet text-gray-600"></i></div><span class="attach-label">钱包</span></div>
                                 </div>
                             </div>
                             <!-- 分页指示器 -->
@@ -5470,54 +5540,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <!-- 隐藏的聊天记录导入 Input -->
             <input type="file" ref="chatHistoryImportInput" accept=".json" class="hidden" @change="importSessionChatHistory">
-
-            <!-- 全局头像：来源选择弹窗 (URL / 本地) -->
-            <transition name="scale">
-                <div v-if="avatarSourceModal.show" class="fixed inset-0 z-[160000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div class="bg-white/95 w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col gap-4 border border-gray-100">
-                        <h3 class="text-lg font-bold text-center text-gray-900">设置图片/头像</h3>
-                        <input v-model="avatarSourceModal.url" placeholder="方式一: 输入图片 URL 直链" class="w-full bg-gray-100/80 p-3.5 rounded-xl text-[14px] text-gray-800 border border-gray-200/50 outline-none shadow-inner focus:border-gray-400 transition" />
-                        <button @click="confirmAvatarUrl" class="w-full bg-gray-900 text-white py-3 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存网络直链</button>
-                        
-                        <div class="flex items-center gap-4 my-1"><div class="flex-1 h-px bg-gray-200"></div><span class="text-[11px] text-gray-400 font-bold">OR</span><div class="flex-1 h-px bg-gray-200"></div></div>
-                        
-                        <button @click="$refs.universalAvatarInput.click()" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md"><i class="fas fa-images mr-1"></i> 方式二: 从本地相册上传并裁剪</button>
-                        <button @click="avatarSourceModal.show = false" class="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm mt-1">取消</button>
-                    </div>
-                </div>
-            </transition>
-
-            <!-- 全局头像：1:1 自由拖拽裁剪编辑弹窗 -->
-            <transition name="scale">
-                <div v-if="avatarCropModal.show" class="fixed inset-0 z-[165000] flex flex-col bg-black">
-                    <div class="h-[90px] pt-10 px-4 flex justify-between items-center text-white shrink-0 z-20">
-                        <button @click="avatarCropModal.show = false" class="text-sm font-bold active:opacity-50">取消</button>
-                        <span class="font-bold text-[17px]">裁剪头像 (1:1)</span>
-                        <button @click="confirmCropAvatar" class="text-[#07c160] text-sm font-bold active:opacity-50">完成</button>
-                    </div>
-                    
-                    <div class="flex-1 relative flex items-center justify-center overflow-hidden w-full bg-black">
-                        <!-- 1:1 正方形可视操作区：多出部分隐藏，形成裁剪框 -->
-                        <div class="relative w-full aspect-square bg-gray-900 border border-white/30 overflow-hidden shadow-[0_0_0_9999px_rgba(0,0,0,0.8)] z-10"
-                             @touchstart.prevent="onCropTouchStart"
-                             @touchmove.prevent="onCropTouchMove"
-                             @touchend="onCropTouchEnd">
-                             
-                             <img ref="cropImage" :src="avatarCropModal.imageSrc" 
-                                  class="absolute top-1/2 left-1/2 max-w-none transform-gpu origin-center"
-                                  :style="{ transform: `translate(calc(-50% + ${avatarCropModal.translateX}px), calc(-50% + ${avatarCropModal.translateY}px)) scale(${avatarCropModal.scale})` }"
-                                  @load="initCropImage">
-                        </div>
-                    </div>
-
-                    <div class="h-28 flex items-center justify-center pb-safe shrink-0 z-20">
-                        <button @click="resetCrop" class="px-6 py-2.5 bg-white/20 rounded-full text-white text-sm font-bold active:scale-95 transition"><i class="fas fa-undo mr-1.5"></i>重置位置与大小</button>
-                    </div>
-                </div>
-            </transition>
-
-            <!-- 唯一的底层中枢上传 Input，替换掉以前的十几个 inputs -->
-            <input type="file" ref="universalAvatarInput" accept="image/*" class="hidden" @change="handleUniversalAvatarUpload">
 
             <!-- 红包详情页 (完美复刻原版UI) -->
             <div v-if="wechatState.activeNav === 'red-packet-detail'" class="flex-1 flex flex-col red-packet-bg absolute inset-0 z-50">
@@ -6962,15 +6984,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.37 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-[#d946ef]"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#f59e0b]"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.37 头像高定裁剪系统与钱包预告</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-04 23:03</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.37 通用头像裁剪系统与钱包入口占位</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-05 15:35</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">钱包功能预告：</span>在聊天界面附件菜单翻页的第二页，新增了“钱包”功能的专属入口占位。该模块的深层架构开发中，敬请期待。</li>
-                                    <li><span class="font-bold text-gray-800">通用头像系统重构：</span>大幅度优化了贯穿整个 Aovein OS 的头像设置机制！现在，不论是设置角色头像、群聊头像、面具头像还是不同桌面的个人名片，点击更换时都不再直接拉取相册，而是统一弹出“设置图片来源”的高级面板，支持直接填写【URL直链】或【本地相册上传】。</li>
-                                    <li><span class="font-bold text-gray-800">1:1 图片自由裁剪引擎：</span>如果你选择了从本地相册上传，不再忍受原本暴力压缩或裁歪边角的痛苦了！系统现在内置了一个极其流畅的全屏 1:1 图片编辑裁剪器。你不仅可以单指拖拽平移、双指自由缩放，还可以在下方点击一键“重置”，确保最心动的画面被完美呈现。</li>
+                                    <li><span class="font-bold text-gray-800">钱包功能占位：</span>在聊天附件翻页菜单的第二页，新增了“钱包”功能的入口图标。目前为系统占位，后续将实装个人专属钱包管理。</li>
+                                    <li><span class="font-bold text-gray-800">全局相册系统大重构：</span>废弃了过去单一枯燥的本地上传机制。现在，无论是在设置角色面具、创建联系人、还是更改桌面组件头像时，都会弹出一个极简风格的操作层，你可以自由选择“填写网络直链URL”或“从本地相册上传”。</li>
+                                    <li><span class="font-bold text-gray-800">1:1 高定图片裁剪台：</span>当你从本地相册选取了一张非正方形的图片时，底层现在会自动唤起一个高级的黑框裁剪台！你可以在屏幕上自由拖拽图片改变视口，通过底部滑动条进行无极缩放，甚至一键“重置”找回原图比例，完美截取出属于你的专属正方形头像！</li>
                                 </ul>
                             </div>
 
@@ -8148,6 +8170,14 @@ const app = createApp({
             
             // Voice Input
             voiceInputModal: { show: false, content: '', isListening: false },
+            
+            // Universal Avatar Cropper Config
+            universalAvatarConfig: {
+                showSourceModal: false, showCropper: false, callback: null,
+                tempRawUrl: '', scale: 1, translateX: 0, translateY: 0, 
+                dragStartX: 0, dragStartY: 0, isDragging: false,
+                baseWidth: 0, baseHeight: 0, naturalWidth: 0, naturalHeight: 0
+            },
 
             // Location Feature
             locationInputModal: { show: false, name: '', address: '' },
@@ -8267,14 +8297,6 @@ const app = createApp({
             // Chat Avatar Override
             avatarSettingModal: { show: false, selfUrl: '', targetUrl: '' },
             avatarModeModal: { show: false },
-            
-            // Universal Avatar Selector & Cropper
-            avatarSourceModal: { show: false, url: '', callback: null },
-            avatarCropModal: { 
-                show: false, imageSrc: '', scale: 1, initialScale: 1, 
-                translateX: 0, translateY: 0, lastX: 0, lastY: 0, 
-                touches: [], lastDist: 0, lastScale: 1 
-            },
 
             cardProfile: { name: '输入文字', id: '输入文字', bio: '你對我來說是宇宙，但我對你来说只是一顆星嗎？', status: '该用户已注销', avatar: '' },
             icityProfile: { name: 'owoZzz', id: 'mizukiz117', bio: '-\n우리의 사랑은\n카메라에 비친 영원한 파라메터다 ·☆·', avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', lastEditTime: Date.now() },
@@ -10385,56 +10407,40 @@ const app = createApp({
             this.sessionMaskModal.show = false;
             this.maskModal.show = true;
         },        
-        async handleGroupAvatarChange2(e) {
-            const f = e.target.files[0]; if(!f) return;
-            try { this.groupProfileModal.avatar = await compressImage(f, 300); } catch(e){}
-            e.target.value = '';
-        },
         triggerGroupMemberAvatarUpload() {
             if (this.wechatState.activeSession && this.wechatState.activeSession.isGroup) {
-                this.$refs.groupMemberAvatarInput.click();
-            }
-        },
-        async handleGroupMemberAvatarChange(e) {
-            const f = e.target.files[0]; if(!f) return;
-            try {
-                const url = await compressImage(f, 300);
-                const session = this.wechatState.activeSession;
-                const nameToMatch = this.currentStatus.name;
-                const friend = this.wechatState.friendList.find(x => (x.remark || x.name) === nameToMatch);
-                
-                if (friend) {
-                    if (!session.membersInfo) session.membersInfo = {};
-                    if (!session.membersInfo[friend.id]) session.membersInfo[friend.id] = { level: 1, customTitle: '', msgCount: 0 };
+                this.openUniversalAvatarUpload((url) => {
+                    const session = this.wechatState.activeSession;
+                    const nameToMatch = this.currentStatus.name;
+                    const friend = this.wechatState.friendList.find(x => (x.remark || x.name) === nameToMatch);
                     
-                    // 赋值并触发 Vue 更新
-                    session.membersInfo[friend.id] = {
-                        ...session.membersInfo[friend.id],
-                        customAvatar: url
-                    };
-                    
-                    // 立即更新当前心声弹窗的头像
-                    this.currentStatus.avatar = url;
-                    
-                    // 替换该群聊中此人所有的历史气泡头像
-                    if (session.messages) {
-                        session.messages.forEach(m => {
-                            if (m.name === nameToMatch) m.avatar = url;
-                        });
+                    if (friend) {
+                        if (!session.membersInfo) session.membersInfo = {};
+                        if (!session.membersInfo[friend.id]) session.membersInfo[friend.id] = { level: 1, customTitle: '', msgCount: 0 };
+                        
+                        session.membersInfo[friend.id] = {
+                            ...session.membersInfo[friend.id],
+                            customAvatar: url
+                        };
+                        
+                        this.currentStatus.avatar = url;
+                        
+                        if (session.messages) {
+                            session.messages.forEach(m => {
+                                if (m.name === nameToMatch) m.avatar = url;
+                            });
+                        }
+                        if (session.statusHistory) {
+                            session.statusHistory.forEach(s => {
+                                if (s.name === nameToMatch) s.avatar = url;
+                            });
+                        }
+                        
+                        this.saveData();
+                        this.showToast('该角色在本群的专属头像已更新');
                     }
-                    if (session.statusHistory) {
-                        session.statusHistory.forEach(s => {
-                            if (s.name === nameToMatch) s.avatar = url;
-                        });
-                    }
-                    
-                    this.saveData();
-                    this.showToast('该角色在本群的专属头像已更新');
-                }
-            } catch(err) {
-                this.showToast('头像更新失败');
+                });
             }
-            e.target.value = '';
         },
         saveGroupProfile() {
             const session = this.wechatState.activeSession;
@@ -14903,8 +14909,7 @@ Structure:
             });
         },
         editFriend(friend) { this.newContact = { ...friend }; this.addContactModal.show = true; },
-        triggerAddContactAvatar() { this.$refs.addContactAvatarInput.click(); },
-        async handleAddContactAvatar(e) { const f = e.target.files[0]; if(!f) return; try { this.newContact.avatar = await compressImage(f, 300); } catch(e){} },
+        // (旧的添加好友头像上传已被接管)
         saveNewContact() {
             if(!this.newContact.name) return this.showToast('请输入姓名');
             if (this.newContact.id) { const idx = this.wechatState.friendList.findIndex(f => f.id === this.newContact.id); if (idx !== -1) { this.wechatState.friendList[idx] = { ...this.newContact }; this.showToast('修改成功'); } } 
@@ -14972,8 +14977,7 @@ Structure:
             } 
             this.maskModal.show = true; 
         },
-        triggerMaskAvatar() { this.$refs.maskAvatarInput.click(); },
-        async handleMaskAvatar(e) { const f=e.target.files[0]; if(!f)return; try { this.maskForm.avatar = await compressImage(f, 300); } catch(e){} },
+        // (旧的面具头像上传已被接管)
         saveMask() {
             if(!this.maskForm.name) return this.showToast('请输入姓名');
             if(this.maskForm.id) { const idx = this.masks.findIndex(m => m.id === this.maskForm.id); if(idx !== -1) this.masks[idx] = { ...this.maskForm }; } 
@@ -15796,15 +15800,148 @@ Structure:
         },
         triggerImport() { this.$refs.importInput.click(); },        
         
-        <!-- 第二页 (剩余 5 个功能) -->
-                                <div class="min-w-full grid grid-cols-4 gap-y-5 gap-x-2 px-3 content-start h-[175px]">
-                                    <div class="attach-item" @click="openMemoryModal"><div class="attach-icon-box"><i class="fas fa-brain text-gray-600"></i></div><span class="attach-label">记忆</span></div>
-                                    <div class="attach-item" @click="showMusicModal"><div class="attach-icon-box"><i class="fas fa-music text-gray-600"></i></div><span class="attach-label">一起听</span></div>
-                                    <div v-if="!wechatState.activeSession?.isGroup" class="attach-item" @click="openCharFavorites"><div class="attach-icon-box"><i class="fas fa-star text-gray-600"></i></div><span class="attach-label">收藏</span></div>
-                                    <div v-else class="attach-item" @click="groupActivityModal.show = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-flag text-gray-600"></i></div><span class="attach-label">群活动</span></div>
-                                    <div class="attach-item" @click="offlineState.selectModalShow = true; wechatState.showAttachMenu = false;"><div class="attach-icon-box"><i class="fas fa-coffee text-gray-600"></i></div><span class="attach-label">线下模式</span></div>
-                                    <div class="attach-item" @click="showToast('钱包功能将在后续开放')"><div class="attach-icon-box"><i class="fas fa-wallet text-gray-600"></i></div><span class="attach-label">钱包</span></div>
-                                </div>
+        // ================= 头像全局裁剪与URL系统 =================
+        openUniversalAvatarUpload(callback) {
+            this.universalAvatarConfig.callback = callback;
+            this.universalAvatarConfig.showSourceModal = true;
+        },
+        selectUniversalAvatarSource(type) {
+            this.universalAvatarConfig.showSourceModal = false;
+            if (type === 'url') {
+                this.showInput('填写图片URL', '', '请输入图片的直接网络链接', (url) => {
+                    if (url && url.trim()) {
+                        this.initCropper(url.trim());
+                    }
+                });
+            } else {
+                this.$refs.universalFileInput.click();
+            }
+        },
+        handleUniversalFileChange(e) {
+            const f = e.target.files[0];
+            if (!f) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                this.initCropper(ev.target.result);
+            };
+            reader.readAsDataURL(f);
+            e.target.value = '';
+        },
+        initCropper(url) {
+            this.universalAvatarConfig.tempRawUrl = url;
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                const nw = img.width;
+                const nh = img.height;
+                const minSide = Math.min(nw, nh);
+                const ratio = 300 / minSide;
+                
+                this.universalAvatarConfig.naturalWidth = nw;
+                this.universalAvatarConfig.naturalHeight = nh;
+                this.universalAvatarConfig.baseWidth = nw * ratio;
+                this.universalAvatarConfig.baseHeight = nh * ratio;
+                
+                this.resetCrop();
+                this.universalAvatarConfig.showCropper = true;
+            };
+            img.onerror = () => {
+                this.showToast('无法读取该图片，请检查链接或网络');
+            };
+            img.src = url;
+        },
+        resetCrop() {
+            this.universalAvatarConfig.scale = 1;
+            this.universalAvatarConfig.translateX = 0;
+            this.universalAvatarConfig.translateY = 0;
+        },
+        startDragCrop(e) {
+            this.universalAvatarConfig.isDragging = true;
+            const touch = e.touches ? e.touches[0] : (e.clientX !== undefined ? e : null);
+            if(touch) {
+                this.universalAvatarConfig.dragStartX = touch.clientX - this.universalAvatarConfig.translateX;
+                this.universalAvatarConfig.dragStartY = touch.clientY - this.universalAvatarConfig.translateY;
+            }
+        },
+        doDragCrop(e) {
+            if (!this.universalAvatarConfig.isDragging) return;
+            const touch = e.touches ? e.touches[0] : (e.clientX !== undefined ? e : null);
+            if(touch) {
+                this.universalAvatarConfig.translateX = touch.clientX - this.universalAvatarConfig.dragStartX;
+                this.universalAvatarConfig.translateY = touch.clientY - this.universalAvatarConfig.dragStartY;
+            }
+        },
+        stopDragCrop() {
+            this.universalAvatarConfig.isDragging = false;
+        },
+        confirmUniversalCrop() {
+            const config = this.universalAvatarConfig;
+            const canvas = document.createElement('canvas');
+            canvas.width = 600; 
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+            
+            const img = this.$refs.cropImageElement;
+            if (!img) return;
+            
+            const scale = config.scale;
+            const drawW = config.baseWidth * scale * 2;
+            const drawH = config.baseHeight * scale * 2;
+            
+            const drawX = 300 - (drawW / 2) + (config.translateX * 2);
+            const drawY = 300 - (drawH / 2) + (config.translateY * 2);
+            
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, 600, 600);
+            ctx.drawImage(img, drawX, drawY, drawW, drawH);
+            
+            const croppedUrl = canvas.toDataURL('image/jpeg', 0.9);
+            config.showCropper = false;
+            
+            if (config.callback) config.callback(croppedUrl);
+        },
+
+        // ================= 接管所有头像点击 =================
+        triggerCardAvatarUpload() { this.openUniversalAvatarUpload(url => { this.cardProfile.avatar = url; this.saveData(); }); },
+        triggerPage2AvatarUpload() { this.openUniversalAvatarUpload(url => { this.page2Profile.avatar = url; this.saveData(); }); },
+        triggerPage2WidgetImgUpload() { this.openUniversalAvatarUpload(url => { this.page2Widget.image = url; this.saveData(); }); },
+        triggerPage2Widget2AvatarUpload() { this.openUniversalAvatarUpload(url => { this.page2Widget2.avatar = url; this.saveData(); }); },
+        triggerHomeAvatarUpload() { this.openUniversalAvatarUpload(url => { this.homeProfile.avatar = url; this.saveData(); }); },
+        triggerIcityAvatarUpload() { this.openUniversalAvatarUpload(url => { this.icityProfile.avatar = url; this.icityProfile.lastEditTime = Date.now(); this.saveData(); }); },
+        triggerGroupAvatarUpload2() { this.openUniversalAvatarUpload(url => { this.groupProfileModal.avatar = url; this.saveData(); }); },
+        triggerAddContactAvatar() { this.openUniversalAvatarUpload(url => { this.newContact.avatar = url; }); },
+        triggerMaskAvatar() { this.openUniversalAvatarUpload(url => { this.maskForm.avatar = url; }); },
+        triggerAvatarUpload(type) {
+            this.avatarSettingModal.uploadType = type;
+            this.openUniversalAvatarUpload((url) => {
+                if(this.avatarSettingModal.uploadType === 'self') this.avatarSettingModal.selfUrl = url;
+                else this.avatarSettingModal.targetUrl = url;
+            });
+        },
+        triggerD2Avatar(keyPath) {
+            this.openUniversalAvatarUpload((url) => {
+                const keys = keyPath.split('.');
+                if(keys.length === 1) this.desktop2[keys[0]] = url;
+                else this.desktop2[keys[0]][keys[1]] = url;
+                this.saveData();
+            });
+        },
+        triggerD2Highlight(idx) {
+            this.activeHighlightIndex = idx;
+            this.openUniversalAvatarUpload((url) => {
+                if (this.activeHighlightIndex !== -1) {
+                    this.desktop2.highlights[this.activeHighlightIndex].img = url;
+                    this.saveData();
+                }
+            });
+        },
+        
+        // ================== 接管结束 ==================
+
+        editCardProfile(f) { let m = { 'name': '卡片名字', 'id': '卡片ID', 'bio': '卡片签名', 'status': '卡片状态' }; this.showInput(m[f], this.cardProfile[f], "请输入...", (v) => { if(v){ this.cardProfile[f]=v; this.saveData(); } }); },
+        editPage2Profile(f) { let m = { 'name': '修改昵称', 'status': '修改心情状态' }; this.showInput(m[f], this.page2Profile[f], "请输入...", (v) => { if(v){ this.page2Profile[f]=v; this.saveData(); } }); },
+        editPage2Widget(f) { let m = { 'title': '修改左上角名称', 'msg': '修改底部提示文字' }; this.showInput(m[f], this.page2Widget[f], "请输入...", (v) => { if(v){ this.page2Widget[f]=v; this.saveData(); } }); },
+        editPage2Widget2(f) { this.showInput('修改心情气泡', this.page2Widget2[f], "请输入...", (v) => { if(v){ this.page2Widget2[f]=v; this.saveData(); } }); },
         // -----------------------------
 
         formatAMPM(timeStr) {
@@ -15834,135 +15971,6 @@ Structure:
             }
         },
         // -----------------------
-
-        // ================= 全局头像选择与裁剪中枢 =================
-        openUniversalAvatarSelector(callback) {
-            this.avatarSourceModal.url = '';
-            this.avatarSourceModal.callback = callback;
-            this.avatarSourceModal.show = true;
-        },
-        confirmAvatarUrl() {
-            if (!this.avatarSourceModal.url.trim()) return this.showToast('请填入链接');
-            if (this.avatarSourceModal.callback) this.avatarSourceModal.callback(this.avatarSourceModal.url.trim());
-            this.avatarSourceModal.show = false;
-        },
-        handleUniversalAvatarUpload(e) {
-            const f = e.target.files[0];
-            if (!f) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                this.avatarCropModal.imageSrc = ev.target.result;
-                this.avatarSourceModal.show = false;
-                this.avatarCropModal.show = true;
-                this.resetCrop();
-            };
-            reader.readAsDataURL(f);
-            e.target.value = '';
-        },
-        initCropImage(e) {
-            const img = e.target;
-            const containerSize = window.innerWidth;
-            // 自适应缩放，使图片刚好覆盖满整个 1:1 的裁剪框
-            const scale = Math.max(containerSize / img.naturalWidth, containerSize / img.naturalHeight);
-            this.avatarCropModal.initialScale = scale;
-            this.resetCrop();
-        },
-        resetCrop() {
-            this.avatarCropModal.scale = this.avatarCropModal.initialScale || 1;
-            this.avatarCropModal.translateX = 0;
-            this.avatarCropModal.translateY = 0;
-            this.avatarCropModal.lastScale = this.avatarCropModal.scale;
-            this.avatarCropModal.lastX = 0;
-            this.avatarCropModal.lastY = 0;
-        },
-        onCropTouchStart(e) {
-            this.avatarCropModal.touches = e.touches;
-            if (e.touches.length === 1) {
-                this.avatarCropModal.lastX = e.touches[0].clientX - this.avatarCropModal.translateX;
-                this.avatarCropModal.lastY = e.touches[0].clientY - this.avatarCropModal.translateY;
-            } else if (e.touches.length === 2) {
-                this.avatarCropModal.lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                this.avatarCropModal.lastScale = this.avatarCropModal.scale;
-            }
-        },
-        onCropTouchMove(e) {
-            if (e.touches.length === 1 && this.avatarCropModal.touches.length === 1) {
-                this.avatarCropModal.translateX = e.touches[0].clientX - this.avatarCropModal.lastX;
-                this.avatarCropModal.translateY = e.touches[0].clientY - this.avatarCropModal.lastY;
-            } else if (e.touches.length === 2 && this.avatarCropModal.touches.length === 2) {
-                const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                const scaleDiff = dist / this.avatarCropModal.lastDist;
-                this.avatarCropModal.scale = Math.max(0.1, this.avatarCropModal.lastScale * scaleDiff);
-            }
-        },
-        onCropTouchEnd(e) {
-            this.avatarCropModal.touches = e.touches;
-        },
-        confirmCropAvatar() {
-            const img = this.$refs.cropImage;
-            const canvas = document.createElement('canvas');
-            const targetSize = 400; // 输出 400x400 的高清头像
-            canvas.width = targetSize;
-            canvas.height = targetSize;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = "#ffffff";
-            ctx.fillRect(0, 0, targetSize, targetSize);
-
-            const displaySize = window.innerWidth;
-            const drawRatio = targetSize / displaySize; 
-
-            ctx.translate(targetSize / 2, targetSize / 2);
-            ctx.scale(this.avatarCropModal.scale * drawRatio, this.avatarCropModal.scale * drawRatio);
-            ctx.translate(this.avatarCropModal.translateX / this.avatarCropModal.scale, this.avatarCropModal.translateY / this.avatarCropModal.scale);
-            
-            ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
-
-            try {
-                const url = canvas.toDataURL('image/jpeg', 0.85);
-                if (this.avatarSourceModal.callback) {
-                    this.avatarSourceModal.callback(url);
-                }
-                this.avatarCropModal.show = false;
-            } catch(e) {
-                this.showToast('裁剪生成失败，图片异常');
-            }
-        },
-
-        // ---------- 替换并接管各端头像方法 ----------
-        triggerHomeAvatarUpload() { this.openUniversalAvatarSelector(url => { this.homeProfile.avatar = url; this.saveData(); }); },
-        triggerIcityAvatarUpload() { this.openUniversalAvatarSelector(url => { this.icityProfile.avatar = url; this.icityProfile.lastEditTime = Date.now(); this.saveData(); }); },
-        triggerCardAvatarUpload() { this.openUniversalAvatarSelector(url => { this.cardProfile.avatar = url; this.saveData(); }); },
-        triggerPage2AvatarUpload() { this.openUniversalAvatarSelector(url => { this.page2Profile.avatar = url; this.saveData(); }); },
-        triggerPage2Widget2AvatarUpload() { this.openUniversalAvatarSelector(url => { this.page2Widget2.avatar = url; this.saveData(); }); },
-        triggerAddContactAvatar() { this.openUniversalAvatarSelector(url => { this.newContact.avatar = url; }); },
-        triggerMaskAvatar() { this.openUniversalAvatarSelector(url => { this.maskForm.avatar = url; }); },
-        triggerGroupMemberAvatarUpload() {
-            if (this.wechatState.activeSession && this.wechatState.activeSession.isGroup) {
-                this.openUniversalAvatarSelector((url) => {
-                    const session = this.wechatState.activeSession;
-                    const nameToMatch = this.currentStatus.name;
-                    const friend = this.wechatState.friendList.find(x => (x.remark || x.name) === nameToMatch);
-                    if (friend) {
-                        if (!session.membersInfo) session.membersInfo = {};
-                        if (!session.membersInfo[friend.id]) session.membersInfo[friend.id] = { level: 1, customTitle: '', msgCount: 0 };
-                        session.membersInfo[friend.id] = { ...session.membersInfo[friend.id], customAvatar: url };
-                        this.currentStatus.avatar = url;
-                        if (session.messages) session.messages.forEach(m => { if (m.name === nameToMatch) m.avatar = url; });
-                        if (session.statusHistory) session.statusHistory.forEach(s => { if (s.name === nameToMatch) s.avatar = url; });
-                        this.saveData();
-                        this.showToast('该角色在本群的专属头像已更新');
-                    }
-                });
-            }
-        },
-        triggerAvatarUpload(type) {
-            this.openUniversalAvatarSelector(url => {
-                if (type === 'self') this.avatarSettingModal.selfUrl = url;
-                else this.avatarSettingModal.targetUrl = url;
-            });
-        },
-        // ----------------------------------------
 
         editHomeProfile(f) { let m = { 'name': '主页名字', 'id': '主页ID', 'bio': '主页签名', 'location': '主页定位' }; this.showInput(m[f], this.homeProfile[f], "请输入...", (v) => { if(v){ this.homeProfile[f]=v; this.saveData(); } }); },
         editIcityProfile(f) { let m = { 'name': '修改名字', 'id': '修改ID', 'bio': '修改签名' }; this.showInput(m[f], this.icityProfile[f], "请输入...", (v) => { if(v){ this.icityProfile[f]=v; this.icityProfile.lastEditTime = Date.now(); this.saveData(); } }, f==='bio'?'textarea':'text'); },
@@ -18709,22 +18717,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                  targetUrl: session.customAvatarTarget || ''
              };
         },
-        triggerAvatarUpload(type) {
-            this.avatarSettingModal.uploadType = type;
-            this.$refs.avatarSettingInput.click();
-        },
-        async handleAvatarUpload(e) {
-            const f = e.target.files[0]; if(!f) return;
-            try {
-                const url = await compressImage(f, 300);
-                if(this.avatarSettingModal.uploadType === 'self') {
-                    this.avatarSettingModal.selfUrl = url;
-                } else {
-                    this.avatarSettingModal.targetUrl = url;
-                }
-            } catch(e) {}
-            e.target.value = '';
-        },
+        // (旧的专属聊天头像覆盖已被接管)
         saveAvatarSetting() {
             const session = this.wechatState.activeSession;
             if(session) {
