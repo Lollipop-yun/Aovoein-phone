@@ -3283,10 +3283,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-3 w-full mb-2">
+                    <div class="flex flex-col gap-3 w-full mb-2">
                         <!-- 消息数卡片 -->
-                        <div class="bg-white rounded-[24px] p-5 flex flex-col justify-between shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 relative overflow-hidden min-h-[110px]">
-                            <div class="absolute -right-3 -top-3 text-gray-50 opacity-80 text-6xl pointer-events-none"><i class="fas fa-comment-dots"></i></div>
+                        <div class="bg-white rounded-[24px] p-5 flex flex-col justify-between shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-gray-100 relative overflow-hidden min-h-[90px]">
+                            <div class="absolute -right-2 -top-2 text-gray-50 opacity-80 text-6xl pointer-events-none"><i class="fas fa-comment-dots"></i></div>
                             <span class="text-[12px] font-bold text-gray-400 mb-2 z-10 tracking-widest">总消息数</span>
                             <div class="flex items-baseline gap-1.5 z-10 mt-auto">
                                 <span class="text-[32px] leading-none font-bold text-gray-900 font-mono tracking-tighter">{{ wechatState.activeSession?.messages?.length || 0 }}</span>
@@ -3294,8 +3294,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                         <!-- Tokens 卡片 -->
-                        <div class="bg-gradient-to-br from-gray-900 to-black rounded-[24px] p-5 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[110px] cursor-pointer active:scale-[0.98] transition" @click="openTokenDetailModal">
-                            <div class="absolute -right-3 -top-3 text-white/5 text-6xl pointer-events-none"><i class="fas fa-microchip"></i></div>
+                        <div class="bg-gradient-to-br from-gray-900 to-black rounded-[24px] p-5 flex flex-col justify-between shadow-lg relative overflow-hidden min-h-[90px] cursor-pointer active:scale-[0.98] transition" @click="openTokenDetailModal">
+                            <div class="absolute -right-2 -top-2 text-white/5 text-6xl pointer-events-none"><i class="fas fa-microchip"></i></div>
                             <span class="text-[12px] font-bold text-gray-300 mb-2 z-10 tracking-widest flex items-center justify-between">消耗 TOKENS <i class="fas fa-chevron-right text-[10px] text-gray-500"></i></span>
                             <div class="flex items-baseline gap-1.5 z-10 mt-auto">
                                 <span class="text-[32px] leading-none font-bold text-white font-mono tracking-tighter">{{ estimateChatTokens(wechatState.activeSession) }}</span>
@@ -3304,9 +3304,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                     
-<div class="w-full mt-4 flex gap-3">
-                        <button @click="memoryModal.statsShow = false" class="w-14 h-[52px] bg-white text-gray-600 rounded-[18px] font-bold text-[16px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center shrink-0"><i class="fas fa-times"></i></button>
-                        <button @click="triggerManualSummarize" class="flex-1 bg-white text-gray-900 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center gap-2 tracking-wide"><i class="fas fa-bolt text-yellow-500"></i> 立即提取并总结</button>
+                    <div class="w-full mt-4 flex gap-3">
+                        <button @click="memoryModal.statsShow = false" class="w-[80px] h-[52px] bg-white text-gray-600 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center shrink-0">取消</button>
+                        <button @click="triggerManualSummarize" class="flex-1 bg-white text-gray-900 rounded-[18px] font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200 flex items-center justify-center gap-2 tracking-wide">立即提取并总结</button>
                     </div>
                 </div>
             </div>
@@ -7025,7 +7025,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.41 更新日志 (当前最新) -->
+                            <!-- v1.42 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#10b981]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.42 数据面板 UI 极简风格重构</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-05 22:01</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">数据面板布局优化：</span>数据面板弹窗中的“总消息数”与“消耗 Tokens”卡片由原本的左右并排结构调整为了更符合阅读直觉的上下单列结构。</li>
+                                    <li><span class="font-bold text-gray-800">底部操作栏精简：</span>移除了“立即提取并总结”按钮前多余的黄色闪电图标，并将“叉号”图标直接替换为简单明了的“取消”文字按钮，更加干净利落。</li>
+                                    <li><span class="font-bold text-gray-800">详情页色彩统一：</span>点击进入“API 消耗与上下文分布”详情页后，原本五颜六色的各模块前端图标现已全部统一替换为高级的“灰底灰字”极简风格。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.41 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#6366f1]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -11835,38 +11849,38 @@ const app = createApp({
             };
 
             const baseTokens = 300;
-            dist.push({ name: '系统核心规则框架', icon: 'fas fa-cogs', color: 'bg-gray-100 text-gray-600', tokens: baseTokens });
+            dist.push({ name: '系统核心规则框架', icon: 'fas fa-cogs', color: 'bg-gray-100 text-gray-500', tokens: baseTokens });
             total += baseTokens;
 
             const mask = this.getMaskById(session.maskId);
             const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-            addDist('人物档案与背景人设', 'fas fa-user-tag', 'bg-blue-50 text-blue-500', (mask.bio||'') + (friend?.bio||''));
+            addDist('人物档案与背景人设', 'fas fa-user-tag', 'bg-gray-100 text-gray-500', (mask.bio||'') + (friend?.bio||''));
 
             if (session.relationships && session.relationships.length > 0) {
-                addDist('关系网 (人际关联)', 'fas fa-project-diagram', 'bg-purple-50 text-purple-500', session.relationships.map(r => r.relation + (r.bio||'')).join(''));
+                addDist('关系网 (人际关联)', 'fas fa-project-diagram', 'bg-gray-100 text-gray-500', session.relationships.map(r => r.relation + (r.bio||'')).join(''));
             }
 
             let folderIds = session.boundWorldbookFolderIds || [];
             let fileIds = session.boundWorldbookFileIds || [];
             if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
             const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
-            if (files.length > 0) addDist('世界书 (场景百科)', 'fas fa-book-atlas', 'bg-green-50 text-green-500', files.map(f => f.content).join(''));
+            if (files.length > 0) addDist('世界书 (场景百科)', 'fas fa-book-atlas', 'bg-gray-100 text-gray-500', files.map(f => f.content).join(''));
 
             if (session.memorySummaries && session.memorySummaries.length > 0) {
-                addDist('长期记忆 (日记档案)', 'fas fa-brain', 'bg-yellow-50 text-yellow-600', session.memorySummaries.map(m => m.content).join(''));
+                addDist('长期记忆 (日记档案)', 'fas fa-brain', 'bg-gray-100 text-gray-500', session.memorySummaries.map(m => m.content).join(''));
             }
 
             const ctxCount = this.getMemorySettings(session).contextCount || 20;
             const msgs = session.messages ? session.messages.slice(-ctxCount) : [];
             let chatStr = msgs.map(m => (m.content || '') + (m.desc || '')).join('');
-            if (chatStr) addDist('短期聊天上下文', 'fas fa-comments', 'bg-pink-50 text-pink-500', chatStr);
+            if (chatStr) addDist('短期聊天上下文', 'fas fa-comments', 'bg-gray-100 text-gray-500', chatStr);
 
             let imgTokens = 0;
             msgs.forEach(m => {
                 if (m.type === 'image' || m.type === 'fake_image') imgTokens += 85;
             });
             if (imgTokens > 0) {
-                dist.push({ name: '视觉识别 (图片预估)', icon: 'fas fa-image', color: 'bg-orange-50 text-orange-500', tokens: imgTokens });
+                dist.push({ name: '视觉识别 (图片预估)', icon: 'fas fa-image', color: 'bg-gray-100 text-gray-500', tokens: imgTokens });
                 total += imgTokens;
             }
 
