@@ -2971,11 +2971,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     <!-- 自适应图片容器，尺寸精准包裹图片 -->
                     <div class="relative bg-transparent" :style="{ width: universalAvatarConfig.imgW + 'px', height: universalAvatarConfig.imgH + 'px' }">
-                        <!-- 底图：显示原色 -->
-                        <img :src="universalAvatarConfig.tempRawUrl" class="w-full h-full block pointer-events-none object-contain">
+                        <!-- 底图：显示原色 (改为 object-fill 防止边缘透明缝隙产生黑边) -->
+                        <img :src="universalAvatarConfig.tempRawUrl" class="w-full h-full block pointer-events-none object-fill bg-transparent">
                         
-                        <!-- 活动的裁切框 -->
-                        <div class="absolute border-2 border-white box-content touch-none z-10"
+                        <!-- 活动的裁切框 (改为 box-border 防止边框宽度溢出计算的长宽) -->
+                        <div class="absolute border-2 border-white box-border touch-none z-10"
                              :style="{
                                  left: universalAvatarConfig.boxX + 'px',
                                  top: universalAvatarConfig.boxY + 'px',
@@ -3373,22 +3373,44 @@ document.addEventListener("DOMContentLoaded", () => {
                         <h1 class="font-bold text-[16px] text-gray-900">私密日记</h1>
                         <span class="text-[10px] text-gray-400 font-mono">{{ wechatState.activeSession?.name }}</span>
                     </div>
-                    <div class="w-8"></div>
+                    <!-- 一键翻译按钮 -->
+                    <button @click="translateDiary(memoryDetailModal.memory)" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50 transition">
+                        <i class="fas fa-language text-[20px]" :class="{'text-blue-500': memoryDetailModal.memory?.showTranslation, 'fa-spin': memoryDetailModal.memory?.isTranslating}"></i>
+                    </button>
                 </header>
+                
                 <!-- 横线信纸背景：行高 32px，通过 pt-[4px] 完美对准信纸划线 -->
                 <div class="flex-1 overflow-y-auto px-6 pt-[4px] pb-12 lined-paper-bg">
-                    <div class="flex flex-col mt-[32px] mb-[32px]">
-                        <!-- 标题：字号放大至 28px，完美贴合单行或双行 32px -->
-                        <div class="font-bold text-[28px] text-gray-900" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
-                            {{ memoryDetailModal.memory?.title || '无题' }}
+                    
+                    <!-- 原始语言视图 -->
+                    <div v-if="!memoryDetailModal.memory?.showTranslation" class="animate-fade-in">
+                        <div class="flex flex-col mt-[32px] mb-[32px]">
+                            <!-- 标题：字号放大至 28px，完美贴合单行或双行 32px -->
+                            <div class="font-bold text-[28px] text-gray-900" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
+                                {{ memoryDetailModal.memory?.title || '无题' }}
+                            </div>
+                            <!-- 日期：保留 14px，位于标题下方 -->
+                            <div class="text-[14px] text-gray-400 font-bold" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
+                                {{ formatFullDate(memoryDetailModal.memory?.time) }}
+                            </div>
                         </div>
-                        <!-- 日期：保留 14px，位于标题下方 -->
-                        <div class="text-[14px] text-gray-400 font-bold" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
-                            {{ formatFullDate(memoryDetailModal.memory?.time) }}
-                        </div>
+                        <!-- 正文内容：字号放大至 20px，行高强制对齐 32px 以匹配信纸线条 -->
+                        <div class="text-[20px] text-gray-800 whitespace-pre-wrap text-justify tracking-wide" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">{{ memoryDetailModal.memory?.content }}</div>
                     </div>
-                    <!-- 正文内容：字号放大至 20px，行高强制对齐 32px 以匹配信纸线条 -->
-                    <div class="text-[20px] text-gray-800 whitespace-pre-wrap text-justify tracking-wide" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">{{ memoryDetailModal.memory?.content }}</div>
+                    
+                    <!-- 翻译后的中文视图 -->
+                    <div v-else class="animate-fade-in">
+                        <div class="flex flex-col mt-[32px] mb-[32px]">
+                            <div class="font-bold text-[28px] text-gray-900" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
+                                {{ memoryDetailModal.memory?.translatedTitle || '无题' }}
+                            </div>
+                            <div class="flex items-center text-[14px] text-gray-400 font-bold" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">
+                                {{ formatFullDate(memoryDetailModal.memory?.time) }} <span class="text-blue-500 ml-2 text-[10px] bg-blue-50 px-2 py-0.5 rounded-full font-sans">中文翻译</span>
+                            </div>
+                        </div>
+                        <div class="text-[20px] text-gray-800 whitespace-pre-wrap text-justify tracking-wide" :style="{ fontFamily: getDiaryFont(), lineHeight: '32px' }">{{ memoryDetailModal.memory?.translatedContent }}</div>
+                    </div>
+
                 </div>
             </div>
         </transition>
@@ -6995,7 +7017,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.38 更新日志 (当前最新) -->
+                            <!-- v1.39 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#10b981]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.39 多语言长期记忆系统与黑边根除</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-05 19:08</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">裁剪器黑边修复：</span>彻底修复了图片裁剪工具中的黑边溢出问题。优化底层盒模型为 `box-border` 并配合 `object-fill`，根除了缩放拖拽时右侧和下方产生的黑色描边异常，让裁切框严丝合缝贴合原始画面。</li>
+                                    <li><span class="font-bold text-gray-800">异国多语言日记：</span>现在，AI 会在总结记忆时严格跟随你设置的「角色输出语言」（英语、日语、繁体中文等）来撰写长期记忆日记。英国人写英语日记，沉浸感直接拉满！</li>
+                                    <li><span class="font-bold text-gray-800">双语无缝切换：</span>日记详情页右上角全新引入了「实时翻译」按钮。点击它，系统会自动将任意语言的外文/繁体日记翻译为地道的简体中文，并允许你在双语视图之间瞬间无缝切换阅读。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.38 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -11527,7 +11563,8 @@ const app = createApp({
    - 关系羁绊：我们俩的感情或关系是否发生了微妙的变化？
    - 未来羁绊：我们之间是否有未完成的承诺、计划或者约定？
 4. 【文风与字数】：字数要求在 {wordCount} 左右（一般不少于400字）。感情必须真挚细腻，严禁写成流水账或冰冷的机器报告，必须像一篇带有强烈个人情感的真人手写日记。
-5. 【极其重要的输出格式】：直接输出标题和正文，绝不要在开头自己写日期或星期几！绝不要包含任何多余的机器解释或首尾客套话！`;
+5. 【极其重要的输出格式】：直接输出标题和正文，绝不要在开头自己写日期或星期几！绝不要包含任何多余的机器解释或首尾客套话！
+{langRequirement}`;
         },
         getMemorySettings(session) {
             if (!session.memorySettings) {
@@ -11557,6 +11594,56 @@ const app = createApp({
             }
             this.memoryDetailModal.memory = mem;
             this.memoryDetailModal.show = true;
+        },
+        async translateDiary(memory) {
+            // 如果已经在翻译中则忽略
+            if (memory.isTranslating) return;
+            // 如果已经存有翻译，则直接秒切中英视图
+            if (memory.translatedContent) {
+                memory.showTranslation = !memory.showTranslation;
+                this.saveData();
+                return;
+            }
+
+            if (!this.apiConfig.apiKey) return this.showToast('请先配置 API Key');
+            
+            memory.isTranslating = true;
+            this.showToast('正在翻译该日记，请稍候...');
+            
+            try {
+                let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+                
+                const res = await fetch(`${url}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                    body: JSON.stringify({ 
+                        model: this.apiConfig.selectedModel, 
+                        messages:[
+                            { role: 'system', content: `你是一个极其精准的小说级翻译助手。请将用户输入的日记文本翻译为流畅地道的【简体中文 (普通话)】。保持日记的第一人称口吻和原有的情感色彩。请保持原有的格式：第一行输出翻译后的标题，然后换行输出翻译后的正文。直接输出翻译结果，不要输出任何多余的说明文字！` },
+                            { role: 'user', content: `${memory.title}\n\n${memory.content}` }
+                        ],
+                        temperature: 0.1 
+                    })
+                });
+
+                if(!res.ok) throw new Error('API 请求失败');
+                const data = await res.json();
+                let result = data.choices[0].message.content.trim();
+                
+                // 将大模型按行返回的内容切割成标题和内容
+                let lines = result.split('\n');
+                memory.translatedTitle = lines[0].replace(/^标题[：:]\s*/, '').trim();
+                memory.translatedContent = lines.slice(1).join('\n').replace(/^正文[：:]\s*/, '').trim();
+                
+                memory.showTranslation = true;
+                this.saveData();
+                this.showToast('翻译完成！');
+            } catch(e) {
+                this.showToast("翻译失败: " + e.message);
+            } finally {
+                memory.isTranslating = false;
+            }
         },
         openDiaryFontModal() {
             this.diaryFontModal.show = true;
@@ -11827,8 +11914,20 @@ const app = createApp({
             const mask = this.getMaskById(session.maskId);
             const chatLog = msgsToSummarize.map(m => `[${m.isSelf ? mask.name : (friend?friend.name:session.name)}]: ${m.content}`).join('\n');
             
+            // 读取用户设定的 AI 输出语言
+            const sourceLang = session.transSourceLang && session.transSourceLang !== '自动识别' ? session.transSourceLang : '简体中文 (普通话)';
+            const langReq = `6. 【语言要求】：你必须使用严格且地道的【${sourceLang}】来书写这篇日记全文（包括第一行的标题）！`;
+
             const actualPrompt = settings.prompt.trim() || this.globalMemoryPrompt || this.getDefaultMemoryPrompt();
             let promptStr = actualPrompt.replace('{wordCount}', settings.wordCount || '150-300');
+            
+            // 安全注入语言约束 (如果用户自定义了 prompt，则追在末尾)
+            if (promptStr.includes('{langRequirement}')) {
+                promptStr = promptStr.replace('{langRequirement}', langReq);
+            } else {
+                promptStr += `\n${langReq}`;
+            }
+            
             let fullPrompt = `【任务说明】\n${promptStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接开始正文书写：`;
 
             try {
