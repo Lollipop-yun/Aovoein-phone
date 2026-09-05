@@ -2951,54 +2951,67 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         </transition>
 
-        <!-- 通用头像 1:1 自由拖拽缩放裁剪台 -->
+        <!-- 通用头像 1:1 相册级自由裁剪台 -->
         <transition name="scale">
-            <div v-if="universalAvatarConfig.showCropper" class="fixed inset-0 z-[150000] flex flex-col bg-black text-white font-sans">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between shrink-0 z-10 border-b border-gray-800 bg-[#1c1c1e]">
+            <div v-if="universalAvatarConfig.showCropper" class="fixed inset-0 z-[150000] flex flex-col bg-[#121212] text-white font-sans overflow-hidden">
+                <header class="h-[90px] pt-10 px-4 flex items-center justify-between shrink-0 z-10 bg-[#1a1a1c] border-b border-[#2c2c2e]">
                     <button @click="universalAvatarConfig.showCropper = false" class="text-white text-[16px] active:opacity-50 font-medium">取消</button>
                     <h1 class="font-bold text-[17px] tracking-wider">裁剪图片 (1:1)</h1>
                     <button @click="confirmUniversalCrop" class="text-[#07c160] font-bold text-[16px] active:opacity-50">完成</button>
                 </header>
                 
-                <div class="flex-1 relative flex items-center justify-center overflow-hidden bg-black">
-                    <!-- 黑色遮罩层，挖出 300x300 的高亮可视区域 -->
-                    <div class="absolute inset-0 z-20 pointer-events-none" style="box-shadow: inset 0 0 0 2000px rgba(0,0,0,0.7);"></div>
-                    <div class="absolute w-[300px] h-[300px] border-2 border-white z-30 pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.7)]">
-                        <div class="absolute inset-0 border border-white/30 grid grid-cols-3 grid-rows-3 pointer-events-none">
-                            <div class="border-r border-b border-white/30"></div><div class="border-r border-b border-white/30"></div><div class="border-b border-white/30"></div>
-                            <div class="border-r border-b border-white/30"></div><div class="border-r border-b border-white/30"></div><div class="border-b border-white/30"></div>
-                            <div class="border-r border-white/30"></div><div class="border-r border-white/30"></div><div></div>
-                        </div>
-                    </div>
+                <!-- 裁剪操控区 (监听所有触摸/鼠标移动事件) -->
+                <div class="flex-1 relative flex items-center justify-center bg-[#121212] px-4 overflow-hidden" 
+                     ref="cropContainer"
+                     @touchmove.prevent="handleCropTouchMove"
+                     @mousemove.prevent="handleCropTouchMove"
+                     @touchend.prevent="stopCropAction"
+                     @mouseup.prevent="stopCropAction"
+                     @mouseleave.prevent="stopCropAction">
                     
-                    <!-- 触控拖拽驱动层 -->
-                    <div class="w-[300px] h-[300px] relative z-10 flex items-center justify-center cursor-move"
-                         @touchstart.prevent="startDragCrop"
-                         @touchmove.prevent="doDragCrop"
-                         @touchend.prevent="stopDragCrop"
-                         @mousedown.prevent="startDragCrop"
-                         @mousemove.prevent="doDragCrop"
-                         @mouseup.prevent="stopDragCrop"
-                         @mouseleave.prevent="stopDragCrop">
-                        <!-- 真实被移动缩放的图片 -->
-                        <img ref="cropImageElement" :src="universalAvatarConfig.tempRawUrl" 
-                             class="absolute max-w-none origin-center pointer-events-none"
-                             :style="{ 
-                                 transform: `translate(${universalAvatarConfig.translateX}px, ${universalAvatarConfig.translateY}px) scale(${universalAvatarConfig.scale})`,
-                                 width: universalAvatarConfig.baseWidth + 'px',
-                                 height: universalAvatarConfig.baseHeight + 'px',
-                                 willChange: 'transform'
+                    <!-- 自适应图片容器，尺寸精准包裹图片 -->
+                    <div class="relative bg-transparent" :style="{ width: universalAvatarConfig.imgW + 'px', height: universalAvatarConfig.imgH + 'px' }">
+                        <!-- 底图：显示原色 -->
+                        <img :src="universalAvatarConfig.tempRawUrl" class="w-full h-full block pointer-events-none object-contain">
+                        
+                        <!-- 活动的裁切框 -->
+                        <div class="absolute border-2 border-white box-content touch-none z-10"
+                             :style="{
+                                 left: universalAvatarConfig.boxX + 'px',
+                                 top: universalAvatarConfig.boxY + 'px',
+                                 width: universalAvatarConfig.boxSize + 'px',
+                                 height: universalAvatarConfig.boxSize + 'px',
+                                 boxShadow: '0 0 0 9999px rgba(0,0,0,0.65)' /* 外部遮罩阴影，露出内部原色 */
                              }">
+                             <!-- 移动热区 (中心拖拽) -->
+                             <div class="absolute inset-0 cursor-move" @touchstart.stop.prevent="startCropAction($event, 'move')" @mousedown.stop.prevent="startCropAction($event, 'move')"></div>
+                             
+                             <!-- 3x3 参考网格 -->
+                             <div class="absolute inset-0 border border-white/30 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                                 <div class="border-r border-b border-white/30"></div><div class="border-r border-b border-white/30"></div><div class="border-b border-white/30"></div>
+                                 <div class="border-r border-b border-white/30"></div><div class="border-r border-b border-white/30"></div><div class="border-b border-white/30"></div>
+                                 <div class="border-r border-white/30"></div><div class="border-r border-white/30"></div><div></div>
+                             </div>
+                             
+                             <!-- 四角缩放热区及边角装饰符 -->
+                             <div class="absolute -top-4 -left-4 w-10 h-10 bg-transparent cursor-nwse-resize z-20 flex items-center justify-center" @touchstart.stop.prevent="startCropAction($event, 'tl')" @mousedown.stop.prevent="startCropAction($event, 'tl')">
+                                <div class="w-4 h-4 border-t-4 border-l-4 border-white pointer-events-none absolute top-4 left-4"></div>
+                             </div>
+                             <div class="absolute -top-4 -right-4 w-10 h-10 bg-transparent cursor-nesw-resize z-20 flex items-center justify-center" @touchstart.stop.prevent="startCropAction($event, 'tr')" @mousedown.stop.prevent="startCropAction($event, 'tr')">
+                                <div class="w-4 h-4 border-t-4 border-r-4 border-white pointer-events-none absolute top-4 right-4"></div>
+                             </div>
+                             <div class="absolute -bottom-4 -left-4 w-10 h-10 bg-transparent cursor-nesw-resize z-20 flex items-center justify-center" @touchstart.stop.prevent="startCropAction($event, 'bl')" @mousedown.stop.prevent="startCropAction($event, 'bl')">
+                                <div class="w-4 h-4 border-b-4 border-l-4 border-white pointer-events-none absolute bottom-4 left-4"></div>
+                             </div>
+                             <div class="absolute -bottom-4 -right-4 w-10 h-10 bg-transparent cursor-nwse-resize z-20 flex items-center justify-center" @touchstart.stop.prevent="startCropAction($event, 'br')" @mousedown.stop.prevent="startCropAction($event, 'br')">
+                                <div class="w-4 h-4 border-b-4 border-r-4 border-white pointer-events-none absolute bottom-4 right-4"></div>
+                             </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="h-[120px] pb-safe px-8 flex flex-col items-center justify-center gap-5 shrink-0 bg-[#1c1c1e]">
-                    <div class="w-full flex items-center gap-4">
-                        <i class="fas fa-image text-gray-500 text-sm"></i>
-                        <input type="range" min="1" max="3" step="0.05" v-model.number="universalAvatarConfig.scale" class="flex-1 h-1 bg-gray-700 rounded-lg appearance-none outline-none slider-thumb">
-                        <i class="fas fa-image text-white text-lg"></i>
-                    </div>
-                    <button @click="resetCrop" class="text-[12px] text-gray-300 font-bold bg-gray-800 px-5 py-1.5 rounded-full active:bg-gray-700 transition tracking-widest"><i class="fas fa-undo mr-1"></i> 重置</button>
+                <div class="h-[100px] pb-safe px-8 flex items-center justify-center shrink-0 bg-[#1a1a1c] border-t border-[#2c2c2e]">
+                    <button @click="resetCropBox" class="text-[14px] text-gray-300 font-bold bg-gray-800 px-6 py-2.5 rounded-full active:bg-gray-700 transition tracking-widest shadow-sm"><i class="fas fa-undo mr-2"></i>重置位置</button>
                 </div>
             </div>
         </transition>
@@ -6982,7 +6995,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.37 更新日志 (当前最新) -->
+                            <!-- v1.38 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.38 相册级自由裁剪台全面重构</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-05 15:35</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">色彩保留与蒙版优化：</span>废弃了此前整个屏幕加上黑色变暗滤镜的方案。全新的裁剪台采用了内穿透式的高斯遮罩投影，现在被选择的图片可以完美呈现真实的色泽，只有选中区外的边角会被精准加黑加暗。</li>
+                                    <li><span class="font-bold text-gray-800">自由热区拖拽系统：</span>滑动杆缩放时代正式结束！现在你可以直接像微信原版或原生相册那样，直接在屏幕上通过按住框的四个角来进行自由的等比例拉伸、缩放，并可以按住中间任意位置来移动视窗框。</li>
+                                    <li><span class="font-bold text-gray-800">绝对防越界系统：</span>植入了严格的边界阻力坐标引擎。无论你怎么放大或移动正方形选择框，它都绝对不会超出原图片的长宽范围，完美避免了以往因为超出导致截取到黑边的劣质体验。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.37 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#f59e0b]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -8171,12 +8198,12 @@ const app = createApp({
             // Voice Input
             voiceInputModal: { show: false, content: '', isListening: false },
             
-            // Universal Avatar Cropper Config
+            // Universal Avatar Cropper Config (相册级)
             universalAvatarConfig: {
                 showSourceModal: false, showCropper: false, callback: null,
-                tempRawUrl: '', scale: 1, translateX: 0, translateY: 0, 
-                dragStartX: 0, dragStartY: 0, isDragging: false,
-                baseWidth: 0, baseHeight: 0, naturalWidth: 0, naturalHeight: 0
+                tempRawUrl: '', naturalWidth: 0, naturalHeight: 0,
+                imgW: 0, imgH: 0, boxX: 0, boxY: 0, boxSize: 0,
+                action: null, startX: 0, startY: 0, initBoxX: 0, initBoxY: 0, initBoxSize: 0
             },
 
             // Location Feature
@@ -15832,47 +15859,116 @@ Structure:
             const img = new Image();
             img.crossOrigin = 'Anonymous';
             img.onload = () => {
-                const nw = img.width;
-                const nh = img.height;
-                const minSide = Math.min(nw, nh);
-                const ratio = 300 / minSide;
+                this.universalAvatarConfig.naturalWidth = img.width;
+                this.universalAvatarConfig.naturalHeight = img.height;
                 
-                this.universalAvatarConfig.naturalWidth = nw;
-                this.universalAvatarConfig.naturalHeight = nh;
-                this.universalAvatarConfig.baseWidth = nw * ratio;
-                this.universalAvatarConfig.baseHeight = nh * ratio;
-                
-                this.resetCrop();
                 this.universalAvatarConfig.showCropper = true;
+                
+                // 等待 DOM 渲染后计算图片容器宽高
+                this.$nextTick(() => {
+                    const container = this.$refs.cropContainer;
+                    if (!container) return;
+                    // 给两边预留 20px 边距
+                    const cw = container.clientWidth - 40; 
+                    const ch = container.clientHeight - 40;
+                    
+                    const ratio = Math.min(cw / img.width, ch / img.height);
+                    this.universalAvatarConfig.imgW = img.width * ratio;
+                    this.universalAvatarConfig.imgH = img.height * ratio;
+                    
+                    this.resetCropBox();
+                });
             };
             img.onerror = () => {
                 this.showToast('无法读取该图片，请检查链接或网络');
             };
             img.src = url;
         },
-        resetCrop() {
-            this.universalAvatarConfig.scale = 1;
-            this.universalAvatarConfig.translateX = 0;
-            this.universalAvatarConfig.translateY = 0;
+        resetCropBox() {
+            const minSide = Math.min(this.universalAvatarConfig.imgW, this.universalAvatarConfig.imgH);
+            this.universalAvatarConfig.boxSize = minSide;
+            // 居中
+            this.universalAvatarConfig.boxX = (this.universalAvatarConfig.imgW - minSide) / 2;
+            this.universalAvatarConfig.boxY = (this.universalAvatarConfig.imgH - minSide) / 2;
         },
-        startDragCrop(e) {
-            this.universalAvatarConfig.isDragging = true;
-            const touch = e.touches ? e.touches[0] : (e.clientX !== undefined ? e : null);
-            if(touch) {
-                this.universalAvatarConfig.dragStartX = touch.clientX - this.universalAvatarConfig.translateX;
-                this.universalAvatarConfig.dragStartY = touch.clientY - this.universalAvatarConfig.translateY;
+        startCropAction(e, actionType) {
+            const c = this.universalAvatarConfig;
+            c.action = actionType;
+            const touch = e.touches ? e.touches[0] : e;
+            c.startX = touch.clientX;
+            c.startY = touch.clientY;
+            c.initBoxX = c.boxX;
+            c.initBoxY = c.boxY;
+            c.initBoxSize = c.boxSize;
+        },
+        handleCropTouchMove(e) {
+            const c = this.universalAvatarConfig;
+            if (!c.action) return;
+            const touch = e.touches ? e.touches[0] : e;
+            
+            if (c.action === 'move') {
+                let dx = touch.clientX - c.startX;
+                let dy = touch.clientY - c.startY;
+                let nx = c.initBoxX + dx;
+                let ny = c.initBoxY + dy;
+                
+                // 拖拽边缘检测
+                if (nx < 0) nx = 0;
+                if (ny < 0) ny = 0;
+                if (nx + c.boxSize > c.imgW) nx = c.imgW - c.boxSize;
+                if (ny + c.boxSize > c.imgH) ny = c.imgH - c.boxSize;
+                
+                c.boxX = nx;
+                c.boxY = ny;
+            } else {
+                let dx = touch.clientX - c.startX;
+                let dy = touch.clientY - c.startY;
+                let nx = c.initBoxX;
+                let ny = c.initBoxY;
+                let ns = c.initBoxSize;
+                
+                // 根据拖拽的角，单边判定决定大小改变，确保始终 1:1 等比
+                if (c.action === 'br') {
+                    let delta = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+                    ns += delta;
+                    if (nx + ns > c.imgW) ns = c.imgW - nx;
+                    if (ny + ns > c.imgH) ns = c.imgH - ny;
+                } else if (c.action === 'tl') {
+                    let delta = Math.abs(dx) > Math.abs(dy) ? -dx : -dy;
+                    ns += delta;
+                    if (nx - delta < 0) ns = c.initBoxSize + nx;
+                    if (ny - delta < 0) ns = Math.min(ns, c.initBoxSize + ny);
+                    nx = c.initBoxX + c.initBoxSize - ns;
+                    ny = c.initBoxY + c.initBoxSize - ns;
+                } else if (c.action === 'tr') {
+                    let delta = Math.abs(dx) > Math.abs(dy) ? dx : -dy;
+                    ns += delta;
+                    if (nx + ns > c.imgW) ns = c.imgW - nx;
+                    if (ny - delta < 0) ns = Math.min(ns, c.initBoxSize + ny);
+                    ny = c.initBoxY + c.initBoxSize - ns;
+                } else if (c.action === 'bl') {
+                    let delta = Math.abs(dx) > Math.abs(dy) ? -dx : dy;
+                    ns += delta;
+                    if (nx - delta < 0) ns = c.initBoxSize + nx;
+                    if (ny + ns > c.imgH) ns = Math.min(ns, c.imgH - ny);
+                    nx = c.initBoxX + c.initBoxSize - ns;
+                }
+                
+                // 限制最小缩放值 50px
+                if (ns < 50) {
+                    ns = 50;
+                    if(c.action === 'tl') { nx = c.initBoxX + c.initBoxSize - 50; ny = c.initBoxY + c.initBoxSize - 50; }
+                    if(c.action === 'tr') { ny = c.initBoxY + c.initBoxSize - 50; }
+                    if(c.action === 'bl') { nx = c.initBoxX + c.initBoxSize - 50; }
+                }
+                
+                c.boxX = nx;
+                c.boxY = ny;
+                c.boxSize = ns;
             }
         },
-        doDragCrop(e) {
-            if (!this.universalAvatarConfig.isDragging) return;
-            const touch = e.touches ? e.touches[0] : (e.clientX !== undefined ? e : null);
-            if(touch) {
-                this.universalAvatarConfig.translateX = touch.clientX - this.universalAvatarConfig.dragStartX;
-                this.universalAvatarConfig.translateY = touch.clientY - this.universalAvatarConfig.dragStartY;
-            }
-        },
-        stopDragCrop() {
-            this.universalAvatarConfig.isDragging = false;
+        stopCropAction() {
+            this.universalAvatarConfig.action = null;
         },
         confirmUniversalCrop() {
             const config = this.universalAvatarConfig;
@@ -15881,24 +15977,30 @@ Structure:
             canvas.height = 600;
             const ctx = canvas.getContext('2d');
             
-            const img = this.$refs.cropImageElement;
-            if (!img) return;
-            
-            const scale = config.scale;
-            const drawW = config.baseWidth * scale * 2;
-            const drawH = config.baseHeight * scale * 2;
-            
-            const drawX = 300 - (drawW / 2) + (config.translateX * 2);
-            const drawY = 300 - (drawH / 2) + (config.translateY * 2);
-            
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, 0, 600, 600);
-            ctx.drawImage(img, drawX, drawY, drawW, drawH);
-            
-            const croppedUrl = canvas.toDataURL('image/jpeg', 0.9);
-            config.showCropper = false;
-            
-            if (config.callback) config.callback(croppedUrl);
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                // 计算显示尺寸与真实图片尺寸的比例映射
+                const scaleX = config.naturalWidth / config.imgW;
+                const scaleY = config.naturalHeight / config.imgH;
+                
+                const sx = config.boxX * scaleX;
+                const sy = config.boxY * scaleY;
+                const sWidth = config.boxSize * scaleX;
+                const sHeight = config.boxSize * scaleY;
+                
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, 0, 600, 600);
+                // ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+                ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, 600, 600);
+                
+                // 压缩导出质量为 0.9，兼顾清晰与轻量
+                const croppedUrl = canvas.toDataURL('image/jpeg', 0.9);
+                config.showCropper = false;
+                
+                if (config.callback) config.callback(croppedUrl);
+            };
+            img.src = config.tempRawUrl;
         },
 
         // ================= 接管所有头像点击 =================
