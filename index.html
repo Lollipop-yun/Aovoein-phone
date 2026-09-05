@@ -3187,7 +3187,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div v-if="memoryModal.isMultiSelect" class="absolute top-4 right-4 w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition" :class="{'bg-blue-500 border-blue-500': memoryModal.selectedIds.includes(mem.id)}">
                             <i v-if="memoryModal.selectedIds.includes(mem.id)" class="fas fa-check text-white text-[10px]"></i>
                         </div>
-                        <div class="text-[15px] font-bold text-gray-900 mb-2 border-b border-gray-50 pb-2 pr-6 truncate">{{ mem.title || formatChatTime(mem.time) }}</div>
+                        <div class="flex justify-between items-center mb-2 border-b border-gray-50 pb-2 pr-6">
+                            <div class="text-[15px] font-bold text-gray-900 truncate flex-1">{{ mem.title || formatChatTime(mem.time) }}</div>
+                            <div v-if="mem.msgStart && mem.msgEnd" class="text-[10px] font-mono text-gray-400 shrink-0 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100 shadow-inner">#{{ mem.msgStart }}-{{ mem.msgEnd }}</div>
+                        </div>
                         <div class="text-[13px] leading-relaxed text-gray-500 text-justify line-clamp-3">{{ mem.content }}</div>
                     </div>
                 </div>
@@ -7022,7 +7025,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.40 更新日志 (当前最新) -->
+                            <!-- v1.41 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#6366f1]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.41 记忆溯源与精确定位区间提取</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-05 21:42</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">消息坐标锚定：</span>所有被总结收纳至“长期记忆”里的日记卡片，现在都会在其右上角直观地展示一个坐标区间（例如：#150-200），让你清晰地知道这篇日记涵盖的是哪几条消息的历史回忆。在点击“合并多篇记忆”时，系统也会智能合并坐标（例如 #1-50 和 #50-100 将自动合并记录为 #1-100）。</li>
+                                    <li><span class="font-bold text-gray-800">精确定位提取：</span>在数据面板点击“立即提取并总结”时，不再是笼统地输入数量，而是可以在弹窗中精确输入起始和结束的消息序号（比如 1-50）。系统还会在弹窗标题贴心地告诉你当前一共聊了多少条消息，方便你按需切割回忆。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.40 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#ec4899]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -11897,12 +11913,21 @@ const app = createApp({
                 const selectedItems = session.memorySummaries.filter(m => this.memoryModal.selectedIds.includes(m.id));
                 selectedItems.sort((a, b) => a.time - b.time);
                 
+                let minStart = null;
+                let maxEnd = null;
+                selectedItems.forEach(item => {
+                    if (item.msgStart !== undefined && (minStart === null || item.msgStart < minStart)) minStart = item.msgStart;
+                    if (item.msgEnd !== undefined && (maxEnd === null || item.msgEnd > maxEnd)) maxEnd = item.msgEnd;
+                });
+                
                 const mergedContent = selectedItems.map(m => m.content).join('\n\n---\n\n');
                 const mergedMemory = {
                     id: Date.now().toString(),
                     time: selectedItems[selectedItems.length - 1].time,
                     title: selectedItems[selectedItems.length - 1].title || '合并记忆',
-                    content: mergedContent
+                    content: mergedContent,
+                    msgStart: minStart,
+                    msgEnd: maxEnd
                 };
                 
                 session.memorySummaries = session.memorySummaries.filter(m => !this.memoryModal.selectedIds.includes(m.id));
@@ -11928,19 +11953,30 @@ const app = createApp({
         },
 
         triggerManualSummarize() {
-            this.showInput("提取记忆", "20", "请输入想要总结最近的多少条聊天记录？", (val) => {
-                const count = parseInt(val);
-                if (isNaN(count) || count <= 0) return this.showToast("请输入有效的数字");
-                this.executeSummarize(this.wechatState.activeSession, count, true);
+            const total = this.wechatState.activeSession?.messages?.length || 0;
+            let defaultRange = "1-" + total;
+            // 如果太多，默认只给最近 50 条的区间建议
+            if (total > 50) defaultRange = (total - 49) + "-" + total;
+            
+            this.showInput(`提取记忆 (共 ${total} 条消息)`, defaultRange, "请输入起始和结束序号，用横线隔开(如 1-50)", (val) => {
+                const parts = val.split('-');
+                if (parts.length !== 2) return this.showToast("格式错误，请用横线连接两个数字");
+                const start = parseInt(parts[0].trim());
+                const end = parseInt(parts[1].trim());
+                if (isNaN(start) || isNaN(end) || start < 1 || end > total || start > end) {
+                    return this.showToast("请输入有效的数字范围");
+                }
+                this.executeSummarize(this.wechatState.activeSession, start, end, true);
                 this.memoryModal.statsShow = false;
-            }, "number");
+            }, "text");
         },
-        async executeSummarize(session, count, isManual = false) {
+        async executeSummarize(session, startIdx, endIdx, isManual = false) {
             const settings = this.getMemorySettings(session);
             if (!this.apiConfig.apiKey) return isManual && this.showToast('请先配置 API Key');
             
-            const msgsToSummarize = session.messages.slice(-count);
-            if (msgsToSummarize.length === 0) return isManual && this.showToast('没有足够的聊天记录');
+            // 精确的数组切割：因为界面是 1-based (比如第1条到第50条)，数组索引需 -1
+            const msgsToSummarize = session.messages.slice(startIdx - 1, endIdx);
+            if (msgsToSummarize.length === 0) return isManual && this.showToast('该范围内没有聊天记录');
             
             if (isManual) this.showToast('AI 正在翻阅回忆并同步进行双语翻译撰写，请稍候...');
             
@@ -11980,7 +12016,7 @@ const app = createApp({
             
             let fullPrompt = `【任务说明】\n${promptStr}\n\n【需要总结的聊天记录】\n${chatLog}\n\n请直接开始正文书写：`;
 
-            // 处理 AI 返回结果的闭包函数，支持双语同出切割
+            // 处理 AI 返回结果的闭包函数，支持双语同出切割与序号区间存储
             const handleDiaryData = (rawContent) => {
                 let title = '记忆碎片', content = rawContent, translatedTitle = '', translatedContent = '';
                 if (rawContent.includes('[原文正文]')) {
@@ -12007,7 +12043,9 @@ const app = createApp({
                     content: content,
                     translatedTitle: translatedTitle,
                     translatedContent: translatedContent,
-                    showTranslation: false
+                    showTranslation: false,
+                    msgStart: startIdx,
+                    msgEnd: endIdx
                 });
                 this.saveData();
             };
@@ -12052,7 +12090,8 @@ const app = createApp({
             const currentCount = session.messages.length;
             
             if (currentCount - lastCount >= settings.summarizeThreshold) {
-                this.executeSummarize(session, currentCount - lastCount, false);
+                // 自动总结传递起止边界：上一次总结之后的第一条 到 当前最新的一条
+                this.executeSummarize(session, lastCount + 1, currentCount, false);
             }
         },
 
