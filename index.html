@@ -4231,7 +4231,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="moment-content">
                             <div class="moment-name">{{ moment.name }}</div>
                             <div class="moment-text">
-                                {{ moment.content }}
+                                {{ moment.showTranslation && moment.translatedContent ? moment.translatedContent : moment.content }}
                                 <!-- 艾特高亮显示 -->
                                 <span v-if="moment.mentions && moment.mentions.length > 0" class="text-[#576b95]"> @{{ getMentionNamesForMoment(moment) }}</span>
                             </div>
@@ -4247,6 +4247,11 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="moment-meta mt-1">
                                 <div class="moment-time flex items-center gap-2">
                                     {{ formatChatTime(moment.time) }}
+                                    
+                                    <!-- 翻译按钮 (零延迟秒切) -->
+                                    <span v-if="moment.translatedContent" class="text-[#576b95] cursor-pointer ml-1 text-[12px] font-bold active:opacity-50" @click.stop="moment.showTranslation = !moment.showTranslation; saveData()">
+                                        <i class="fas fa-language"></i> {{ moment.showTranslation ? '原文' : '翻译' }}
+                                    </span>
                                     
                                     <!-- 删除按钮：仅自己发的朋友圈，在时间旁边显示垃圾桶标识 -->
                                     <i v-if="moment.name === homeProfile.name" class="far fa-trash-alt text-[#576b95] cursor-pointer ml-1 hover:opacity-70 transition text-sm" @click.stop="handleMomentAction('delete', moment)"></i>
@@ -7099,7 +7104,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.46 更新日志 (当前最新) -->
+                            <!-- v1.47 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.47 AI发圈兜底算法与朋友圈多语言直出</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-06 17:40</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">发圈引擎彻底修复：</span>重构了 AI 发送朋友圈的 JSON 解析引擎。采用了“严格模式 + 深度正则兜底”双轨并行算法，即使大模型发神经输出了损坏的 JSON 或者带有换行符和注释，底层也能强制剥离出文案，确保角色的朋友圈 100% 成功发布！</li>
+                                    <li><span class="font-bold text-gray-800">朋友圈多语言双轨直出：</span>给外国角色发圈注入了灵魂！现在当 AI 发朋友圈时，会严格感知并遵循其在私聊里设定好的“角色输出语言”（如英语、日语、繁体字等）。不仅如此，大模型会在同一次请求的 JSON 键值对中，瞬间附带生成一份中文翻译藏在底层！</li>
+                                    <li><span class="font-bold text-gray-800">零加载秒翻译：</span>对于包含外语或繁体内容的朋友圈，日期右侧会自动出现一个“翻译”按钮。得益于直出架构，点击后不需要转圈加载，动态文案将瞬间、无缝切换为地道的中文，再次点击瞬间切回原语种，体验无以复加的流畅。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.46 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -18963,6 +18982,16 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                 }
 
                 let content = "";
+                let translatedContent = "";
+                
+                // 获取角色专属输出语言
+                let sourceLang = '简体中文 (普通话)';
+                if (session && session.transSourceLang && session.transSourceLang !== '自动识别') {
+                    sourceLang = session.transSourceLang;
+                }
+                const isChinese = sourceLang.includes('中文') || sourceLang.includes('普通话') || sourceLang.includes('粤语');
+                let jsonFormat = `{"content": "(${sourceLang}原文)", "translatedContent": "(简体中文翻译，如果原文已经是纯中文则必须留空)", "mentions": ["我", "其他人名"], "visibility": "public"}`;
+
                 try {
                     let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                     if (!url.endsWith('/v1')) url += '/v1';
@@ -18972,7 +19001,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         body: JSON.stringify({ 
                             model: this.apiConfig.selectedModel, 
                             messages: [
-                                { role: 'system', content: `你现在的身份是: ${friend.name}。这是你的背景设定(人设): ${friend.bio || '无'}。这是你最近与用户的聊天记录(可作为参考): ${recentChatContext}。\n规则：\n1. 请根据性格和背景，发布一条微信朋友圈动态。\n2. 语气自然，字数10-50字，严禁敷衍废话！\n3. 必须输出以下 JSON 格式（绝对不要包含任何 // 注释）：\n{"content": "文案", "mentions": ["我", "其他人名"], "visibility": "public"}\n说明：mentions 填你想艾特的人（可选），visibility 填 public(公开) 或 private(仅自己可见) 或 only_user(仅玩家可见)。\n绝不包含任何 Markdown 格式或额外文本！` },
+                                { role: 'system', content: `你现在的身份是: ${friend.name}。这是你的背景设定(人设): ${friend.bio || '无'}。这是你最近与用户的聊天记录(可作为参考): ${recentChatContext}。\n规则：\n1. 请根据性格和背景，用【${sourceLang}】发布一条微信朋友圈动态。\n2. 语气自然，字数10-50字，严禁敷衍废话！\n3. 必须输出以下 JSON 格式（绝对不要包含任何 // 注释，文案中请勿包含换行符）：\n${jsonFormat}\n说明：mentions 填你想艾特的人（可选），visibility 填 public(公开) 或 private(仅自己可见) 或 only_user(仅玩家可见)。\n绝不包含任何 Markdown 格式或额外文本！` },
                                 { role: 'user', content: '开始生成你的朋友圈JSON。' }
                             ],
                             temperature: this.apiConfig.temperature || 0.8
@@ -18989,17 +19018,25 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         throw new Error('API 返回数据格式错误');
                     }
                     
-                    let parsed;
+                    let parsed = {};
                     try {
                         let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
                         raw = raw.replace(/\/\/[^\n]*/g, '').trim(); 
+                        raw = raw.replace(/\n/g, '\\n').replace(/\\n\s*"/g, '\n"').replace(/\\n\s*\}/g, '\n}').replace(/\{\s*\\n/g, '{\n');
                         parsed = JSON.parse(raw);
+                        content = parsed.content || "分享了瞬间";
+                        translatedContent = parsed.translatedContent || "";
                     } catch (err) {
-                        let cleanFallback = data.choices[0].message.content.trim().replace(/[{}]/g, '').replace(/"content"\s*:/, '').replace(/"mentions"\s*:/, '').replace(/"visibility"\s*:/, '').trim();
-                        parsed = { content: cleanFallback };
+                        console.warn("JSON parsing failed, engaging Regex Extractor fallback.");
+                        let raw = data.choices[0].message.content;
+                        let cMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
+                        if (cMatch) content = cMatch[1].replace(/\\n/g, '\n'); else content = "分享了瞬间";
+                        let tMatch = raw.match(/"translatedContent"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
+                        if (tMatch) translatedContent = tMatch[1].replace(/\\n/g, '\n');
+                        parsed.visibility = raw.includes('"visibility" : "private"') || raw.includes('"visibility":"private"') ? 'private' : (raw.includes('"visibility" : "only_user"') || raw.includes('"visibility":"only_user"') ? 'only_user' : 'public');
+                        parsed.mentions = raw.includes('"我"') ? ['我'] : [];
                     }
                     
-                    content = parsed.content || "分享了瞬间";
                     successCount++;
 
                     let finalVisibility = 'public';
@@ -19028,6 +19065,8 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         name: friend.remark || friend.name,
                         avatar: friend.avatar,
                         content: content,
+                        translatedContent: translatedContent,
+                        showTranslation: false,
                         images: [], 
                         location: '',
                         mentions: finalMentions,
@@ -19071,8 +19110,17 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             if (!friend) return;
             
             let content = "";
+            let translatedContent = "";
+            
             if (this.apiConfig.apiKey) {
                 try {
+                    let sourceLang = '简体中文 (普通话)';
+                    if (session && session.transSourceLang && session.transSourceLang !== '自动识别') {
+                        sourceLang = session.transSourceLang;
+                    }
+                    const isChinese = sourceLang.includes('中文') || sourceLang.includes('普通话') || sourceLang.includes('粤语');
+                    let jsonFormat = `{"content": "(${sourceLang}原文)", "translatedContent": "(简体中文翻译，如果原文已经是纯中文则必须留空)", "mentions": ["我"], "visibility": "public"}`;
+
                     let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                     if (!url.endsWith('/v1')) url += '/v1';
                     const res = await fetch(`${url}/chat/completions`, {
@@ -19081,7 +19129,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         body: JSON.stringify({ 
                             model: this.apiConfig.selectedModel, 
                             messages: [
-                                { role: 'system', content: `你是 ${friend.name}。人设: ${friend.bio || '无'}。你刚刚在微信里跟别人聊了关于 "${chatContext}" 的内容。请发一条微信朋友圈动态。必须输出如下 JSON 格式（绝对不要包含任何 // 注释）：\n{"content": "文案", "mentions": ["我"], "visibility": "public"}\n说明：mentions 填你想艾特的人（可选），visibility 填 public(公开) 或 private(仅自己可见) 或 only_user(仅玩家可见)。\n绝不包含任何 Markdown 格式或额外文本！` },
+                                { role: 'system', content: `你是 ${friend.name}。人设: ${friend.bio || '无'}。你刚刚在微信里跟别人聊了关于 "${chatContext}" 的内容。\n请用【${sourceLang}】发一条微信朋友圈动态。必须输出如下 JSON 格式（绝对不要包含任何 // 注释，文案中请勿包含换行符）：\n${jsonFormat}\n说明：mentions 填你想艾特的人（可选），visibility 填 public(公开) 或 private(仅自己可见) 或 only_user(仅玩家可见)。\n绝不包含任何 Markdown 格式或额外文本！` },
                                 { role: 'user', content: '直接输出 JSON，不要多余字符。' }
                             ],
                             temperature: this.apiConfig.temperature || 0.8
@@ -19090,16 +19138,24 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     if(!res.ok) throw new Error();
                     const data = await res.json();
                     
-                    let parsed;
+                    let parsed = {};
                     try {
                         let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
                         raw = raw.replace(/\/\/[^\n]*/g, '').trim(); 
+                        raw = raw.replace(/\n/g, '\\n').replace(/\\n\s*"/g, '\n"').replace(/\\n\s*\}/g, '\n}').replace(/\{\s*\\n/g, '{\n');
                         parsed = JSON.parse(raw);
+                        content = parsed.content || "分享了瞬间";
+                        translatedContent = parsed.translatedContent || "";
                     } catch (err) {
-                        let cleanFallback = data.choices[0].message.content.trim().replace(/[{}]/g, '').replace(/"content"\s*:/, '').replace(/"mentions"\s*:/, '').replace(/"visibility"\s*:/, '').trim();
-                        parsed = { content: cleanFallback };
+                        console.warn("JSON parsing failed, engaging Regex Extractor fallback.");
+                        let raw = data.choices[0].message.content;
+                        let cMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
+                        if (cMatch) content = cMatch[1].replace(/\\n/g, '\n'); else content = "分享了瞬间";
+                        let tMatch = raw.match(/"translatedContent"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
+                        if (tMatch) translatedContent = tMatch[1].replace(/\\n/g, '\n');
+                        parsed.visibility = raw.includes('"visibility" : "private"') || raw.includes('"visibility":"private"') ? 'private' : (raw.includes('"visibility" : "only_user"') || raw.includes('"visibility":"only_user"') ? 'only_user' : 'public');
+                        parsed.mentions = raw.includes('"我"') ? ['我'] : [];
                     }
-                    content = parsed.content || "分享了瞬间";
 
                     let finalVisibility = 'public';
                     let finalVisibilityFriends = [];
@@ -19127,6 +19183,8 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         name: friend.remark || friend.name,
                         avatar: friend.avatar,
                         content: content,
+                        translatedContent: translatedContent,
+                        showTranslation: false,
                         images: [], 
                         location: '',
                         mentions: finalMentions,
