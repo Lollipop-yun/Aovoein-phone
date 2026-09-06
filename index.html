@@ -4200,10 +4200,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <div v-if="wechatState.activeNav === 'moments'" class="bg-white absolute inset-0 z-50 overflow-y-auto pb-32 moments-scroll-fix block" @click="activeMomentMenuId = null" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
                 <div class="absolute top-0 left-0 w-full h-[90px] pt-10 px-4 flex justify-between items-center z-10 text-white drop-shadow-md">
                     <button @click="wechatState.activeNav='discover'" class="w-8 h-8 flex items-center justify-center"><i class="fas fa-chevron-left text-lg"></i></button>
-                    <div class="flex gap-4 items-center">
-                        <div class="relative cursor-pointer w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm active:scale-95 transition" @click="openMomentNotifications">
-                            <i class="fas fa-bell text-sm"></i>
-                            <div v-if="unreadMomentNotifCount > 0" class="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] bg-red-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold border border-white shadow-sm">{{ unreadMomentNotifCount > 99 ? '99+' : unreadMomentNotifCount }}</div>
+                    <div class="flex gap-4">
+                        <div class="relative">
+                            <button @click="openMomentNotifications" class="w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm active:scale-95 transition"><i class="fas fa-bell text-sm"></i></button>
+                            <div v-if="momentUnreadCount > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] min-w-4 h-4 px-1 rounded-full flex items-center justify-center border border-white font-bold">{{ momentUnreadCount > 99 ? '99+' : momentUnreadCount }}</div>
                         </div>
                         <button @click="openMomentGenerateModal" class="w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm active:scale-95 transition"><i class="fas fa-sync-alt text-sm"></i></button>
                         <button @click="openPublishMoment" class="w-8 h-8 flex items-center justify-center bg-black/20 rounded-full backdrop-blur-sm active:scale-95 transition"><i class="fas fa-camera text-lg"></i></button>
@@ -4223,11 +4223,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <div class="pb-20 min-h-[101%]">
                     <div v-if="moments.length === 0" class="text-center text-gray-400 text-sm mt-10">暂无动态，点击右上角发布</div>
-                    <div v-for="moment in moments" :key="moment.id" class="moment-item">
+                    <div v-for="moment in moments" :key="moment.id" class="moment-item relative">
+                        <div v-if="moment.visibility === 'private' && moment.name === homeProfile.name" class="absolute right-4 top-4 text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm"><i class="fas fa-lock"></i>仅自己可见</div>
+                        <div v-if="moment.visibility === 'share_to' && moment.visibilityFriends && moment.visibilityFriends.includes('mine') && moment.visibilityFriends.length === 1 && moment.name !== homeProfile.name" class="absolute right-4 top-4 text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm"><i class="fas fa-eye-slash"></i>仅你可见</div>
+                        
                         <div class="moment-avatar"><img :src="moment.avatar" class="w-full h-full object-cover"></div>
-                        <div class="moment-content relative">
+                        <div class="moment-content">
                             <div class="moment-name">{{ moment.name }}</div>
-                            <div v-if="moment.visibility === 'only_user'" class="absolute top-0 right-0 text-[10px] text-orange-500 bg-orange-50 px-2 py-0.5 rounded font-medium border border-orange-100">仅你可见</div>
                             <div class="moment-text">
                                 {{ moment.content }}
                                 <!-- 艾特高亮显示 -->
@@ -4235,11 +4237,10 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                             <div v-if="moment.images && moment.images.length > 0" class="moment-images">
                                 <template v-for="(img, idx) in moment.images" :key="idx">
-                                    <img v-if="!img.startsWith('fake://')" :src="img" class="moment-image" :class="moment.images.length===1?'single':''">
-                                    <div v-else class="moment-image flex items-center justify-center text-gray-600 text-[11px] p-2 text-center overflow-hidden" :class="moment.images.length===1?'single':''" style="background-image: url('https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'); background-size: cover; background-position: center; position: relative;">
-                                        <div class="absolute inset-0 bg-white/70 backdrop-blur-sm"></div>
-                                        <span class="relative z-10 font-bold leading-snug break-words">{{ img.substring(7) }}</span>
+                                    <div v-if="img.startsWith('fake:')" class="moment-image flex items-center justify-center bg-[#e5e7eb] p-2 text-center text-[10px] text-gray-600 break-all" :class="moment.images.length===1?'single !w-[180px] !h-[180px] !text-sm':''">
+                                        {{ img.substring(5) }}
                                     </div>
+                                    <img v-else :src="img" class="moment-image" :class="moment.images.length===1?'single':''">
                                 </template>
                             </div>
                             <!-- 定位显示 -->
@@ -4291,6 +4292,55 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>
 
+            <!-- 朋友圈上传图片方式选择弹窗 -->
+            <transition name="app-slide">
+                <div v-if="momentImageSourceModal.show" class="fixed inset-0 z-[150000]">
+                    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="momentImageSourceModal.show = false"></div>
+                    <div class="absolute bottom-0 w-full bg-[#f2f2f6] rounded-t-2xl overflow-hidden pb-safe font-sans">
+                        <div class="bg-white divide-y divide-gray-100 text-center text-[16px] font-medium text-gray-900">
+                            <div class="p-4 text-xs text-gray-400 font-normal">选择获取图片方式</div>
+                            <div @click="triggerRealMomentImage" class="p-4 cursor-pointer active:bg-gray-50">从本地相册选择</div>
+                            <div @click="triggerFakeMomentImage" class="p-4 cursor-pointer active:bg-gray-50 text-blue-600">拍摄 (输入文字描述生成)</div>
+                        </div>
+                        <div class="bg-white mt-2 p-4 text-center font-bold text-gray-800 cursor-pointer active:bg-gray-50" @click="momentImageSourceModal.show = false">取消</div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- 朋友圈消息通知页 -->
+            <transition name="page-slide">
+                <div v-if="wechatState.activeNav === 'moment_notifications'" class="flex-1 flex flex-col bg-[#f2f2f6] absolute inset-0 z-50 font-sans pb-safe">
+                    <header class="h-[90px] pt-10 px-4 flex items-center bg-[#f2f2f6] z-10 shrink-0 sticky top-0 border-b border-gray-200 shadow-sm">
+                        <button @click="wechatState.activeNav = 'moments'" class="w-8 h-8 flex items-center justify-center active:opacity-50"><i class="fas fa-chevron-left text-[18px] text-gray-800"></i></button>
+                        <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">消息</h1>
+                        <button @click="clearMomentNotifications" class="absolute right-4 text-gray-500 font-medium text-[15px] active:opacity-50">清空</button>
+                    </header>
+                    <div class="flex-1 overflow-y-auto bg-white">
+                        <div v-if="momentNotifications.length === 0" class="flex flex-col items-center justify-center h-40 text-gray-400 text-sm mt-10">
+                            <i class="far fa-bell text-4xl mb-3 opacity-30"></i>
+                            暂无新消息
+                        </div>
+                        <div v-for="notif in momentNotifications" :key="notif.id" class="flex items-start p-4 border-b border-gray-50 active:bg-gray-50 cursor-pointer transition" @click="wechatState.activeNav = 'moments'">
+                            <img :src="notif.avatar" class="w-10 h-10 rounded-[8px] object-cover border border-gray-100 shrink-0">
+                            <div class="flex-1 min-w-0 mx-3 flex flex-col justify-center">
+                                <div class="text-[15px] font-bold text-[#576b95]">{{ notif.user }}</div>
+                                <div class="text-[14px] text-gray-800 mt-0.5 leading-snug break-words">
+                                    <template v-if="notif.type === 'like'"><i class="far fa-heart text-red-500 mr-1"></i>赞了你的朋友圈</template>
+                                    <template v-else-if="notif.type === 'mention'"><span class="text-[#576b95]">@了你</span></template>
+                                    <template v-else>{{ notif.text }}</template>
+                                </div>
+                                <div class="text-[11px] text-gray-400 mt-1">{{ formatChatTime(notif.time) }}</div>
+                            </div>
+                            <div class="w-14 h-14 bg-gray-100 overflow-hidden shrink-0 ml-1 rounded-sm border border-gray-100">
+                                <img v-if="notif.momentImg && !notif.momentImg.startsWith('fake:')" :src="notif.momentImg" class="w-full h-full object-cover">
+                                <div v-else-if="notif.momentImg && notif.momentImg.startsWith('fake:')" class="w-full h-full flex items-center justify-center bg-[#e5e7eb] text-[8px] text-gray-500 p-1 text-center break-all">{{ notif.momentImg.substring(5) }}</div>
+                                <div v-else class="w-full h-full p-1 text-[10px] text-gray-500 flex items-center justify-center bg-gray-50 break-all text-center">{{ notif.momentText }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
             <!-- 发布朋友圈弹窗 -->
             <transition name="app-slide">
                 <div v-if="showPublishMoment" class="fixed inset-0 z-[70000] bg-white flex flex-col">
@@ -4302,64 +4352,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         <textarea v-model="newMoment.content" placeholder="这一刻的想法..." class="w-full h-24 text-base outline-none resize-none mb-4"></textarea>
                         
                         <div class="grid grid-cols-3 gap-2 mb-6">
-                            <div v-for="(img, idx) in newMoment.images" :key="idx" class="aspect-square bg-gray-100 relative rounded-lg overflow-hidden flex items-center justify-center">
-                                <img v-if="!img.startsWith('fake://')" :src="img" class="w-full h-full object-cover">
-                                <div v-else class="w-full h-full text-[11px] font-bold text-gray-600 p-2 flex items-center justify-center text-center bg-gray-200 break-all leading-tight" style="background-image: url('https://pic1.imgdb.cn/item/6a23c0a10c24090b10261293.jpg'); background-size: cover; background-position: center; position: relative;">
-                                    <div class="absolute inset-0 bg-white/70 backdrop-blur-sm"></div>
-                                    <span class="relative z-10">{{ img.substring(7) }}</span>
-                                </div>
-                                <div class="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center text-white text-xs cursor-pointer z-20" @click="newMoment.images.splice(idx,1)"><i class="fas fa-times"></i></div>
+                            <div v-for="(img, idx) in newMoment.images" :key="idx" class="aspect-square bg-gray-100 relative rounded-lg overflow-hidden">
+                                <img v-if="!img.startsWith('fake:')" :src="img" class="w-full h-full object-cover">
+                                <div v-else class="w-full h-full bg-[#e5e7eb] flex items-center justify-center text-center text-gray-600 text-[10px] p-2 break-all">{{ img.substring(5) }}</div>
+                                <div class="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center text-white text-xs cursor-pointer" @click="newMoment.images.splice(idx,1)"><i class="fas fa-times"></i></div>
                             </div>
                             <div v-if="newMoment.images.length < 9" class="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 cursor-pointer active:bg-gray-200" @click="momentImageSourceModal.show = true">
                                 <i class="fas fa-plus text-2xl"></i>
                             </div>
                         </div>
                         <input type="file" ref="momentImgInput" accept="image/*" class="hidden" multiple @change="handleMomentImgUpload">
-
-            <!-- 朋友圈图片来源选择弹窗 -->
-            <transition name="app-slide">
-                <div v-if="momentImageSourceModal.show" class="fixed inset-0 z-[75000]">
-                    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="momentImageSourceModal.show = false"></div>
-                    <div class="ios-list-modal font-sans">
-                        <div class="ios-list-header">选择图片来源 <button class="absolute right-4 text-gray-500 font-normal text-sm" @click="momentImageSourceModal.show = false">取消</button></div>
-                        <div class="ios-list-content p-0 bg-white">
-                            <div class="p-4 border-b border-gray-50 flex items-center justify-center cursor-pointer active:bg-gray-50 text-blue-500 font-medium text-[16px]" @click="triggerMomentLocalImg">
-                                从本地相册选择
-                            </div>
-                            <div class="p-4 flex items-center justify-center cursor-pointer active:bg-gray-50 text-blue-500 font-medium text-[16px]" @click="triggerMomentFakeImg">
-                                拍摄 (文字拟图)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </transition>
-
-            <!-- 朋友圈互动消息页 (全部互动消息) -->
-            <div v-if="wechatState.activeNav === 'moment-notifications'" class="flex-1 flex flex-col bg-white absolute inset-0 z-50 font-sans pb-safe">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] border-b border-gray-100 shrink-0 sticky top-0 z-10">
-                    <button @click="wechatState.activeNav = 'moments'" class="w-8 h-8 flex items-center justify-start text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[20px]"></i></button>
-                    <h1 class="font-medium text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">全部互动消息</h1>
-                    <div class="w-8"></div>
-                </header>
-                <div class="flex-1 overflow-y-auto">
-                    <div v-if="momentNotifications.length === 0" class="text-center text-gray-400 mt-20 text-sm">暂无互动消息</div>
-                    <div v-for="(notif, idx) in sortedMomentNotifs" :key="idx" class="flex p-4 border-b border-gray-100 active:bg-gray-50 transition cursor-pointer" @click="wechatState.activeNav = 'moments'">
-                        <img :src="notif.avatar" class="w-10 h-10 rounded-md object-cover mr-3 shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <div class="text-[15px] font-bold text-[#576b95] mb-0.5">{{ notif.name }}</div>
-                            <div v-if="notif.type === 'like'" class="text-[#576b95] text-sm mb-1"><i class="far fa-heart"></i></div>
-                            <div v-if="notif.type === 'comment'" class="text-gray-800 text-[14px] mb-1 line-clamp-2">{{ notif.content }}</div>
-                            <div v-if="notif.type === 'mention'" class="text-gray-800 text-[14px] mb-1 line-clamp-2">提到了你</div>
-                            <div class="text-[11px] text-gray-400">{{ formatChatTime(notif.time) }}</div>
-                        </div>
-                        <div class="w-14 h-14 bg-gray-100 shrink-0 ml-3 overflow-hidden rounded-sm flex items-center justify-center">
-                            <img v-if="notif.momentImg && !notif.momentImg.startsWith('fake://')" :src="notif.momentImg" class="w-full h-full object-cover">
-                            <div v-else-if="notif.momentImg && notif.momentImg.startsWith('fake://')" class="w-full h-full bg-gray-200 text-[8px] p-1 text-gray-500 overflow-hidden break-all leading-tight">{{ notif.momentImg.substring(7) }}</div>
-                            <div v-else class="w-full h-full text-[10px] p-1 text-gray-500 overflow-hidden break-all leading-tight">{{ notif.momentText }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
                         <!-- 新增属性配置栏 -->
                         <div class="border-t border-gray-100 divide-y divide-gray-100 mt-2">
@@ -7085,17 +7087,31 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.44 更新日志 (当前最新) -->
+                            <!-- v1.45 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#f43f5e]"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.44 朋友圈深度社交补全：可见性、艾特与互动中心</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-06 15:45</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.45 朋友圈权限大升华与互动消息系统</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-06 16:40</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">AI 权限觉醒：</span>大模型现在发布朋友圈时，可以选择发布“仅你可见”的动态了！如果角色在发布时设定了仅对你可见，卡片右上角会出现专属橘色标签。不仅如此，AI 还能在朋友圈直接 @艾特 你。</li>
-                                    <li><span class="font-bold text-gray-800">文字拟图发布：</span>自己发朋友圈选择图片时，现在可以直接采用聊天界面的“拍摄(文字拟图)”功能。输入描述文字后，它会变成灰底黑字的质感相纸排版并正常发送在九宫格里。</li>
-                                    <li><span class="font-bold text-gray-800">全部互动消息中心：</span>完美复刻微信原版的朋友圈互动通知系统！现在，无论是 AI 对你的朋友圈点赞、评论，还是发朋友圈时 @ 了你，在朋友圈首页的右上角都会出现红点与铃铛。点进去就能看到所有人对你的互动列表与对应内容缩略图！</li>
+                                    <li><span class="font-bold text-gray-800">AI 可见性设置：</span>彻底改变了以往 AI 发朋友圈只能“公开”的死板设定！现在大模型会被要求输出 JSON 格式来发朋友圈。它可以根据剧本内容，自主决定这条动态是“公开”、“仅自己可见”还是“仅你（玩家）可见”。当发布为“仅你可见”时，动态的右上角会挂载专属标识牌。</li>
+                                    <li><span class="font-bold text-gray-800">朋友圈 @ 艾特系统：</span>AI 可以在 JSON 里使用 mentions 字段主动艾特玩家或其他 NPC，相关动态会自动高亮变蓝。</li>
+                                    <li><span class="font-bold text-gray-800">全新消息通知中心：</span>朋友圈右上角新增了带小红点的“消息”按钮入口。当 AI 点赞你的动态、回复你的评论、或者在它的朋友圈里 @ 你时，相关事件将全盘搜集进专属的通知中心列表，完全复刻原版 UI 体验。</li>
+                                    <li><span class="font-bold text-gray-800">拟真拍摄功能：</span>发布朋友圈新增了选项分流。除了上传真实的本地图片外，你现在可以选择“拍摄(文字拟图)”。输入文字描述后，图片位置会自动渲染出灰白色的占位框，跟聊天界面的 Fake Image 完美对齐。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.44 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#06b6d4]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.44 确认开发规则与系统初始化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-06 16:35</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">系统初始化：</span>已完整读取所有代码，系统环境与组件逻辑记忆完毕，随时可以进行后续开发。</li>
+                                    <li><span class="font-bold text-gray-800">开发规则确立：</span>确认后续的交互均采用精确的“替换前/后”代码匹配格式；所有新增 UI 将严格保持 iOS 灰白 ins 高级质感；实现更新日志的自动化时间戳与内容叠加追踪。</li>
                                 </ul>
                             </div>
 
@@ -8453,12 +8469,12 @@ const app = createApp({
 
             // Moments
             moments: [],
-            momentNotifications: [], // 新增：互动消息通知
-            unreadMomentNotifCount: 0, // 新增：未读互动消息数
-            momentImageSourceModal: { show: false }, // 新增：发朋友圈图片来源选择
             showPublishMoment: false,
             newMoment: { content: '', images: [], location: '', mentions: [], visibility: 'public', visibilityGroups: [], visibilityFriends: [] },
             momentsBackground: '',
+            momentNotifications: [],
+            momentUnreadCount: 0,
+            momentImageSourceModal: { show: false },
             mentionModal: { show: false, selectedIds: [] },
             visibilityModal: { show: false },
             visibilityTargetModal: { show: false, mode: '', selectedGroupIds: [], selectedFriendIds: [] },
@@ -8584,10 +8600,6 @@ const app = createApp({
             const kw = this.inputMsg.trim().toLowerCase();
             // 根据输入的关键字匹配表情包库里的 desc (描述)
             return this.stickers.filter(s => s.desc && s.desc.toLowerCase().includes(kw));
-        },
-        sortedMomentNotifs() {
-            if (!this.momentNotifications) return [];
-            return [...this.momentNotifications].sort((a, b) => b.time - a.time);
         },
         sortedBookshelf() {
             let list = [...this.bookshelf];
@@ -18575,6 +18587,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         getMentionNames() {
             if (!this.newMoment.mentions || this.newMoment.mentions.length === 0) return '';
             const names = this.newMoment.mentions.map(id => {
+                if (id === 'mine') return this.homeProfile.name || '我';
                 const f = this.wechatState.friendList.find(x => x.id === id);
                 return f ? (f.remark || f.name) : '';
             }).filter(Boolean);
@@ -18583,6 +18596,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
         getMentionNamesForMoment(moment) {
             if (!moment.mentions) return '';
             return moment.mentions.map(id => {
+                if (id === 'mine') return this.homeProfile.name || '我';
                 const f = this.wechatState.friendList.find(x => x.id === id);
                 return f ? (f.remark || f.name) : '';
             }).filter(Boolean).join(', @');
@@ -18648,44 +18662,6 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             return true;
         },
 
-        // --- 朋友圈新特性支持方法 ---
-        triggerMomentLocalImg() {
-            this.momentImageSourceModal.show = false;
-            this.$refs.momentImgInput.click();
-        },
-        triggerMomentFakeImg() {
-            this.momentImageSourceModal.show = false;
-            this.showInput('拍摄 (文字拟图)', '', '请描述你想发送的照片样子', (val) => {
-                if (val && val.trim()) {
-                    if (this.newMoment.images.length < 9) {
-                        this.newMoment.images.push('fake://' + val.trim());
-                    }
-                }
-            });
-        },
-        openMomentNotifications() {
-            this.unreadMomentNotifCount = 0;
-            this.saveData();
-            this.wechatState.activeNav = 'moment-notifications';
-        },
-        pushMomentNotification(type, friend, content, moment) {
-            if (!this.momentNotifications) this.momentNotifications = [];
-            const img = moment.images && moment.images.length > 0 ? moment.images[0] : null;
-            this.momentNotifications.unshift({
-                id: Date.now().toString() + Math.random(),
-                avatar: friend.avatar,
-                name: friend.remark || friend.name,
-                type: type, // 'like', 'comment', 'mention'
-                content: content,
-                time: Date.now(),
-                momentId: moment.id,
-                momentImg: img,
-                momentText: img ? '' : moment.content
-            });
-            this.unreadMomentNotifCount++;
-            this.saveData();
-        },
-
         // --- Moments AI Generate Selection Modal ---
         openMomentGenerateModal() {
             this.momentGenerateModal.selectedIds = [];
@@ -18709,6 +18685,43 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             this.generateSelectedAIMoments(ids);
         },
 
+        openMomentNotifications() {
+            this.momentUnreadCount = 0;
+            this.wechatState.activeNav = 'moment_notifications';
+            this.saveData();
+        },
+        clearMomentNotifications() {
+            this.momentNotifications = [];
+            this.saveData();
+        },
+        pushMomentNotification(type, user, avatar, text, momentId, momentText, momentImg) {
+            this.momentNotifications.unshift({
+                id: Date.now().toString() + Math.random(),
+                type: type,
+                user: user,
+                avatar: avatar,
+                text: text,
+                momentId: momentId,
+                momentText: momentText,
+                momentImg: momentImg,
+                time: Date.now()
+            });
+            this.momentUnreadCount++;
+            this.saveData();
+        },
+        triggerRealMomentImage() {
+            this.momentImageSourceModal.show = false;
+            this.$refs.momentImgInput.click();
+        },
+        triggerFakeMomentImage() {
+            this.momentImageSourceModal.show = false;
+            this.showInput('拍摄 (文字拟图)', '', '例如: 一杯热气腾腾的咖啡', (val) => {
+                if(val && this.newMoment.images.length < 9) {
+                    this.newMoment.images.push('fake:' + val);
+                    this.saveData();
+                }
+            });
+        },
         async handleMomentImgUpload(e) {
             const files = e.target.files; if(!files.length) return;
             for(let i=0; i<files.length; i++) {
@@ -18916,66 +18929,83 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                      recentChatContext = `你们最近的聊天内容:\n${recentMsgs}`;
                 }
 
+                let content = "";
                 try {
                     let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                     if (!url.endsWith('/v1')) url += '/v1';
-                    
-                    const prompt = `你现在的身份是: ${friend.name}。背景设定: ${friend.bio || '无'}。最近聊天参考: ${recentChatContext}。\n规则：发布一条微信朋友圈动态。必须符合人物性格，严禁使用“今天天气真不错”等敷衍废话。
-请严格输出合法的 JSON 格式：
-{
-  "content": "你要发的朋友圈文案内容",
-  "visibility": "public" OR "only_user", // 如果你只想让我(玩家)一个人看到，填 "only_user"，否则填 "public"
-  "mentions": ["我的名字"] // 如果你想在这条朋友圈艾特我(玩家)，请在这里写上我的名字，否则留空数组 []
-}`;
-
                     const res = await fetch(`${url}/chat/completions`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
                         body: JSON.stringify({ 
                             model: this.apiConfig.selectedModel, 
                             messages: [
-                                { role: 'system', content: prompt },
-                                { role: 'user', content: '请输出JSON。' }
+                                { role: 'system', content: `你现在的身份是: ${friend.name}。这是你的背景设定(人设): ${friend.bio || '无'}。这是你最近与用户的聊天记录(可作为参考): ${recentChatContext}。\n规则：\n1. 请根据性格和背景，发布一条微信朋友圈动态。\n2. 语气自然，字数10-50字，严禁敷衍废话！\n3. 必须输出以下 JSON 格式：\n{\n  "content": "文案",\n  "mentions": ["我", "其他人名"], // OPTIONAL: 想艾特提醒谁看\n  "visibility": "public" // OPTIONAL: public(公开), private(仅自己可见), only_user(仅玩家可见)\n}\n绝不包含任何 Markdown 格式或额外文本！` },
+                                { role: 'user', content: '开始生成你的朋友圈JSON。' }
                             ],
                             temperature: this.apiConfig.temperature || 0.8
                         })
                     });
                     
-                    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                    if(!res.ok) {
+                        console.error(`API Error: ${res.status}`);
+                        throw new Error(`HTTP ${res.status}`);
+                    }
+                    
                     const data = await res.json();
+                    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                        throw new Error('API 返回数据格式错误');
+                    }
                     
-                    let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
-                    let parsed = { content: raw, visibility: 'public', mentions: [] };
-                    try { parsed = JSON.parse(raw); } catch(e) { parsed.content = raw; }
+                    let parsed;
+                    try {
+                        const raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
+                        parsed = JSON.parse(raw);
+                    } catch (err) {
+                        // 降级处理
+                        parsed = { content: data.choices[0].message.content.trim() };
+                    }
                     
-                    let mentionIds = [];
-                    if (parsed.mentions && Array.isArray(parsed.mentions) && parsed.mentions.length > 0) {
-                        // 目前默认只有玩家
-                        mentionIds.push('mine');
+                    content = parsed.content || "分享了瞬间";
+                    successCount++;
+
+                    let finalVisibility = 'public';
+                    let finalVisibilityFriends = [];
+                    if (parsed.visibility === 'private') finalVisibility = 'private';
+                    if (parsed.visibility === 'only_user') {
+                        finalVisibility = 'share_to';
+                        finalVisibilityFriends = ['mine']; // 特殊标记，我=mine
                     }
 
-                    successCount++;
+                    let finalMentions = [];
+                    if (parsed.mentions && Array.isArray(parsed.mentions)) {
+                        parsed.mentions.forEach(m => {
+                            if (m === '我' || m === '玩家' || m === this.homeProfile.name) {
+                                finalMentions.push('mine');
+                                this.pushMomentNotification('mention', friend.remark || friend.name, friend.avatar, '提到了你', 'temp', content, '');
+                            } else {
+                                const f = this.wechatState.friendList.find(x => x.name === m || x.remark === m);
+                                if (f) finalMentions.push(f.id);
+                            }
+                        });
+                    }
                     
                     const moment = {
                         id: Date.now().toString() + Math.random(),
                         name: friend.remark || friend.name,
                         avatar: friend.avatar,
-                        content: parsed.content || '...',
+                        content: content,
                         images: [], 
                         location: '',
-                        mentions: mentionIds,
-                        visibility: parsed.visibility === 'only_user' ? 'only_user' : 'public',
+                        mentions: finalMentions,
+                        visibility: finalVisibility,
+                        visibilityFriends: finalVisibilityFriends,
+                        visibilityGroups: [],
                         time: Date.now(),
                         likes: [],
                         comments: [],
                         isLiked: false
                     };
                     this.moments.unshift(moment);
-                    
-                    if (mentionIds.includes('mine')) {
-                        this.pushMomentNotification('mention', friend, '', moment);
-                    }
-                    
                     this.saveData();
                     
                     let privateSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
@@ -19006,69 +19036,67 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
             if (!friend) return;
             
+            let content = "";
             if (this.apiConfig.apiKey) {
                 try {
                     let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
                     if (!url.endsWith('/v1')) url += '/v1';
-                    
-                    const prompt = `你是 ${friend.name}。人设: ${friend.bio || '无'}。你刚刚在微信里跟别人聊了关于 "${chatContext}" 的内容。请根据你的人设发一条微信朋友圈动态。
-请严格输出合法的 JSON 格式：
-{
-  "content": "你要发的朋友圈文案内容",
-  "visibility": "public" OR "only_user", // 如果你只想让我(玩家)一个人看到，填 "only_user"，否则填 "public"
-  "mentions": ["我的名字"] // 如果你想在这条朋友圈艾特我，请写上我的名字，否则留空数组 []
-}`;
-
                     const res = await fetch(`${url}/chat/completions`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
                         body: JSON.stringify({ 
                             model: this.apiConfig.selectedModel, 
                             messages: [
-                                { role: 'system', content: prompt },
-                                { role: 'user', content: '请输出JSON。' }
+                                { role: 'system', content: `你是 ${friend.name}。人设: ${friend.bio || '无'}。你刚刚在微信里跟别人聊了关于 "${chatContext}" 的内容。请发一条微信朋友圈动态。必须输出如下 JSON 格式：\n{\n  "content": "文案",\n  "mentions": ["我"], // OPTIONAL: 想艾特提醒谁看\n  "visibility": "public" // OPTIONAL: public(公开), private(仅自己可见), only_user(仅玩家可见)\n}` },
+                                { role: 'user', content: '直接输出 JSON，不要多余字符。' }
                             ],
                             temperature: this.apiConfig.temperature || 0.8
                         })
                     });
                     if(!res.ok) throw new Error();
                     const data = await res.json();
-                    let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
-                    let parsed = { content: raw, visibility: 'public', mentions: [] };
-                    try { parsed = JSON.parse(raw); } catch(e) { parsed.content = raw; }
                     
-                    let mentionIds = [];
-                    if (parsed.mentions && Array.isArray(parsed.mentions) && parsed.mentions.length > 0) mentionIds.push('mine');
+                    let parsed;
+                    try {
+                        const raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
+                        parsed = JSON.parse(raw);
+                    } catch (err) {
+                        parsed = { content: data.choices[0].message.content.trim() };
+                    }
+                    content = parsed.content || "分享了瞬间";
+
+                    let finalVisibility = 'public';
+                    let finalVisibilityFriends = [];
+                    if (parsed.visibility === 'private') finalVisibility = 'private';
+                    if (parsed.visibility === 'only_user') {
+                        finalVisibility = 'share_to';
+                        finalVisibilityFriends = ['mine']; 
+                    }
+
+                    let finalMentions = [];
+                    if (parsed.mentions && Array.isArray(parsed.mentions)) {
+                        parsed.mentions.forEach(m => {
+                            if (m === '我' || m === '玩家' || m === this.homeProfile.name) {
+                                finalMentions.push('mine');
+                                this.pushMomentNotification('mention', friend.remark || friend.name, friend.avatar, '提到了你', 'temp', content, '');
+                            } else {
+                                const f = this.wechatState.friendList.find(x => x.name === m || x.remark === m);
+                                if (f) finalMentions.push(f.id);
+                            }
+                        });
+                    }
 
                     const moment = {
-                        id: Date.now().toString(),
-                        name: friend.remark || friend.name,
-                        avatar: friend.avatar,
-                        content: parsed.content || '...',
-                        images: [], 
-                        location: '',
-                        mentions: mentionIds,
-                        visibility: parsed.visibility === 'only_user' ? 'only_user' : 'public',
-                        time: Date.now(),
-                        likes: [],
-                        comments: [],
-                        isLiked: false
-                    };
-                    this.moments.unshift(moment);
-                    
-                    if (mentionIds.includes('mine')) {
-                        this.pushMomentNotification('mention', friend, '', moment);
-                    }
-                    
-                    this.saveData();
                         id: Date.now().toString(),
                         name: friend.remark || friend.name,
                         avatar: friend.avatar,
                         content: content,
                         images: [], 
                         location: '',
-                        mentions: [],
-                        visibility: 'public',
+                        mentions: finalMentions,
+                        visibility: finalVisibility,
+                        visibilityFriends: finalVisibilityFriends,
+                        visibilityGroups: [],
                         time: Date.now(),
                         likes: [],
                         comments: [],
@@ -19129,16 +19157,13 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                         text: commentText
                     });
                     
-                    // 50% 概率 AI 顺手点个赞
-                    if (Math.random() < 0.5 && !moment.likes.includes(aiFriend.remark || aiFriend.name)) {
-                        moment.likes.push(aiFriend.remark || aiFriend.name);
-                        if (moment.name === this.homeProfile.name) {
-                            this.pushMomentNotification('like', aiFriend, '', moment);
-                        }
-                    }
-
                     if (moment.name === this.homeProfile.name) {
-                        this.pushMomentNotification('comment', aiFriend, commentText, moment);
+                        this.pushMomentNotification('comment', aiFriend.remark || aiFriend.name, aiFriend.avatar, commentText, moment.id, moment.content, moment.images && moment.images.length ? moment.images[0] : '');
+                    }
+                    
+                    this.saveData();
+                    
+                    if (moment.name === this.homeProfile.name) {
                         let privateSession = this.wechatState.sessions.find(s => s.targetId === aiFriend.id && !s.isGroup);
                         if (privateSession) {
                             privateSession.messages.push({
@@ -19219,7 +19244,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                             replyTo: this.homeProfile.name 
                         });
                         
-                        this.pushMomentNotification('comment', aiFriend, replyText, moment);
+                        this.pushMomentNotification('comment', aiFriend.remark || aiFriend.name, aiFriend.avatar, replyText, moment.id, moment.content, moment.images && moment.images.length ? moment.images[0] : '');
 
                         this.saveData();
                         this.showToast(`${aiFriend.name} 回复了你`);
