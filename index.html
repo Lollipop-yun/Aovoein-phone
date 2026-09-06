@@ -4961,7 +4961,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <!-- 正常输入栏 -->
                     <div v-else class="flex items-center gap-2 px-2 py-2">
-                        <transition name="fade"><div v-if="replyingTo" class="absolute bottom-full left-0 w-full bg-gray-100 p-2 text-xs text-gray-500 border-t border-gray-200 flex justify-between items-center z-10"><span>引用: {{ replyingTo.content }}</span><button @click="replyingTo=null"><i class="fas fa-times"></i></button></div></transition>
+                        <transition name="fade"><div v-if="replyingTo" class="absolute bottom-full left-0 w-full bg-gray-100 p-2 text-xs text-gray-500 border-t border-gray-200 flex justify-between items-center z-10"><span class="truncate pr-4">引用: {{ getMessageSummary(replyingTo) }}</span><button @click="replyingTo=null" class="shrink-0"><i class="fas fa-times"></i></button></div></transition>
                         
                         <button @click.stop="wechatState.showAttachMenu = !wechatState.showAttachMenu; wechatState.attachMenuPage = 0;" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-800 transition shrink-0"><i class="fas fa-paperclip text-xl"></i></button>
                         <button @click="openVoiceInput" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-black transition active:scale-95 shrink-0"><i class="fas fa-microphone text-xl"></i></button>
@@ -7025,7 +7025,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.42 更新日志 (当前最新) -->
+                            <!-- v1.43 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#eab308]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.43 引用消息转换与朋友圈引擎优化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-06 08:38</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">优雅的引用摘要：</span>彻底修复了在聊天界面“引用”对方发来的表情包、相片、文档等富媒体消息时，引用的气泡会直接暴力展现一长串 URL 链接的刺眼 Bug。现在系统会通过 `[动画表情]`、`[图片]`、`[位置]` 等自然标签来进行优雅转换。</li>
+                                    <li><span class="font-bold text-gray-800">AI 朋友圈发送恢复：</span>修复了近期由于提示词请求头未携带 `temperature` 字段，导致部分严苛的大模型 API 服务商（如 DeepSeek/MiniMax）拒绝处理生成朋友圈请求的问题。</li>
+                                    <li><span class="font-bold text-gray-800">朋友圈事件滑动联动：</span>增强了朋友圈动作与私聊框内系统旁白的联动感知。现在当 AI 在后台发了朋友圈或点了赞，只要你刚好停留在跟 ta 的对话框内，系统旁白不仅会立刻出现，并且会强制自动向下滑动到底部，绝不漏掉一丝社交细节。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.42 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#10b981]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -9236,25 +9250,29 @@ const app = createApp({
             if (session.messages && session.messages.length > 0) return session.messages[session.messages.length - 1].time;
             return session.time;
         },
+        getMessageSummary(msg) {
+            if (!msg) return '';
+            if (msg.isRecalled) return '"' + (msg.isSelf ? '你' : msg.name) + '" 撤回了一条消息';
+            if (msg.type === 'image' || msg.type === 'fake_image') return '[图片]';
+            if (msg.type === 'file') return `[文件] ${msg.fileName}`;
+            if (msg.type === 'voice') return '[语音]';
+            if (msg.type === 'sticker') return '[动画表情]';
+            if (msg.type === 'red_packet') return '[微信红包]';
+            if (msg.type === 'transfer') return '[微信转账]';
+            if (msg.type === 'location') return `[位置] ${msg.name}`;
+            if (msg.type === 'moment') return '[朋友圈]';
+            if (msg.type === 'food_payment' || msg.type === 'taobao_payment') return '[代付请求]';
+            if (msg.type === 'food_delivery' || msg.type === 'taobao_order') return '[购物订单]';
+            if (msg.type === 'taobao_forward') return '[商品分享]';
+            if (msg.type === 'music_invite') return '[音乐邀请]';
+            if (msg.type === 'voice_call_record' || msg.type === 'video_call_record') return '[通话记录]';
+            if (msg.type === 'system') return msg.content;
+            return msg.content;
+        },
         getSessionLastMessage(session) {
             if (session.messages && session.messages.length > 0) {
                 const last = session.messages[session.messages.length - 1];
-                if (last.isRecalled) return '"' + (last.isSelf ? '你' : last.name) + '" 撤回了一条消息';
-                if (last.type === 'image' || last.type === 'fake_image') return '[图片]';
-                if (last.type === 'file') return `[文件] ${last.fileName}`;
-                if (last.type === 'voice') return '[语音]';
-                if (last.type === 'sticker') return '[动画表情]';
-                if (last.type === 'red_packet') return '[微信红包]';
-                if (last.type === 'transfer') return '[微信转账]';
-                if (last.type === 'location') return '[位置]';
-                if (last.type === 'moment') return '[朋友圈]';
-                if (last.type === 'food_payment' || last.type === 'taobao_payment') return '[代付请求]';
-                if (last.type === 'food_delivery' || last.type === 'taobao_order') return '[购物订单]';
-                if (last.type === 'taobao_forward') return '[商品分享]';
-                if (last.type === 'music_invite') return '[音乐邀请]';
-                if (last.type === 'voice_call_record' || last.type === 'video_call_record') return '[通话记录]';
-                if (last.type === 'system') return last.content;
-                return last.content;
+                return this.getMessageSummary(last);
             }
             return session.lastMessage || '...';
         },
@@ -11360,7 +11378,7 @@ const app = createApp({
             const msg = { content: inputContent, isSelf: true, time: Date.now(), avatar: this.getMaskById(this.wechatState.activeSession.maskId).avatar };
             if(this.replyingTo) { 
                 let quoteName = this.replyingTo.isSelf ? '我' : (this.wechatState.activeSession.isGroup ? (this.replyingTo.name || '群成员') : this.wechatState.activeSession.name);
-                msg.quote = { name: quoteName, content: this.replyingTo.content }; 
+                msg.quote = { name: quoteName, content: this.getMessageSummary(this.replyingTo) }; 
                 this.replyingTo = null; 
             }
             const currentSession = this.wechatState.activeSession;
@@ -18791,7 +18809,8 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                             messages: [
                                 { role: 'system', content: `你现在的身份是: ${friend.name}。这是你的背景设定(人设): ${friend.bio || '无'}。这是你最近与用户的聊天记录(可作为参考): ${recentChatContext}。\n规则：1. 请根据你的性格和背景，发布一条微信朋友圈动态。2. 必须以纯文本输出，不要带话题标签(hashtags)或引号。3. 语气自然贴合人设，字数10-50字。4. 严禁使用“今天天气真不错”、“今天很开心”之类的敷衍废话！必须结合你的身份背景来写！` },
                                 { role: 'user', content: '请直接输出你现在要发的朋友圈文案内容。' }
-                            ]
+                            ],
+                            temperature: this.apiConfig.temperature || 0.8
                         })
                     });
                     
@@ -18832,6 +18851,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                             content: `[系统提示] ${friend.remark || friend.name} 刚刚发布了一条新的朋友圈`,
                             time: Date.now()
                         });
+                        if (this.wechatState.activeSession?.id === privateSession.id) this.scrollToBottom();
                         this.saveData();
                     }
 
@@ -18865,7 +18885,8 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                             messages: [
                                 { role: 'system', content: `你是 ${friend.name}。人设: ${friend.bio || '无'}。你刚刚在微信里跟别人聊了关于 "${chatContext}" 的内容。请根据你的人设发一条微信朋友圈动态。要求：纯文本，不要带hashtag，不能有引号，严禁使用“今天天气真不错”这种敷衍废话！` },
                                 { role: 'user', content: '直接输出要发的朋友圈文案。' }
-                            ]
+                            ],
+                            temperature: this.apiConfig.temperature || 0.8
                         })
                     });
                     if(!res.ok) throw new Error();
@@ -18896,6 +18917,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                             content: `[系统提示] ${friend.remark || friend.name} 刚刚发布了一条新的朋友圈`,
                             time: Date.now()
                         });
+                        if (this.wechatState.activeSession?.id === privateSession.id) this.scrollToBottom();
                         this.saveData();
                     }
                 } catch(e) { console.error("Chat trigger moment failed", e); }
@@ -18927,7 +18949,8 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                             messages: [
                                 { role: 'system', content: `你是 ${aiFriend.name}, 这是你的人设: ${aiFriend.bio || '无'}。你在刷朋友圈时看到了这条动态: "${moment.content}"。请根据你的人设，写一句非常简短的评论(最多15个字)。严禁说“哈哈”、“赞”、“不错”等敷衍词汇，必须符合人物性格！` },
                                 { role: 'user', content: '直接输出评论内容，不要加引号。' }
-                            ]
+                            ],
+                            temperature: this.apiConfig.temperature || 0.8
                         })
                     });
                     if(!res.ok) throw new Error();
@@ -18948,6 +18971,7 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                                 content: `[系统提示] ${aiFriend.remark || aiFriend.name} 刚刚查看并评论了你的朋友圈`,
                                 time: Date.now()
                             });
+                            if (this.wechatState.activeSession?.id === privateSession.id) this.scrollToBottom();
                             this.saveData();
                         }
                     }
