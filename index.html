@@ -1739,9 +1739,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- AI 心声弹窗 -->
     <transition name="scale">
-        <div v-if="statusModal.show" class="fixed inset-0 z-[60000] flex items-center justify-center bg-black/40 backdrop-blur-sm" @click="statusModal.show = false">
+        <div v-if="statusModal.show" class="fixed inset-0 z-[60000] flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm" @click="statusModal.show = false">
             <!-- 加上了 aovein-status-card 专属选择器，用于接收美化 CSS -->
-            <div class="aovein-status-card bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[85vh]" @click.stop>
+            <div class="aovein-status-card bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[75vh]" @click.stop>
                 <!-- 左上角美化按钮 -->
                 <div class="absolute top-4 left-4 text-gray-400 cursor-pointer active:scale-95 transition" @click="statusBeautifyConfig.show = true; statusModal.show = false;"><i class="fas fa-palette text-xl"></i></div>
                 
@@ -1761,18 +1761,18 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">穿着</div><div class="text-gray-800">{{ currentStatus.outfit || '未知' }}</div></div>
                     <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">{{ currentStatus.note || '无随笔' }}</div></div>
                 </div>
+            </div>
 
-                <!-- 底部操作栏：历史翻页与删除 -->
-                <div class="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between shrink-0">
-                    <div v-if="currentStatusHistory && currentStatusHistory.length > 1" class="flex items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100 shadow-sm">
-                        <i class="fas fa-chevron-left text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="prevStatusHistory"></i>
-                        <span class="text-[10px] text-gray-500 font-mono font-bold">{{ currentStatusHistory.length - statusHistoryIndex }} / {{ currentStatusHistory.length }}</span>
-                        <i class="fas fa-chevron-right text-gray-400 hover:text-gray-600 cursor-pointer active:scale-90 transition text-sm" @click="nextStatusHistory"></i>
-                    </div>
-                    <div v-else></div>
-                    <div class="text-gray-300 hover:text-red-400 cursor-pointer transition p-2 active:scale-90" @click="deleteCurrentStatus">
-                        <i class="far fa-trash-alt text-lg"></i>
-                    </div>
+            <!-- 底部操作栏：移出卡片外部，悬浮在下方 -->
+            <div class="w-[85%] mt-6 flex items-center justify-between" @click.stop>
+                <div v-if="currentStatusHistory && currentStatusHistory.length > 1" class="flex items-center gap-4 bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-full shadow-lg border border-white/50">
+                    <i class="fas fa-chevron-left text-gray-500 hover:text-black cursor-pointer active:scale-90 transition text-sm" @click="prevStatusHistory"></i>
+                    <span class="text-[12px] text-gray-800 font-mono font-bold">{{ currentStatusHistory.length - statusHistoryIndex }} / {{ currentStatusHistory.length }}</span>
+                    <i class="fas fa-chevron-right text-gray-500 hover:text-black cursor-pointer active:scale-90 transition text-sm" @click="nextStatusHistory"></i>
+                </div>
+                <div v-else></div>
+                <div class="bg-white/90 backdrop-blur-md w-11 h-11 rounded-full flex items-center justify-center text-gray-500 hover:text-red-500 cursor-pointer shadow-lg border border-white/50 transition active:scale-90" @click="deleteCurrentStatus">
+                    <i class="far fa-trash-alt text-lg"></i>
                 </div>
             </div>
         </div>
@@ -4083,118 +4083,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- 日记功能页 - 书架视图 -->
-            <div v-if="wechatState.activeNav === 'diary'" class="flex-1 flex flex-col bg-[#fdfaf5] absolute inset-0 z-50 overflow-hidden">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between z-10 sticky top-0">
-                    <button @click="wechatState.activeNav = 'discover'" class="w-8 h-8 flex items-center justify-center text-gray-500"><i class="fas fa-chevron-left text-lg"></i></button>
-                    <!-- 模拟顶部日期选择器 -->
-                    <div class="px-4 py-1 bg-[#ebe3d9] rounded-lg text-sm font-bold text-gray-700 shadow-sm flex items-center gap-2">
-                        {{ new Date().getFullYear() }}.{{ String(new Date().getMonth()+1).padStart(2,'0')}}.{{ String(new Date().getDate()).padStart(2,'0') }} {{ displayDate.dayString }}
-                    </div>
-                    <button class="w-8 h-8 flex items-center justify-center text-gray-500"><i class="fas fa-question-circle"></i></button>
-                </header>
-                
-                <div class="flex-1 overflow-y-auto p-6">
-                    <div class="grid grid-cols-3 gap-x-4 gap-y-8">
-                        <!-- 我的日记本 -->
-                        <div class="flex flex-col items-center gap-2" @click="openDiaryDetail('mine')">
-                            <div class="diary-book w-full bg-[#f5a9b8] relative">
-                                <div class="diary-avatar-cutout"><img :src="homeProfile.avatar" class="w-full h-full object-cover"></div>
-                                <div class="diary-book-clasp"></div>
-                            </div>
-                            <span class="text-xs font-bold text-gray-800">我的日记</span>
-                        </div>
-                        
-                        <!-- 朋友的日记本 -->
-                        <div v-for="friend in wechatState.friendList" :key="friend.id" class="flex flex-col items-center gap-2" @click="openDiaryDetail(friend.id)">
-                            <div class="diary-book w-full bg-[#c17f59] relative">
-                                <div class="diary-avatar-cutout"><img :src="friend.avatar" class="w-full h-full object-cover"></div>
-                                <div class="diary-book-clasp"></div>
-                            </div>
-                            <span class="text-xs font-bold text-gray-800 text-center line-clamp-1">{{ friend.remark || friend.name }} 的日记</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 写日记悬浮按钮 -->
-                <div class="absolute bottom-16 right-6">
-                    <button @click="diaryState.isWriting = true" class="w-16 h-16 bg-[#ff9eb5] rounded-full shadow-lg flex items-center justify-center text-white text-3xl active:scale-95 transition">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 日记详情页 (阅读视图) -->
-            <div v-if="wechatState.activeNav === 'diary-detail'" class="flex-1 flex flex-col bg-white absolute inset-0 z-50 overflow-hidden">
-                <header class="h-[90px] pt-10 px-4 flex items-center justify-between border-b border-gray-100 sticky top-0 bg-white z-10">
-                    <button @click="wechatState.activeNav = 'diary'" class="w-8 h-8 flex items-center justify-center"><i class="fas fa-chevron-left text-lg text-black"></i></button>
-                    <h1 class="font-bold text-[17px]">{{ diaryState.activeBookName }}</h1>
-                    <div class="flex items-center gap-4">
-                        <button @click="toggleDiaryMultiSelect" class="text-black"><i class="fas" :class="diaryState.isMultiSelect ? 'fa-times' : 'fa-check-square'"></i></button>
-                        <button v-if="diaryState.activeBookId !== 'mine'" @click="generateDiary(diaryState.activeBookId)" class="text-black"><i class="fas fa-plus text-lg"></i></button>
-                    </div>
-                </header>
-                <div class="flex-1 overflow-y-auto p-4 space-y-6 bg-[#f9f9f9]">
-                    <div v-if="getFilteredDiaries().length === 0" class="flex flex-col items-center justify-center h-64 text-gray-400">
-                        <i class="fas fa-book-open text-4xl mb-3 opacity-30"></i>
-                        <p class="text-xs">暂无日记内容</p>
-                    </div>
-                    
-                    <div v-for="diary in getFilteredDiaries()" :key="diary.id" class="bg-white rounded-xl p-6 shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-gray-50 relative overflow-hidden" @click="diaryState.isMultiSelect ? toggleSelectDiary(diary.id) : null">
-                        <!-- 多选蒙层 -->
-                        <div v-if="diaryState.isMultiSelect" class="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
-                            <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center transition" :class="diaryState.selectedIds.includes(diary.id) ? 'bg-black border-black' : 'bg-white'">
-                                <i v-if="diaryState.selectedIds.includes(diary.id)" class="fas fa-check text-white"></i>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-full bg-gray-100 overflow-hidden shrink-0"><img :src="diary.avatar" class="w-full h-full object-cover"></div>
-                            <div>
-                                <div class="font-bold text-base text-gray-900">{{ diary.name }}</div>
-                                <div class="text-xs text-gray-400 mt-1">{{ diary.date }} · {{ diary.weather || '未知天气' }}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="text-[15px] leading-8 text-gray-700 font-serif whitespace-pre-wrap text-justify">{{ diary.content }}</div>
-                        
-                        <div class="text-right mt-6 text-xs text-gray-300 font-mono">{{ formatChatTime(diary.time) }}</div>
-                        
-                        <!-- 评论区 -->
-                        <div v-if="diary.comments && diary.comments.length > 0" class="diary-comments-box">
-                            <div v-for="(comment, cIdx) in diary.comments" :key="cIdx" class="diary-comment-row" @click.stop="setDiaryReplyTarget(diary, comment)">
-                                <span class="diary-comment-user">{{ comment.user }}</span>
-                                <span v-if="comment.replyTo" class="diary-reply-label">回复</span>
-                                <span v-if="comment.replyTo" class="diary-comment-user">{{ comment.replyTo }}</span>
-                                <span class="diary-comment-content">: {{ comment.text }}</span>
-                            </div>
-                        </div>
-
-                        <!-- 操作栏 -->
-                        <div class="diary-action-bar">
-                            <div v-if="diary.friendId === 'mine'" class="diary-action-btn" @click.stop="generateAICommentForMyDiary(diary)"><i class="fas fa-wand-magic-sparkles text-purple-400"></i></div>
-                            <div class="diary-action-btn" @click.stop="handleDiaryAction('comment', diary)"><i class="far fa-comment"></i></div>
-                        </div>
-                        
-                        <!-- 评论输入框 (仅当前激活时显示) -->
-                        <div v-if="activeCommentDiaryId === diary.id" class="mt-2 flex gap-2" @click.stop>
-                            <input v-model="diaryCommentInput" ref="diaryCommentInputRef" class="flex-1 bg-gray-50 border border-gray-200 rounded px-2 py-1 text-sm outline-none" :placeholder="diaryReplyTarget ? `回复 ${diaryReplyTarget.user}...` : '评论...'" @keyup.enter="submitDiaryComment(diary)">
-                            <button @click="submitDiaryComment(diary)" class="text-blue-600 text-xs font-bold px-2">发送</button>
-                        </div>
-
-                        <!-- 装饰元素 -->
-                        <div class="absolute top-0 right-0 w-24 h-24 bg-yellow-50 rounded-bl-full -z-0 opacity-30 pointer-events-none"></div>
-                    </div>
-                </div>
-                <!-- 多选删除底部栏 -->
-                <transition name="app-slide">
-                    <div v-if="diaryState.isMultiSelect" class="absolute bottom-0 left-0 w-full bg-white border-t border-gray-100 p-4 pb-safe z-50 shadow-lg">
-                        <button @click="deleteSelectedDiaries" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold text-sm">删除所选 ({{diaryState.selectedIds.length}})</button>
-                    </div>
-                </transition>
-            </div>
+            </div>           
 
             <!-- 朋友圈 (Moments) -->
             <div v-if="wechatState.activeNav === 'moments'" class="bg-white absolute inset-0 z-50 overflow-y-auto pb-32 moments-scroll-fix block" @click="activeMomentMenuId = null" style="-webkit-overflow-scrolling: touch; overscroll-behavior: contain;">
@@ -5930,16 +5819,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
                         </div>
                     </div>
-                    <!-- 日记入口 -->
-                    <div @click="wechatState.activeNav = 'diary'" class="flex items-center p-4 active:bg-gray-50 cursor-pointer justify-between">
-                        <div class="flex items-center gap-3">
-                            <div class="text-base font-medium text-black">日记</div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span v-if="diaries.length > 0" class="text-xs text-gray-400">new</span>
-                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
-                        </div>
-                    </div>                    
                 </div>
                 
                 <div class="mt-4 bg-white divide-y divide-gray-100">
@@ -7105,7 +6984,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.50 更新日志 (当前最新) -->
+                            <!-- v1.51 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#64748b]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.51 UI重构与粤语翻译稳定化</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-07 18:45</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">心声卡片操作栏剥离：</span>解决了心声面板左下角翻页按钮遮挡随笔内容的布局问题。现在底部的“翻页”和“删除”按钮已彻底移出卡片主体，独立悬浮在卡片下方，界面更加清爽无遮挡。</li>
+                                    <li><span class="font-bold text-gray-800">日记功能精简：</span>根据需求，彻底移除了发现页的“日记”入口及其配套的全部书架、详情视图代码，让应用更纯粹。</li>
+                                    <li><span class="font-bold text-gray-800">粤语翻译稳定化：</span>修复了当角色设定为“粤语”等含汉字的方言输出时，底层的强力中文拦截机制会误伤拦截导致不翻译的 Bug。现已为粤语和繁体字加入了特权白名单。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.50 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -14824,16 +14717,20 @@ Structure:
                              const hasForeignChars = /[\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]/.test(seg.trim()); // 日韩等字符
                              
                              let enableTranslate = session.enableClickTranslate;
+                             let sourceLang = session.transSourceLang || '自动识别';
                              if (session.isGroup && speakerId) {
                                  const pSession = this.wechatState.sessions.find(s => s.targetId === speakerId && !s.isGroup);
                                  if (pSession) {
                                      enableTranslate = pSession.enableClickTranslate;
+                                     sourceLang = pSession.transSourceLang || '自动识别';
                                  }
                              }
                              
+                             const isSourceSpecialChinese = sourceLang.includes('粤语') || sourceLang.includes('繁体');
+                             
                              if (enableTranslate && !trans) {
-                                 // 如果原文明显是中文，且外语单词少于3个，绝对不发起翻译请求！
-                                 if (hasChinese && engWordCount < 3 && !hasForeignChars) {
+                                 // 如果原文明显是普通中文(不包含粤语/繁体设定)，且外语单词少于3个，绝对不发起翻译请求！
+                                 if (hasChinese && engWordCount < 3 && !hasForeignChars && !isSourceSpecialChinese) {
                                      // 静默拦截，不需要翻译，别浪费 Tokens 和触发大模型发疯
                                  } else {
                                      setTimeout(() => {
@@ -18323,7 +18220,9 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
 
             // 【绝对强力本地拦截】：只要目标语言是中文，且原文已经有中文了，而且英文单词不到 3 个，直接掐断！绝不发网络请求！
             const isTargetChinese = target.includes('中文') || target.includes('粤语') || target.includes('普通话');
-            if (isTargetChinese && /[\u4e00-\u9fa5]/.test(msg.content) && (msg.content.match(/[a-zA-Z]+/g) || []).length < 3) {
+            const isSourceSpecialChinese = source.includes('粤语') || source.includes('繁体');
+            // 如果源语言是粤语或繁体，则跳过此强制拦截，允许请求翻译
+            if (isTargetChinese && !isSourceSpecialChinese && /[\u4e00-\u9fa5]/.test(msg.content) && (msg.content.match(/[a-zA-Z]+/g) || []).length < 3) {
                 msg.translation = null;
                 msg.showTranslation = false; 
                 this.saveData();
