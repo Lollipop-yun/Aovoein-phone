@@ -4224,12 +4224,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="pb-20 min-h-[101%]">
                     <div v-if="moments.length === 0" class="text-center text-gray-400 text-sm mt-10">暂无动态，点击右上角发布</div>
                     <div v-for="moment in moments" :key="moment.id" class="moment-item relative">
-                        <div v-if="moment.visibility === 'private' && moment.name === homeProfile.name" class="absolute right-4 top-4 text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm"><i class="fas fa-lock"></i>仅自己可见</div>
-                        <div v-if="moment.visibility === 'share_to' && moment.visibilityFriends && moment.visibilityFriends.includes('mine') && moment.visibilityFriends.length === 1 && moment.name !== homeProfile.name" class="absolute right-4 top-4 text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded flex items-center gap-1 shadow-sm"><i class="fas fa-eye-slash"></i>仅你可见</div>
-                        
                         <div class="moment-avatar"><img :src="moment.avatar" class="w-full h-full object-cover"></div>
                         <div class="moment-content">
-                            <div class="moment-name">{{ moment.name }}</div>
+                            <div class="moment-name flex justify-between items-center">
+                                <span>{{ moment.name }}</span>
+                                <div v-if="moment.visibility === 'private' && moment.name === homeProfile.name" class="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm font-sans tracking-wide"><i class="fas fa-lock"></i>仅自己可见</div>
+                                <div v-if="moment.visibility === 'share_to' && moment.visibilityFriends && moment.visibilityFriends.includes('mine') && moment.visibilityFriends.length === 1 && moment.name !== homeProfile.name" class="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm font-sans tracking-wide"><i class="fas fa-user-friends"></i>仅你可见</div>
+                            </div>
                             <div class="moment-text">
                                 {{ moment.showTranslation && moment.translatedContent ? moment.translatedContent : moment.content }}
                                 <!-- 艾特高亮显示 -->
@@ -7104,7 +7105,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.47 更新日志 (当前最新) -->
+                            <!-- v1.48 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#ef4444]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.48 朋友圈降维容错与跨界翻译强控制</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-07 14:23</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">权限标识完美重定位：</span>朋友圈“仅你可见”和“仅自己可见”的标识，现在已经从略微偏僻的绝对右上角，优雅地平移放置在了与动态发布者名字同一行的末尾处（使用双人头和锁头标志），完全契合微信原版排版风格。</li>
+                                    <li><span class="font-bold text-gray-800">大模型语言强制接管：</span>修复了开启自动翻译后，大模型仍不理会要求、嘴硬坚持输出中文的顽固情况。在底层系统 Prompt 中全新挂载了针对 <code>translations</code> 配置项的强压级语种约束！现在，只要选择了非中文的输出语言，角色 100% 将以纯正的外语推进所有对话。</li>
+                                    <li><span class="font-bold text-gray-800">发圈引擎终极降维算法：</span>彻底解决了开启自动双语翻译后，AI 无法发送朋友圈动态的灾难级 Bug！底层全新搭载了“降维强提算法”——不论大模型在输出 JSON 格式时如何偷工减料、少逗号多换行、甚至是完全发疯吐出了纯文本，这套算法都会硬生生把文案从返回结果里撕扯出来强行发布，永远不会让动作卡死！</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.47 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -13707,6 +13722,16 @@ const app = createApp({
             }
             // ============================
             
+            // --- 输出语言强制认知 ---
+            let outputLangContext = "";
+            if (!session.isGroup) {
+                const transLang = session.transSourceLang && session.transSourceLang !== '自动识别' ? session.transSourceLang : '简体中文 (普通话)';
+                if (!transLang.includes('中文') && !transLang.includes('普通话') && !transLang.includes('粤语')) {
+                    outputLangContext = `\n【极其重要的语言强制指令】：你必须且只能使用【${transLang}】来进行你的主要回复（包含所有对话和内心戏）！并且，在 JSON 的 "translations" 数组中提供完整的简体中文翻译！如果你用中文作为主要的 reply 将被视为严重错误！`;
+                }
+            }
+            // ============================
+
             // == 【拉黑状态上帝视角构建】 ==
             let blockContext = "";
             if (session.isBlocked) {
@@ -13868,6 +13893,7 @@ ${groupNoticeContext}
 ${voteContext}
 ${chainContext}
 ${statusInstruction}
+${outputLangContext}
 </ENVIRONMENT_CONTEXT>
 
 IMPORTANT: You must output ONLY a valid JSON object. No Markdown. No other text.
@@ -19022,21 +19048,33 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     try {
                         let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
                         raw = raw.replace(/\/\/[^\n]*/g, '').trim(); 
-                        raw = raw.replace(/\n/g, '\\n').replace(/\\n\s*"/g, '\n"').replace(/\\n\s*\}/g, '\n}').replace(/\{\s*\\n/g, '{\n');
-                        parsed = JSON.parse(raw);
-                        content = parsed.content || "分享了瞬间";
-                        translatedContent = parsed.translatedContent || "";
+                        
+                        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            let finalJsonStr = jsonMatch[0].replace(/\n/g, '\\n').replace(/\\n\s*"/g, '\n"').replace(/\\n\s*\}/g, '\n}').replace(/\{\s*\\n/g, '{\n');
+                            parsed = JSON.parse(finalJsonStr);
+                        } else {
+                            throw new Error("No JSON structure");
+                        }
                     } catch (err) {
-                        console.warn("JSON parsing failed, engaging Regex Extractor fallback.");
+                        console.warn("JSON parsing failed in Batch Generate, engaging Absolute Fallback.");
                         let raw = data.choices[0].message.content;
-                        let cMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
-                        if (cMatch) content = cMatch[1].replace(/\\n/g, '\n'); else content = "分享了瞬间";
-                        let tMatch = raw.match(/"translatedContent"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
-                        if (tMatch) translatedContent = tMatch[1].replace(/\\n/g, '\n');
-                        parsed.visibility = raw.includes('"visibility" : "private"') || raw.includes('"visibility":"private"') ? 'private' : (raw.includes('"visibility" : "only_user"') || raw.includes('"visibility":"only_user"') ? 'only_user' : 'public');
-                        parsed.mentions = raw.includes('"我"') ? ['我'] : [];
+                        let cMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*(?:,|"translatedContent"|"mentions"|"visibility"|\}))/i);
+                        if (cMatch) {
+                            parsed.content = cMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                        } else {
+                            parsed.content = raw.replace(/[{}"']/g, '').trim(); // 就算大模型只吐出纯文本也要强行抓出来！
+                        }
+                        
+                        let tMatch = raw.match(/"translatedContent"\s*:\s*"([\s\S]*?)"/i);
+                        if (tMatch) parsed.translatedContent = tMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                        
+                        parsed.visibility = /"visibility"\s*:\s*"private"/i.test(raw) ? 'private' : (/"visibility"\s*:\s*"only_user"/i.test(raw) ? 'only_user' : 'public');
+                        parsed.mentions = /"我"/i.test(raw) ? ['我'] : [];
                     }
                     
+                    content = parsed.content || "分享了瞬间";
+                    translatedContent = parsed.translatedContent || "";
                     successCount++;
 
                     let finalVisibility = 'public';
@@ -19142,20 +19180,33 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     try {
                         let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
                         raw = raw.replace(/\/\/[^\n]*/g, '').trim(); 
-                        raw = raw.replace(/\n/g, '\\n').replace(/\\n\s*"/g, '\n"').replace(/\\n\s*\}/g, '\n}').replace(/\{\s*\\n/g, '{\n');
-                        parsed = JSON.parse(raw);
-                        content = parsed.content || "分享了瞬间";
-                        translatedContent = parsed.translatedContent || "";
+                        
+                        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            let finalJsonStr = jsonMatch[0].replace(/\n/g, '\\n').replace(/\\n\s*"/g, '\n"').replace(/\\n\s*\}/g, '\n}').replace(/\{\s*\\n/g, '{\n');
+                            parsed = JSON.parse(finalJsonStr);
+                        } else {
+                            throw new Error("No JSON structure");
+                        }
                     } catch (err) {
-                        console.warn("JSON parsing failed, engaging Regex Extractor fallback.");
+                        console.warn("JSON parsing failed in Individual Generate, engaging Absolute Fallback.");
                         let raw = data.choices[0].message.content;
-                        let cMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
-                        if (cMatch) content = cMatch[1].replace(/\\n/g, '\n'); else content = "分享了瞬间";
-                        let tMatch = raw.match(/"translatedContent"\s*:\s*"([\s\S]*?)"(?=\s*,|\s*\})/);
-                        if (tMatch) translatedContent = tMatch[1].replace(/\\n/g, '\n');
-                        parsed.visibility = raw.includes('"visibility" : "private"') || raw.includes('"visibility":"private"') ? 'private' : (raw.includes('"visibility" : "only_user"') || raw.includes('"visibility":"only_user"') ? 'only_user' : 'public');
-                        parsed.mentions = raw.includes('"我"') ? ['我'] : [];
+                        let cMatch = raw.match(/"content"\s*:\s*"([\s\S]*?)"(?=\s*(?:,|"translatedContent"|"mentions"|"visibility"|\}))/i);
+                        if (cMatch) {
+                            parsed.content = cMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                        } else {
+                            parsed.content = raw.replace(/[{}"']/g, '').trim(); // 哪怕模型彻底发疯只有文本，照抓不误！
+                        }
+                        
+                        let tMatch = raw.match(/"translatedContent"\s*:\s*"([\s\S]*?)"/i);
+                        if (tMatch) parsed.translatedContent = tMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+                        
+                        parsed.visibility = /"visibility"\s*:\s*"private"/i.test(raw) ? 'private' : (/"visibility"\s*:\s*"only_user"/i.test(raw) ? 'only_user' : 'public');
+                        parsed.mentions = /"我"/i.test(raw) ? ['我'] : [];
                     }
+                    
+                    content = parsed.content || "分享了瞬间";
+                    translatedContent = parsed.translatedContent || "";
 
                     let finalVisibility = 'public';
                     let finalVisibilityFriends = [];
