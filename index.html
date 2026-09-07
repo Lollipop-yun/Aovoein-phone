@@ -7105,7 +7105,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.48 更新日志 (当前最新) -->
+                            <!-- v1.49 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.49 AI朋友圈主权归还与自然触发</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-07 16:38</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">朋友圈主权归还：</span>为 AI 大模型 JSON 输出通道正式注入了 <code>post_moment</code> 字段！现在，无论是在单聊还是群聊中，只要你明确要求角色去发朋友圈，或是角色聊到兴头上有感而发，它都能通过主动输出该字段，直接触发底层的发圈引擎。</li>
+                                    <li><span class="font-bold text-gray-800">自然社交体验：</span>告别过去只能靠 2% 极低随机概率触发朋友圈的死板设定。现在的 AI 在接收到你的明示或暗示后，能够精准抓住聊天的核心要素作为主题，自己去后台酝酿并发布朋友圈，动态反馈更加智能、灵性。</li>
+                                    <li><span class="font-bold text-gray-800">群聊发圈修复：</span>彻底修复了此前在群聊中，发圈引擎错误调用群 ID 而导致提取好友信息失败，进而朋友圈发布夭折的恶性 Bug。现已能够精准定位到群内说话的实体角色。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.48 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#ef4444]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -13924,6 +13938,7 @@ Structure:
       "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：群聊中如果想【单独给某个人】(如玩家或特定NPC)钱，绝对不能用红包，必须用转账并填写 target_user！
       "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【警告】：只能用来给大家发福利，【绝对不能】用来给单人付款！
       "private_message": "OPTIONAL: 【极度重要】如果你在群里发完言后，想趁机私下找我(玩家)开小差、吐槽或说悄悄话，请直接在这里填入你要发给我的单聊内容（系统会自动将其发到我们的私聊窗口，并附带弹窗提醒！）",
+      "post_moment": "OPTIONAL: 如果你有感而发想发一条朋友圈，或者玩家要求你发朋友圈，请简要概括你想发的主题（系统将自动为你生成并发布朋友圈）。",
       "food_payment": { "item": "芝士草莓葡萄冰", "original_price": "35.00", "discount": "-5.00", "amount": "30.00", "eta": "30分钟" }, // OPTIONAL: 外卖代付请求。【警告】：这是你想吃东西但没钱，发给玩家让玩家帮你付款（你让玩家请客）！
       "food_delivery": { "item": "疯狂星期四全家桶", "original_price": "100.00", "discount": "-20.00", "amount": "80.00", "eta": "30分钟", "remark": "记得拿" } // OPTIONAL: 已点外卖卡片。【警告】：这是你已经花钱给玩家点好了外卖（你请玩家吃东西）！
     }
@@ -13965,6 +13980,7 @@ Structure:
   "change_avatar": true OR false, // OPTIONAL: 如果你想换上玩家刚才发给你的图片作为你的新头像，请设为 true
   "crop_user_avatar": true OR false, // OPTIONAL: 如果你想裁剪玩家当前的头像（截取其中的边角料、背景或手持物）作为你们的“情侣/匹配头像”，请设为 true
   "sticker_id": "OPTIONAL: 填入你想发的表情包的纯数字 ID",
+  "post_moment": "OPTIONAL: 如果你有感而发想发一条朋友圈，或者玩家要求你发朋友圈，请简要概括你想发的主题（系统将自动为你生成并发布朋友圈）。",
   "invite_music": true
 }
 `}
@@ -14444,6 +14460,13 @@ Structure:
                         }, delay + 2500); // 延迟2.5秒，显得像发完群聊再切出去发私聊
                     }
 
+                    // === 处理AI主动发朋友圈 ===
+                    if (block.post_moment) {
+                        setTimeout(() => {
+                            this.generateAIMomentFromChat(session, String(block.post_moment), speakerId);
+                        }, delay + 3500);
+                    }
+
                     // 清理过滤多余垃圾字符
                     const segments = smartSegments
                         .map(s => s.trim())
@@ -14859,7 +14882,7 @@ Structure:
                              
                              if (Math.random() < 0.02) {
                                  setTimeout(() => {
-                                     this.generateAIMomentFromChat(session, seg);
+                                     this.generateAIMomentFromChat(session, seg, speakerId);
                                  }, 5000);
                              }
                         }, delay);
@@ -19143,11 +19166,23 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             }
         },
 
-        async generateAIMomentFromChat(session, chatContext) {
-            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+        async generateAIMomentFromChat(session, chatContext, overrideFriendId = null) {
+            let friendId = overrideFriendId || session.targetId;
+            const friend = this.wechatState.friendList.find(f => f.id === friendId);
             if (!friend) return;
             
             let content = "";
+      "speaker": "说话的角色名字 (必须是群成员之一)",
+      "reply":["第一句话", "第二句话"], 
+      "translations":["对应的中文翻译"], // 【必填约束】：如果 reply 中包含外语(英语/日韩等)，必须在此提供完整的中文翻译！如果是纯中文句子请填 "" 占位。注意：数组长度必须和 reply 严格一致，保证翻译和原句一一对应！
+      "action": "当前具体动作(每轮必须更新，绝不能用'无')",
+      "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
+      "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
+      "note": "随笔日记(OPTIONAL: 看心情决定是否提笔，必须使用纯中文)",
+      "post_moment": "OPTIONAL: 如果你想发一条朋友圈(如有感而发或应玩家要求)，请填入你想发的朋友圈内容",
+      "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
+  "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
+      "change_group_name": "OPTIONAL: 填入你想修改的新群名(仅限群名修改权限开启时有效)",
             let translatedContent = "";
             
             if (this.apiConfig.apiKey) {
