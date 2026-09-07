@@ -2371,7 +2371,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div class="w-[52px] h-[52px] border border-gray-100 rounded-lg p-0.5 flex flex-col items-center justify-between shrink-0 cursor-pointer active:scale-95 transition bg-white">
                                         <!-- 补充了 @click.stop="triggerCardAvatarUpload" 触发本地相册 -->
                                         <div class="w-full h-[70%] rounded-md overflow-hidden bg-gray-50 relative" @click.stop="triggerCardAvatarUpload">
-                                            <img v-if="cardProfile.avatar" :src="cardProfile.avatar" class="w-full h-full object-cover grayscale opacity-80">
+                                            <img v-if="cardProfile.avatar" :src="cardProfile.avatar" class="w-full h-full object-cover">
                                             <i v-else class="fas fa-user text-gray-300 text-xl flex h-full items-center justify-center"></i>
                                         </div>
                                         <span class="text-[8px] opacity-60 scale-90 origin-bottom font-medium truncate w-full text-center" @click.stop="editCardProfile('status')">{{ cardProfile.status }}</span>
@@ -2656,7 +2656,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="w-full flex items-center justify-between mb-3">
                         <div class="relative w-[65px] h-[65px] shrink-0 cursor-pointer active:opacity-70 transition" @click="triggerD2Avatar('profile.avatar')">
                             <div class="w-full h-full rounded-full border-2 border-dashed border-gray-300 p-1 flex items-center justify-center relative">
-                                <img :src="desktop2.profile.avatar" class="w-full h-full rounded-full object-cover grayscale opacity-90">
+                                <img :src="desktop2.profile.avatar" class="w-full h-full rounded-full object-cover">
                                 <i class="fas fa-heart absolute -top-1 -left-1 text-gray-800 text-lg drop-shadow-md"></i>
                                 <i class="fas fa-heart absolute top-0 left-2 text-gray-300 text-sm drop-shadow-md"></i>
                             </div>
@@ -2673,7 +2673,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <button class="w-full py-1.5 border border-gray-200 bg-white rounded-[10px] text-[12px] font-bold text-gray-500 mb-3 shadow-sm active:scale-[0.98] transition" @click="showToast('点上面内容直接改呀')">Edit Profile</button>
                     <div class="w-full flex justify-between px-1">
                         <div class="flex flex-col items-center gap-1.5"><div class="w-[45px] h-[45px] rounded-full border border-gray-300 flex items-center justify-center text-2xl text-gray-500 bg-transparent"><i class="font-light">+</i></div><span class="text-[10px] text-gray-500 font-bold">New</span></div>
-                        <div v-for="(h, idx) in desktop2.highlights" :key="idx" class="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="triggerD2Highlight(idx)"><div class="w-[45px] h-[45px] rounded-full border border-gray-200 p-0.5 bg-white shadow-sm overflow-hidden"><img :src="h.img" class="w-full h-full rounded-full object-cover grayscale opacity-80" :class="{'opacity-50': idx===2}"></div><span class="text-[10px] text-gray-500 font-bold">{{ h.name }}</span></div>
+                        <div v-for="(h, idx) in desktop2.highlights" :key="idx" class="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="triggerD2Highlight(idx)"><div class="w-[45px] h-[45px] rounded-full border border-gray-200 p-0.5 bg-white shadow-sm overflow-hidden"><img :src="h.img" class="w-full h-full rounded-full object-cover" :class="{'opacity-50': idx===2}"></div><span class="text-[10px] text-gray-500 font-bold">{{ h.name }}</span></div>
                     </div>
                 </div>
 
@@ -2684,7 +2684,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="bg-gray-100 px-3 py-1 rounded-full text-[12px] font-bold text-gray-500 flex items-center gap-1.5 shadow-inner"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Lives</div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-300 shrink-0 border border-gray-100 shadow-inner overflow-hidden cursor-pointer active:opacity-70 transition" @click="triggerD2Avatar('middleAvatar')"><img :src="desktop2.middleAvatar" class="w-full h-full object-cover grayscale opacity-90"></div>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-300 shrink-0 border border-gray-100 shadow-inner overflow-hidden cursor-pointer active:opacity-70 transition" @click="triggerD2Avatar('middleAvatar')"><img :src="desktop2.middleAvatar" class="w-full h-full object-cover"></div>
                         <div class="flex-1 h-9 bg-gray-100/80 rounded-[12px] border border-gray-200/60 shadow-inner flex items-center px-3 text-gray-400">|</div>
                     </div>
                     <div class="flex justify-between items-center px-1">
@@ -2704,7 +2704,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-xl rounded-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative p-2.5 pl-6 flex flex-col justify-center cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('binderImage')">
                         <div class="absolute left-0 top-0 h-full flex flex-col justify-evenly py-3 -translate-x-1.5"><div v-for="i in 8" :key="i" class="flex items-center relative"><div class="binder-ring"></div><div class="binder-hole"></div></div></div>
                         <div class="w-full bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 rounded-[10px] flex flex-col items-center">
-                            <div class="w-full aspect-square bg-gray-100 overflow-hidden rounded-[4px]"><img :src="desktop2.binderImage" class="w-full h-full object-cover grayscale"></div>
+                            <div class="w-full aspect-square bg-gray-100 overflow-hidden rounded-[4px]"><img :src="desktop2.binderImage" class="w-full h-full object-cover"></div>
                             <div class="w-full text-center text-[7px] text-gray-400 tracking-widest font-bold mt-2 mb-1 whitespace-nowrap overflow-hidden">------ ୨ ♠ ୧ ------</div>
                         </div>
                     </div>
@@ -2724,20 +2724,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="w-[55%] h-full bg-[#fdfdfd] rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden">
                         <div class="absolute inset-0 opacity-[0.15] pointer-events-none" style="background-image: radial-gradient(#6b7280 1px, transparent 1px); background-size: 10px 10px;"></div>
                         <div class="absolute top-9 left-6 z-20 flex items-center justify-center">
-                            <div class="absolute -left-4 w-[20px] h-[20px] pointer-events-none" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90"></div>
-                            <div class="w-8 h-8 rounded-full border-[1.5px] border-white shadow-sm overflow-hidden bg-gray-100 relative z-10 cursor-pointer active:scale-90 transition" @click="triggerD2Avatar('p2Avatar')"><img :src="desktop2.p2Avatar" class="w-full h-full object-cover grayscale"></div>
-                            <div class="absolute -right-4 w-[20px] h-[20px] pointer-events-none" style="transform: scaleX(-1); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90"></div>
+                            <div class="absolute -left-4 w-[20px] h-[20px] pointer-events-none" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain opacity-90"></div>
+                            <div class="w-8 h-8 rounded-full border-[1.5px] border-white shadow-sm overflow-hidden bg-gray-100 relative z-10 cursor-pointer active:scale-90 transition" @click="triggerD2Avatar('p2Avatar')"><img :src="desktop2.p2Avatar" class="w-full h-full object-cover"></div>
+                            <div class="absolute -right-4 w-[20px] h-[20px] pointer-events-none" style="transform: scaleX(-1); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain opacity-90"></div>
                             <div class="absolute -top-7 -right-4 bg-gray-100/90 px-2 py-0.5 rounded-full text-[8px] font-bold text-gray-600 shadow-sm z-30 backdrop-blur-sm border border-gray-200 whitespace-nowrap cursor-pointer active:scale-90 transition" @click="editD2Text('修改颜文字', 'p2Kaomoji', desktop2.p2Kaomoji)">{{ desktop2.p2Kaomoji }}</div>
                         </div>
                         <div class="absolute top-3 right-1 transform rotate-3 bg-white p-1 pb-4 rounded-[6px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 w-[85px] z-10 cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('p2Img1')">
-                            <div class="w-full aspect-[4/5] bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img1" class="w-full h-full object-cover grayscale"></div>
+                            <div class="w-full aspect-[4/5] bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img1" class="w-full h-full object-cover"></div>
                         </div>
                         <div class="absolute bottom-2 left-1.5 transform -rotate-3 bg-white p-1 pb-3 rounded-[6px] shadow-[0_8px_15px_rgba(0,0,0,0.08)] border border-gray-100 w-[80px] z-20 cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('p2Img2')">
-                            <div class="w-full aspect-square bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img2" class="w-full h-full object-cover grayscale"></div>
+                            <div class="w-full aspect-square bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img2" class="w-full h-full object-cover"></div>
                             <div class="absolute bottom-0.5 left-0 w-full text-center text-[8px] font-bold text-gray-800 tracking-tighter" @click.stop="editD2Text('修改拍立得文字', 'p2Text', desktop2.p2Text)">{{ desktop2.p2Text }}</div>
                         </div>
                         <div class="absolute bottom-3 right-2 w-[40px] h-[16px] bg-gray-200/80 rounded-full shadow-inner border border-gray-300/50 flex items-center justify-center z-30 backdrop-blur-sm transform rotate-[-5deg]">
-                            <div class="w-3.5 h-3.5 bg-white shadow-sm border border-gray-100 cursor-pointer active:scale-90 transition overflow-hidden rounded-[2px]" @click.stop="triggerD2Avatar('p2BandAidImg')"><img :src="desktop2.p2BandAidImg" class="w-full h-full object-cover grayscale"></div>
+                            <div class="w-3.5 h-3.5 bg-white shadow-sm border border-gray-100 cursor-pointer active:scale-90 transition overflow-hidden rounded-[2px]" @click.stop="triggerD2Avatar('p2BandAidImg')"><img :src="desktop2.p2BandAidImg" class="w-full h-full object-cover"></div>
                         </div>
                     </div>
                 </div>
@@ -2759,7 +2759,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="w-[30px] h-[30px] border border-gray-100 bg-white rounded-[6px] flex items-center justify-center text-[11px] font-bold text-gray-800 shadow-sm">{{ desktop2Date.day }}</div>
                         </div>
                         <div class="absolute left-[58%] -bottom-1 -translate-x-1/2 z-30 cursor-pointer active:scale-90 transition" @click="triggerD2Avatar('p2MidAvatar')">
-                            <div class="w-[52px] h-[52px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-100"><img :src="desktop2.p2MidAvatar" class="w-full h-full object-cover grayscale opacity-90"></div>
+                            <div class="w-[52px] h-[52px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-100"><img :src="desktop2.p2MidAvatar" class="w-full h-full object-cover"></div>
                         </div>
                         <div class="border border-gray-200 rounded-[6px] px-2 py-1.5 text-[10px] font-bold text-gray-500 bg-white shadow-sm cursor-pointer ml-auto" @click="editD2Text('修改右下角文本', 'p2BottomRightText', desktop2.p2BottomRightText)">{{ desktop2.p2BottomRightText }}</div>
                         <i class="fas fa-mouse-pointer absolute right-2 -top-4 text-gray-400 transform -rotate-12 text-sm drop-shadow-sm"></i>
@@ -2774,9 +2774,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest">终身雨季</span>
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest">可我需要你</span>
                             <div class="relative flex justify-center items-center w-full my-0.5">
-                                <div class="absolute left-1 w-[18px] h-[18px] pointer-events-none z-20" style="filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90"></div>
+                                <div class="absolute left-1 w-[18px] h-[18px] pointer-events-none z-20" style="filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain opacity-90"></div>
                                 <span class="text-[10px] font-bold text-gray-800 bg-gray-100/90 rounded-md py-1 px-1.5 shadow-sm border border-gray-200/50 tracking-wider relative z-10 whitespace-nowrap">泛滥成灾的谎言</span>
-                                <div class="absolute right-1 w-[18px] h-[18px] pointer-events-none z-20" style="transform: scaleX(-1); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90"></div>
+                                <div class="absolute right-1 w-[18px] h-[18px] pointer-events-none z-20" style="transform: scaleX(-1); filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain opacity-90"></div>
                             </div>
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest">模糊的爱意</span>
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest">破碎记忆</span>
@@ -2785,7 +2785,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
                         <div v-for="id in ['memo', 'album', 'ph5', 'ph6']" :key="id" class="flex flex-col items-center gap-1 cursor-pointer home-icon" @click="handleAppClick(id)">
-                            <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
+                            <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-2xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
                             <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
                         </div>
                     </div>
@@ -7105,7 +7105,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.49 更新日志 (当前最新) -->
+                            <!-- v1.50 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#14b8a6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.50 桌面小组件画质还原与全彩修复</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-07 17:53</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">桌面组件真彩色还原：</span>修复了桌面 2（以及桌面 1 部分名片）所有可以自定义替换图片的小组件卡片，在上传图片后会被强制附加上 <code>grayscale</code> 灰度滤镜导致全部变成灰白色的视觉问题。现在所有上传的照片都将原汁原味地展现其原本绚丽的色彩。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.49 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#f97316]"></div>
                                 <div class="flex justify-between items-center mb-3">
