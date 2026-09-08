@@ -3027,7 +3027,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] shrink-0 z-50 sticky top-0">
                     <button @click="relationshipModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
                     <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">人际关系网</h1>
-                    <button @click="openAddRelationModal" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-plus text-[18px]"></i></button>
+                    <div class="flex items-center gap-2">
+                        <button @click="generateAINpcForRelation" class="w-8 h-8 flex items-center justify-center text-blue-500 active:opacity-50"><i class="fas fa-magic text-[16px]"></i></button>
+                        <button @click="openAddRelationModal" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-plus text-[18px]"></i></button>
+                    </div>
                 </header>
                 <div class="flex-1 overflow-y-auto p-4 space-y-4">
                     <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人，防止串戏提及毫无瓜葛的联系人。</p>
@@ -5819,12 +5822,50 @@ document.addEventListener("DOMContentLoaded", () => {
                             <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
                         </div>
                     </div>
-                </div>
-                
-                <div class="mt-4 bg-white divide-y divide-gray-100">
-                    <!-- Removed Scan/Search Items as requested -->
+                    <!-- NPC 档案入口 -->
+                    <div @click="wechatState.activeNav = 'npc_archive'" class="flex items-center p-4 active:bg-gray-50 cursor-pointer justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="text-base font-medium text-black">NPC 设定录</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                        </div>
+                    </div> 
                 </div>
             </main>                       
+
+            <!-- NPC 设定录页面 (Discover) -->
+            <transition name="page-slide">
+                <div v-if="wechatState.activeNav === 'npc_archive'" class="flex-1 flex flex-col bg-[#f4f4f6] absolute inset-0 z-50 font-sans pb-safe">
+                    <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-10">
+                        <button @click="wechatState.activeNav = 'discover'" class="w-8 h-8 flex items-center justify-center"><i class="fas fa-chevron-left text-lg text-black"></i></button>
+                        <h1 class="font-bold text-[17px]">NPC 设定录</h1>
+                        <div class="w-8"></div>
+                    </header>
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <div v-if="!wechatState.npcList || wechatState.npcList.length === 0" class="text-center text-gray-400 mt-20 text-xs">
+                            <i class="fas fa-users text-4xl mb-3 opacity-20 block"></i>
+                            暂无 NPC 设定。<br>在角色的关系网中点击“AI生成”即可收录。
+                        </div>
+                        <div v-else class="space-y-3">
+                            <div v-for="(npc, idx) in wechatState.npcList" :key="idx" class="bg-white p-4 rounded-[20px] shadow-sm border border-gray-100 relative">
+                                <button @click="deleteGlobalNpc(idx)" class="absolute top-4 right-4 text-gray-300 hover:text-red-500 active:scale-90 transition"><i class="fas fa-trash-alt"></i></button>
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200"><i class="fas fa-user"></i></div>
+                                    <div>
+                                        <div class="font-bold text-[15px] text-gray-900">{{ npc.name }}</div>
+                                        <div class="text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded mt-1 w-fit border border-gray-100 shadow-inner">所属角色: {{ npc.sourceChar }}</div>
+                                    </div>
+                                </div>
+                                <div class="text-[13px] text-gray-600 leading-relaxed text-justify bg-gray-50/50 p-3 rounded-xl border border-gray-50 whitespace-pre-wrap shadow-inner">
+                                    <span class="font-bold text-gray-500 block mb-1">关系：{{ npc.relation }}</span>
+                                    {{ npc.bio }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>                       
 
             <!-- 编辑书籍弹窗 -->
             <transition name="scale">
@@ -6984,12 +7025,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.52 更新日志 (当前最新) -->
+                            <!-- v1.53 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.53 闭环禁言体系与 AI 自动生成 NPC 系统</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-08 10:26</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">禁言闭环与系统通知：</span>彻底修复了群聊中角色被禁言后还能强行发言的灵异 Bug。现在底层会在解析 AI 回复时进行硬拦截，被禁言的角色绝对发不出任何声音。同时，AI 管理员禁言时可以自由指定时长，并在群公屏发出精确到分钟的禁言通知；当禁言时间到期后，系统会自动解禁并发布系统通知。</li>
+                                    <li><span class="font-bold text-gray-800">关系网 AI 自动生成 NPC：</span>在角色的“人际关系网”设置中，新增了魔法棒图标的“AI 生成”按钮。点击后，底层将深度阅读该角色的人设背景与当前绑定的局部/全局世界书，自动推演并生成一个符合世界观逻辑的 NPC（自动生成姓名、关系、背景纠葛），并将其自动入库绑定。</li>
+                                    <li><span class="font-bold text-gray-800">NPC 档案集 (设定录)：</span>在底栏的“发现”页中，新增了“NPC 设定录”的入口。这里会统一汇聚、保存你在所有角色里利用 AI 生成过的所有专属 NPC 档案，方便你随时查阅和管理。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.52 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#ec4899]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.52 专属头像识别与粤语无延迟同传</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-08 11:35</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-08 05:32</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
                                     <li><span class="font-bold text-gray-800">粤语翻译零延迟直出：</span>彻底剥离了此前粤语翻译受限于“中文特征”而触发的视觉拦截与备用网络请求。现在设定为粤语后，大模型将强行在底层 JSON 中同时输出粤语原文与普通话翻译，并在气泡渲染瞬间同步弹出，无需等待加载，无需再次点击。</li>
@@ -8301,7 +8356,7 @@ const app = createApp({
             previewFontFamily: '', 
             appList: Object.keys(DEFAULT_APPS), appCustomization: {}, tempIconUrls: {}, uploadingAppId: null,
             homeScreenPresets:[],
-            wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
+            wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false, npcList: [] },
             contactImportModal: { show: false },
             translateLangModal: { show: false, type: 'source' },
             translateLangOptions: ['自动识别', '简体中文 (普通话)', '繁体中文', '粤语', '英语 (English)', '日语 (日本語)', '韩语 (한국어)', '法语 (Français)', '西班牙语 (Español)', '俄语 (Русский)'],
@@ -8634,6 +8689,7 @@ const app = createApp({
                 if (session.isGroup) {
                     this.checkGroupVotes(session);
                     this.checkGroupChains(session);
+                    this.checkMuteExpiration(session);
                 }
             });
         }, 60000);
@@ -13851,7 +13907,7 @@ Structure:
       "join_chain": "OPTIONAL: 如果你想参与当前的群接龙，填入你要接上的文字（例如你的网名或加上备注）",
       "create_group_chain": { "purpose": "接龙目的", "example": "示例格式" }, // OPTIONAL: 如果你想主动发起一个群接龙，填入此项
       "kick_member": "OPTIONAL: 填入你想踢出的角色名(仅限当前speaker是管理员时有效)",
-      "mute_member": "OPTIONAL: 填入你想禁言的角色名(仅限当前speaker是管理员时有效)",
+      "mute_member": { "name": "角色名", "duration": 60 }, // OPTIONAL: 填入你想禁言的角色名和禁言时长(分钟)。仅限当前 speaker 是管理员时有效。
       "favorite_user_content": { "content": "你想收藏的玩家发送的【唯一一条】特定消息原文/描述", "source": "群内消息", "reason": "为什么想收藏" }, // OPTIONAL: 类似单聊，如果玩家发的话/图戳中该角色，可让该角色偷偷将其收藏进自己的私密记事本
       "transfer": { "amount": "52.00", "note": "For you", "target_user": "目标名字" }, // OPTIONAL: 发转账。【极其重要】：群聊中如果想【单独给某个人】(如玩家或特定NPC)钱，绝对不能用红包，必须用转账并填写 target_user！
       "red_packet": { "amount": "8.88", "count": 3, "note": "发个红包乐一乐" }, // OPTIONAL: 群内发红包(拼手气)。【警告】：只能用来给大家发福利，【绝对不能】用来给单人付款！
@@ -14587,15 +14643,23 @@ Structure:
                                 }
                             }
                             if (block.mute_member) {
-                                const target = this.wechatState.friendList.find(f => (f.remark === block.mute_member || f.name === block.mute_member) && session.members.includes(f.id));
+                                let muteTargetName = typeof block.mute_member === 'string' ? block.mute_member : block.mute_member.name;
+                                let muteDuration = typeof block.mute_member === 'object' && block.mute_member.duration ? parseInt(block.mute_member.duration) : 60;
+                                const target = this.wechatState.friendList.find(f => (f.remark === muteTargetName || f.name === muteTargetName) && session.members.includes(f.id));
                                 if (target) {
                                     if (!session.mutedObj) session.mutedObj = {};
-                                    session.mutedObj[target.id] = Date.now() + 60 * 60000; // AI自动禁言一小时
-                                    session.messages.push({ type: 'system', content: `管理员 "${block.speaker}" 将 "${target.remark || target.name}" 禁言了`, time: Date.now() });
+                                    session.mutedObj[target.id] = Date.now() + muteDuration * 60000;
+                                    session.messages.push({ type: 'system', content: `[系统提示] 管理员 "${block.speaker}" 将 "${target.remark || target.name}" 禁言了 ${muteDuration} 分钟`, time: Date.now() });
                                 }
                             }
                         }
                     }
+                    
+                    // 【拦截禁言】：如果该角色被禁言了，直接丢弃它这轮的发言！
+                    if (session.isGroup && speakerId && this.checkIsMuted(session, speakerId)) {
+                        continue; // 跳过此人的回复处理
+                    }
+
                     // ======================================
                     let statusObj = null;
                     if (block.thought || block.action || block.note || block.outfit) {
@@ -20867,6 +20931,113 @@ ${greetingInstruction}`;
                 if (this.wechatState.activeSession?.id === session.id) this.scrollToBottom();
                 this.saveData();
             }
+        },
+        checkMuteExpiration(session) {
+            if (!session || !session.mutedObj) return;
+            let updated = false;
+            const now = Date.now();
+            for (const memId in session.mutedObj) {
+                if (session.mutedObj[memId] > 0 && session.mutedObj[memId] <= now) {
+                    delete session.mutedObj[memId];
+                    updated = true;
+                    const fname = this.getFriendName(memId);
+                    session.messages.push({ type: 'system', content: `[系统提示] "${fname}" 的禁言已自动解除`, time: Date.now() });
+                }
+            }
+            if (updated) {
+                if (this.wechatState.activeSession?.id === session.id) this.scrollToBottom();
+                this.saveData();
+            }
+        },
+        async generateAINpcForRelation() {
+            const session = this.wechatState.activeSession;
+            if (!session) return;
+            if (!this.apiConfig.apiKey) return this.showToast('请先配置 API Key');
+            
+            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
+            const charName = friend ? (friend.remark || friend.name) : session.name;
+            const charBio = friend ? friend.bio : '无';
+            
+            let folderIds = session.boundWorldbookFolderIds || [];
+            let fileIds = session.boundWorldbookFileIds || [];
+            if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
+            const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
+            const wbContext = files.map(f => `[${f.name}]: ${f.content}`).join('\n');
+
+            this.showToast('AI 正在翻阅背景设定，生成专属 NPC...');
+            
+            const prompt = `你是文案策划。请根据角色【${charName}】(在指令中可被称为 char 或 {{char}})的人设背景，以及该角色绑定的世界观设定，自动生成一个与Ta有社会关系的全新 NPC。
+角色人设：${charBio}
+世界观/背景资料：
+${wbContext || '无特定背景资料'}
+
+要求：
+1. 生成的 NPC 必须符合上述背景逻辑，不要太突兀。
+2. 名字要符合背景风格（如现代、古代、西幻等）。
+3. 关系要明确（如：师傅、死对头、青梅竹马、上司等）。
+4. 简介(bio)需要包含其性格、身份以及与【${charName}】的过往纠葛（字数100字左右）。
+5. 必须且只能输出如下 JSON 格式，不要加多余文本或Markdown注释：
+{
+  "name": "NPC名字",
+  "relation": "与${charName}的关系",
+  "bio": "NPC的背景、性格与纠葛..."
+}`;
+
+            try {
+                let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+                
+                const res = await fetch(`${url}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                    body: JSON.stringify({ 
+                        model: this.apiConfig.selectedModel, 
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.9 
+                    })
+                });
+
+                if (!res.ok) throw new Error('API Error');
+                const data = await res.json();
+                let rawContent = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
+                let parsed = JSON.parse(rawContent);
+
+                if (parsed.name && parsed.relation) {
+                    const newRel = {
+                        type: 'npc',
+                        targetId: null,
+                        name: parsed.name,
+                        relation: parsed.relation,
+                        bio: parsed.bio || ''
+                    };
+                    
+                    if (!session.relationships) session.relationships = [];
+                    session.relationships.push(newRel);
+                    
+                    if (!this.wechatState.npcList) this.wechatState.npcList = [];
+                    this.wechatState.npcList.unshift({
+                        name: parsed.name,
+                        relation: parsed.relation,
+                        bio: parsed.bio || '',
+                        sourceChar: charName,
+                        time: Date.now()
+                    });
+
+                    this.saveData();
+                    this.showToast(`成功生成 NPC: ${parsed.name}`);
+                } else {
+                    this.showToast('生成的格式有误，请重试');
+                }
+            } catch(e) {
+                console.error(e);
+                this.showToast('NPC 生成失败: ' + e.message);
+            }
+        },
+        deleteGlobalNpc(idx) {
+            this.showConfirm('确定从设定录中删除此 NPC 吗？(不会影响角色已绑定的关系网)', () => {
+                this.wechatState.npcList.splice(idx, 1);
+                this.saveData();
+            });
         }
     }
 });
