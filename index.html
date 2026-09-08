@@ -4844,7 +4844,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div class="attach-item" @click="startVideoCall"><div class="attach-icon-box"><i class="fas fa-video text-gray-600"></i></div><span class="attach-label">视频通话</span></div>
                                     <div class="attach-item" @click="openLocationModal"><div class="attach-icon-box"><i class="fas fa-map-marker-alt text-gray-600"></i></div><span class="attach-label">位置</span></div>
                                     <div class="attach-item" @click="startVoiceCall"><div class="attach-icon-box"><i class="fas fa-phone text-gray-600"></i></div><span class="attach-label">语音通话</span></div>
-                                    <div class="attach-item" @click="openRedPacketModal"><div class="attach-icon-box !bg-white border border-gray-200 text-gray-600 !rounded-2xl"><i class="fas fa-wallet text-lg"></i></div><span class="attach-label">红包</span></div>
+                                    <div class="attach-item" @click="openRedPacketModal"><div class="attach-icon-box !bg-white border border-gray-200 text-gray-600 !rounded-2xl"><i class="fas fa-envelope text-lg"></i></div><span class="attach-label">红包</span></div>
                                     <div class="attach-item" @click="openFileModal"><div class="attach-icon-box"><i class="fas fa-folder text-gray-600"></i></div><span class="attach-label">文件</span></div>
                                     <div class="attach-item" @click="openTransferModal"><div class="attach-icon-box"><i class="fas fa-money-bill-wave text-gray-600"></i></div><span class="attach-label">转账</span></div>
                                 </div>
@@ -6984,7 +6984,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.51 更新日志 (当前最新) -->
+                            <!-- v1.52 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#ec4899]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.52 专属头像识别与粤语无延迟同传</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-08 11:35</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">粤语翻译零延迟直出：</span>彻底剥离了此前粤语翻译受限于“中文特征”而触发的视觉拦截与备用网络请求。现在设定为粤语后，大模型将强行在底层 JSON 中同时输出粤语原文与普通话翻译，并在气泡渲染瞬间同步弹出，无需等待加载，无需再次点击。</li>
+                                    <li><span class="font-bold text-gray-800">专属头像视界对齐：</span>修复了“允许角色识别头像 (多模态)”功能在私聊中的逻辑 Bug。如果玩家在当前对话框内设置了“本聊专属头像”，大模型的视觉捕捉将优先读取并识别这个专属头像，而不再死板地读取外层全局面具里的默认头像。</li>
+                                    <li><span class="font-bold text-gray-800">图标防撞：</span>将聊天附件栏中的“红包”图标修改为经典的信封样式（<code>fa-envelope</code>），解决其与即将上线的钱包管理功能图标重复冲突的问题。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.51 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#64748b]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -13644,8 +13658,8 @@ const app = createApp({
             let outputLangContext = "";
             if (!session.isGroup) {
                 const transLang = session.transSourceLang && session.transSourceLang !== '自动识别' ? session.transSourceLang : '简体中文 (普通话)';
-                if (!transLang.includes('中文') && !transLang.includes('普通话') && !transLang.includes('粤语')) {
-                    outputLangContext = `\n【极其重要的语言强制指令】：你必须且只能使用【${transLang}】来进行你的主要回复（包含所有对话和内心戏）！并且，在 JSON 的 "translations" 数组中提供完整的简体中文翻译！如果你用中文作为主要的 reply 将被视为严重错误！`;
+                if (!transLang.includes('简体中文') && !transLang.includes('普通话')) {
+                    outputLangContext = `\n【极其重要的语言强制指令】：你必须且只能使用【${transLang}】来进行你的主要回复（包含所有对话和内心戏）！并且，在 JSON 的 "translations" 数组中同步提供完整的简体中文翻译！如果你用简体中文作为主要的 reply 将被视为严重错误！`;
                 }
             }
             // ============================
@@ -13903,8 +13917,8 @@ Structure:
 
             // === 视觉多模态：传递头像 ===
             if (!session.isGroup && session.enableAvatarVision) {
-                const myAvatar = this.getMaskById(session.maskId).avatar;
-                const aiAvatar = friend ? friend.avatar : session.avatar;
+                const myAvatar = session.customAvatarSelf || this.getMaskById(session.maskId).avatar;
+                const aiAvatar = session.customAvatarTarget || (friend ? friend.avatar : session.avatar);
                 // 如果头像确实是 http 开头的在线图片或 base64，才传给大模型 (避免纯本地路径无法识别)
                 if (myAvatar && aiAvatar && (myAvatar.startsWith('http') || myAvatar.startsWith('data:'))) {
                     contextMessages.push({
@@ -14680,8 +14694,10 @@ Structure:
                                  // 识别大模型的安全防护废话
                                  const isAIWarning = tText.includes('人工智能') || tText.includes('心理') || tText.includes('医疗') || tText.includes('医生') || tText.length > seg.length * 4;
                                  
+                                 const isSourceSpecialChinese = (session.transSourceLang || '').includes('粤语') || (session.transSourceLang || '').includes('繁体');
+
                                  // 【最严硬拦截】：原句是中文、翻译是废话、或者包含AI警告，坚决隐藏翻译！
-                                 if (!isPureChinese && tText && !tText.includes('无需翻译') && !tText.includes('无翻译') && tText !== seg.trim() && !isAIWarning) {
+                                 if ((!isPureChinese || isSourceSpecialChinese) && tText && !tText.includes('无需翻译') && !tText.includes('无翻译') && tText !== seg.trim() && !isAIWarning) {
                                      trans = tText;
                                  }
                              }
