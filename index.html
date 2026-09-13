@@ -3931,7 +3931,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div v-if="currentApp === 'wechat'" class="absolute inset-0 z-[1000] bg-[#f7f7f7] flex flex-col overflow-hidden text-black" @click="closeChatMenus">
             
             <!-- 头部 -->
-            <header v-if="wechatState.activeNav !== 'room' && wechatState.activeNav !== 'chat-details' && wechatState.activeNav !== 'chat-bg-settings' && wechatState.activeNav !== 'red-packet-detail' && wechatState.activeNav !== 'wallet' && wechatState.activeNav !== 'qinmi-manage' && wechatState.activeNav !== 'qinmi-specific-detail' && wechatState.activeNav !== 'moments' && wechatState.activeNav !== 'diary' && wechatState.activeNav !== 'diary-detail' && wechatState.activeNav !== 'new-friends' && wechatState.activeNav !== 'bookshelf' && wechatState.activeNav !== 'blacklist-manage' && wechatState.activeNav !== 'chatlist-beautify' && wechatState.activeNav !== 'moment_notifications'" class="h-[90px] pt-10 px-4 flex items-center justify-between sticky top-0 z-[60] bg-[#f7f7f7]">
+            <header v-if="wechatState.activeNav !== 'room' && wechatState.activeNav !== 'chat-details' && wechatState.activeNav !== 'chat-bg-settings' && wechatState.activeNav !== 'red-packet-detail' && wechatState.activeNav !== 'wallet' && wechatState.activeNav !== 'qinmi-manage' && wechatState.activeNav !== 'qinmi-specific-detail' && wechatState.activeNav !== 'moments' && wechatState.activeNav !== 'diary' && wechatState.activeNav !== 'diary-detail' && wechatState.activeNav !== 'new-friends' && wechatState.activeNav !== 'bookshelf' && wechatState.activeNav !== 'blacklist-manage' && wechatState.activeNav !== 'chatlist-beautify' && wechatState.activeNav !== 'moment_notifications' && wechatState.activeNav !== 'npc_personas'" class="h-[90px] pt-10 px-4 flex items-center justify-between sticky top-0 z-[60] bg-[#f7f7f7]">
                 <button @click="closeApp" class="w-8 h-8 flex items-center justify-center text-black"><i class="fas fa-times text-lg"></i></button>
                 <!-- 强制绝对居中，并将 me 映射为 设置，其他分别映射为 消息/通讯录/发现 -->
                 <h1 class="text-[17px] font-bold absolute left-1/2 -translate-x-1/2">{{ wechatState.activeNav === 'contacts' ? '联系人' : (wechatState.activeNav === 'discover' ? '发现' : (wechatState.activeNav === 'me' ? '设置' : '消息')) }}</h1>
@@ -4088,56 +4088,70 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </div>           
 
-            <!-- NPC 档案库 -->
+            <!-- NPC 档案库 (按角色分组展示关系的终极版) -->
             <transition name="page-slide">
-                <div v-if="wechatState.activeNav === 'npc_personas'" class="flex-1 flex flex-col bg-[#f2f2f6] absolute inset-0 z-50 font-sans pb-safe">
+                <div v-if="wechatState.activeNav === 'npc_personas'" class="flex-1 flex flex-col bg-[#f2f2f6] absolute inset-0 z-[100000] font-sans pb-safe">
                     <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 sticky top-0 z-10 shrink-0 shadow-sm">
                         <button @click="wechatState.activeNav = 'discover'" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
                         <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">NPC 档案库</h1>
-                        <button @click="openEditNpcPersona(null)" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-plus text-[18px]"></i></button>
+                        <div class="w-8"></div>
                     </header>
-                    <div class="flex-1 overflow-y-auto p-4 space-y-3">
-                        <div v-if="!npcPersonas || npcPersonas.length === 0" class="text-center text-gray-400 mt-20 text-xs">
+                    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div v-if="getSessionsWithNpcs().length === 0" class="text-center text-gray-400 mt-20 text-xs">
                             <i class="fas fa-users text-4xl mb-3 opacity-20 block"></i>
-                            暂无NPC档案。可以在角色设置的关系网中一键 AI 生成，或者点击右上角手动添加。
+                            暂无NPC档案。请在各角色的【关系网】中手动添加或让AI提取。
                         </div>
-                        <div v-for="npc in npcPersonas" :key="npc.id" class="bg-white p-4 rounded-[16px] flex items-start gap-4 shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-50 cursor-pointer active:bg-gray-50 transition" @click="openEditNpcPersona(npc)">
-                            <div class="w-[52px] h-[52px] rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
-                                <img v-if="npc.avatar" :src="npc.avatar" class="w-full h-full object-cover">
-                                <i v-else class="fas fa-user text-gray-300 flex items-center justify-center h-full text-xl"></i>
+                        
+                        <div v-for="session in getSessionsWithNpcs()" :key="session.id" class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100">
+                            <!-- 角色头部分组栏 -->
+                            <div class="p-3 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2">
+                                <img :src="getAvatarForSession(session)" class="w-6 h-6 rounded-full object-cover border border-gray-200 shadow-sm">
+                                <span class="text-[12px] font-bold text-gray-700 tracking-wide">{{ session.remark || session.name }} <span class="font-normal text-gray-400">的关系网</span></span>
                             </div>
-                            <div class="flex-1 min-w-0 pt-0.5">
-                                <h3 class="font-bold text-[16px] text-gray-900 truncate">{{ npc.name }}</h3>
-                                <p class="text-[13px] text-gray-500 line-clamp-2 mt-1 leading-relaxed">{{ npc.bio || '暂无设定' }}</p>
+                            
+                            <!-- 该角色下的 NPC 列表 -->
+                            <div class="divide-y divide-gray-50">
+                                <div v-for="(npc, idx) in session.relationships.filter(r => r.type === 'npc')" :key="npc.id || idx" class="p-4 flex items-start gap-4 cursor-pointer active:bg-gray-50 transition" @click="openEditNpcPersona(session, npc)">
+                                    <div class="w-[52px] h-[52px] rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100 relative shadow-sm">
+                                        <img v-if="npc.avatar" :src="npc.avatar" class="w-full h-full object-cover">
+                                        <i v-else class="fas fa-user text-gray-300 flex items-center justify-center h-full text-xl"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0 pt-0.5">
+                                        <h3 class="font-bold text-[16px] text-gray-900 truncate">{{ npc.name }} <span class="text-[10px] bg-blue-50 text-blue-500 border border-blue-100 px-1.5 py-0.5 rounded ml-1 align-middle">{{ npc.relation }}</span></h3>
+                                        <p class="text-[12px] text-gray-500 line-clamp-2 mt-1.5 leading-relaxed">{{ npc.bio || '暂无详细设定...' }}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-300 text-sm mt-3 shrink-0"></i>
                         </div>
                     </div>
                 </div>
             </transition>
 
-            <!-- NPC 编辑/添加弹窗 -->
+            <!-- NPC 档案修改弹窗 (同步写入关系网) -->
             <transition name="scale">
                 <div v-if="npcPersonaModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col gap-4 font-sans border border-gray-100">
-                        <h3 class="text-lg font-bold text-center mb-2 text-gray-900">{{ npcPersonaModal.isEdit ? '编辑 NPC 档案' : '新建 NPC 档案' }}</h3>
-                        <div class="flex justify-center">
+                    <div class="bg-white w-[85%] max-h-[85vh] overflow-y-auto scrollbar-hide rounded-[24px] shadow-2xl p-6 flex flex-col gap-4 font-sans border border-gray-100">
+                        <h3 class="text-lg font-bold text-center mb-2 text-gray-900">编辑 NPC 档案</h3>
+                        <div class="flex justify-center shrink-0">
                             <div class="w-20 h-20 rounded-full overflow-hidden bg-gray-50 border border-gray-200 cursor-pointer shadow-sm relative group" @click="triggerNpcPersonaAvatar">
                                 <img v-if="npcPersonaModal.avatar" :src="npcPersonaModal.avatar" class="w-full h-full object-cover">
                                 <i v-else class="fas fa-camera flex h-full items-center justify-center text-gray-300 text-2xl"></i>
-                                <div class="absolute inset-0 bg-black/20 hidden group-hover:flex items-center justify-center text-white text-xs font-bold">换头像</div>
                             </div>
                         </div>
-                        <div>
+                        <div class="shrink-0">
                             <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 名字</label>
-                            <input v-model="npcPersonaModal.name" placeholder="输入名字" class="w-full bg-gray-50 p-3.5 rounded-xl text-[14px] font-bold text-gray-900 border border-gray-200 outline-none shadow-sm transition focus:border-gray-400">
+                            <input v-model="npcPersonaModal.name" placeholder="输入名字" class="w-full bg-gray-50 p-3.5 rounded-xl text-[14px] font-bold text-gray-900 border border-gray-200 outline-none shadow-sm transition">
                         </div>
-                        <div>
+                        <div class="shrink-0">
+                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">与角色的关系</label>
+                            <input v-model="npcPersonaModal.relation" placeholder="例如：死对头、哥哥..." class="w-full bg-gray-50 p-3.5 rounded-xl text-[14px] font-bold text-gray-900 border border-gray-200 outline-none shadow-sm transition">
+                        </div>
+                        <div class="shrink-0">
                             <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">人设背景 (性格、外貌、职业等)</label>
-                            <textarea v-model="npcPersonaModal.bio" placeholder="输入人设背景..." class="w-full h-32 bg-gray-50 p-3.5 rounded-xl text-[13px] text-gray-700 leading-relaxed border border-gray-200 outline-none resize-none shadow-sm transition focus:border-gray-400"></textarea>
+                            <textarea v-model="npcPersonaModal.bio" placeholder="输入人设背景..." class="w-full h-24 bg-gray-50 p-3.5 rounded-xl text-[13px] text-gray-700 leading-relaxed border border-gray-200 outline-none resize-none shadow-sm transition"></textarea>
                         </div>
-                        <div class="flex gap-2 mt-2">
-                            <button v-if="npcPersonaModal.isEdit" @click="deleteNpcPersona" class="w-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center active:scale-95 transition border border-red-100 shadow-sm"><i class="fas fa-trash"></i></button>
+                        <div class="flex gap-2 mt-2 shrink-0">
+                            <button @click="deleteNpcPersona" class="w-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center active:scale-95 transition border border-red-100 shadow-sm"><i class="fas fa-trash"></i></button>
                             <button @click="npcPersonaModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200">取消</button>
                             <button @click="saveNpcPersona" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存</button>
                         </div>
@@ -6031,7 +6045,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </main>
 
             <!-- 底部悬浮导航 (聊天房间和聊天详情不显示) -->
-            <div v-if="wechatState.activeNav !== 'room' && wechatState.activeNav !== 'chat-details' && wechatState.activeNav !== 'chat-bg-settings' && wechatState.activeNav !== 'red-packet-detail' && wechatState.activeNav !== 'wallet' && wechatState.activeNav !== 'qinmi-manage' && wechatState.activeNav !== 'qinmi-specific-detail' && wechatState.activeNav !== 'moments' && wechatState.activeNav !== 'diary' && wechatState.activeNav !== 'diary-detail' && wechatState.activeNav !== 'new-friends' && wechatState.activeNav !== 'bookshelf' && wechatState.activeNav !== 'blacklist-manage' && wechatState.activeNav !== 'chatlist-beautify' && wechatState.activeNav !== 'moment_notifications'" class="absolute bottom-6 left-1/2 -translate-x-1/2 wechat-bottom-nav flex items-center justify-around px-4 z-20">
+            <div v-if="wechatState.activeNav !== 'room' && wechatState.activeNav !== 'chat-details' && wechatState.activeNav !== 'chat-bg-settings' && wechatState.activeNav !== 'red-packet-detail' && wechatState.activeNav !== 'wallet' && wechatState.activeNav !== 'qinmi-manage' && wechatState.activeNav !== 'qinmi-specific-detail' && wechatState.activeNav !== 'moments' && wechatState.activeNav !== 'diary' && wechatState.activeNav !== 'diary-detail' && wechatState.activeNav !== 'new-friends' && wechatState.activeNav !== 'bookshelf' && wechatState.activeNav !== 'blacklist-manage' && wechatState.activeNav !== 'chatlist-beautify' && wechatState.activeNav !== 'moment_notifications' && wechatState.activeNav !== 'npc_personas'" class="absolute bottom-6 left-1/2 -translate-x-1/2 wechat-bottom-nav flex items-center justify-around px-4 z-20">
                 <div @click="wechatState.activeNav='chat'" class="relative flex items-center justify-center w-10 h-full cursor-pointer transition text-xl" :class="wechatState.activeNav==='chat' ? 'text-black' : 'text-gray-400'">
                     <i class="fas fa-comment"></i>
                     <div v-if="totalUnreadCount > 0" class="absolute top-2 -right-1 min-w-[14px] h-[14px] px-[3px] bg-red-500 rounded-full flex items-center justify-center text-white text-[9px] font-bold border border-white shadow-sm">{{ totalUnreadCount > 99 ? '99+' : totalUnreadCount }}</div>
@@ -7055,7 +7069,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.53 更新日志 (当前最新) -->
+                            <!-- v1.54 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.54 NPC聚合查阅与数据同源贯通</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-13 16:50</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">UI 层级修正：</span>修复了 NPC 档案库与全局系统栏重叠导致“点击返回却直接退出程序陷入死循环”的严重前端遮挡 Bug。</li>
+                                    <li><span class="font-bold text-gray-800">档案库聚合查阅：</span>NPC 档案库不再是将所有人像大杂烩一样堆在一起。现在系统会严格遍历你手机里每一位角色的【私密关系网】，按照源角色进行分组排列（带有主角色头像和名字标题），清晰展示哪些 NPC 是依附于哪个角色的。</li>
+                                    <li><span class="font-bold text-gray-800">同源数据贯通：</span>所有在档案库里针对 NPC 做出的更改（如换头像、改名、修改关系与身份背景），都会被底层瞬间指针同步，直接改写并保存进对应角色的关系网数据源中。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.53 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#64748b]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -20696,11 +20724,13 @@ ${greetingInstruction}`;
             if (!this.addRelationModal.relation.trim()) return this.showToast('请输入关系 (如：前任、亲妹妹)');
 
             const relData = {
+                id: 'npc_' + Date.now().toString(),
                 type: this.addRelationModal.type,
                 targetId: this.addRelationModal.type === 'contact' ? this.addRelationModal.targetId : null,
                 name: this.addRelationModal.type === 'npc' ? this.addRelationModal.name.trim() : '',
                 relation: this.addRelationModal.relation.trim(),
-                bio: this.addRelationModal.type === 'npc' ? this.addRelationModal.bio.trim() : ''
+                bio: this.addRelationModal.type === 'npc' ? this.addRelationModal.bio.trim() : '',
+                avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
             };
 
             if (!this.wechatState.activeSession.relationships) this.wechatState.activeSession.relationships = [];
@@ -20979,41 +21009,51 @@ ${greetingInstruction}`;
                 this.saveData();
             }
         },
-        openEditNpcPersona(npc) {
-            if (npc) {
-                this.npcPersonaModal = { show: true, id: npc.id, name: npc.name, bio: npc.bio, avatar: npc.avatar, isEdit: true };
-            } else {
-                this.npcPersonaModal = { show: true, id: null, name: '', bio: '', avatar: '', isEdit: false };
-            }
+        getAvatarForSession(session) {
+            return session.customAvatarTarget || session.avatar;
+        },
+        getSessionsWithNpcs() {
+            return this.wechatState.sessions.filter(s => !s.isGroup && s.relationships && s.relationships.some(r => r.type === 'npc'));
+        },
+        openEditNpcPersona(session, npc) {
+            if (!session || !npc) return;
+            const realIdx = session.relationships.findIndex(r => r === npc);
+            this.npcPersonaModal = { 
+                show: true, 
+                sessionId: session.id,
+                realIdx: realIdx,
+                name: npc.name, 
+                bio: npc.bio, 
+                relation: npc.relation,
+                avatar: npc.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', 
+                isEdit: true 
+            };
         },
         saveNpcPersona() {
             if (!this.npcPersonaModal.name.trim()) return this.showToast('名字不能为空');
-            if (!this.npcPersonas) this.npcPersonas = [];
-            if (this.npcPersonaModal.isEdit) {
-                const idx = this.npcPersonas.findIndex(n => n.id === this.npcPersonaModal.id);
-                if (idx > -1) {
-                    this.npcPersonas[idx].name = this.npcPersonaModal.name;
-                    this.npcPersonas[idx].bio = this.npcPersonaModal.bio;
-                    this.npcPersonas[idx].avatar = this.npcPersonaModal.avatar;
+            const session = this.wechatState.sessions.find(s => s.id === this.npcPersonaModal.sessionId);
+            if (session && this.npcPersonaModal.isEdit) {
+                const npc = session.relationships[this.npcPersonaModal.realIdx];
+                if (npc) {
+                    npc.name = this.npcPersonaModal.name;
+                    npc.bio = this.npcPersonaModal.bio;
+                    npc.relation = this.npcPersonaModal.relation;
+                    npc.avatar = this.npcPersonaModal.avatar;
+                    this.saveData();
+                    this.showToast('NPC 档案已同步更新至对应角色关系网');
                 }
-            } else {
-                this.npcPersonas.unshift({
-                    id: 'npc_' + Date.now(),
-                    name: this.npcPersonaModal.name,
-                    bio: this.npcPersonaModal.bio,
-                    avatar: this.npcPersonaModal.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
-                });
             }
-            this.saveData();
             this.npcPersonaModal.show = false;
-            this.showToast('NPC 已保存');
         },
         deleteNpcPersona() {
-            this.showConfirm('确定删除该 NPC 档案吗？', () => {
-                this.npcPersonas = this.npcPersonas.filter(n => n.id !== this.npcPersonaModal.id);
-                this.saveData();
+            this.showConfirm('确定要删除这个 NPC 吗？TA 将从该角色的关系网中消失。', () => {
+                const session = this.wechatState.sessions.find(s => s.id === this.npcPersonaModal.sessionId);
+                if (session && this.npcPersonaModal.isEdit) {
+                    session.relationships.splice(this.npcPersonaModal.realIdx, 1);
+                    this.saveData();
+                    this.showToast('已删除');
+                }
                 this.npcPersonaModal.show = false;
-                this.showToast('已删除');
             });
         },
         triggerNpcPersonaAvatar() {
@@ -21077,30 +21117,21 @@ ${greetingInstruction}`;
 
                 if (Array.isArray(parsed) && parsed.length > 0) {
                     if (!session.relationships) session.relationships = [];
-                    if (!this.npcPersonas) this.npcPersonas = [];
                     
                     parsed.forEach(npc => {
                         session.relationships.push({
+                            id: 'npc_' + Date.now().toString() + Math.random().toString(36).substr(2, 5),
                             type: 'npc',
                             targetId: null,
                             name: npc.name,
                             relation: npc.relation,
-                            bio: npc.bio
+                            bio: npc.bio,
+                            avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
                         });
-                        
-                        const exists = this.npcPersonas.find(n => n.name === npc.name);
-                        if (!exists) {
-                            this.npcPersonas.unshift({
-                                id: 'npc_' + Date.now() + Math.random().toString(36).substr(2, 5),
-                                name: npc.name,
-                                bio: npc.bio,
-                                avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
-                            });
-                        }
                     });
                     
                     this.saveData();
-                    this.showToast(`成功提取并生成了 ${parsed.length} 个 NPC 关系！`);
+                    this.showToast(`成功提取并生成了 ${parsed.length} 个 NPC 关系！去发现页的档案库给他们配上头像吧！`);
                 } else {
                     this.showToast('未提取到任何 NPC');
                 }
