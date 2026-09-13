@@ -1746,20 +1746,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="absolute top-4 left-4 text-gray-400 cursor-pointer active:scale-95 transition" @click="statusBeautifyConfig.show = true; statusModal.show = false;"><i class="fas fa-palette text-xl"></i></div>
                 
                 <div class="text-center mb-6 mt-2 shrink-0">
-                    <div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg relative cursor-pointer group" @click="wechatState.activeSession?.isGroup ? triggerGroupMemberAvatarUpload() : null">
+                    <div class="status-avatar w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg relative cursor-pointer group" @click="wechatState.activeSession?.isGroup ? triggerGroupMemberAvatarUpload() : null">
                         <img :src="getChatAvatar({isSelf: false, name: currentStatus.name, avatar: currentStatus.avatar})" class="w-full h-full object-cover">
                         <div v-if="wechatState.activeSession?.isGroup" class="absolute bottom-0 left-0 w-full bg-black/40 text-white text-[9px] py-0.5 text-center font-bold">群内换头</div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900">{{ currentStatus.name || wechatState.activeSession?.name }}</h3>
-                    <p class="text-xs text-gray-400 mt-1">Current State</p>
+                    <h3 class="status-name text-xl font-bold text-gray-900">{{ currentStatus.name || wechatState.activeSession?.name }}</h3>
+                    <p class="status-state text-xs text-gray-400 mt-1">Current State</p>
                 </div>
                 
                 <!-- 内容区 -->
-                <div class="space-y-4 text-sm flex-1 overflow-y-auto scrollbar-hide pb-2 aovein-status-content">
-                    <div class="flex gap-3 aovein-status-action"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">动作</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.action || '无' }}</div></div>
-                    <div class="flex gap-3 aovein-status-thought"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">心声</div><div class="text-gray-800 aovein-status-text">"{{ currentStatus.thought || '...' }}"</div></div>
-                    <div class="flex gap-3 aovein-status-outfit"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">穿着</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.outfit || '未知' }}</div></div>
-                    <div class="flex gap-3 aovein-status-note"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed aovein-status-text">{{ currentStatus.note || '无随笔' }}</div></div>
+                <div class="space-y-4 text-sm flex-1 overflow-y-auto scrollbar-hide pb-2">
+                    <div class="status-row flex gap-3"><div class="status-label w-8 shrink-0 text-gray-400 font-bold text-right">动作</div><div class="status-value text-gray-800">{{ currentStatus.action || '无' }}</div></div>
+                    <div class="status-row flex gap-3"><div class="status-label w-8 shrink-0 text-gray-400 font-bold text-right">心声</div><div class="status-value text-gray-800">"{{ currentStatus.thought || '...' }}"</div></div>
+                    <div class="status-row flex gap-3"><div class="status-label w-8 shrink-0 text-gray-400 font-bold text-right">穿着</div><div class="status-value text-gray-800">{{ currentStatus.outfit || '未知' }}</div></div>
+                    <div class="status-row flex gap-3"><div class="status-label w-8 shrink-0 text-gray-400 font-bold text-right">随笔</div><div class="status-note text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">{{ currentStatus.note || '无随笔' }}</div></div>
                 </div>
             </div>
 
@@ -1803,15 +1803,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="text-xs text-gray-400 mb-4 text-center font-bold tracking-widest">效果预览</div>
                     <div class="aovein-status-card bg-white w-full rounded-[20px] overflow-hidden shadow-md p-5 relative border border-gray-100">
                         <div class="text-center mb-4">
-                            <div class="w-14 h-14 rounded-full bg-gray-200 mx-auto mb-2"><i class="fas fa-user flex items-center justify-center h-full text-gray-400 text-xl"></i></div>
-                            <h3 class="text-sm font-bold text-gray-900">某位少爷</h3>
-                            <p class="text-[10px] text-gray-400">Current State</p>
+                            <div class="status-avatar w-14 h-14 rounded-full bg-gray-200 mx-auto mb-2"><i class="fas fa-user flex items-center justify-center h-full text-gray-400 text-xl"></i></div>
+                            <h3 class="status-name text-sm font-bold text-gray-900">某位少爷</h3>
+                            <p class="status-state text-[10px] text-gray-400">Current State</p>
                         </div>
                         <div class="space-y-2 text-xs">
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">动作</div><div class="text-gray-800">喝了一口咖啡</div></div>
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800">"这咖啡怎么这么苦..."</div></div>
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">穿着</div><div class="text-gray-800">黑色风衣</div></div>
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">原来少爷也是怕苦的，真是可爱。</div></div>
+                            <div class="status-row flex gap-2"><div class="status-label w-8 text-gray-400 font-bold text-right">动作</div><div class="status-value text-gray-800">喝了一口咖啡</div></div>
+                            <div class="status-row flex gap-2"><div class="status-label w-8 text-gray-400 font-bold text-right">心声</div><div class="status-value text-gray-800">"这咖啡怎么这么苦..."</div></div>
+                            <div class="status-row flex gap-2"><div class="status-label w-8 text-gray-400 font-bold text-right">穿着</div><div class="status-value text-gray-800">黑色风衣</div></div>
+                            <div class="status-row flex gap-2"><div class="status-label w-8 text-gray-400 font-bold text-right">随笔</div><div class="status-note text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">原来少爷也是怕苦的，真是可爱。</div></div>
                         </div>
                     </div>
                 </div>
@@ -2198,11 +2198,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <div v-if="newContact.id" class="flex flex-col gap-2 mb-4">
                         <div class="flex gap-3">
-                            <button @click="triggerExportContact('json')" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition border border-gray-200"><i class="fas fa-code"></i> Export JSON</button>
-                            <button @click="triggerExportContact('png')" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition shadow-md"><i class="fas fa-image"></i> PNG Card</button>
+                            <button @click="openCharExportModal('json')" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition border border-gray-200"><i class="fas fa-code"></i> Export JSON</button>
+                            <button @click="openCharExportModal('png')" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition shadow-md"><i class="fas fa-image"></i> PNG Card</button>
                         </div>
                         <div class="text-[10px] text-gray-400 text-center leading-tight">注：JSON仅含角色基础设定；PNG专属卡将额外打包导出该角色绑定的【局部世界书】，在被导入时会自动恢复背景设定并一键绑定。</div>
                     </div>
+
+                    <!-- 新增：角色导出确认弹窗 (携带关系网选项) -->
+                    <transition name="scale">
+                        <div v-if="charExportModal.show" class="fixed inset-0 z-[130000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                            <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col gap-4 font-sans">
+                                <h3 class="text-center font-bold text-gray-900 text-lg mb-2">导出角色档案</h3>
+                                <div class="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                    <div class="flex flex-col">
+                                        <span class="text-[14px] font-bold text-gray-800">包含关联的 NPC 档案</span>
+                                        <span class="text-[10px] text-gray-400 mt-0.5">连同该角色的关系网一起打包导出</span>
+                                    </div>
+                                    <input type="checkbox" id="export-npc-toggle" class="switch-checkbox" v-model="charExportModal.includeNpc">
+                                    <label for="export-npc-toggle" class="switch-label shrink-0"><div class="switch-button"></div></label>
+                                </div>
+                                <div class="flex gap-3 mt-4">
+                                    <button @click="charExportModal.show = false" class="flex-1 bg-white text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200">取消</button>
+                                    <button @click="executeCharExport" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">确认导出</button>
+                                </div>
+                            </div>
+                        </div>
+                    </transition>
 
                     <!-- 底部确认与取消按钮 -->
                     <div class="flex gap-3 mb-4">
@@ -3027,13 +3048,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] shrink-0 z-50 sticky top-0">
                     <button @click="relationshipModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
                     <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">人际关系网</h1>
-                    <div class="flex items-center gap-1.5">
-                        <button @click="generateNpcRelations" class="text-gray-700 text-[12px] font-bold active:bg-gray-200 transition bg-white border border-gray-200 px-3 py-1.5 rounded-full shadow-sm flex items-center ml-2"><i class="fas fa-magic mr-1 text-gray-500"></i>AI生成</button>
+                    <div class="flex items-center gap-2">
+                        <button @click="generateNpcRelations" class="text-gray-700 text-[13px] font-bold active:opacity-50 bg-white border border-gray-200 px-3 py-1.5 rounded-full shadow-sm flex items-center mr-1"><i class="fas fa-magic mr-1"></i>AI提取</button>
                         <button @click="openAddRelationModal" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-plus text-[18px]"></i></button>
                     </div>
                 </header>
                 <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                    <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人，防止串戏提及毫无瓜葛的联系人。</p>
+                    <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。点击连线中途的标签可手动修改两人之间的隐藏交叉关系。</p>
 
                     <!-- 关系网可视化区域 -->
                     <div class="relative w-full h-[320px] bg-white rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
@@ -3046,7 +3067,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
 
                         <!-- 关系网连线 (含智能交叉连线) -->
-                        <svg class="absolute inset-0 w-full h-full" style="z-index: 10; pointer-events: none;">
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" style="z-index: 10;">
                             <!-- 中心到外围的连线 -->
                             <line v-for="(rel, idx) in wechatState.activeSession.relationships" :key="'line-'+idx"
                                   x1="50%" y1="50%"
@@ -3055,23 +3076,20 @@ document.addEventListener("DOMContentLoaded", () => {
                                   stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,4"/>
                             
                             <!-- 外围节点之间的交叉连线 -->
-                            <g v-for="(line, lidx) in getCrossRelations()" :key="'cross-'+lidx" style="pointer-events: auto;">
+                            <g v-for="(line, lidx) in getCrossRelations()" :key="'cross-'+lidx" style="pointer-events: auto; cursor: pointer;" @click="editCrossRelation(line)">
                                 <line :x1="getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + '%'"
                                       :y1="getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + '%'"
                                       :x2="getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x + '%'"
                                       :y2="getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y + '%'"
                                       stroke="#9ca3af" stroke-width="1" stroke-dasharray="2,2"/>
-                                <!-- 连线上的关系文字背景和文字 (加入独立可点击状态) -->
-                                <rect @click.stop="editCrossRelation(line)"
-                                      :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
+                                <!-- 连线上的关系文字背景和文字 -->
+                                <rect :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
                                       :y="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y)/2) + '%'"
-                                      width="32" height="16" fill="#f9fafb" rx="4"
-                                      class="cursor-pointer"
-                                      style="transform: translate(-16px, -8px); stroke: #e5e7eb; stroke-width: 1px;"/>
-                                <text @click.stop="editCrossRelation(line)"
-                                      :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
+                                      width="32" height="14" fill="#f9fafb" rx="4" stroke="#e5e7eb" stroke-width="1"
+                                      style="transform: translate(-16px, -7px);"/>
+                                <text :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
                                       :y="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y)/2) + '%'"
-                                      fill="#4b5563" font-size="8" font-weight="bold" text-anchor="middle" dominant-baseline="central" class="cursor-pointer">
+                                      fill="#4b5563" font-size="8" font-weight="bold" text-anchor="middle" dominant-baseline="central">
                                     {{ line.label }}
                                 </text>
                             </g>
@@ -4106,24 +4124,24 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         
                         <div v-for="session in getSessionsWithNpcs()" :key="session.id" class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100">
-                            <!-- 角色头部分组栏 (增加折叠功能) -->
-                            <div class="p-3.5 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between cursor-pointer active:bg-gray-100 transition" @click="toggleNpcSessionFolder(session.id)">
+                            <!-- 角色头部分组栏 (支持折叠) -->
+                            <div class="p-3 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between cursor-pointer active:bg-gray-100 transition" @click="toggleNpcSession(session.id)">
                                 <div class="flex items-center gap-2">
                                     <img :src="getAvatarForSession(session)" class="w-6 h-6 rounded-full object-cover border border-gray-200 shadow-sm">
-                                    <span class="text-[13px] font-bold text-gray-700 tracking-wide">{{ session.remark || session.name }} <span class="font-normal text-gray-400">的关系网</span></span>
+                                    <span class="text-[12px] font-bold text-gray-700 tracking-wide">{{ session.remark || session.name }} <span class="font-normal text-gray-400">的关系网</span></span>
                                 </div>
-                                <i class="fas fa-chevron-right text-gray-400 text-xs transition-transform duration-200" :class="{'rotate-90': collapsedNpcSessions.includes(session.id)}"></i>
+                                <i class="fas fa-chevron-right text-gray-300 text-xs transition-transform duration-200" :class="{'rotate-90': !collapsedNpcSessions.includes(session.id)}"></i>
                             </div>
                             
                             <!-- 该角色下的 NPC 列表 -->
-                            <div v-show="collapsedNpcSessions.includes(session.id)" class="divide-y divide-gray-50">
+                            <div v-show="!collapsedNpcSessions.includes(session.id)" class="divide-y divide-gray-50">
                                 <div v-for="(npc, idx) in session.relationships.filter(r => r.type === 'npc')" :key="npc.id || idx" class="p-4 flex items-start gap-4 cursor-pointer active:bg-gray-50 transition" @click="openEditNpcPersona(session, npc)">
                                     <div class="w-[52px] h-[52px] rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100 relative shadow-sm">
                                         <img v-if="npc.avatar" :src="npc.avatar" class="w-full h-full object-cover">
                                         <i v-else class="fas fa-user text-gray-300 flex items-center justify-center h-full text-xl"></i>
                                     </div>
                                     <div class="flex-1 min-w-0 pt-0.5">
-                                        <h3 class="font-bold text-[16px] text-gray-900 truncate">{{ npc.name }} <span class="text-[10px] bg-gray-800 text-white border border-gray-800 px-1.5 py-0.5 rounded ml-1 align-middle">{{ npc.relation }}</span></h3>
+                                        <h3 class="font-bold text-[16px] text-gray-900 truncate">{{ npc.name }} <span class="text-[10px] bg-blue-50 text-blue-500 border border-blue-100 px-1.5 py-0.5 rounded ml-1 align-middle">{{ npc.relation }}</span></h3>
                                         <p class="text-[12px] text-gray-500 line-clamp-2 mt-1.5 leading-relaxed">{{ npc.bio || '暂无详细设定...' }}</p>
                                     </div>
                                 </div>
@@ -4133,40 +4151,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </transition>
 
-            <!-- 角色与导出分离选项弹窗 -->
-            <transition name="scale">
-                <div v-if="contactExportModal.show" class="fixed inset-0 z-[130000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div class="bg-white w-[80%] rounded-[24px] overflow-hidden shadow-2xl p-6 flex flex-col font-sans">
-                        <h3 class="text-lg font-bold text-gray-900 mb-2 text-center">导出选项</h3>
-                        <p class="text-[13px] text-gray-500 text-center mb-6">是否连同该角色关系网中的所有【NPC档案】一并打包导出？</p>
-                        
-                        <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 cursor-pointer" @click="contactExportModal.includeNpc = !contactExportModal.includeNpc">
-                            <span class="text-[14px] font-bold text-gray-800">携带关联的 NPC 档案</span>
-                            <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition" :class="{'bg-[#07c160] border-[#07c160]': contactExportModal.includeNpc}">
-                                <i v-if="contactExportModal.includeNpc" class="fas fa-check text-white text-[10px]"></i>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-3">
-                            <button @click="contactExportModal.show = false" class="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm">取消</button>
-                            <button @click="executeExportContact" class="flex-1 py-3 bg-black text-white rounded-xl font-bold text-sm shadow-md">确认导出</button>
-                        </div>
-                    </div>
-                </div>
-            </transition>
-
-            <!-- 高定版 NPC 档案修改弹窗 (同步写入关系网) -->
+            <!-- NPC 档案修改弹窗 (同步写入关系网 - 高定卡片版) -->
             <transition name="scale">
                 <div v-if="npcPersonaModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                    <div class="bg-white w-[92%] max-h-[90vh] shadow-2xl flex flex-col relative font-sans overflow-hidden border border-gray-200">
+                    <div class="bg-white w-[92%] max-h-[90vh] shadow-2xl flex flex-col relative font-sans overflow-hidden border border-gray-200 rounded-[24px]">
+                        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 sticky top-0 z-10 shrink-0">
+                            <button @click="npcPersonaModal.show = false" class="text-gray-500 font-bold text-[14px] active:opacity-50">取消</button>
+                            <h3 class="text-[16px] font-bold text-gray-900">{{ npcPersonaModal.isEdit ? '编辑 NPC 档案' : '新建 NPC' }}</h3>
+                            <button @click="saveNpcPersona" class="text-blue-600 font-bold text-[14px] active:opacity-50">保存</button>
+                        </div>
                         
                         <div class="flex-1 overflow-y-auto p-6 scrollbar-hide relative">
-                            <!-- 顶部返回/删除与标题 -->
-                            <div class="flex justify-between items-center mb-6">
-                                <span class="font-bold text-[17px] text-gray-900 font-mono tracking-tighter">NPC Database</span>
-                                <button v-if="npcPersonaModal.isEdit" @click="deleteNpcPersona" class="text-red-500 text-[13px] font-bold"><i class="fas fa-trash-alt mr-1"></i>删除</button>
-                            </div>
-
                             <div class="flex gap-4 mb-8 mt-2">
                                 <div class="shrink-0 relative cursor-pointer group" @click="triggerNpcPersonaAvatar">
                                     <div class="absolute -top-3 -left-2 text-gray-400 text-2xl -rotate-[30deg] drop-shadow-sm z-10"><i class="fas fa-paperclip"></i></div>
@@ -4179,30 +4174,29 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </div>
 
                                 <div class="flex-1 min-w-0 flex flex-col pt-1">
-                                    <div class="flex items-center gap-1">
-                                        <span class="text-[17px] font-bold text-gray-900 font-mono tracking-tighter">@ </span>
-                                        <input v-model="npcPersonaModal.name" placeholder="NPC名字" class="text-[16px] font-bold text-gray-800 outline-none bg-transparent flex-1 min-w-0 border-b-[1.5px] border-gray-200 pb-1">
+                                    <div class="border-b-[1.5px] border-gray-200 pb-1.5 mb-3 flex items-center">
+                                        <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mr-2">关系</span>
+                                        <input v-model="npcPersonaModal.relation" placeholder="例如：死对头..." class="text-[13px] font-bold text-blue-600 outline-none bg-transparent w-full">
                                     </div>
-                                    <div class="text-[9px] text-gray-400 tracking-widest uppercase mb-3 mt-1">Character Name</div>
 
-                                    <div class="space-y-2">
-                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1.5">
-                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Relation</span>
-                                            <input v-model="npcPersonaModal.relation" placeholder="与角色的关系" class="text-[13px] font-bold text-gray-900 text-right outline-none bg-transparent w-24">
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1">
+                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Name</span>
+                                            <input v-model="npcPersonaModal.name" placeholder="姓名" class="text-[13px] font-bold text-gray-900 text-right outline-none bg-transparent w-20">
                                         </div>
-                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1.5 cursor-pointer" @click="npcPersonaModal.gender = npcPersonaModal.gender === '男' ? '女' : (npcPersonaModal.gender === '女' ? '未知' : '男')">
+                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1 cursor-pointer" @click="openGenderSelect('npc')">
                                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Gender</span>
-                                            <span class="text-[13px] font-bold text-gray-900">{{ npcPersonaModal.gender || '未知' }}</span>
+                                            <span class="text-[13px] font-bold text-gray-900">{{ npcPersonaModal.gender || '女' }}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1">
+                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Age</span>
+                                            <div class="flex items-baseline"><input v-model="npcPersonaModal.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold">岁</span></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-x-6 gap-y-4 mb-8">
-                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
-                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Age</span>
-                                    <div class="flex items-baseline"><input v-model="npcPersonaModal.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold">岁</span></div>
-                                </div>
                                 <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
                                     <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Birth</span>
                                     <input v-model="npcPersonaModal.birthday" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-16">
@@ -4211,7 +4205,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Height</span>
                                     <div class="flex items-baseline"><input v-model="npcPersonaModal.height" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">cm</span></div>
                                 </div>
-                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1 col-span-2">
                                     <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Weight</span>
                                     <div class="flex items-baseline"><input v-model="npcPersonaModal.weight" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">kg</span></div>
                                 </div>
@@ -4220,25 +4214,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div class="mb-8 relative">
                                 <div class="flex items-center gap-2 mb-3">
                                     <div class="w-1 h-4 bg-gray-900"></div>
-                                    <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Background & Bio</span>
+                                    <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Background Record</span>
                                 </div>
-                                <textarea v-model="npcPersonaModal.bio" placeholder="输入NPC生平、背景资料、外貌与性格设定..." class="w-full min-h-[120px] text-[14px] leading-loose text-gray-600 bg-transparent outline-none resize-none text-justify"></textarea>
+                                <textarea v-model="npcPersonaModal.bio" placeholder="输入人物生平、背景资料、性格设定..." class="w-full min-h-[140px] text-[14px] leading-loose text-gray-600 bg-transparent outline-none resize-none text-justify"></textarea>
                             </div>
 
-                            <div class="mb-8">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-1 h-4 bg-gray-900"></div>
-                                        <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Signature</span>
-                                    </div>
-                                </div>
-                                <input v-model="npcPersonaModal.signature" placeholder="一句话个性签名..." class="w-full border-b border-dashed border-gray-300 pb-2 text-[13px] text-gray-500 outline-none bg-transparent italic">
-                            </div>
-
-                            <!-- 底部确认与取消按钮 -->
-                            <div class="flex gap-3 mb-4">
-                                <button @click="npcPersonaModal.show = false" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[13px] tracking-widest active:scale-95 transition border border-gray-200">取消</button>
-                                <button @click="saveNpcPersona" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[13px] tracking-widest active:scale-95 transition shadow-md">确定</button>
+                            <div v-if="npcPersonaModal.isEdit" class="mb-4">
+                                <button @click="deleteNpcPersona" class="w-full py-3 bg-[#fdf2f2] text-red-500 font-bold text-[13px] tracking-widest active:scale-95 transition border border-red-100 rounded-xl"><i class="fas fa-trash mr-1"></i> 删除该 NPC</button>
                             </div>
                         </div>
                     </div>
@@ -7157,17 +7139,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="space-y-4">
                             <!-- v1.55 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-[#8b5cf6]"></div>
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#10b981]"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.55 心声深度定制与 NPC 生态完整流转</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-13 22:13</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.55 关系网交叉编辑与NPC深度漫游</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-13 23:05</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">心声面板深度定制：</span>为心声卡片内部的“动作、心声、穿着、随笔”各个模块精准注入了 <code>aovein-status-action</code> 等专属独立类名，并重写了默认美化源码。现在你可以用 CSS 单独控制每一行文字的颜色、粗细和背景色了。</li>
-                                    <li><span class="font-bold text-gray-800">关系网动态修正：</span>现在人际关系网中 AI 自动生成的连线（如夫妻、兄妹等交叉关系），可以直接点击中心的文字标签进行手动修改，彻底告别 AI 乱拉线无法纠正的尴尬。</li>
-                                    <li><span class="font-bold text-gray-800">NPC 档案深度流转：</span>导出角色卡（JSON/PNG）时新增了高级选项卡，支持自由勾选“是否携带关联的 NPC 档案”。导入时，附带的 NPC 会被系统自动解包剥离，并无缝注入新角色的关系网中。</li>
-                                    <li><span class="font-bold text-gray-800">AI 智能提取与润色：</span>关系网新增黑白灰质感的“AI生成”按钮，不仅能一键提取 NPC，大模型还会根据上下文自动为你补全该 NPC 的性格、外貌、职业等长篇优质背景设定。</li>
-                                    <li><span class="font-bold text-gray-800">NPC 档案库重构：</span>修复了左上角返回按钮导致的系统死循环退出问题。现在的档案库按所属角色采用了高级折叠卡片进行分组收纳，点击即可弹出与新建联系人同款的高定资料卡进行独立编辑。</li>
+                                    <li><span class="font-bold text-gray-800">关系网隐藏连线编辑：</span>关系网不再只是查看工具。现在你可以直接点击关系网图谱中 NPC 之间的交叉连线标签，手动修改并纠正两人之间的关联（防止 AI 乱拉线）。同时，顶部的“AI 生成”按钮已调整为灰白风 UI 并向右微调。</li>
+                                    <li><span class="font-bold text-gray-800">NPC 档案提取与卡片化：</span>当你让 AI 提取关系网时，底层 prompt 已重写，大模型现在不仅会提取名字，还会基于世界观对 NPC 的设定进行自动润色扩写，并补齐性别、年龄、身高、体重等维度。同时 NPC 档案的编辑界面已完全重构，采用了新建角色同款的高定灰白 UI 卡片。</li>
+                                    <li><span class="font-bold text-gray-800">档案库折叠收纳：</span>NPC 档案库现在支持以“主角色”为单位进行手风琴式的点击折叠与展开，列表阅读更加清爽。</li>
+                                    <li><span class="font-bold text-gray-800">隐写打包漫游扩容：</span>当你导出某个角色的专属卡片（PNG / JSON）时，系统现在会弹出一个高级选项，询问你是否要“连同该角色关联的 NPC 关系档案”一起导出。如果勾选，该角色的人际网络将被隐写入图片内，别人导入时将瞬间复原！</li>
+                                    <li><span class="font-bold text-gray-800">心声源码深度开放：</span>为心声面板注入了完整的前端类名（如 <code>.status-avatar</code>, <code>.status-row</code> 等），并在默认的一键美化 CSS 源代码中补全了所有类名的结构框架，方便你随心所欲地控制心声卡片的每个细节。</li>
                                 </ul>
                             </div>
 
@@ -8517,10 +8499,8 @@ const app = createApp({
             previewFontFamily: '', 
             appList: Object.keys(DEFAULT_APPS), appCustomization: {}, tempIconUrls: {}, uploadingAppId: null,
             homeScreenPresets:[],
-            collapsedNpcSessions: [], // NPC折叠状态
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
-            contactExportModal: { show: false, type: 'png', includeNpc: true },
             translateLangModal: { show: false, type: 'source' },
             translateLangOptions: ['自动识别', '简体中文 (普通话)', '繁体中文', '粤语', '英语 (English)', '日语 (日本語)', '韩语 (한국어)', '法语 (Français)', '西班牙语 (Español)', '俄语 (Русский)'],
             fileModal: { show: false, tab: 'real', title: '', content: '' }, 
@@ -8693,6 +8673,8 @@ const app = createApp({
             
             // Diary Feature (New - Immersive)
             diaries: [],
+            collapsedNpcSessions: [], // NPC 档案库折叠状态
+            charExportModal: { show: false, includeNpc: true }, // 角色导出携带 NPC 选项
             groupActivityModal: { show: false },
             groupVoteCreateModal: { show: false, title: '', options: ['', ''], startTime: '', endTime: '' },
             voteDetailsModal: { show: false, msg: null },
@@ -9331,44 +9313,10 @@ const app = createApp({
             this.showToast('已恢复默认样式');
         },
         copyStatusBeautifyDefault() {
-            const defaultCss = `/* Aovein 专属代码：心声卡片美化 */
-.aovein-status-card {
-    background-color: #ffffff !important;
-    border: 1px solid #f3f4f6 !important;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
-}
-
-/* 核心布局区域：可以调整行高和边距 */
-.aovein-status-content {
-    line-height: 1.6 !important;
-}
-
-/* 【动作】这一行的所有样式 */
-.aovein-status-action .aovein-status-label { color: #9ca3af !important; }
-.aovein-status-action .aovein-status-text { color: #1f2937 !important; }
-
-/* 【心声】这一行的所有样式 */
-.aovein-status-thought .aovein-status-label { color: #9ca3af !important; }
-.aovein-status-thought .aovein-status-text { 
-    color: #1f2937 !important; 
-    font-weight: 500 !important; 
-}
-
-/* 【穿着】这一行的所有样式 */
-.aovein-status-outfit .aovein-status-label { color: #9ca3af !important; }
-.aovein-status-outfit .aovein-status-text { color: #4b5563 !important; }
-
-/* 【随笔】这一行的所有样式 */
-.aovein-status-note .aovein-status-label { color: #9ca3af !important; }
-.aovein-status-note .aovein-status-text {
-    background-color: #f9fafb !important;
-    color: #4b5563 !important;
-    padding: 8px !important;
-    border-radius: 8px !important;
-}`;
+            const defaultCss = `/* Aovein 专属代码：心声卡片美化 */\n.aovein-status-card {\n    background-color: #ffffff !important;\n    border: 1px solid #f3f4f6 !important;\n    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;\n}\n.aovein-status-card .status-avatar {\n    /* 头像框样式 */\n}\n.aovein-status-card .status-name {\n    color: #1f2937 !important;\n    letter-spacing: 1px !important;\n}\n.aovein-status-card .status-state {\n    /* Current State 小字样式 */\n}\n.aovein-status-card .status-row {\n    /* 每一行的 flex 容器 */\n}\n.aovein-status-card .status-label {\n    /* 左侧标签(动作/心声/穿着)文字 */\n    color: #9ca3af !important;\n}\n.aovein-status-card .status-value {\n    /* 右侧具体内容 */\n    color: #1f2937 !important;\n}\n.aovein-status-card .status-note {\n    /* 随笔特殊框 */\n    background-color: #f9fafb !important;\n}`;
             this.statusBeautifyConfig.tempCode = defaultCss;
             this.copyToClipboard(defaultCss);
-            this.showToast('默认Aovein源代码已填入框内并复制到剪切板');
+            this.showToast('全套类名源码已填入框内，并复制到剪切板');
         },
         saveStatusBeautifyPreset() {
             const name = this.statusBeautifyConfig.presetNameInput.trim();
@@ -9615,8 +9563,26 @@ const app = createApp({
             }
             return session.lastMessage || '...';
         },
+        openCharExportModal(mode) {
+            this.charExportModal.mode = mode;
+            this.charExportModal.show = true;
+        },
+        executeCharExport() {
+            this.charExportModal.show = false;
+            if (this.charExportModal.mode === 'json') {
+                this.exportContactAsJSON();
+            } else {
+                this.exportContactAsPNG();
+            }
+        },
         exportContactAsJSON() {
-            const dataStr = JSON.stringify(this.newContact, null, 2);
+            let exportData = JSON.parse(JSON.stringify(this.newContact));
+            const session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id);
+            if (this.charExportModal.includeNpc && session && session.relationships) {
+                exportData._embeddedNpcs = session.relationships;
+            }
+
+            const dataStr = JSON.stringify(exportData, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `Aovein_Contact_${this.newContact.name}.json`; a.click(); URL.revokeObjectURL(url);
@@ -9625,6 +9591,22 @@ const app = createApp({
         async exportContactAsPNG() {
             try {
                 this.showToast('正在生成 Aovein OS 专属 PNG 角色卡...');
+                
+                // 深拷贝防止污染当前数据
+                let exportData = JSON.parse(JSON.stringify(this.newContact));
+                
+                // 查找当前角色会话，提取其绑定的世界书ID 和 NPC 关系网
+                const session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id);
+                if (session) {
+                    exportData.boundWorldbookFolderIds = session.boundWorldbookFolderIds || [];
+                    exportData.boundWorldbookFileIds = session.boundWorldbookFileIds || [];
+                    if (session.boundWorldbookFolderId && !exportData.boundWorldbookFolderIds.includes(session.boundWorldbookFolderId)) {
+                        exportData.boundWorldbookFolderIds.push(session.boundWorldbookFolderId);
+                    }
+                    if (this.charExportModal.includeNpc && session.relationships) {
+                        exportData._embeddedNpcs = session.relationships;
+                    }
+                }
                 
                 // 深拷贝防止污染当前数据
                 let exportData = JSON.parse(JSON.stringify(this.newContact));
@@ -11885,12 +11867,6 @@ const app = createApp({
                                 
                                 delete data._embeddedWorldbook;
                                 this.saveData(); // 预先保存进世界书数据库
-                            }
-
-                            // 缓存拦截导入的 NPC 档案
-                            if (data._embeddedNpcs) {
-                                this.newContact._tempEmbeddedNpcs = data._embeddedNpcs;
-                                delete data._embeddedNpcs;
                             }
                             
                             this.newContact = { ...this.newContact, ...data, id: null };
@@ -15540,6 +15516,7 @@ Structure:
         },
         selectGender(g) {
             if (this.genderSelectModal.target === 'contact') this.newContact.gender = g;
+            else if (this.genderSelectModal.target === 'npc') this.npcPersonaModal.gender = g;
             else this.maskForm.gender = g;
             this.genderSelectModal.show = false;
         },
@@ -15557,44 +15534,39 @@ Structure:
         // (旧的添加好友头像上传已被接管)
         saveNewContact() {
             if(!this.newContact.name) return this.showToast('请输入姓名');
-            let savedId = this.newContact.id;
             
-            if (savedId) { 
-                const idx = this.wechatState.friendList.findIndex(f => f.id === savedId); 
-                if (idx !== -1) { 
-                    this.wechatState.friendList[idx] = { ...this.newContact }; 
-                    this.showToast('修改成功'); 
-                } 
+            // 拦截由于导入带来的 _embeddedNpcs 并注入给会话
+            const tempEmbeddedNpcs = this.newContact._embeddedNpcs;
+            delete this.newContact._embeddedNpcs;
+
+            let finalId = this.newContact.id;
+            if (finalId) { 
+                const idx = this.wechatState.friendList.findIndex(f => f.id === finalId); 
+                if (idx !== -1) { this.wechatState.friendList[idx] = { ...this.newContact }; this.showToast('修改成功'); } 
             } else { 
-                savedId = Date.now().toString();
-                this.wechatState.friendList.push({ ...this.newContact, id: savedId }); 
+                finalId = Date.now().toString();
+                this.newContact.id = finalId;
+                this.wechatState.friendList.push({ ...this.newContact }); 
                 this.showToast('已添加朋友'); 
             }
-            
-            // 如果刚刚导入了角色且附带了 NPC 数据，自动将其注入该角色的新会话关系网中
-            if (this.newContact._tempEmbeddedNpcs) {
-                let session = this.wechatState.sessions.find(s => s.targetId === savedId);
+
+            // 同步恢复 NPC 关系网
+            if (tempEmbeddedNpcs && tempEmbeddedNpcs.length > 0) {
+                let session = this.wechatState.sessions.find(s => s.targetId === finalId);
                 if (!session) {
                     const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
-                    const friendObj = this.wechatState.friendList.find(f => f.id === savedId);
-                    if (myMaskId && friendObj) {
-                        this.createSession(friendObj, this.getMaskById(myMaskId));
-                        session = this.wechatState.sessions[0];
+                    if (myMaskId) {
+                        this.createSession(this.wechatState.friendList.find(f => f.id === finalId), this.getMaskById(myMaskId));
+                        session = this.wechatState.sessions.find(s => s.targetId === finalId);
                     }
                 }
                 if (session) {
-                    if (!session.relationships) session.relationships = [];
-                    // 重新分配防止 ID 冲突
-                    this.newContact._tempEmbeddedNpcs.forEach((npc, index) => {
-                        session.relationships.push({ ...npc, id: 'npc_' + Date.now() + '_' + index });
-                    });
-                    this.showToast('附带的 NPC 关系档案已成功注入系统！');
+                    session.relationships = tempEmbeddedNpcs;
+                    this.showToast('随行携带的 NPC 档案已同步导入！');
                 }
-                delete this.newContact._tempEmbeddedNpcs;
             }
-            
-            this.addContactModal.show = false; 
-            this.saveData();
+
+            this.addContactModal.show = false; this.saveData();
         },
         async autoFillProfile(field, isMask = false) {
             if (!this.apiConfig.apiKey) return this.showToast('请先配置 API Key');
@@ -15973,6 +15945,13 @@ Structure:
                 try { const url = await compressImage(files[i], 300); this.npcAvatars.unshift(url); } catch(err) {}
             }
             this.saveData(); e.target.value = ''; this.showToast('上传成功');
+        },
+        toggleNpcSession(id) {
+            if (!this.collapsedNpcSessions) this.collapsedNpcSessions = [];
+            const idx = this.collapsedNpcSessions.indexOf(id);
+            if (idx > -1) this.collapsedNpcSessions.splice(idx, 1);
+            else this.collapsedNpcSessions.push(id);
+            this.saveData();
         },
         toggleNpcAvatarSelect(idx) {
             if (!this.isNpcMultiSelect) return;
@@ -20847,13 +20826,17 @@ ${greetingInstruction}`;
         },
         inferRelation(r1, r2) {
             const match = (a, b, w1, w2) => (a.includes(w1) && b.includes(w2)) || (a.includes(w2) && b.includes(w1));
+            // 夫妻
             if (match(r1, r2, '父', '母') || match(r1, r2, '爸', '妈')) return '夫妻';
             if (match(r1, r2, '爷', '奶')) return '夫妻';
             if (match(r1, r2, '外公', '外婆')) return '夫妻';
+            // 父子/父女
             if (match(r1, r2, '父', '子') || match(r1, r2, '父', '弟') || match(r1, r2, '父', '哥')) return '父子';
             if (match(r1, r2, '父', '女') || match(r1, r2, '父', '妹') || match(r1, r2, '父', '姐')) return '父女';
+            // 母子/母女
             if (match(r1, r2, '母', '子') || match(r1, r2, '母', '弟') || match(r1, r2, '母', '哥')) return '母子';
             if (match(r1, r2, '母', '女') || match(r1, r2, '母', '妹') || match(r1, r2, '母', '姐')) return '母女';
+            // 兄弟姐妹
             if (match(r1, r2, '哥', '弟') || (r1.includes('弟') && r2.includes('弟')) || (r1.includes('哥') && r2.includes('哥'))) return '兄弟';
             if (match(r1, r2, '姐', '妹') || (r1.includes('妹') && r2.includes('妹')) || (r1.includes('姐') && r2.includes('姐'))) return '姐妹';
             if (match(r1, r2, '哥', '妹') || match(r1, r2, '兄', '妹')) return '兄妹';
@@ -20864,19 +20847,19 @@ ${greetingInstruction}`;
             const session = this.wechatState.activeSession;
             if (!session) return [];
             const rels = session.relationships || [];
-            const crossRels = session.crossRels || {};
+            const customCross = session.customCrossRelations || {};
             const lines = [];
             for (let i = 0; i < rels.length; i++) {
                 for (let j = i + 1; j < rels.length; j++) {
-                    const key = [i, j].sort().join('-');
-                    if (crossRels[key]) {
-                        lines.push({ sourceIdx: i, targetIdx: j, label: crossRels[key], key: key });
+                    const key = `${rels[i].id}_${rels[j].id}`;
+                    if (customCross[key] !== undefined) {
+                        if (customCross[key]) {
+                            lines.push({ sourceIdx: i, targetIdx: j, label: customCross[key], key });
+                        }
                     } else {
-                        const r1 = rels[i].relation;
-                        const r2 = rels[j].relation;
-                        let crossName = this.inferRelation(r1, r2);
+                        let crossName = this.inferRelation(rels[i].relation, rels[j].relation);
                         if (crossName) {
-                            lines.push({ sourceIdx: i, targetIdx: j, label: crossName, key: key });
+                            lines.push({ sourceIdx: i, targetIdx: j, label: crossName, key });
                         }
                     }
                 }
@@ -20884,20 +20867,19 @@ ${greetingInstruction}`;
             return lines;
         },
         editCrossRelation(line) {
-            this.showInput('修改这两个 NPC 的羁绊关系', line.label, '如：夫妻、情敌、挚友', (val) => {
-                if(val && val.trim()) {
-                    const session = this.wechatState.activeSession;
-                    if(!session.crossRels) session.crossRels = {};
-                    session.crossRels[line.key] = val.trim();
-                    this.saveData();
-                    this.showToast('关系已修正');
-                }
+            this.showInput('修改交叉关系', line.label, '请输入新的关系称呼，清空则取消关联', (val) => {
+                const session = this.wechatState.activeSession;
+                if (!session.customCrossRelations) session.customCrossRelations = {};
+                session.customCrossRelations[line.key] = (val || '').trim();
+                this.saveData();
+                this.showToast(val ? '关系已修改' : '关系已取消关联');
             });
         },
         getRelNodePos(idx, total) {
+            // 环形算法，将节点均匀分布在当前角色周围
             if (total === 0) return { x: 50, y: 50 };
             const angle = (idx / total) * 2 * Math.PI - Math.PI / 2;
-            const radius = 35;
+            const radius = 35; // 连线半径35%
             return {
                 x: 50 + radius * Math.cos(angle),
                 y: 50 + radius * Math.sin(angle)
@@ -20928,7 +20910,7 @@ ${greetingInstruction}`;
             if (!this.wechatState.activeSession.relationships) this.wechatState.activeSession.relationships = [];
 
             if (this.addRelationModal.isEdit) {
-                this.wechatState.activeSession.relationships[this.addRelationModal.editIndex] = { ...this.wechatState.activeSession.relationships[this.addRelationModal.editIndex], ...relData, id: this.wechatState.activeSession.relationships[this.addRelationModal.editIndex].id || relData.id };
+                this.wechatState.activeSession.relationships[this.addRelationModal.editIndex] = relData;
             } else {
                 this.wechatState.activeSession.relationships.push(relData);
             }
@@ -20944,266 +20926,6 @@ ${greetingInstruction}`;
                 this.showToast('关系已解除');
             });
         },
-        getAvatarForSession(session) {
-            return session.customAvatarTarget || session.avatar;
-        },
-        getSessionsWithNpcs() {
-            return this.wechatState.sessions.filter(s => !s.isGroup && s.relationships && s.relationships.some(r => r.type === 'npc'));
-        },
-        toggleNpcSessionFolder(id) {
-            if (!this.collapsedNpcSessions) this.collapsedNpcSessions = [];
-            const idx = this.collapsedNpcSessions.indexOf(id);
-            if (idx > -1) this.collapsedNpcSessions.splice(idx, 1);
-            else this.collapsedNpcSessions.push(id);
-        },
-        openEditNpcPersona(session, npc) {
-            if (!session || !npc) return;
-            const realIdx = session.relationships.findIndex(r => r === npc);
-            this.npcPersonaModal = { 
-                show: true, 
-                sessionId: session.id,
-                realIdx: realIdx,
-                name: npc.name, 
-                bio: npc.bio, 
-                relation: npc.relation,
-                gender: npc.gender || '男',
-                age: npc.age || '',
-                height: npc.height || '',
-                weight: npc.weight || '',
-                birthday: npc.birthday || '',
-                signature: npc.signature || '',
-                avatar: npc.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', 
-                isEdit: true 
-            };
-        },
-        saveNpcPersona() {
-            if (!this.npcPersonaModal.name.trim()) return this.showToast('名字不能为空');
-            const session = this.wechatState.sessions.find(s => s.id === this.npcPersonaModal.sessionId);
-            if (session && this.npcPersonaModal.isEdit) {
-                const npc = session.relationships[this.npcPersonaModal.realIdx];
-                if (npc) {
-                    npc.name = this.npcPersonaModal.name;
-                    npc.bio = this.npcPersonaModal.bio;
-                    npc.relation = this.npcPersonaModal.relation;
-                    npc.gender = this.npcPersonaModal.gender;
-                    npc.age = this.npcPersonaModal.age;
-                    npc.height = this.npcPersonaModal.height;
-                    npc.weight = this.npcPersonaModal.weight;
-                    npc.birthday = this.npcPersonaModal.birthday;
-                    npc.signature = this.npcPersonaModal.signature;
-                    npc.avatar = this.npcPersonaModal.avatar;
-                    this.saveData();
-                    this.showToast('NPC 档案已同步更新至对应角色关系网');
-                }
-            }
-            this.npcPersonaModal.show = false;
-        },
-        deleteNpcPersona() {
-            this.showConfirm('确定要删除这个 NPC 吗？TA 将从该角色的关系网中彻底消失。', () => {
-                const session = this.wechatState.sessions.find(s => s.id === this.npcPersonaModal.sessionId);
-                if (session && this.npcPersonaModal.isEdit) {
-                    session.relationships.splice(this.npcPersonaModal.realIdx, 1);
-                    this.saveData();
-                    this.showToast('已删除');
-                }
-                this.npcPersonaModal.show = false;
-            });
-        },
-        triggerNpcPersonaAvatar() {
-            this.openUniversalAvatarUpload(url => {
-                this.npcPersonaModal.avatar = url;
-            });
-        },
-        async generateNpcRelations() {
-            if (!this.apiConfig.apiKey) return this.showToast('请先配置 API Key');
-            const session = this.wechatState.activeSession;
-            if (!session) return;
-            const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
-            if (!friend) return;
-
-            this.showToast('AI 正在翻阅设定为您自动推演完善 NPC 档案，请稍候...');
-
-            let worldContext = "";
-            let folderIds = session.boundWorldbookFolderIds || [];
-            let fileIds = session.boundWorldbookFileIds || [];
-            if (session.boundWorldbookFolderId) folderIds.push(session.boundWorldbookFolderId);
-            const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
-            worldContext = files.map(f => `[${f.name}]: ${f.content}`).join("\n");
-
-            const prompt = `你是档案提取与文案润色大师。请根据以下角色({{char}})的【背景设定】以及【世界书资料】，提取出与该角色有明确关系的 NPC 人物，并自动生成、润色他们的所有档案属性。
-【角色({{char}})名字】：${friend.name}
-【角色背景设定】：${friend.bio || '无'}
-【关联世界书资料】：${worldContext || '无'}
-
-请输出一个 JSON 数组，提取 1-4 个最重要的 NPC。如果资料里没有提到任何人，你可以基于角色的人设合理推断并虚构出 2 个能丰富剧情的 NPC（比如死对头、青梅竹马、上司等）。
-结构要求（必须完全使用这 9 个字段）：
-[
-  {
-    "name": "NPC名字",
-    "relation": "与 {{char}} (${friend.name}) 的关系",
-    "gender": "男/女/未知",
-    "age": "25",
-    "height": "180",
-    "weight": "65",
-    "birthday": "10月5日",
-    "bio": "极其重要！请发挥你的创作能力，在提取的基础上进行润色，写出一段优美、细节丰富、能立体展现该NPC性格与过往的背景设定(不少于80字)",
-    "signature": "一句符合该NPC性格的签名"
-  }
-]
-注意：
-1. 绝对不要包含 {{char}} (${friend.name}) 自己！
-2. 绝对不要包含 "我"、"用户"、"玩家"、"{{user}}" 相关的角色。
-3. 只能输出纯 JSON 数组，严禁其他解释或 Markdown！`;
-
-            try {
-                let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
-                if (!url.endsWith('/v1')) url += '/v1';
-                
-                const res = await fetch(`${url}/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
-                    body: JSON.stringify({ 
-                        model: this.apiConfig.selectedModel, 
-                        messages: [{ role: 'user', content: prompt }],
-                        temperature: 0.8
-                    })
-                });
-
-                if (!res.ok) throw new Error('API 请求失败');
-                const data = await res.json();
-                let rawContent = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
-                let parsed = JSON.parse(rawContent);
-
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    if (!session.relationships) session.relationships = [];
-                    
-                    parsed.forEach(npc => {
-                        session.relationships.push({
-                            id: 'npc_' + Date.now().toString() + Math.random().toString(36).substr(2, 5),
-                            type: 'npc',
-                            targetId: null,
-                            name: npc.name,
-                            relation: npc.relation,
-                            bio: npc.bio,
-                            gender: npc.gender || '未知',
-                            age: npc.age || '',
-                            height: npc.height || '',
-                            weight: npc.weight || '',
-                            birthday: npc.birthday || '',
-                            signature: npc.signature || '',
-                            avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
-                        });
-                    });
-                    
-                    this.saveData();
-                    this.showToast(`成功推演并生成了 ${parsed.length} 个高级 NPC 档案！去发现页档案库看看吧！`);
-                } else {
-                    this.showToast('未提取到任何 NPC');
-                }
-            } catch(e) {
-                this.showToast('提取失败: ' + e.message);
-                console.error(e);
-            }
-        },
-        triggerExportContact(type) {
-            this.contactExportModal.type = type;
-            this.contactExportModal.includeNpc = true;
-            this.contactExportModal.show = true;
-        },
-        executeExportContact() {
-            this.contactExportModal.show = false;
-            if (this.contactExportModal.type === 'json') {
-                this.exportContactAsJSON_execute();
-            } else {
-                this.exportContactAsPNG_execute();
-            }
-        },
-        exportContactAsJSON_execute() {
-            let exportData = JSON.parse(JSON.stringify(this.newContact));
-            const session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id);
-            if (session && this.contactExportModal.includeNpc && session.relationships) {
-                exportData._embeddedNpcs = session.relationships.filter(r => r.type === 'npc');
-            }
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([dataStr], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `Aovein_Contact_${this.newContact.name}.json`; a.click(); URL.revokeObjectURL(url);
-            this.showToast('导出 JSON 成功');
-        },
-        async exportContactAsPNG_execute() {
-            try {
-                this.showToast('正在生成 Aovein OS 专属 PNG 角色卡...');
-                
-                let exportData = JSON.parse(JSON.stringify(this.newContact));
-                
-                const session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id);
-                if (session) {
-                    exportData.boundWorldbookFolderIds = session.boundWorldbookFolderIds || [];
-                    exportData.boundWorldbookFileIds = session.boundWorldbookFileIds || [];
-                    if (session.boundWorldbookFolderId && !exportData.boundWorldbookFolderIds.includes(session.boundWorldbookFolderId)) {
-                        exportData.boundWorldbookFolderIds.push(session.boundWorldbookFolderId);
-                    }
-                    if (this.contactExportModal.includeNpc && session.relationships) {
-                        exportData._embeddedNpcs = session.relationships.filter(r => r.type === 'npc');
-                    }
-                }
-                
-                let boundFolderIds = exportData.boundWorldbookFolderIds || [];
-                let boundFileIds = exportData.boundWorldbookFileIds || [];
-                let embeddedFolders = [];
-                let embeddedFiles = [];
-                
-                if (boundFolderIds.length > 0 || boundFileIds.length > 0) {
-                    this.worldData.forEach(item => {
-                        if (item.type === 'folder' && boundFolderIds.includes(item.id)) {
-                            embeddedFolders.push(item);
-                        }
-                    });
-                    
-                    this.worldData.forEach(item => {
-                        if (item.type === 'file' && !item.isGlobal) {
-                            if (boundFileIds.includes(item.id) || boundFolderIds.includes(item.parentId)) {
-                                embeddedFiles.push(item);
-                            }
-                        }
-                    });
-                }
-                
-                if (embeddedFolders.length > 0 || embeddedFiles.length > 0) {
-                    exportData._embeddedWorldbook = { folders: embeddedFolders, files: embeddedFiles };
-                }
-                
-                const dataStr = JSON.stringify(exportData);
-                const magicBytes = new TextEncoder().encode("AOVEIN_OS_DATA_V1:");
-                const jsonBytes = new TextEncoder().encode(dataStr);
-                
-                const avatarUrl = this.newContact.avatar;
-                if (!avatarUrl.startsWith('data:image')) {
-                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                    const img = new Image(); img.crossOrigin = 'Anonymous';
-                    img.onload = () => {
-                        canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
-                        canvas.toBlob((blob) => { this.appendDataToPngBlob(blob, magicBytes, jsonBytes, this.newContact.name); }, 'image/png');
-                    };
-                    img.onerror = () => this.showToast('头像跨域限制，请尝试导出JSON');
-                    img.src = avatarUrl;
-                } else {
-                    const res = await fetch(avatarUrl);
-                    const blob = await res.blob();
-                    if (blob.type !== 'image/png') {
-                        const img = new Image();
-                        img.onload = () => {
-                            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                            canvas.width = img.width; canvas.height = img.height; ctx.drawImage(img, 0, 0);
-                            canvas.toBlob((pngBlob) => { this.appendDataToPngBlob(pngBlob, magicBytes, jsonBytes, this.newContact.name); }, 'image/png');
-                        };
-                        img.src = avatarUrl;
-                    } else {
-                        this.appendDataToPngBlob(blob, magicBytes, jsonBytes, this.newContact.name);
-                    }
-                }
-            } catch(e) { this.showToast('导出 PNG 失败'); }
-        }
         
         // --- 接受 AI 听歌邀请 ---
         acceptMusicInvite(msg) {
@@ -21474,9 +21196,14 @@ ${greetingInstruction}`;
                 show: true, 
                 sessionId: session.id,
                 realIdx: realIdx,
-                name: npc.name, 
-                bio: npc.bio, 
-                relation: npc.relation,
+                name: npc.name || '', 
+                bio: npc.bio || '', 
+                relation: npc.relation || '',
+                gender: npc.gender || '女',
+                age: npc.age || '',
+                height: npc.height || '',
+                weight: npc.weight || '',
+                birthday: npc.birthday || '',
                 avatar: npc.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', 
                 isEdit: true 
             };
@@ -21491,6 +21218,11 @@ ${greetingInstruction}`;
                     npc.bio = this.npcPersonaModal.bio;
                     npc.relation = this.npcPersonaModal.relation;
                     npc.avatar = this.npcPersonaModal.avatar;
+                    npc.gender = this.npcPersonaModal.gender;
+                    npc.age = this.npcPersonaModal.age;
+                    npc.height = this.npcPersonaModal.height;
+                    npc.weight = this.npcPersonaModal.weight;
+                    npc.birthday = this.npcPersonaModal.birthday;
                     this.saveData();
                     this.showToast('NPC 档案已同步更新至对应角色关系网');
                 }
@@ -21529,18 +21261,24 @@ ${greetingInstruction}`;
             const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
             worldContext = files.map(f => `[${f.name}]: ${f.content}`).join("\n");
 
-            const prompt = `你是信息提取助手。请根据以下角色({{char}})的【背景设定】以及【世界书资料】，提取出与该角色有明确关系的 NPC 人物，并生成他们的人设和关系。
+            const prompt = `你是信息提取助手。请根据以下角色({{char}})的【背景设定】以及【世界书资料】，提取出与该角色有明确关系的 NPC 人物。
 【角色({{char}})名字】：${friend.name}
 【角色背景设定】：${friend.bio || '无'}
 【关联世界书资料】：${worldContext || '无'}
 
 请输出一个 JSON 数组，最多提取 5 个最重要的 NPC。如果实在没有，可以基于角色设定合理推断或虚构 1~2 个丰富剧情的NPC（如死对头、同伴、师傅等）。
+请务必结合你的知识和创作能力，为每个提取出的 NPC 丰富和润色其人设背景。
 结构要求：
 [
   {
     "name": "NPC名字",
     "relation": "与 {{char}} (${friend.name}) 的关系(如: 青梅竹马、死对头、师傅)",
-    "bio": "该 NPC 的人设背景、性格、外貌特征等(不少于30字)"
+    "gender": "男或女",
+    "age": "年龄数字或未知",
+    "height": "身高(如178cm)",
+    "weight": "体重(如55kg)",
+    "birthday": "生日",
+    "bio": "该 NPC 的详细人设背景、性格、外貌特征等(必须经过你的润色和扩写，不少于50字)"
   }
 ]
 注意：
@@ -21575,15 +21313,20 @@ ${greetingInstruction}`;
                             id: 'npc_' + Date.now().toString() + Math.random().toString(36).substr(2, 5),
                             type: 'npc',
                             targetId: null,
-                            name: npc.name,
-                            relation: npc.relation,
-                            bio: npc.bio,
+                            name: npc.name || '',
+                            relation: npc.relation || '',
+                            gender: npc.gender || '未知',
+                            age: npc.age || '',
+                            height: npc.height || '',
+                            weight: npc.weight || '',
+                            birthday: npc.birthday || '',
+                            bio: npc.bio || '',
                             avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
                         });
                     });
                     
                     this.saveData();
-                    this.showToast(`成功提取并生成了 ${parsed.length} 个 NPC 关系！去发现页的档案库给他们配上头像吧！`);
+                    this.showToast(`成功提取并润色了 ${parsed.length} 个 NPC！去发现页档案库给他们配头像吧！`);
                 } else {
                     this.showToast('未提取到任何 NPC');
                 }
