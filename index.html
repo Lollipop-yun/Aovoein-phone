@@ -1740,26 +1740,23 @@ document.addEventListener("DOMContentLoaded", () => {
     <!-- AI 心声弹窗 -->
     <transition name="scale">
         <div v-if="statusModal.show" class="fixed inset-0 z-[60000] flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm" @click="statusModal.show = false">
-            <!-- 加上了 aovein-status-card 专属选择器，用于接收美化 CSS -->
             <div class="aovein-status-card bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl p-6 relative flex flex-col max-h-[75vh]" @click.stop>
-                <!-- 左上角美化按钮 -->
                 <div class="absolute top-4 left-4 text-gray-400 cursor-pointer active:scale-95 transition" @click="statusBeautifyConfig.show = true; statusModal.show = false;"><i class="fas fa-palette text-xl"></i></div>
                 
-                <div class="text-center mb-6 mt-2 shrink-0">
-                    <div class="w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg relative cursor-pointer group" @click="wechatState.activeSession?.isGroup ? triggerGroupMemberAvatarUpload() : null">
-                        <img :src="getChatAvatar({isSelf: false, name: currentStatus.name, avatar: currentStatus.avatar})" class="w-full h-full object-cover">
+                <div class="text-center mb-6 mt-2 shrink-0 aovein-status-header">
+                    <div class="aovein-status-avatar-wrapper w-20 h-20 rounded-full bg-gray-100 mx-auto mb-3 overflow-hidden border-2 border-white shadow-lg relative cursor-pointer group" @click="wechatState.activeSession?.isGroup ? triggerGroupMemberAvatarUpload() : null">
+                        <img :src="getChatAvatar({isSelf: false, name: currentStatus.name, avatar: currentStatus.avatar})" class="w-full h-full object-cover aovein-status-avatar">
                         <div v-if="wechatState.activeSession?.isGroup" class="absolute bottom-0 left-0 w-full bg-black/40 text-white text-[9px] py-0.5 text-center font-bold">群内换头</div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900">{{ currentStatus.name || wechatState.activeSession?.name }}</h3>
-                    <p class="text-xs text-gray-400 mt-1">Current State</p>
+                    <h3 class="aovein-status-name text-xl font-bold text-gray-900">{{ currentStatus.name || wechatState.activeSession?.name }}</h3>
+                    <p class="aovein-status-state-label text-xs text-gray-400 mt-1">Current State</p>
                 </div>
                 
-                <!-- 内容区 -->
-                <div class="space-y-4 text-sm flex-1 overflow-y-auto scrollbar-hide pb-2">
-                    <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">动作</div><div class="text-gray-800">{{ currentStatus.action || '无' }}</div></div>
-                    <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800">"{{ currentStatus.thought || '...' }}"</div></div>
-                    <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">穿着</div><div class="text-gray-800">{{ currentStatus.outfit || '未知' }}</div></div>
-                    <div class="flex gap-3"><div class="w-8 shrink-0 text-gray-400 font-bold text-right">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">{{ currentStatus.note || '无随笔' }}</div></div>
+                <div class="space-y-4 text-sm flex-1 overflow-y-auto scrollbar-hide pb-2 aovein-status-body">
+                    <div class="flex gap-3 aovein-status-row aovein-action-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">动作</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.action || '无' }}</div></div>
+                    <div class="flex gap-3 aovein-status-row aovein-thought-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">心声</div><div class="text-gray-800 aovein-status-text">"{{ currentStatus.thought || '...' }}"</div></div>
+                    <div class="flex gap-3 aovein-status-row aovein-outfit-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">穿着</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.outfit || '未知' }}</div></div>
+                    <div class="flex gap-3 aovein-status-row aovein-note-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed aovein-status-note-box">{{ currentStatus.note || '无随笔' }}</div></div>
                 </div>
             </div>
 
@@ -1802,16 +1799,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="bg-white rounded-[20px] p-4 border border-gray-100 shadow-sm shrink-0">
                     <div class="text-xs text-gray-400 mb-4 text-center font-bold tracking-widest">效果预览</div>
                     <div class="aovein-status-card bg-white w-full rounded-[20px] overflow-hidden shadow-md p-5 relative border border-gray-100">
-                        <div class="text-center mb-4">
-                            <div class="w-14 h-14 rounded-full bg-gray-200 mx-auto mb-2"><i class="fas fa-user flex items-center justify-center h-full text-gray-400 text-xl"></i></div>
-                            <h3 class="text-sm font-bold text-gray-900">某位少爷</h3>
-                            <p class="text-[10px] text-gray-400">Current State</p>
+                        <div class="text-center mb-4 aovein-status-header">
+                            <div class="aovein-status-avatar-wrapper w-14 h-14 rounded-full bg-gray-200 mx-auto mb-2 overflow-hidden border-2 border-white shadow-sm"><i class="fas fa-user flex items-center justify-center h-full text-gray-400 text-xl aovein-status-avatar"></i></div>
+                            <h3 class="aovein-status-name text-sm font-bold text-gray-900">某位少爷</h3>
+                            <p class="aovein-status-state-label text-[10px] text-gray-400">Current State</p>
                         </div>
-                        <div class="space-y-2 text-xs">
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">动作</div><div class="text-gray-800">喝了一口咖啡</div></div>
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">心声</div><div class="text-gray-800">"这咖啡怎么这么苦..."</div></div>
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">穿着</div><div class="text-gray-800">黑色风衣</div></div>
-                            <div class="flex gap-2"><div class="w-8 text-gray-400 font-bold text-right">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed">原来少爷也是怕苦的，真是可爱。</div></div>
+                        <div class="space-y-2 text-xs aovein-status-body">
+                            <div class="flex gap-2 aovein-status-row aovein-action-row"><div class="w-8 text-gray-400 font-bold text-right aovein-status-label">动作</div><div class="text-gray-800 aovein-status-text">喝了一口咖啡</div></div>
+                            <div class="flex gap-2 aovein-status-row aovein-thought-row"><div class="w-8 text-gray-400 font-bold text-right aovein-status-label">心声</div><div class="text-gray-800 aovein-status-text">"这咖啡怎么这么苦..."</div></div>
+                            <div class="flex gap-2 aovein-status-row aovein-outfit-row"><div class="w-8 text-gray-400 font-bold text-right aovein-status-label">穿着</div><div class="text-gray-800 aovein-status-text">黑色风衣</div></div>
+                            <div class="flex gap-2 aovein-status-row aovein-note-row"><div class="w-8 text-gray-400 font-bold text-right aovein-status-label">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed aovein-status-note-box">原来少爷也是怕苦的，真是可爱。</div></div>
                         </div>
                     </div>
                 </div>
@@ -2197,6 +2194,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
 
                     <div v-if="newContact.id" class="flex flex-col gap-2 mb-4">
+                        <div class="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-xl border border-gray-200 mb-2 cursor-pointer active:bg-gray-100 transition shadow-sm" @click="exportWithNpcs = !exportWithNpcs">
+                            <span class="text-[12px] font-bold text-gray-700 tracking-wide">导出时包含该角色绑定的 NPC 人际关系网设定</span>
+                            <div class="w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center transition" :class="exportWithNpcs ? 'bg-black border-black' : 'bg-white'"><i v-if="exportWithNpcs" class="fas fa-check text-white text-[8px]"></i></div>
+                        </div>
                         <div class="flex gap-3">
                             <button @click="exportContactAsJSON" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition border border-gray-200"><i class="fas fa-code"></i> Export JSON</button>
                             <button @click="exportContactAsPNG" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[12px] uppercase tracking-wider flex items-center justify-center gap-2 active:scale-95 transition shadow-md"><i class="fas fa-image"></i> PNG Card</button>
@@ -3036,9 +3037,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人。点击关系线可自定义修改。</p>
 
                     <!-- 关系网可视化区域 -->
-                    <div class="relative w-full h-[320px] bg-white rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
+                    <div class="relative w-full h-[380px] bg-[#f9f9f9] rounded-[24px] shadow-inner border border-gray-200 overflow-auto scrollbar-hide" ref="relationNetWrapper">
+                        <div class="relative min-w-[800px] min-h-[800px] flex items-center justify-center shrink-0">
                         <!-- 中心节点：当前角色 -->
-                        <div class="absolute z-20 flex flex-col items-center">
+                        <div class="absolute z-20 flex flex-col items-center" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
                             <div class="w-[60px] h-[60px] rounded-full border-[3px] border-blue-500/30 overflow-hidden shadow-md bg-gray-100">
                                 <img :src="getCurrentSessionAvatar()" class="w-full h-full object-cover">
                             </div>
@@ -3086,6 +3088,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                             <span class="mt-1 text-[10px] font-bold text-gray-600 bg-white/80 px-2 py-0.5 rounded-full shadow-sm max-w-[65px] truncate text-center">{{ rel.type === 'contact' ? getFriendName(rel.targetId) : rel.name }}</span>
                         </div>
+                        </div>
                     </div>
 
                     <!-- 关系列表 -->
@@ -3113,52 +3116,100 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <!-- 添加/编辑关系弹窗 -->
         <transition name="scale">
-            <div v-if="addRelationModal.show" class="fixed inset-0 z-[117000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                <div class="bg-white w-[85%] rounded-[24px] overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
-                        <h3 class="font-bold text-lg text-gray-900">{{ addRelationModal.isEdit ? '编辑关系' : '添加人物关系' }}</h3>
-                        <button v-if="addRelationModal.isEdit" @click="deleteRelation" class="text-red-500 text-[13px] font-bold active:opacity-50"><i class="fas fa-trash mr-1"></i>删除</button>
-                    </div>
-
+            <div v-if="addRelationModal.show" class="fixed inset-0 z-[117000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div class="bg-white w-[92%] max-h-[90vh] shadow-2xl flex flex-col relative font-sans overflow-hidden border border-gray-200 rounded-[24px]">
+                    
                     <div class="flex border-b border-gray-100 bg-gray-50/50 shrink-0" v-if="!addRelationModal.isEdit">
                         <button @click="addRelationModal.type = 'contact'" class="flex-1 py-3 text-[14px] font-bold transition" :class="addRelationModal.type === 'contact' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">绑定手机联系人</button>
                         <button @click="addRelationModal.type = 'npc'" class="flex-1 py-3 text-[14px] font-bold transition" :class="addRelationModal.type === 'npc' ? 'text-black bg-white border-b-2 border-black' : 'text-gray-400'">新建独立 NPC</button>
                     </div>
 
-                    <div class="flex-1 overflow-y-auto p-5 space-y-4">
-                        <div v-if="addRelationModal.type === 'contact' && !addRelationModal.isEdit">
-                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">选择通讯录角色</label>
-                            <select v-model="addRelationModal.targetId" class="w-full bg-gray-50 p-3 rounded-xl text-[14px] border border-gray-200 outline-none shadow-sm text-gray-800">
-                                <option value="" disabled>下拉选择...</option>
-                                <option v-for="f in wechatState.friendList" :key="f.id" :value="f.id">{{ f.remark || f.name }}</option>
-                            </select>
-                        </div>
-                        <div v-else-if="addRelationModal.type === 'contact' && addRelationModal.isEdit">
-                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                <img :src="getFriendAvatar(addRelationModal.targetId)" class="w-10 h-10 rounded-full object-cover">
-                                <span class="font-bold text-gray-800">{{ getFriendName(addRelationModal.targetId) }}</span>
+                    <div class="flex-1 overflow-y-auto p-6 scrollbar-hide relative">
+                        <div v-if="addRelationModal.type === 'contact'" class="space-y-6">
+                            <div v-if="!addRelationModal.isEdit">
+                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-2 block">选择通讯录角色</label>
+                                <select v-model="addRelationModal.targetId" class="w-full bg-gray-50 p-3.5 rounded-xl text-[14px] font-bold border border-gray-200 outline-none shadow-sm text-gray-800">
+                                    <option value="" disabled>下拉选择...</option>
+                                    <option v-for="f in wechatState.friendList" :key="f.id" :value="f.id">{{ f.remark || f.name }}</option>
+                                </select>
+                            </div>
+                            <div v-else>
+                                <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+                                    <img :src="getFriendAvatar(addRelationModal.targetId)" class="w-12 h-12 rounded-full object-cover border border-gray-200">
+                                    <span class="font-bold text-gray-800 text-[15px]">{{ getFriendName(addRelationModal.targetId) }}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[12px] font-bold text-gray-500 ml-1 mb-2 block">关系定位</label>
+                                <input v-model="addRelationModal.relation" placeholder="例如: 死对头、亲妹妹、暗恋对象..." class="w-full bg-gray-50 p-3.5 rounded-xl text-[14px] font-bold text-gray-800 border border-gray-200 outline-none shadow-sm">
                             </div>
                         </div>
 
                         <div v-if="addRelationModal.type === 'npc'">
-                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 姓名</label>
-                            <input v-model="addRelationModal.name" placeholder="输入该NPC的名字" class="w-full bg-gray-50 p-3 rounded-xl text-[14px] border border-gray-200 outline-none shadow-sm">
-                        </div>
+                            <div class="flex gap-4 mb-8 mt-2">
+                                <div class="shrink-0 relative cursor-pointer group" @click="triggerAddRelationAvatar">
+                                    <div class="absolute -top-3 -left-2 text-gray-400 text-2xl -rotate-[30deg] drop-shadow-sm z-10"><i class="fas fa-paperclip"></i></div>
+                                    <div class="bg-white p-1.5 pb-4 shadow-sm border border-gray-200">
+                                        <div class="w-24 h-24 bg-gray-50 overflow-hidden relative border border-gray-100">
+                                            <img v-if="addRelationModal.avatar" :src="addRelationModal.avatar" class="w-full h-full object-cover">
+                                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300"><i class="fas fa-camera text-xl"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <div>
-                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">关系定位</label>
-                            <input v-model="addRelationModal.relation" placeholder="例如: 死对头、亲妹妹、暗恋对象..." class="w-full bg-gray-50 p-3 rounded-xl text-[14px] border border-gray-200 outline-none shadow-sm">
-                        </div>
+                                <div class="flex-1 min-w-0 flex flex-col pt-1">
+                                    <div class="flex items-center gap-1 border-b-[1.5px] border-gray-200 pb-1.5 mb-1">
+                                        <input v-model="addRelationModal.name" placeholder="NPC 姓名" class="text-[17px] font-bold text-gray-900 outline-none bg-transparent flex-1 min-w-0 tracking-wide">
+                                    </div>
+                                    <div class="text-[9px] text-gray-400 tracking-widest uppercase mb-3">NPC Profile</div>
 
-                        <div v-if="addRelationModal.type === 'npc'">
-                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">基础设定 (给AI了解背景用)</label>
-                            <textarea v-model="addRelationModal.bio" placeholder="选填，例如：是你们共同的青梅竹马，性格火爆..." class="w-full h-24 bg-gray-50 p-3 rounded-xl text-[13px] border border-gray-200 outline-none resize-none shadow-sm"></textarea>
-                        </div>
-                    </div>
+                                    <div class="space-y-1.5">
+                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1">
+                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Relation</span>
+                                            <input v-model="addRelationModal.relation" placeholder="关系定位" class="text-[13px] font-bold text-blue-600 text-right outline-none bg-transparent w-20">
+                                        </div>
+                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1">
+                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Gender</span>
+                                            <input v-model="addRelationModal.gender" placeholder="男/女" class="text-[13px] font-bold text-gray-900 text-right outline-none bg-transparent w-20">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                    <div class="p-4 bg-white border-t border-gray-100 flex gap-3 shrink-0">
-                        <button @click="addRelationModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-sm active:scale-95 transition">取消</button>
-                        <button @click="saveRelation" class="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-sm active:scale-95 transition shadow-md">保存</button>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-4 mb-8">
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Age</span>
+                                    <div class="flex items-baseline"><input v-model="addRelationModal.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold">岁</span></div>
+                                </div>
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Birth</span>
+                                    <input v-model="addRelationModal.birthday" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-16">
+                                </div>
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Height</span>
+                                    <div class="flex items-baseline"><input v-model="addRelationModal.height" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">cm</span></div>
+                                </div>
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Weight</span>
+                                    <div class="flex items-baseline"><input v-model="addRelationModal.weight" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">kg</span></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4 relative">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-1 h-4 bg-gray-900"></div>
+                                    <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Background Record (YAML)</span>
+                                </div>
+                                <textarea v-model="addRelationModal.bio" placeholder="可输入严格的 YAML 格式档案..." class="w-full min-h-[140px] text-[13px] leading-loose text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-100 outline-none resize-none font-mono shadow-inner"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 底部确认与取消按钮 -->
+                        <div class="flex gap-3 mt-8">
+                            <button v-if="addRelationModal.isEdit" @click="deleteRelation" class="w-12 py-3 bg-red-50 text-red-500 rounded-xl flex items-center justify-center active:scale-95 transition border border-red-100 shadow-sm"><i class="fas fa-trash"></i></button>
+                            <button @click="addRelationModal.show = false" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[13px] tracking-widest active:scale-95 transition border border-gray-200 rounded-xl shadow-sm">取消</button>
+                            <button @click="saveRelation" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[13px] tracking-widest active:scale-95 transition shadow-md rounded-xl">确定</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -7114,9 +7165,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.55 更新日志 (当前最新) -->
+                            <!-- v1.56 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.56 极致 YAML 提取与连线画布解拥挤</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-15 01:37</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">关系网抗拥挤算法：</span>重构了关系网的画布呈现逻辑。现在节点和连线被安置在了一个极其宽广的 800x800 画布中，外层套入了一个防溢出滚动视窗。无论你有多少个 NPC，布局都不会重叠拥挤，且每次点开都会利用底层 JS 算法贴心为你自动居中定位在原点。</li>
+                                    <li><span class="font-bold text-gray-800">高定化 NPC 名片流：</span>将关系网里面随意而粗糙的“添加/编辑 NPC 弹窗”直接重写并对标为【角色的高定名片档案】！现在你在关系网点开某个 NPC，也可以像查看主角档案一样享受精致的卡片式视觉体验。</li>
+                                    <li><span class="font-bold text-gray-800">神级 YAML 骨架生成：</span>将 AI 提取生成 NPC 时的提示词进行了史诗级强化！现在 AI 必须要用一份涵盖【外貌、年龄阶层生平履历、家庭氛围、表里性格差异、社会定位及心理恐惧】等极致详细的 YAML 神级结构图，来进行脑补并填充它的背景故事！并且严格限制：绝对不允许 AI 凭空捏造和虚构没有提到的人物！</li>
+                                    <li><span class="font-bold text-gray-800">NPC 打包漫游：</span>在给主角导出卡片时，终于增加了“是否包含麾下 NPC 关系网设定”的选项。勾选并以图片的形式发送给别人，对方导入后，它的几大护法、仇人和前女友，就会原封不动地出现在对方的手机里。</li>
+                                    <li><span class="font-bold text-gray-800">心声源码释出：</span>修补了心声美化的底层类名和映射盲区，现在复制出的源码包含了所有细粒度的操控句柄，并且能在预览区做到百分百同步生效了。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.55 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.55 关系网交叉编辑与 NPC 深度润色生成</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-14 20:12</span>
@@ -8515,8 +8582,9 @@ const app = createApp({
             groupAddMemberModal: { show: false, selectedIds:[] },
             sessionMaskModal: { show: false },
             memorySyncModal: { show: false, selectedGroupIds:[] },
+            exportWithNpcs: true,
             relationshipModal: { show: false },
-            addRelationModal: { show: false, isEdit: false, editIndex: -1, type: 'contact', targetId: '', name: '', relation: '', bio: '' },
+            addRelationModal: { show: false, isEdit: false, editIndex: -1, type: 'contact', targetId: '', name: '', relation: '', gender: '男', age: '', height: '', weight: '', birthday: '', bio: '', avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg' },
             isEditingSessionMask: false,
             masks: [], showMaskManager: false, maskModal: { show: false }, maskForm: { id: null, name: '', remark: '', username: '', gender: '女', bio: '', nudge: '', signature: '', avatar: '' },
             worldData: [], expandedFolders:[], worldModal: { show: false, type: 'file', name: '', folderName: '', content: '', id: null, isGlobal: false, position: '中' }, viewFileModal: { show: false, data: {} },
@@ -9290,8 +9358,36 @@ const app = createApp({
             this.showToast('已恢复默认样式');
         },
         copyStatusBeautifyDefault() {
-            // 修复：去除了自带的 .italic 蓝色字体覆盖，回归深灰色
-            const defaultCss = `/* Aovein 专属代码：心声卡片美化 */\n.aovein-status-card {\n    background-color: #ffffff !important;\n    border: 1px solid #f3f4f6 !important;\n    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;\n}\n\n.aovein-status-card h3 {\n    color: #1f2937 !important;\n    letter-spacing: 1px !important;\n}`;
+            const defaultCss = `/* Aovein 专属代码：心声卡片美化 */
+.aovein-status-card {
+    background-color: #ffffff !important;
+    border: 1px solid #f3f4f6 !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
+}
+
+/* --- 头部区域 --- */
+.aovein-status-header { margin-bottom: 20px !important; }
+.aovein-status-avatar-wrapper { border-color: #f3f4f6 !important; }
+.aovein-status-avatar { filter: brightness(1) !important; }
+.aovein-status-name { color: #1f2937 !important; letter-spacing: 1px !important; }
+.aovein-status-state-label { color: #9ca3af !important; }
+
+/* --- 内容行通用 --- */
+.aovein-status-row { margin-bottom: 12px !important; }
+.aovein-status-label { color: #9ca3af !important; }
+.aovein-status-text { color: #1f2937 !important; }
+
+/* --- 独立字段定制 --- */
+.aovein-action-row .aovein-status-text { font-style: italic !important; }
+.aovein-thought-row .aovein-status-text { font-weight: bold !important; }
+.aovein-outfit-row .aovein-status-text { color: #4b5563 !important; }
+
+/* --- 随笔日记框 --- */
+.aovein-status-note-box {
+    background-color: #f9fafb !important;
+    color: #4b5563 !important;
+    border: 1px dashed #e5e7eb !important;
+}`;
             this.statusBeautifyConfig.tempCode = defaultCss;
             this.copyToClipboard(defaultCss);
             this.showToast('源码已填入框内，并复制到剪切板');
@@ -9542,7 +9638,12 @@ const app = createApp({
             return session.lastMessage || '...';
         },
         exportContactAsJSON() {
-            const dataStr = JSON.stringify(this.newContact, null, 2);
+            let exportData = JSON.parse(JSON.stringify(this.newContact));
+            const session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id);
+            if (this.exportWithNpcs && session && session.relationships) {
+                exportData._embeddedRelationships = session.relationships;
+            }
+            const dataStr = JSON.stringify(exportData, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `Aovein_Contact_${this.newContact.name}.json`; a.click(); URL.revokeObjectURL(url);
@@ -9555,9 +9656,12 @@ const app = createApp({
                 // 深拷贝防止污染当前数据
                 let exportData = JSON.parse(JSON.stringify(this.newContact));
                 
-                // 查找当前角色会话，提取其绑定的世界书ID
+                // 查找当前角色会话，提取其绑定的世界书ID与NPC
                 const session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id);
                 if (session) {
+                    if (this.exportWithNpcs && session.relationships) {
+                        exportData._embeddedRelationships = session.relationships;
+                    }
                     exportData.boundWorldbookFolderIds = session.boundWorldbookFolderIds || [];
                     exportData.boundWorldbookFileIds = session.boundWorldbookFileIds || [];
                     if (session.boundWorldbookFolderId && !exportData.boundWorldbookFolderIds.includes(session.boundWorldbookFolderId)) {
@@ -15479,6 +15583,27 @@ Structure:
             if(!this.newContact.name) return this.showToast('请输入姓名');
             if (this.newContact.id) { const idx = this.wechatState.friendList.findIndex(f => f.id === this.newContact.id); if (idx !== -1) { this.wechatState.friendList[idx] = { ...this.newContact }; this.showToast('修改成功'); } } 
             else { this.wechatState.friendList.push({ ...this.newContact, id: Date.now().toString() }); this.showToast('已添加朋友'); }
+            
+            // 自动拦截恢复绑定的 NPC 关系网设定
+            if (this.newContact._embeddedRelationships) {
+                let session = this.wechatState.sessions.find(s => s.targetId === this.newContact.id);
+                if (!session) {
+                    const myMaskId = this.wechatState.activeSession?.maskId || (this.masks.length > 0 ? this.masks[0].id : null);
+                    if (myMaskId) {
+                        const targetFriend = this.wechatState.friendList.find(f => f.id === this.newContact.id);
+                        if (targetFriend) {
+                            this.createSession(targetFriend, this.getMaskById(myMaskId));
+                            session = this.wechatState.sessions[0];
+                        }
+                    }
+                }
+                if (session) {
+                    session.relationships = this.newContact._embeddedRelationships;
+                    this.showToast('附带的 NPC 关系网已同步恢复');
+                }
+                delete this.newContact._embeddedRelationships;
+            }
+            
             this.addContactModal.show = false; this.saveData();
         },
         async autoFillProfile(field, isMask = false) {
@@ -20729,6 +20854,13 @@ ${greetingInstruction}`;
                 this.wechatState.activeSession.relationships = [];
             }
             this.relationshipModal.show = true;
+            this.$nextTick(() => {
+                const w = this.$refs.relationNetWrapper;
+                if (w) {
+                    w.scrollLeft = (w.scrollWidth - w.clientWidth) / 2;
+                    w.scrollTop = (w.scrollHeight - w.clientHeight) / 2;
+                }
+            });
         },
         inferRelation(r1, r2) {
             const match = (a, b, w1, w2) => (a.includes(w1) && b.includes(w2)) || (a.includes(w2) && b.includes(w1));
@@ -21202,12 +21334,101 @@ ${greetingInstruction}`;
     "age": "如: 24",
     "height": "如: 178",
     "weight": "如: 65",
-    "bio": "MBTI: INTJ\\n性格: 极度克制、掌控欲极强\\n社会身份: xxx\\n背景经历: xxx\\n家庭内容: xxx\\n"
+    "bio": "在此处将该NPC的人设严格按照底下的 YAML 模板进行全维度脑补与润色填充，务必以 YAML 字符串的格式返回并注意转义换行符。"
   }
 ]
 
 【特别警告】：
-1. bio 字段内必须使用严格的 YAML / 多行纯文本格式，包含上述示范的维度进行深度润色！不要使用 Markdown。
+1. bio 字段内必须且只能使用下面这份极其严格的 YAML 格式进行深度润色！必须原封不动地保留所有键名，只需填空。
+character:
+  basic:
+    name: ""
+    age: null
+    gender: ""
+    birthday: ""
+    height: ""
+    weight: ""
+    mbti: ""
+
+  appearance:
+    overall: ""
+    hair: ""
+    eyes: ""
+    face: ""
+    body: ""
+    style: ""
+    features: ""
+
+  life:
+    0-6岁:
+      experience: ""
+    7-12岁:
+      experience: ""
+    13-18岁:
+      experience: ""
+    19-35岁:
+      experience: ""
+    35岁-至今:
+      experience: ""
+
+  family:
+    background: ""
+    members: []
+    relationship: ""
+    atmosphere: ""
+
+  personality:
+    overall: ""
+    surface:
+      impression: ""
+      traits: []
+    deep:
+      true_self: ""
+      desire: ""
+      fear: ""
+      weakness: ""
+      values: ""
+    habits: []
+    likes: []
+    dislikes: []
+
+  identity:
+    occupation: ""
+    education: ""
+    social_status: ""
+    public_image: ""
+
+  speaking:
+    style: ""
+    tone: ""
+    habits: ""
+    catchphrases: []
+    chat_style: ""
+    emotional:
+      happy: ""
+      angry: ""
+      sad: ""
+      affectionate: ""
+
+  relationships:
+    lover: ""
+    friends: ""
+    family: ""
+    important_people: []
+
+  psychology:
+    greatest_desire: ""
+    greatest_fear: ""
+    biggest_secret: ""
+    greatest_regret: ""
+    core_motivation: ""
+
+  growth:
+    turning_points: []
+    changes: ""
+    current_goal: ""
+
+2. 只能提取上述资料中明确提到过的人物！如果资料中没有任何其他人物，则返回空数组 []，绝对不要强行凭空捏造、虚构人物！
 2. 绝对不要包含 ${friend.name} 本人！
 3. 绝对不要包含 "我"、"用户"、"玩家" 等虚拟角色！
 4. 只能输出纯 JSON 数组，严禁其他解释或标记！`;
