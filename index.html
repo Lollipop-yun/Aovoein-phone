@@ -3027,13 +3027,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-[#f2f2f6] shrink-0 z-50 sticky top-0">
                     <button @click="relationshipModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-chevron-left text-[18px]"></i></button>
                     <h1 class="font-bold text-[17px] text-gray-900 absolute left-1/2 -translate-x-1/2">人际关系网</h1>
-                    <div class="flex items-center gap-3">
-                        <button @click="generateNpcRelations" class="text-blue-500 text-[13px] font-bold active:opacity-50 bg-blue-50 px-2.5 py-1.5 rounded-full shadow-sm flex items-center"><i class="fas fa-magic mr-1"></i>AI生成</button>
+                    <div class="flex items-center gap-2 mr-[-4px]">
+                        <button @click="generateNpcRelations" :disabled="isGeneratingNpcs" class="text-gray-800 text-[12px] font-bold active:scale-95 transition bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-full shadow-sm flex items-center"><i class="fas" :class="isGeneratingNpcs ? 'fa-spinner fa-spin' : 'fa-magic'"></i><span class="ml-1">{{ isGeneratingNpcs ? '提取中' : 'AI生成' }}</span></button>
                         <button @click="openAddRelationModal" class="w-8 h-8 flex items-center justify-center text-gray-800 active:opacity-50"><i class="fas fa-plus text-[18px]"></i></button>
                     </div>
                 </header>
                 <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                    <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人，防止串戏提及毫无瓜葛的联系人。</p>
+                    <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人。点击关系线可自定义修改。</p>
 
                     <!-- 关系网可视化区域 -->
                     <div class="relative w-full h-[320px] bg-white rounded-[24px] shadow-sm border border-gray-100 flex items-center justify-center overflow-hidden">
@@ -3055,7 +3055,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                   stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,4"/>
                             
                             <!-- 外围节点之间的交叉连线 -->
-                            <g v-for="(line, lidx) in getCrossRelations()" :key="'cross-'+lidx">
+                            <g v-for="(line, lidx) in getCrossRelations()" :key="'cross-'+lidx" style="pointer-events: auto; cursor: pointer;" @click.stop="editCrossRelation(line)">
                                 <line :x1="getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + '%'"
                                       :y1="getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + '%'"
                                       :x2="getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x + '%'"
@@ -3064,8 +3064,8 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <!-- 连线上的关系文字背景和文字 -->
                                 <rect :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
                                       :y="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y)/2) + '%'"
-                                      width="24" height="12" fill="#f9fafb" rx="2"
-                                      style="transform: translate(-12px, -6px);"/>
+                                      width="32" height="14" fill="#f9fafb" stroke="#e5e7eb" stroke-width="0.5" rx="3"
+                                      style="transform: translate(-16px, -7px);"/>
                                 <text :x="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).x + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).x)/2) + '%'"
                                       :y="((getRelNodePos(line.sourceIdx, wechatState.activeSession.relationships?.length || 0).y + getRelNodePos(line.targetIdx, wechatState.activeSession.relationships?.length || 0).y)/2) + '%'"
                                       fill="#4b5563" font-size="8" font-weight="bold" text-anchor="middle" dominant-baseline="central">
@@ -4104,13 +4104,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         
                         <div v-for="session in getSessionsWithNpcs()" :key="session.id" class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100">
                             <!-- 角色头部分组栏 -->
-                            <div class="p-3 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2">
-                                <img :src="getAvatarForSession(session)" class="w-6 h-6 rounded-full object-cover border border-gray-200 shadow-sm">
-                                <span class="text-[12px] font-bold text-gray-700 tracking-wide">{{ session.remark || session.name }} <span class="font-normal text-gray-400">的关系网</span></span>
+                            <div class="p-3 border-b border-gray-50 bg-gray-50/50 flex items-center justify-between cursor-pointer active:bg-gray-100 transition" @click="toggleNpcLibraryGroup(session.id)">
+                                <div class="flex items-center gap-2">
+                                    <img :src="getAvatarForSession(session)" class="w-6 h-6 rounded-full object-cover border border-gray-200 shadow-sm">
+                                    <span class="text-[12px] font-bold text-gray-700 tracking-wide">{{ session.remark || session.name }} <span class="font-normal text-gray-400">的关系网</span></span>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-300 text-xs transition-transform duration-200" :class="{'rotate-90': npcLibraryExpanded.includes(session.id)}"></i>
                             </div>
                             
                             <!-- 该角色下的 NPC 列表 -->
-                            <div class="divide-y divide-gray-50">
+                            <div v-show="npcLibraryExpanded.includes(session.id)" class="divide-y divide-gray-50">
                                 <div v-for="(npc, idx) in session.relationships.filter(r => r.type === 'npc')" :key="npc.id || idx" class="p-4 flex items-start gap-4 cursor-pointer active:bg-gray-50 transition" @click="openEditNpcPersona(session, npc)">
                                     <div class="w-[52px] h-[52px] rounded-full bg-gray-100 overflow-hidden shrink-0 border border-gray-100 relative shadow-sm">
                                         <img v-if="npc.avatar" :src="npc.avatar" class="w-full h-full object-cover">
@@ -4129,31 +4132,73 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <!-- NPC 档案修改弹窗 (同步写入关系网) -->
             <transition name="scale">
-                <div v-if="npcPersonaModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div class="bg-white w-[85%] max-h-[85vh] overflow-y-auto scrollbar-hide rounded-[24px] shadow-2xl p-6 flex flex-col gap-4 font-sans border border-gray-100">
-                        <h3 class="text-lg font-bold text-center mb-2 text-gray-900">编辑 NPC 档案</h3>
-                        <div class="flex justify-center shrink-0">
-                            <div class="w-20 h-20 rounded-full overflow-hidden bg-gray-50 border border-gray-200 cursor-pointer shadow-sm relative group" @click="triggerNpcPersonaAvatar">
-                                <img v-if="npcPersonaModal.avatar" :src="npcPersonaModal.avatar" class="w-full h-full object-cover">
-                                <i v-else class="fas fa-camera flex h-full items-center justify-center text-gray-300 text-2xl"></i>
+                <div v-if="npcPersonaModal.show" class="fixed inset-0 z-[120000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div class="bg-white w-[92%] max-h-[90vh] shadow-2xl flex flex-col relative font-sans overflow-hidden border border-gray-200 rounded-[24px]">
+                        
+                        <div class="flex-1 overflow-y-auto p-6 scrollbar-hide relative">
+                            <div class="flex gap-4 mb-8 mt-2">
+                                <div class="shrink-0 relative cursor-pointer group" @click="triggerNpcPersonaAvatar">
+                                    <div class="absolute -top-3 -left-2 text-gray-400 text-2xl -rotate-[30deg] drop-shadow-sm z-10"><i class="fas fa-paperclip"></i></div>
+                                    <div class="bg-white p-1.5 pb-4 shadow-sm border border-gray-200">
+                                        <div class="w-24 h-24 bg-gray-50 overflow-hidden relative border border-gray-100">
+                                            <img v-if="npcPersonaModal.avatar" :src="npcPersonaModal.avatar" class="w-full h-full object-cover">
+                                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300"><i class="fas fa-camera text-xl"></i></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex-1 min-w-0 flex flex-col pt-1">
+                                    <div class="flex items-center gap-1 border-b-[1.5px] border-gray-200 pb-1.5 mb-1">
+                                        <input v-model="npcPersonaModal.name" placeholder="NPC 姓名" class="text-[17px] font-bold text-gray-900 outline-none bg-transparent flex-1 min-w-0 tracking-wide">
+                                    </div>
+                                    <div class="text-[9px] text-gray-400 tracking-widest uppercase mb-3">NPC Profile</div>
+
+                                    <div class="space-y-1.5">
+                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1">
+                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Relation</span>
+                                            <input v-model="npcPersonaModal.relation" placeholder="人际关系" class="text-[13px] font-bold text-blue-600 text-right outline-none bg-transparent w-20">
+                                        </div>
+                                        <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1 cursor-pointer">
+                                            <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Gender</span>
+                                            <input v-model="npcPersonaModal.gender" placeholder="男/女" class="text-[13px] font-bold text-gray-900 text-right outline-none bg-transparent w-20">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="shrink-0">
-                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">NPC 名字</label>
-                            <input v-model="npcPersonaModal.name" placeholder="输入名字" class="w-full bg-gray-50 p-3.5 rounded-xl text-[14px] font-bold text-gray-900 border border-gray-200 outline-none shadow-sm transition">
-                        </div>
-                        <div class="shrink-0">
-                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">与角色的关系</label>
-                            <input v-model="npcPersonaModal.relation" placeholder="例如：死对头、哥哥..." class="w-full bg-gray-50 p-3.5 rounded-xl text-[14px] font-bold text-gray-900 border border-gray-200 outline-none shadow-sm transition">
-                        </div>
-                        <div class="shrink-0">
-                            <label class="text-[12px] font-bold text-gray-500 ml-1 mb-1 block">人设背景 (性格、外貌、职业等)</label>
-                            <textarea v-model="npcPersonaModal.bio" placeholder="输入人设背景..." class="w-full h-24 bg-gray-50 p-3.5 rounded-xl text-[13px] text-gray-700 leading-relaxed border border-gray-200 outline-none resize-none shadow-sm transition"></textarea>
-                        </div>
-                        <div class="flex gap-2 mt-2 shrink-0">
-                            <button @click="deleteNpcPersona" class="w-12 bg-red-50 text-red-500 rounded-xl flex items-center justify-center active:scale-95 transition border border-red-100 shadow-sm"><i class="fas fa-trash"></i></button>
-                            <button @click="npcPersonaModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-sm border border-gray-200">取消</button>
-                            <button @click="saveNpcPersona" class="flex-1 bg-gray-900 text-white py-3.5 rounded-xl font-bold text-[14px] active:scale-95 transition shadow-md">保存</button>
+
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-4 mb-8">
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Age</span>
+                                    <div class="flex items-baseline"><input v-model="npcPersonaModal.age" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold">岁</span></div>
+                                </div>
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Birth</span>
+                                    <input v-model="npcPersonaModal.birthday" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-16">
+                                </div>
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Height</span>
+                                    <div class="flex items-baseline"><input v-model="npcPersonaModal.height" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">cm</span></div>
+                                </div>
+                                <div class="flex justify-between items-end border-b border-dashed border-gray-200 pb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Weight</span>
+                                    <div class="flex items-baseline"><input v-model="npcPersonaModal.weight" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">kg</span></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-8 relative">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <div class="w-1 h-4 bg-gray-900"></div>
+                                    <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Background Record (YAML)</span>
+                                </div>
+                                <textarea v-model="npcPersonaModal.bio" placeholder="可输入 YAML 格式的人设背景资料..." class="w-full min-h-[140px] text-[13px] leading-loose text-gray-600 bg-gray-50/50 p-3 rounded-xl border border-gray-100 outline-none resize-none font-mono"></textarea>
+                            </div>
+
+                            <!-- 底部确认与取消按钮 -->
+                            <div class="flex gap-3 mb-4">
+                                <button v-if="npcPersonaModal.isEdit" @click="deleteNpcPersona" class="w-12 py-3 bg-red-50 text-red-500 rounded-xl flex items-center justify-center active:scale-95 transition border border-red-100 shadow-sm"><i class="fas fa-trash"></i></button>
+                                <button @click="npcPersonaModal.show = false" class="flex-1 py-3 bg-[#f8f9fa] text-gray-800 font-bold text-[13px] tracking-widest active:scale-95 transition border border-gray-200 rounded-xl">取消</button>
+                                <button @click="saveNpcPersona" class="flex-1 py-3 bg-[#111827] text-white font-bold text-[13px] tracking-widest active:scale-95 transition shadow-md rounded-xl">确定</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -7069,7 +7114,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.54 更新日志 (当前最新) -->
+                            <!-- v1.55 更新日志 (当前最新) -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.55 关系网交叉编辑与 NPC 深度润色生成</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-14 20:12</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">UI 层级深度优化：</span>关系网头部的“AI 生成”按钮彻底灰白 ins 化处理，位置微调，并且增加了“防手抖阻断式”的提取中 Loading 动画状态。</li>
+                                    <li><span class="font-bold text-gray-800">关系线干预自定义：</span>之前关系网中间连线的交叉关系（如 A 和 B 的关系）完全由 AI 底层逻辑锁死推断。现在！你可以直接在人际关系网中点击那条“连线”，唤出弹窗对他们俩之间的关系进行强行覆盖和重写，系统将永久记忆你的自定义关系。</li>
+                                    <li><span class="font-bold text-gray-800">档案库聚合查阅优化：</span>发现页的 NPC 档案库增加了【折叠/展开】功能，点击角色标题栏即可折叠收纳它底下的所有 NPC，不再是一长串列表拉不到底。</li>
+                                    <li><span class="font-bold text-gray-800">NPC 深度润色生成：</span>对关系网中的“AI一键提取”引擎进行了跨越式升级！AI 现在不再仅仅是丢出名字和干瘪的关系，它会直接化身顶级小说人设构筑师，利用世界书和背景资料，直接用 YAML 格式为你补全该 NPC 的【MBTI、性格、社会身份、背景经历、家庭内容】，并且自动填充身高、体重、年龄！同时，点开该 NPC 的编辑弹窗，也会展现出跟主角一样极其奢华的“黑白高级名片式 UI”，沉浸感爆棚！</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.54 更新日志 -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#3b82f6]"></div>
                                 <div class="flex justify-between items-center mb-3">
@@ -8394,7 +8454,10 @@ const app = createApp({
             chatSearchModal: { show: false, keyword: '', results:[] },
             globalSearchModal: { show: false, keyword: '', contacts: [], groups: [], histories:[] },
             themeConfig: { wallpaper: '', fontFamily: '', fontUrl: '', fontSize: 1.0, fontColor: '#000000', isDarkMode: false }, fontPresets:[], fontInputUrl: '',
-            npcPersonas: [], npcPersonaModal: { show: false, id: null, name: '', bio: '', avatar: '', isEdit: false },
+            npcPersonas: [], 
+            npcPersonaModal: { show: false, id: null, name: '', bio: '', avatar: '', relation: '', gender: '男', age: '', height: '', weight: '', birthday: '', signature: '', isEdit: false },
+            npcLibraryExpanded: [],
+            isGeneratingNpcs: false,
             npcLibraryTab: 'avatar', npcAvatars: [], npcAvatarInputUrl: '', isNpcMultiSelect: false, selectedNpcAvatars: [], npcNames: [], npcNameInput: '',
             npcNames: [], npcNameInput: '', npcTab: 'avatar', isNpcNameMultiSelect: false, selectedNpcNames: [],
             chatlistBeautifyConfig: { activeCSS: '', tempCode: '', presets: [] },
@@ -20687,19 +20750,52 @@ ${greetingInstruction}`;
             return null;
         },
         getCrossRelations() {
-            const rels = this.wechatState.activeSession?.relationships || [];
+            const session = this.wechatState.activeSession;
+            if (!session) return [];
+            const rels = session.relationships || [];
             const lines = [];
             for (let i = 0; i < rels.length; i++) {
                 for (let j = i + 1; j < rels.length; j++) {
-                    const r1 = rels[i].relation;
-                    const r2 = rels[j].relation;
-                    let crossName = this.inferRelation(r1, r2);
+                    const id1 = rels[i].id || rels[i].targetId;
+                    const id2 = rels[j].id || rels[j].targetId;
+                    // 优先读取用户自定义的关系覆盖
+                    let crossName = null;
+                    if (session.crossRelations) {
+                        crossName = session.crossRelations[`${id1}|${id2}`] || session.crossRelations[`${id2}|${id1}`];
+                    }
+                    if (!crossName) {
+                        const r1 = rels[i].relation;
+                        const r2 = rels[j].relation;
+                        crossName = this.inferRelation(r1, r2);
+                    }
                     if (crossName) {
                         lines.push({ sourceIdx: i, targetIdx: j, label: crossName });
                     }
                 }
             }
             return lines;
+        },
+        editCrossRelation(line) {
+            this.showInput('修改 NPC 之间的交叉关系', line.label, '请输入他们之间的关系 (如：夫妻、兄弟)', (val) => {
+                if (val && val.trim()) {
+                    const session = this.wechatState.activeSession;
+                    if (!session.crossRelations) session.crossRelations = {};
+                    const id1 = session.relationships[line.sourceIdx].id || session.relationships[line.sourceIdx].targetId;
+                    const id2 = session.relationships[line.targetIdx].id || session.relationships[line.targetIdx].targetId;
+                    // 以固定组合格式存入本地，下次读取优先使用
+                    session.crossRelations[`${id1}|${id2}`] = val.trim();
+                    this.saveData();
+                    this.showToast('关系已修正并保存');
+                }
+            });
+        },
+        toggleNpcLibraryGroup(sessionId) {
+            const idx = this.npcLibraryExpanded.indexOf(sessionId);
+            if (idx > -1) {
+                this.npcLibraryExpanded.splice(idx, 1);
+            } else {
+                this.npcLibraryExpanded.push(sessionId);
+            }
         },
         getRelNodePos(idx, total) {
             // 环形算法，将节点均匀分布在当前角色周围
@@ -21022,9 +21118,14 @@ ${greetingInstruction}`;
                 show: true, 
                 sessionId: session.id,
                 realIdx: realIdx,
-                name: npc.name, 
-                bio: npc.bio, 
-                relation: npc.relation,
+                name: npc.name || '', 
+                bio: npc.bio || '', 
+                relation: npc.relation || '',
+                gender: npc.gender || '未知',
+                age: npc.age || '',
+                height: npc.height || '',
+                weight: npc.weight || '',
+                birthday: npc.birthday || '',
                 avatar: npc.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', 
                 isEdit: true 
             };
@@ -21038,6 +21139,11 @@ ${greetingInstruction}`;
                     npc.name = this.npcPersonaModal.name;
                     npc.bio = this.npcPersonaModal.bio;
                     npc.relation = this.npcPersonaModal.relation;
+                    npc.gender = this.npcPersonaModal.gender;
+                    npc.age = this.npcPersonaModal.age;
+                    npc.height = this.npcPersonaModal.height;
+                    npc.weight = this.npcPersonaModal.weight;
+                    npc.birthday = this.npcPersonaModal.birthday;
                     npc.avatar = this.npcPersonaModal.avatar;
                     this.saveData();
                     this.showToast('NPC 档案已同步更新至对应角色关系网');
@@ -21068,7 +21174,8 @@ ${greetingInstruction}`;
             const friend = this.wechatState.friendList.find(f => f.id === session.targetId);
             if (!friend) return;
 
-            this.showToast('AI 正在翻阅背景设定提取 NPC，请稍候...');
+            this.isGeneratingNpcs = true;
+            this.showToast('AI 正在翻阅背景设定并润色提取 NPC，请稍候...');
 
             let worldContext = "";
             let folderIds = session.boundWorldbookFolderIds || [];
@@ -21077,24 +21184,33 @@ ${greetingInstruction}`;
             const files = this.worldData.filter(i => i.type === 'file' && i.isActive !== false && (folderIds.includes(i.parentId) || fileIds.includes(i.id) || i.isGlobal));
             worldContext = files.map(f => `[${f.name}]: ${f.content}`).join("\n");
 
-            const prompt = `你是信息提取助手。请根据以下角色({{char}})的【背景设定】以及【世界书资料】，提取出与该角色有明确关系的 NPC 人物，并生成他们的人设和关系。
-【角色({{char}})名字】：${friend.name}
-【角色背景设定】：${friend.bio || '无'}
+            const prompt = `你是顶级小说设定构筑师。请仔细阅读以下主角色({{char}})的【背景设定】与【世界书资料】，深度提取并润色出与该角色有深刻羁绊或交互的 NPC。
+【主角色({{char}})名字】：${friend.name}
+【主角色背景设定】：${friend.bio || '无'}
 【关联世界书资料】：${worldContext || '无'}
 
-请输出一个 JSON 数组，最多提取 5 个最重要的 NPC。如果实在没有，可以基于角色设定合理推断或虚构 1~2 个丰富剧情的NPC（如死对头、同伴、师傅等）。
-结构要求：
+请基于上述资料，一键提取并补全所有信息。如果资料中提及的 NPC 不多，请基于世界观合理原创 2~4 个能丰富剧情走向的 NPC（例如：严厉的家属、暗流涌动的死对头、忠诚的护卫、纠缠不清的前任等）。
+
+【输出格式要求】：
+请输出一个合法的 JSON 数组，每个对象代表一个 NPC。
+结构示范：
 [
   {
     "name": "NPC名字",
-    "relation": "与 {{char}} (${friend.name}) 的关系(如: 青梅竹马、死对头、师傅)",
-    "bio": "该 NPC 的人设背景、性格、外貌特征等(不少于30字)"
+    "relation": "与 ${friend.name} 的关系(如: 青梅竹马、死对头、师傅)",
+    "gender": "男 / 女",
+    "age": "如: 24",
+    "height": "如: 178",
+    "weight": "如: 65",
+    "bio": "MBTI: INTJ\\n性格: 极度克制、掌控欲极强\\n社会身份: xxx\\n背景经历: xxx\\n家庭内容: xxx\\n"
   }
 ]
-注意：
-1. 绝对不要包含 {{char}} (${friend.name}) 自己！
-2. 绝对不要包含 "我"、"用户"、"玩家"、"{{user}}" 相关的角色。
-3. 只能输出纯 JSON 数组，严禁其他解释或 Markdown！`;
+
+【特别警告】：
+1. bio 字段内必须使用严格的 YAML / 多行纯文本格式，包含上述示范的维度进行深度润色！不要使用 Markdown。
+2. 绝对不要包含 ${friend.name} 本人！
+3. 绝对不要包含 "我"、"用户"、"玩家" 等虚拟角色！
+4. 只能输出纯 JSON 数组，严禁其他解释或标记！`;
 
             try {
                 let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
@@ -21123,21 +21239,28 @@ ${greetingInstruction}`;
                             id: 'npc_' + Date.now().toString() + Math.random().toString(36).substr(2, 5),
                             type: 'npc',
                             targetId: null,
-                            name: npc.name,
-                            relation: npc.relation,
-                            bio: npc.bio,
+                            name: npc.name || '未知',
+                            relation: npc.relation || '未知',
+                            gender: npc.gender || '男',
+                            age: npc.age || '',
+                            height: npc.height || '',
+                            weight: npc.weight || '',
+                            birthday: '', // 留白给玩家填写
+                            bio: npc.bio || '',
                             avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
                         });
                     });
                     
                     this.saveData();
-                    this.showToast(`成功提取并生成了 ${parsed.length} 个 NPC 关系！去发现页的档案库给他们配上头像吧！`);
+                    this.showToast(`成功提取并润色了 ${parsed.length} 个 NPC！资料已全维填充，去档案库看看吧！`);
                 } else {
                     this.showToast('未提取到任何 NPC');
                 }
             } catch(e) {
                 this.showToast('提取失败: ' + e.message);
                 console.error(e);
+            } finally {
+                this.isGeneratingNpcs = false;
             }
         }
     }
