@@ -1753,10 +1753,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
                 
                 <div class="space-y-4 text-sm flex-1 overflow-y-auto scrollbar-hide pb-2 aovein-status-body">
-                    <div class="flex gap-3 aovein-status-row aovein-action-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">动作</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.action || '无' }}</div></div>
-                    <div class="flex gap-3 aovein-status-row aovein-thought-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">心声</div><div class="text-gray-800 aovein-status-text">"{{ currentStatus.thought || '...' }}"</div></div>
-                    <div class="flex gap-3 aovein-status-row aovein-outfit-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">穿着</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.outfit || '未知' }}</div></div>
-                    <div class="flex gap-3 aovein-status-row aovein-note-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed aovein-status-note-box">{{ currentStatus.note || '无随笔' }}</div></div>
+                    <div v-if="currentStatus.custom_html" v-html="currentStatus.custom_html" class="w-full"></div>
+                    <template v-else>
+                        <div class="flex gap-3 aovein-status-row aovein-action-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">动作</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.action || '无' }}</div></div>
+                        <div class="flex gap-3 aovein-status-row aovein-thought-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">心声</div><div class="text-gray-800 aovein-status-text">"{{ currentStatus.thought || '...' }}"</div></div>
+                        <div class="flex gap-3 aovein-status-row aovein-outfit-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">穿着</div><div class="text-gray-800 aovein-status-text">{{ currentStatus.outfit || '未知' }}</div></div>
+                        <div class="flex gap-3 aovein-status-row aovein-note-row"><div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">随笔</div><div class="text-gray-600 bg-gray-50 p-2 rounded-lg text-xs leading-relaxed aovein-status-note-box">{{ currentStatus.note || '无随笔' }}</div></div>
+                    </template>
                 </div>
             </div>
 
@@ -1852,7 +1855,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <div class="flex justify-between items-center mb-1">
                         <span class="text-[11px] font-bold text-gray-500 tracking-wider">心声内容提示词 (Prompt)</span>
                     </div>
-                    <textarea v-model="statusBeautifyConfig.tempPrompt" placeholder="在这里告诉AI，心声卡片应该生成什么内容...\n例如：'请不要输出动作和穿着，把所有内容集中在 note 字段写成一首关于玩家的短诗...'" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-[13px] border border-gray-200 outline-none resize-none mb-3 leading-relaxed"></textarea>
+                    <textarea v-model="statusBeautifyConfig.tempPrompt" placeholder="在这里告诉AI，心声应该生成什么内容...\n例如：'请在 custom_status_html 字段输出一段HTML，包含：<div class=\&quot;my-hp\&quot;>当前好感度：99</div><div class=\&quot;my-thought\&quot;>内心戏...</div>' 然后你可以在CSS代码里深度美化 my-hp 和 my-thought 等类名！" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-[13px] border border-gray-200 outline-none resize-none mb-3 leading-relaxed"></textarea>
                     
                     <button @click="applyStatusPrompt" class="w-full bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">应用生成提示词</button>
                 </div>
@@ -3052,17 +3055,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="flex-1 overflow-y-auto p-4 space-y-4">
                     <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人。点击关系线可自定义修改。</p>
 
-                    <!-- 关系网可视化区域 -->
-                    <div class="relative w-full h-[380px] bg-[#f9f9f9] rounded-[24px] shadow-inner border border-gray-200 overflow-hidden" ref="relationNetWrapper">
+                    <!-- 关系网可视化区域 (支持双指缩放) -->
+                    <div class="relative w-full h-[380px] bg-[#f9f9f9] rounded-[24px] shadow-inner border border-gray-200 overflow-hidden" ref="relationNetWrapper"
+                         @touchstart="onRelationNetTouchStart"
+                         @touchmove="onRelationNetTouchMove"
+                         @touchend="onRelationNetTouchEnd">
                         
-                        <!-- 悬浮缩放控制器 -->
-                        <div class="absolute right-3 top-3 flex flex-col gap-2 z-50 bg-white/80 backdrop-blur-md rounded-full p-1 shadow-sm border border-gray-200">
-                            <button @click="relationNetZoom = Math.min(relationNetZoom + 0.1, 2.0)" class="w-7 h-7 flex items-center justify-center text-gray-600 active:scale-90 transition"><i class="fas fa-plus"></i></button>
-                            <div class="w-full h-[1px] bg-gray-200"></div>
-                            <button @click="relationNetZoom = Math.max(relationNetZoom - 0.1, 0.5)" class="w-7 h-7 flex items-center justify-center text-gray-600 active:scale-90 transition"><i class="fas fa-minus"></i></button>
-                        </div>
-
-                        <div class="relative w-full h-full flex items-center justify-center origin-center transition-transform duration-300 ease-out" :style="{ transform: `scale(${relationNetZoom})` }">
+                        <div class="relative w-full h-full flex items-center justify-center origin-center transition-transform duration-100 ease-out" :style="{ transform: `scale(${relationNetZoom})` }">
                         <!-- 中心节点：当前角色 (动态大小) -->
                         <div class="absolute z-20 flex flex-col items-center" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
                             <div class="rounded-full border-[3px] border-blue-500/30 overflow-hidden shadow-md bg-gray-100 transition-all duration-300" 
@@ -4245,7 +4244,16 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div class="flex items-center gap-1 border-b-[1.5px] border-gray-200 pb-1.5 mb-1">
                                         <input v-model="npcPersonaModal.name" placeholder="NPC 姓名" class="text-[17px] font-bold text-gray-900 outline-none bg-transparent flex-1 min-w-0 tracking-wide">
                                     </div>
-                                    <div class="text-[9px] text-gray-400 tracking-widest uppercase mb-3">NPC Profile</div>
+                                    <div class="text-[9px] text-gray-400 tracking-widest uppercase mb-1">NPC Profile</div>
+
+                                    <div class="flex items-center gap-1 border-b border-dashed border-gray-200 pb-1 mb-1">
+                                        <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase w-12">ID</span>
+                                        <input v-model="npcPersonaModal.wechatId" placeholder="微信号" class="text-[13px] font-bold text-gray-900 outline-none bg-transparent flex-1 min-w-0">
+                                    </div>
+                                    <div class="flex items-center gap-1 border-b border-dashed border-gray-200 pb-1 mb-3">
+                                        <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase w-12">Name</span>
+                                        <input v-model="npcPersonaModal.username" placeholder="网名" class="text-[13px] font-bold text-gray-900 outline-none bg-transparent flex-1 min-w-0">
+                                    </div>
 
                                     <div class="space-y-1.5">
                                         <div class="flex justify-between items-center border-b border-dashed border-gray-200 pb-1">
@@ -4277,6 +4285,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase mb-0.5">Weight</span>
                                     <div class="flex items-baseline"><input v-model="npcPersonaModal.weight" placeholder="-" class="text-[14px] font-bold text-gray-900 text-right outline-none bg-transparent w-10"><span class="text-[10px] text-gray-400 ml-1 font-bold uppercase">kg</span></div>
                                 </div>
+                            </div>
+
+                            <div class="mb-6 relative">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-1 h-4 bg-gray-900"></div>
+                                    <span class="text-[12px] font-bold text-gray-900 tracking-widest uppercase">Signature</span>
+                                </div>
+                                <input v-model="npcPersonaModal.signature" placeholder="个性签名..." class="w-full border-b border-dashed border-gray-300 pb-2 text-[13px] text-gray-600 outline-none bg-transparent italic">
                             </div>
 
                             <div class="mb-8 relative">
@@ -7227,9 +7243,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.57 更新日志 (当前最新) -->
+                            <!-- v1.58 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.58 双指无极缩放与心声引擎解禁</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-15 20:01</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">关系网无极缩放：</span>彻底移除了关系网面板右侧的固定缩放按钮。现在，你可以直接像查看原生相册一样，在关系网区域使用<span class="text-black font-bold">双指直接捏合、展开</span>，实现自由、丝滑的无极缩放体验。</li>
+                                    <li><span class="font-bold text-gray-800">档案同源双向绑定：</span>彻底打通了【关系网】与【NPC档案库】的数据链路。在档案编辑界面，完美补全了网名、微信号、个性签名等所有缺失字段的输入框。你在其中一处修改的内容，将瞬间双向绑定并实时映射到另一处，彻底告别数据割裂。</li>
+                                    <li><span class="font-bold text-gray-800">NPC 智能脑补萃取：</span>精简并优化了 AI 提取 NPC 的底层提示词逻辑，屏蔽了无意义的多余社会关联。现在 AI 在提取并创建 NPC 时，不仅会生成姓名和关系，还会根据世界观与人设，<span class="text-black font-bold">自动脑补并填满</span>该 NPC 的网名、ID、性别、年龄、生日、身高、体重、个性签名等所有维度的基础属性，不再需要你手动去挨个捏人！</li>
+                                    <li><span class="font-bold text-gray-800">心声面板引擎解禁：</span>彻底解除了心声面板只能输出“动作、穿着、心声、随笔”四要素的死板限制！在大模型返回的 JSON 结构中全新挂载了 <code>custom_status_html</code> 字段。现在你可以通过 Prompt 命令 AI 直接输出带有你自定义 class 类名的 HTML 结构，再配合 CSS 面板，你可以把心声卡片改造成属性面板、好感度进度条、好感度掉落提示等任何你想要的终极形态！</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.57 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.57 关系网缩放与设置中心拆分</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-15 07:14</span>
@@ -8661,6 +8692,7 @@ const app = createApp({
             memorySyncModal: { show: false, selectedGroupIds:[] },
             exportOptionsModal: { show: false, type: 'json' },
             relationNetZoom: 1.0,
+            relationNetPinch: null,
             relationshipModal: { show: false },
             addRelationModal: { show: false, isEdit: false, editIndex: -1, type: 'contact', targetId: '', name: '', username: '', wechatId: '', signature: '', relation: '', gender: '男', age: '', height: '', weight: '', birthday: '', bio: '', avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg' },
             isEditingSessionMask: false,
@@ -14123,7 +14155,7 @@ const app = createApp({
             }
             
             let statusInstruction = currentStatusPrompt 
-                ? `\n【极其重要的心声(状态卡片)定制指令】：\n${currentStatusPrompt}\n(请严格遵照上述指示，你可以打破原有的固定格式，随意支配、填写或留空 action, thought, outfit, note 四个字段，来达到上述指令要求的最终排版效果)`
+                ? `\n【极其重要的心声(状态卡片)定制指令】：\n${currentStatusPrompt}\n(你可以打破原有固定格式，留空 action/thought 等字段，直接将定制的内容通过 HTML 代码包裹并输出在 "custom_status_html" 字段中，以达到用户要求的最终排版效果！)`
                 : '';
             // ============================
 
@@ -14214,6 +14246,7 @@ Structure:
       "thought": "当前心声(第一人称思考，必须使用纯中文，每轮更新)",
       "outfit": "当前穿着(必须更新，贴合此时此地的场景)",
       "note": "随笔日记(OPTIONAL: 看心情决定是否提笔，必须使用纯中文)",
+      "custom_status_html": "OPTIONAL: 若用户提供了特殊心声指令，请按要求输出带有特定class的HTML代码包裹内容",
       "call_user": true OR false, // OPTIONAL: 如果你想主动打【语音电话】，请设为 true！
   "call_video_user": true OR false, // OPTIONAL: 如果你想主动打【视频通话】，请设为 true！
       "change_group_name": "OPTIONAL: 填入你想修改的新群名(仅限群名修改权限开启时有效)",
@@ -14971,8 +15004,8 @@ Structure:
                     }
                     // ======================================
                     let statusObj = null;
-                    if (block.thought || block.action || block.note || block.outfit) {
-                        statusObj = { time: Date.now(), action: block.action, thought: block.thought, outfit: block.outfit, note: block.note, avatar: speakerAvatar, name: speakerName, customCss: currentStatusCss };
+                    if (block.thought || block.action || block.note || block.outfit || block.custom_status_html) {
+                        statusObj = { time: Date.now(), action: block.action, thought: block.thought, outfit: block.outfit, note: block.note, custom_html: block.custom_status_html, avatar: speakerAvatar, name: speakerName, customCss: currentStatusCss };
                         session.status = statusObj;
                         if(!session.statusHistory) session.statusHistory =[];
                         session.statusHistory.unshift(statusObj); 
@@ -21018,6 +21051,34 @@ ${greetingInstruction}`;
                 this.npcLibraryExpanded.push(sessionId);
             }
         },
+        onRelationNetTouchStart(e) {
+            if (e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                this.relationNetPinch = {
+                    startDist: Math.sqrt(dx*dx + dy*dy),
+                    startZoom: this.relationNetZoom
+                };
+                e.preventDefault();
+            }
+        },
+        onRelationNetTouchMove(e) {
+            if (e.touches.length === 2 && this.relationNetPinch) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const currentDist = Math.sqrt(dx*dx + dy*dy);
+                const scale = currentDist / this.relationNetPinch.startDist;
+                let newZoom = this.relationNetPinch.startZoom * scale;
+                newZoom = Math.max(0.3, Math.min(newZoom, 3.0));
+                this.relationNetZoom = newZoom;
+                e.preventDefault();
+            }
+        },
+        onRelationNetTouchEnd(e) {
+            if (e.touches.length < 2) {
+                this.relationNetPinch = null;
+            }
+        },
         getRelNodePos(idx, total) {
             // 环形算法，将节点均匀分布在当前角色周围
             if (total === 0) return { x: 50, y: 50 };
@@ -21033,7 +21094,14 @@ ${greetingInstruction}`;
         },
         editRelation(idx) {
             const rel = this.wechatState.activeSession.relationships[idx];
-            this.addRelationModal = { show: true, isEdit: true, editIndex: idx, type: rel.type, targetId: rel.targetId || '', name: rel.name || '', relation: rel.relation || '', bio: rel.bio || '' };
+            this.addRelationModal = { 
+                show: true, isEdit: true, editIndex: idx, type: rel.type, 
+                targetId: rel.targetId || '', name: rel.name || '', relation: rel.relation || '', 
+                bio: rel.bio || '', username: rel.username || '', wechatId: rel.wechatId || '',
+                signature: rel.signature || '', gender: rel.gender || '男', age: rel.age || '',
+                height: rel.height || '', weight: rel.weight || '', birthday: rel.birthday || '',
+                avatar: rel.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
+            };
         },
         saveRelation() {
             if (this.addRelationModal.type === 'contact' && !this.addRelationModal.targetId) return this.showToast('请选择要绑定的联系人');
@@ -21340,6 +21408,9 @@ ${greetingInstruction}`;
                 sessionId: session.id,
                 realIdx: realIdx,
                 name: npc.name || '', 
+                username: npc.username || '',
+                wechatId: npc.wechatId || '',
+                signature: npc.signature || '',
                 bio: npc.bio || '', 
                 relation: npc.relation || '',
                 gender: npc.gender || '未知',
@@ -21358,6 +21429,9 @@ ${greetingInstruction}`;
                 const npc = session.relationships[this.npcPersonaModal.realIdx];
                 if (npc) {
                     npc.name = this.npcPersonaModal.name;
+                    npc.username = this.npcPersonaModal.username;
+                    npc.wechatId = this.npcPersonaModal.wechatId;
+                    npc.signature = this.npcPersonaModal.signature;
                     npc.bio = this.npcPersonaModal.bio;
                     npc.relation = this.npcPersonaModal.relation;
                     npc.gender = this.npcPersonaModal.gender;
@@ -21410,9 +21484,10 @@ ${greetingInstruction}`;
 【主角色背景设定】：${friend.bio || '无'}
 【关联世界书资料】：${worldContext || '无'}
 
-请基于上述资料，一键提取并补全所有信息。如果资料中提及的 NPC 不多，请基于世界观合理原创 2~4 个能丰富剧情走向的 NPC（例如：严厉的家属、暗流涌动的死对头、忠诚的护卫、纠缠不清的前任等）。
+请基于上述资料，一键提取并补全所有信息。注意：【仅生成该NPC与主角色 ${friend.name} 之间的关系】，不要去深挖或生成别的多余的社会身份关系。如果资料中提及的 NPC 不多，请基于世界观合理原创 2~4 个能丰富剧情走向的 NPC（例如：严厉的家属、暗流涌动的死对头、忠诚的护卫、纠缠不清的前任等）。
 
 【输出格式要求】：
+请根据人设，务必将网名、微信号ID、性别、年龄、生日、身高、体重、个性签名等字段【全部自动脑补并填充完整】！
 请输出一个合法的 JSON 数组，每个对象代表一个 NPC。
 结构示范：
 [
