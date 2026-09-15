@@ -3055,13 +3055,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="flex-1 overflow-y-auto p-4 space-y-4">
                     <p class="text-[11px] text-gray-400 text-center px-4">构建 TA 的社交世界。严令 AI 只能认识关系网里的人。点击关系线可自定义修改。</p>
 
-                    <!-- 关系网可视化区域 (支持双指缩放) -->
-                    <div class="relative w-full h-[380px] bg-[#f9f9f9] rounded-[24px] shadow-inner border border-gray-200 overflow-hidden" ref="relationNetWrapper"
+                    <!-- 关系网可视化区域 (支持单指拖拽平移 + 双指缩放) -->
+                    <div class="relative w-full h-[380px] bg-[#f9f9f9] rounded-[24px] shadow-inner border border-gray-200 overflow-hidden touch-none" ref="relationNetWrapper"
                          @touchstart="onRelationNetTouchStart"
                          @touchmove="onRelationNetTouchMove"
                          @touchend="onRelationNetTouchEnd">
                         
-                        <div class="relative w-full h-full flex items-center justify-center origin-center transition-transform duration-100 ease-out" :style="{ transform: `scale(${relationNetZoom})` }">
+                        <div class="relative w-full h-full flex items-center justify-center origin-center transition-transform duration-75 ease-out" :style="{ transform: `translate(${relationNetPan.x}px, ${relationNetPan.y}px) scale(${relationNetZoom})` }">
                         <!-- 中心节点：当前角色 (动态大小) -->
                         <div class="absolute z-20 flex flex-col items-center" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
                             <div class="rounded-full border-[3px] border-blue-500/30 overflow-hidden shadow-md bg-gray-100 transition-all duration-300" 
@@ -7120,7 +7120,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div class="flex items-center gap-4"><i class="fas fa-eye-slash text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">隐藏状态栏</span></div><input type="checkbox" id="toggle-sb" class="switch-checkbox" v-model="hideStatusBar" @change="saveData"><label for="toggle-sb" class="switch-label"><div class="switch-button"></div></label>
                                 </div>
                             </div>
-                            <div class="mt-8 mb-10 flex items-center justify-center gap-2 text-[12px] font-medium text-gray-400">
+                            <div class="mt-8 mb-24 flex items-center justify-center gap-2 text-[12px] font-medium text-gray-400">
                                 <span>Version 1.0.0</span><span class="mx-1 text-gray-300">|</span><span @click="showSettingsDisclaimer = true" class="text-blue-500 cursor-pointer active:opacity-70">用户条约与免责声明</span>
                             </div>
                         </div>
@@ -7243,9 +7243,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.58 更新日志 (当前最新) -->
+                            <!-- v1.59 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.59 关系网全手势交互与交叉关系精简</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-15 22:54</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">关系网全手势交互：</span>关系网画布交互体验满血进化！在上一版本双指缩放的基础上，全新实装了<span class="text-black font-bold">单指自由拖拽平移</span>功能，让你能像使用原生地图软件一样，在广阔的关系网宇宙中丝滑漫游。</li>
+                                    <li><span class="font-bold text-gray-800">交叉关系一键斩断：</span>修复了 NPC 之间乱认亲戚的问题。现在点击关系网中的连线（交叉关系）呼出修改弹窗后，不仅可以自定义修改关系名，还新增了红色的<span class="text-black font-bold">“删除连线”</span>按钮，点击即可永久斩断并隐藏这两个 NPC 之间的关系连线。</li>
+                                    <li><span class="font-bold text-gray-800">NPC 档案双向满血互通：</span>彻底修复了“在关系网弹窗修改了 NPC 属性，但在档案库里不显示”的断层 Bug。现在关系网的编辑弹窗已完美补全所有字段（包含身高、体重、ID、网名、签名等），两端数据真正实现 100% 底层同源双向绑定！</li>
+                                    <li><span class="font-bold text-gray-800">关系词条纯简化：</span>重写了 AI 提取 NPC 时的底层 Prompt，对大模型下达了极其严厉的格式压制。现在 AI 只会输出干净利落的核心关系词（如“哥哥”、“前任”），绝对不会再自作聪明地在后面加上大段的括号补充解释了。</li>
+                                    <li><span class="font-bold text-gray-800">UI 呼吸感优化：</span>全面调优了设置界面的沉浸感，加大了页面最底部的留白空间，彻底解决了免责声明文字紧贴屏幕底边造成的视觉压迫感。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.58 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.58 双指无极缩放与心声引擎解禁</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-15 20:01</span>
@@ -8692,6 +8708,8 @@ const app = createApp({
             memorySyncModal: { show: false, selectedGroupIds:[] },
             exportOptionsModal: { show: false, type: 'json' },
             relationNetZoom: 1.0,
+            relationNetPan: { x: 0, y: 0 },
+            relationNetDrag: null,
             relationNetPinch: null,
             relationshipModal: { show: false },
             addRelationModal: { show: false, isEdit: false, editIndex: -1, type: 'contact', targetId: '', name: '', username: '', wechatId: '', signature: '', relation: '', gender: '男', age: '', height: '', weight: '', birthday: '', bio: '', avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg' },
@@ -21022,7 +21040,7 @@ ${greetingInstruction}`;
                         const r2 = rels[j].relation;
                         crossName = this.inferRelation(r1, r2);
                     }
-                    if (crossName) {
+                    if (crossName && crossName !== 'NONE') {
                         lines.push({ sourceIdx: i, targetIdx: j, label: crossName });
                     }
                 }
@@ -21030,16 +21048,27 @@ ${greetingInstruction}`;
             return lines;
         },
         editCrossRelation(line) {
-            this.showInput('修改 NPC 之间的交叉关系', line.label, '请输入他们之间的关系 (如：夫妻、兄弟)', (val) => {
+            this.showInput('修改交叉关系', line.label === 'NONE' ? '' : line.label, '输入关系，或点击删除连线', (val) => {
                 if (val && val.trim()) {
                     const session = this.wechatState.activeSession;
                     if (!session.crossRelations) session.crossRelations = {};
                     const id1 = session.relationships[line.sourceIdx].id || session.relationships[line.sourceIdx].targetId;
                     const id2 = session.relationships[line.targetIdx].id || session.relationships[line.targetIdx].targetId;
-                    // 以固定组合格式存入本地，下次读取优先使用
                     session.crossRelations[`${id1}|${id2}`] = val.trim();
                     this.saveData();
-                    this.showToast('关系已修正并保存');
+                    this.showToast('关系已保存');
+                }
+            }, 'text', {
+                text: '删除连线',
+                action: () => {
+                    const session = this.wechatState.activeSession;
+                    if (!session.crossRelations) session.crossRelations = {};
+                    const id1 = session.relationships[line.sourceIdx].id || session.relationships[line.sourceIdx].targetId;
+                    const id2 = session.relationships[line.targetIdx].id || session.relationships[line.targetIdx].targetId;
+                    session.crossRelations[`${id1}|${id2}`] = 'NONE';
+                    this.inputModal.show = false;
+                    this.saveData();
+                    this.showToast('连线已删除');
                 }
             });
         },
@@ -21055,11 +21084,9 @@ ${greetingInstruction}`;
             if (e.touches.length === 2) {
                 const dx = e.touches[0].clientX - e.touches[1].clientX;
                 const dy = e.touches[0].clientY - e.touches[1].clientY;
-                this.relationNetPinch = {
-                    startDist: Math.sqrt(dx*dx + dy*dy),
-                    startZoom: this.relationNetZoom
-                };
-                e.preventDefault();
+                this.relationNetPinch = { startDist: Math.sqrt(dx*dx + dy*dy), startZoom: this.relationNetZoom };
+            } else if (e.touches.length === 1) {
+                this.relationNetDrag = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, panX: this.relationNetPan.x, panY: this.relationNetPan.y };
             }
         },
         onRelationNetTouchMove(e) {
@@ -21067,17 +21094,28 @@ ${greetingInstruction}`;
                 const dx = e.touches[0].clientX - e.touches[1].clientX;
                 const dy = e.touches[0].clientY - e.touches[1].clientY;
                 const currentDist = Math.sqrt(dx*dx + dy*dy);
-                const scale = currentDist / this.relationNetPinch.startDist;
-                let newZoom = this.relationNetPinch.startZoom * scale;
-                newZoom = Math.max(0.3, Math.min(newZoom, 3.0));
-                this.relationNetZoom = newZoom;
+                let newZoom = this.relationNetPinch.startZoom * (currentDist / this.relationNetPinch.startDist);
+                this.relationNetZoom = Math.max(0.3, Math.min(newZoom, 3.0));
+                e.preventDefault();
+            } else if (e.touches.length === 1 && this.relationNetDrag) {
+                const dx = e.touches[0].clientX - this.relationNetDrag.startX;
+                const dy = e.touches[0].clientY - this.relationNetDrag.startY;
+                this.relationNetPan.x = this.relationNetDrag.panX + dx;
+                this.relationNetPan.y = this.relationNetDrag.panY + dy;
                 e.preventDefault();
             }
         },
         onRelationNetTouchEnd(e) {
-            if (e.touches.length < 2) {
-                this.relationNetPinch = null;
+            if (e.touches.length < 2) this.relationNetPinch = null;
+            if (e.touches.length === 0) this.relationNetDrag = null;
+        },
+        openRelationshipModal() {
+            if (!this.wechatState.activeSession.relationships) {
+                this.wechatState.activeSession.relationships = [];
             }
+            this.relationNetZoom = 1.0;
+            this.relationNetPan = { x: 0, y: 0 };
+            this.relationshipModal.show = true;
         },
         getRelNodePos(idx, total) {
             // 环形算法，将节点均匀分布在当前角色周围
@@ -21109,13 +21147,21 @@ ${greetingInstruction}`;
             if (!this.addRelationModal.relation.trim()) return this.showToast('请输入关系 (如：前任、亲妹妹)');
 
             const relData = {
-                id: 'npc_' + Date.now().toString(),
+                id: this.addRelationModal.isEdit ? this.wechatState.activeSession.relationships[this.addRelationModal.editIndex].id : 'npc_' + Date.now().toString(),
                 type: this.addRelationModal.type,
                 targetId: this.addRelationModal.type === 'contact' ? this.addRelationModal.targetId : null,
                 name: this.addRelationModal.type === 'npc' ? this.addRelationModal.name.trim() : '',
+                username: this.addRelationModal.type === 'npc' ? (this.addRelationModal.username || '').trim() : '',
+                wechatId: this.addRelationModal.type === 'npc' ? (this.addRelationModal.wechatId || '').trim() : '',
+                signature: this.addRelationModal.type === 'npc' ? (this.addRelationModal.signature || '').trim() : '',
                 relation: this.addRelationModal.relation.trim(),
+                gender: this.addRelationModal.type === 'npc' ? this.addRelationModal.gender : '男',
+                age: this.addRelationModal.type === 'npc' ? this.addRelationModal.age : '',
+                height: this.addRelationModal.type === 'npc' ? this.addRelationModal.height : '',
+                weight: this.addRelationModal.type === 'npc' ? this.addRelationModal.weight : '',
+                birthday: this.addRelationModal.type === 'npc' ? this.addRelationModal.birthday : '',
                 bio: this.addRelationModal.type === 'npc' ? this.addRelationModal.bio.trim() : '',
-                avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
+                avatar: this.addRelationModal.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
             };
 
             if (!this.wechatState.activeSession.relationships) this.wechatState.activeSession.relationships = [];
@@ -21496,7 +21542,7 @@ ${greetingInstruction}`;
     "wechatId": "如: wxx_123 (只能小写英文数字下划线)",
     "username": "该NPC的社交网名(如: 孤夜)",
     "signature": "该NPC的社交个性签名",
-    "relation": "与 ${friend.name} 的关系(如: 青梅竹马、死对头、师傅)",
+    "relation": "与 ${friend.name} 的关系(极度重要：只能输出核心词汇如'哥哥'、'死对头'、'前任'，绝对不准附加任何括号补充解释或背景描述！)",
     "gender": "男 / 女",
     "age": "如: 24",
     "birthday": "如: 12月05日",
