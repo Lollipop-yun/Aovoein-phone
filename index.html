@@ -7260,9 +7260,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.61 更新日志 (当前最新) -->
+                            <!-- v1.62 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.62 朋友圈生态闭环与防爹味说教指令</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-17 00:50</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">防催睡机制入库：</span>给系统底层植入了第 11 条绝对规则：严禁大模型因为时间晚了就爹味说教强制催睡！现在你如果不表达困意，AI 就只能乖乖顺着你的话题陪你熬过漫漫长夜。</li>
+                                    <li><span class="font-bold text-gray-800">朋友圈 NPC 真实生态网：</span>朋友圈互动引擎史诗级进化！当角色发布朋友圈的瞬间，系统会自动提取该角色关系网中的 NPC 并在底部立刻生成符合人设的秒评。主角看到后甚至还会跟这些 NPC 互动，彻底打造极其真实的社交圈环境！</li>
+                                    <li><span class="font-bold text-gray-800">玩家参战 NPC 互动：</span>补全了互动闭环！现在如果你在朋友圈里直接回复了某个 NPC，该 NPC 同样会基于它的人设向你回话，主角若是看到还会吃醋或者帮腔，让关系网真正活过来。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.61 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.61 心声自定义变量扩展与重构指南</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-16 22:46</span>
@@ -14325,6 +14339,7 @@ You are NO LONGER an AI. You are a real, living person chatting on a modern mess
 8. Coherent Bubbles: When writing the JSON "reply" array, DO NOT split a single continuous thought (connected by commas) into multiple bubbles. Only split by periods or question marks.
 9. Anti-Repetition (防重复刷屏): 【极度重要】绝对不要重复发送同样的功能性卡片（比如刚点过外卖、刚发过红包转账，就绝对不要在下一轮马上又发一个一模一样的）！只在剧情真正需要推进时才使用这些能力。
 10. Anti-Silence (防沉默机制): 【极度重要】哪怕你发送了红包、转账或私聊，你的 "reply" 数组中也必须正常说话！绝对不允许只发卡片却一言不发（reply为空数组）！
+11. Anti-Nagging (防催睡机制): 【极度重要】除非玩家(User)主动表达出困意或想睡觉的意愿，否则你绝对不能因为时间晚了就强行催促、命令玩家去睡觉。玩家熬夜必有原因，你应当选择陪伴玩家度过漫漫长夜，或者顺着玩家的话题聊下去，尊重玩家的意愿。
 </TONE_AND_STYLE_GUIDELINES>
 
 <ENVIRONMENT_CONTEXT>
@@ -19468,6 +19483,18 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                  const aiFriend = this.wechatState.friendList.find(f => (f.remark || f.name) === this.replyTarget.user);
                  if (aiFriend && this.canAIFriendSeeMoment(moment, aiFriend)) {
                      this.generateAIReplyToComment(moment, aiFriend, this.commentInput);
+                 } else {
+                     // 如果查无此人，说明这可能是个 NPC，进入 NPC 交互分支
+                     const charFriend = this.wechatState.friendList.find(f => (f.remark || f.name) === moment.name);
+                     if (charFriend) {
+                         const authorSession = this.wechatState.sessions.find(s => s.targetId === charFriend.id);
+                         if (authorSession && authorSession.relationships) {
+                             const npc = authorSession.relationships.find(r => r.name === this.replyTarget.user && r.type === 'npc');
+                             if (npc) {
+                                 this.generateNpcReplyToComment(moment, authorSession, npc, this.commentInput, charFriend);
+                             }
+                         }
+                     }
                  }
             } else {
                 const aiAuthor = this.wechatState.friendList.find(f => (f.remark || f.name) === moment.name);
@@ -19617,7 +19644,14 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     this.moments.unshift(moment);
                     this.saveData();
                     
+                    // --- 触发 NPC 朋友圈评论互动 ---
                     let privateSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
+                    if (privateSession && privateSession.relationships && privateSession.relationships.some(r => r.type === 'npc')) {
+                        setTimeout(() => {
+                            this.simulateNpcInteractionsForMoment(moment, privateSession, friend);
+                        }, 2000);
+                    }
+                    // ---------------------------------
                     if (privateSession) {
                         privateSession.messages.push({
                             type: 'system',
@@ -19749,7 +19783,14 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
                     this.moments.unshift(moment);
                     this.saveData();
                     
+                    // --- 触发 NPC 朋友圈评论互动 ---
                     let privateSession = this.wechatState.sessions.find(s => s.targetId === friend.id && !s.isGroup);
+                    if (privateSession && privateSession.relationships && privateSession.relationships.some(r => r.type === 'npc')) {
+                        setTimeout(() => {
+                            this.simulateNpcInteractionsForMoment(moment, privateSession, friend);
+                        }, 2000);
+                    }
+                    // ---------------------------------
                     if (privateSession) {
                         privateSession.messages.push({
                             type: 'system',
@@ -19828,6 +19869,135 @@ ${settings.bannedWords && settings.bannedWords.trim() ? `5. 【绝对禁忌词�
             } else { return this.showToast('请先配置 API Key'); }
         },
 
+        async simulateNpcInteractionsForMoment(moment, session, charFriend) {
+            if (!this.apiConfig.apiKey) return;
+            const npcs = session.relationships.filter(r => r.type === 'npc');
+            if (npcs.length === 0) return;
+
+            // 随机抽取 1-2 个关系网里的 NPC 来评论，营造真实感
+            const shuffled = npcs.sort(() => 0.5 - Math.random());
+            const selectedNpcs = shuffled.slice(0, Math.floor(Math.random() * 2) + 1);
+            const npcContexts = selectedNpcs.map(n => `NPC名字：${n.name}，关系：${n.relation}，设定：${n.bio}`).join('\n');
+
+            try {
+                let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                if (!url.endsWith('/v1')) url += '/v1';
+
+                const sysPrompt = `你是小说剧情推演大师。主角色【${charFriend.name}】刚发了一条朋友圈：“${moment.content}”。
+这是主角色的设定：${charFriend.bio || '无'}。
+这是主角色关系网中的NPC：
+${npcContexts}
+
+请根据这条朋友圈的内容，以及各个NPC的性格和与主角的关系，为选中的NPC生成一条符合其人设的评论。同时，主角色看完评论后，有一定概率会回复该NPC的评论。
+你必须返回合法的JSON数组，格式如下：
+[
+  {
+    "npcName": "NPC名字",
+    "comment": "NPC的具体评论内容",
+    "charReply": "主角色对该评论的回复内容（可选，如果不回复请设为空字符串\"\"）"
+  }
+]
+绝对不能OOC，绝不要加任何Markdown或//注释！直接输出JSON数组！`;
+
+                const res = await fetch(`${url}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                    body: JSON.stringify({
+                        model: this.apiConfig.selectedModel,
+                        messages: [{ role: 'system', content: sysPrompt }, { role: 'user', content: '直接输出 JSON 数组' }],
+                        temperature: 0.8
+                    })
+                });
+
+                if (!res.ok) return;
+                const data = await res.json();
+                let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
+                let parsed = JSON.parse(raw);
+
+                if (Array.isArray(parsed)) {
+                    parsed.forEach(item => {
+                        if (item.comment) {
+                            moment.comments.push({
+                                user: item.npcName,
+                                text: item.comment,
+                                replyTo: null
+                            });
+                            if (item.charReply) {
+                                moment.comments.push({
+                                    user: charFriend.remark || charFriend.name,
+                                    text: item.charReply,
+                                    replyTo: item.npcName
+                                });
+                            }
+                        }
+                    });
+                    this.saveData();
+                }
+            } catch (e) {
+                console.error("NPC朋友圈互动生成失败", e);
+            }
+        },
+        async generateNpcReplyToComment(moment, session, npc, userCommentText, charFriend) {
+            if (!this.apiConfig.apiKey) return;
+            this.showToast(`${npc.name} 正在回复...`);
+
+            setTimeout(async () => {
+                try {
+                    let url = this.apiConfig.baseUrl.trim().replace(/\/+$/, '');
+                    if (!url.endsWith('/v1')) url += '/v1';
+
+                    const sysPrompt = `你是小说剧情推演大师。
+场景：主角色【${charFriend.name}】发了一条朋友圈：“${moment.content}”。
+NPC【${npc.name}】(设定:${npc.bio}，与主角关系:${npc.relation}) 在朋友圈底下。
+接着，我(玩家)在这个朋友圈下回复了 NPC【${npc.name}】：“${userCommentText}”。
+
+请根据 NPC 的人设，写出 NPC 对我(玩家)的回复。同时，主角色【${charFriend.name}】看到我们的对话后，也有一定概率会跟着插嘴回复。
+必须返回合法JSON格式：
+{
+  "npcReply": "NPC对玩家的回复",
+  "charReply": "主角色参与互动的回复（可选，如果不回复请设为空字符串\"\"，回复对象可以是玩家或NPC）"
+}
+绝对不能OOC！直接输出JSON，不要加Markdown。`;
+
+                    const res = await fetch(`${url}/chat/completions`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.apiConfig.apiKey.trim()}` },
+                        body: JSON.stringify({
+                            model: this.apiConfig.selectedModel,
+                            messages: [{ role: 'system', content: sysPrompt }, { role: 'user', content: '直接输出 JSON' }],
+                            temperature: 0.8
+                        })
+                    });
+
+                    if(!res.ok) return;
+                    const data = await res.json();
+                    let raw = data.choices[0].message.content.trim().replace(/```json/g, '').replace(/```/g, '').trim();
+                    let parsed = JSON.parse(raw);
+
+                    if (parsed.npcReply) {
+                        moment.comments.push({
+                            user: npc.name,
+                            text: parsed.npcReply,
+                            replyTo: this.homeProfile.name
+                        });
+                        this.pushMomentNotification('comment', npc.name, npc.avatar || 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg', parsed.npcReply, moment.id, moment.content, moment.images && moment.images.length ? moment.images[0] : '');
+                    }
+                    if (parsed.charReply) {
+                        moment.comments.push({
+                            user: charFriend.remark || charFriend.name,
+                            text: parsed.charReply,
+                            replyTo: null
+                        });
+                        this.pushMomentNotification('comment', charFriend.remark || charFriend.name, charFriend.avatar, parsed.charReply, moment.id, moment.content, moment.images && moment.images.length ? moment.images[0] : '');
+                    }
+                    
+                    this.saveData();
+                    this.showToast(`收到了新的回复`);
+                } catch(e) {
+                    console.error("NPC 回复错误", e);
+                }
+            }, 2000);
+        },
         async generateAIReplyToComment(moment, aiFriend, userComment, isAuthorReply = false) {
             if (!this.canAIFriendSeeMoment(moment, aiFriend)) return;
 
