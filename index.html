@@ -1829,7 +1829,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <h3 class="aovein-status-name text-sm font-bold text-gray-900">某位少爷</h3>
                             <p class="aovein-status-state-label text-[10px] text-gray-400">Current State</p>
                         </div>
-                        <div v-if="statusBeautifyConfig.tempHtml" v-html="statusBeautifyConfig.tempHtml.replace(/\{\{action\}\}/g, '喝了一口咖啡').replace(/\{\{thought\}\}/g, '这咖啡怎么这么苦...').replace(/\{\{outfit\}\}/g, '黑色风衣').replace(/\{\{note\}\}/g, '原来少爷也是怕苦的，真是可爱。')" class="space-y-2 text-xs aovein-status-body w-full"></div>
+                        <div v-if="statusBeautifyConfig.tempHtml" v-html="statusBeautifyConfig.tempHtml.replace(/\{\{action\}\}/g, '喝了一口咖啡').replace(/\{\{thought\}\}/g, '这咖啡怎么这么苦...').replace(/\{\{outfit\}\}/g, '黑色风衣').replace(/\{\{note\}\}/g, '原来少爷也是怕苦的，真是可爱。').replace(/\{\{avatar\}\}/g, 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg').replace(/\{\{name\}\}/g, '某位少爷')" class="space-y-2 text-xs aovein-status-body w-full"></div>
                         <div v-else class="space-y-2 text-xs aovein-status-body">
                             <div class="flex gap-2 aovein-status-row aovein-action-row"><div class="w-8 text-gray-400 font-bold text-right aovein-status-label">动作</div><div class="text-gray-800 aovein-status-text">喝了一口咖啡</div></div>
                             <div class="flex gap-2 aovein-status-row aovein-thought-row"><div class="w-8 text-gray-400 font-bold text-right aovein-status-label">心声</div><div class="text-gray-800 aovein-status-text">"这咖啡怎么这么苦..."</div></div>
@@ -1848,7 +1848,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <button @click="copyStatusBeautifyDefault" class="text-[10px] text-blue-500 font-bold active:opacity-50">复制源码</button>
                         </div>
                     </div>
-                    <textarea v-model="statusBeautifyConfig.tempHtml" placeholder="请填入 HTML 代码...\n支持变量：{{action}}, {{thought}}, {{outfit}}, {{note}}" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
+                    <textarea v-model="statusBeautifyConfig.tempHtml" placeholder="请填入 HTML 代码...\n支持变量：{{action}}, {{thought}}, {{outfit}}, {{note}}, {{avatar}}, {{name}}" class="w-full h-32 bg-white shadow-inner p-3 rounded-[16px] text-xs font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
                     
                     <button @click="applyStatusHtml" class="w-full bg-gray-900 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition shadow-md">应用 HTML 结构</button>
                 </div>
@@ -7260,9 +7260,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.60 更新日志 (当前最新) -->
+                            <!-- v1.61 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.61 心声自定义变量扩展与重构指南</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-16 22:46</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">心声 HTML 变量扩容：</span>为心声卡片的 HTML 结构解析引擎新增了 <code>{{name}}</code> 和 <code>{{avatar}}</code> 两个强力专属变量。现在你在用 HTML 重构心声卡片时，系统会自动替你填入角色当前生效的头像（完美兼容了你在本聊设置里换的专属头像）和名字，再也不用手动去硬编码图片链接了！如果想要用自己的链接，直接覆盖 img 的 src 即可。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.60 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.60 动态HTML结构解禁与信息提取修正</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-16 18:34</span>
@@ -9498,10 +9510,16 @@ const app = createApp({
             let html = this.statusBeautifyConfig.activeHtml;
             if (!html) return '';
             const s = this.currentStatus || {};
+            // 兜底获取动态头像和名字 (完美兼容本聊专属头像设定)
+            let finalAvatar = s.avatar || this.getCurrentSessionAvatar();
+            let finalName = s.name || this.wechatState.activeSession?.name || '未知';
+            
             return html.replace(/\{\{action\}\}/g, s.action || '无')
                        .replace(/\{\{thought\}\}/g, s.thought || '...')
                        .replace(/\{\{outfit\}\}/g, s.outfit || '未知')
-                       .replace(/\{\{note\}\}/g, s.note || '无');
+                       .replace(/\{\{note\}\}/g, s.note || '无')
+                       .replace(/\{\{avatar\}\}/g, finalAvatar)
+                       .replace(/\{\{name\}\}/g, finalName);
         },
         applyStatusHtml() {
             this.statusBeautifyConfig.activeHtml = this.statusBeautifyConfig.tempHtml;
@@ -9535,7 +9553,10 @@ const app = createApp({
         },
         copyStatusBeautifyDefault() {
             if (this.statusBeautifyConfig.currentTab === 'html') {
-                const defaultHtml = `<div class="flex gap-3 aovein-status-row aovein-action-row">
+                const defaultHtml = `<!-- 提示：如果想完全重新设计卡片(包括头像)，请先在CSS配置里加入 .aovein-status-header { display: none !important; } 隐藏掉系统自带的默认头像和名字，然后在这里尽情发挥！ -->
+<!-- <img src="{{avatar}}" class="my-custom-avatar"> <span>{{name}}</span> -->
+
+<div class="flex gap-3 aovein-status-row aovein-action-row">
     <div class="w-8 shrink-0 text-gray-400 font-bold text-right aovein-status-label">动作</div>
     <div class="text-gray-800 aovein-status-text">{{action}}</div>
 </div>
