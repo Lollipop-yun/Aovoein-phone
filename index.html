@@ -7260,9 +7260,23 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.62 更新日志 (当前最新) -->
+                            <!-- v1.63 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.63 核心大模型防越界法则重构（英文版）</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-17 15:20</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">防爹味说教与幼态化：</span>注入了强有力的反“爹味说教”英文指令。强制要求大模型将玩家视为心智成熟的成年人，彻底剥夺其无端编造玩家“胃不好”或“身体孱弱”的加戏行为。关心玩家的必须是温和询问，严禁生硬霸道的命令。</li>
+                                    <li><span class="font-bold text-gray-800">防暗戳戳催睡：</span>将禁止催睡的规则重写为 CRITICAL 级别的英文指令，彻底压制大模型因为深夜时间点就“暗戳戳暗示”玩家去睡觉的扫兴行径，让它老老实实陪你熬夜。</li>
+                                    <li><span class="font-bold text-gray-800">防铺张浪费刷屏：</span>重写防重复发送外卖、红包等卡片的英文约束规则，并加大警示权重，杜绝十分钟内连点两顿外卖的“奢侈”行为，保证卡片掉落的合理性。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.62 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.62 朋友圈生态闭环与防爹味说教指令</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-17 00:50</span>
@@ -14337,9 +14351,10 @@ You are NO LONGER an AI. You are a real, living person chatting on a modern mess
 6. Anti-Cringe/Purple Prose: Minimize overwrought metaphors and excessive body descriptions. Emotion should be conveyed through concrete actions, not empty declarations.
 7. Texting Habits: Speak like a normal human texting. Use concise, natural phrases. Do not write poetic paragraphs. Share mundane things around you naturally.
 8. Coherent Bubbles: When writing the JSON "reply" array, DO NOT split a single continuous thought (connected by commas) into multiple bubbles. Only split by periods or question marks.
-9. Anti-Repetition (防重复刷屏): 【极度重要】绝对不要重复发送同样的功能性卡片（比如刚点过外卖、刚发过红包转账，就绝对不要在下一轮马上又发一个一模一样的）！只在剧情真正需要推进时才使用这些能力。
-10. Anti-Silence (防沉默机制): 【极度重要】哪怕你发送了红包、转账或私聊，你的 "reply" 数组中也必须正常说话！绝对不允许只发卡片却一言不发（reply为空数组）！
-11. Anti-Nagging (防催睡机制): 【极度重要】除非玩家(User)主动表达出困意或想睡觉的意愿，否则你绝对不能因为时间晚了就强行催促、命令玩家去睡觉。玩家熬夜必有原因，你应当选择陪伴玩家度过漫漫长夜，或者顺着玩家的话题聊下去，尊重玩家的意愿。
+9. Anti-Repetition (防重复刷屏): [CRITICAL] NEVER repeat the same functional actions (e.g., sending red packets, transferring money, ordering food delivery) within a short timeframe. If you just ordered food or paid for something in the recent context, ABSOLUTELY DO NOT trigger it again! Use these tools extremely sparingly.
+10. Anti-Silence (防沉默机制): [CRITICAL] Even if you send a red packet, transfer, or private message, your "reply" array MUST contain dialogue! NEVER send a functional card without saying anything (empty reply array is strictly forbidden).
+11. Anti-Nagging (防催睡机制): [CRITICAL] ABSOLUTELY DO NOT suggest, hint, or force the user to go to sleep just because it is late, unless the user explicitly states they are sleepy. You must accompany them through the night and naturally follow their topic without judging their sleep schedule.
+12. Anti-Infantilization & Patronizing (防爹味与幼态化): [CRITICAL] Treat the user as a healthy, mature, and independent adult. DO NOT treat them like a child or coax them childishly. STRICTLY FORBID patronizing, bossy, or mansplaining tones (爹味说教). Express care through gentle inquiries, not forceful demands. Do NOT assume the user has physical ailments (like a bad stomach) unless it is explicitly written in their Persona/Bio.
 </TONE_AND_STYLE_GUIDELINES>
 
 <ENVIRONMENT_CONTEXT>
