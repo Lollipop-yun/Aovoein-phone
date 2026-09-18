@@ -2470,94 +2470,106 @@ document.addEventListener('DOMContentLoaded', () => {
                      </div>
                  </transition>
 
-                 <div class="w-full flex flex-col items-center skin-text-container">
-                    
-                    <!-- 顶部名片 -->
-                    <div class="w-[90%] z-20 mt-2 mb-2 shrink-0">
-                        <div class="bg-white/90 backdrop-blur-sm rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative" :class="{'jiggle': appDragState.isEditing}">
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex gap-3">
-                                    <div class="w-[52px] h-[52px] border border-gray-100 rounded-lg p-0.5 flex flex-col items-center justify-between shrink-0 cursor-pointer active:scale-95 transition bg-white">
-                                        <div class="w-full h-[70%] rounded-md overflow-hidden bg-gray-50 relative" @click.stop="appDragState.isEditing ? null : triggerCardAvatarUpload()">
-                                            <img v-if="cardProfile.avatar" :src="cardProfile.avatar" class="w-full h-full object-cover">
-                                            <i v-else class="fas fa-user text-gray-300 text-xl flex h-full items-center justify-center"></i>
+                 <transition-group name="app-list" tag="div" class="w-full flex flex-col items-center skin-text-container relative">
+                    <template v-for="(block, bIdx) in d1p1Blocks" :key="block">
+                        
+                        <!-- 顶部名片 -->
+                        <div v-if="block === 'card'" class="w-[90%] z-20 mt-2 mb-2 shrink-0 app-drop-zone relative" data-type="block" data-name="d1p1Blocks" :data-index="bIdx" :class="{'opacity-0': appDragState.draggingId === block}">
+                            <div class="bg-white/90 backdrop-blur-sm rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative" 
+                                 :class="{'jiggle cursor-move': appDragState.isEditing}"
+                                 @touchstart="startAppDrag($event, 'block', 'd1p1Blocks', bIdx, block)" @mousedown="startAppDrag($event, 'block', 'd1p1Blocks', bIdx, block)">
+                                <div class="flex justify-between items-start mb-3 pointer-events-none">
+                                    <div class="flex gap-3">
+                                        <div class="w-[52px] h-[52px] border border-gray-100 rounded-lg p-0.5 flex flex-col items-center justify-between shrink-0 cursor-pointer active:scale-95 transition bg-white pointer-events-auto">
+                                            <div class="w-full h-[70%] rounded-md overflow-hidden bg-gray-50 relative" @click.stop="appDragState.isEditing ? null : triggerCardAvatarUpload()">
+                                                <img v-if="cardProfile.avatar" :src="cardProfile.avatar" class="w-full h-full object-cover">
+                                                <i v-else class="fas fa-user text-gray-300 text-xl flex h-full items-center justify-center"></i>
+                                            </div>
+                                            <span class="text-[8px] opacity-60 scale-90 origin-bottom font-medium truncate w-full text-center" @click.stop="appDragState.isEditing ? null : editCardProfile('status')">{{ cardProfile.status }}</span>
                                         </div>
-                                        <span class="text-[8px] opacity-60 scale-90 origin-bottom font-medium truncate w-full text-center" @click.stop="appDragState.isEditing ? null : editCardProfile('status')">{{ cardProfile.status }}</span>
+                                        <div class="flex flex-col pt-0.5 pointer-events-auto" style="font-size: var(--custom-font-size)">
+                                            <h2 @click="appDragState.isEditing ? null : editCardProfile('name')" class="text-[14px] font-bold tracking-wider mb-0.5 cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">{{ cardProfile.name }}</h2>
+                                            <p @click="appDragState.isEditing ? null : editCardProfile('id')" class="text-[10px] opacity-60 font-mono tracking-wide cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">@ {{ cardProfile.id }}</p>
+                                        </div>
                                     </div>
-                                    <div class="flex flex-col pt-0.5" style="font-size: var(--custom-font-size)">
-                                        <h2 @click="appDragState.isEditing ? null : editCardProfile('name')" class="text-[14px] font-bold tracking-wider mb-0.5 cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">{{ cardProfile.name }}</h2>
-                                        <p @click="appDragState.isEditing ? null : editCardProfile('id')" class="text-[10px] opacity-60 font-mono tracking-wide cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">@ {{ cardProfile.id }}</p>
+                                    <div class="flex items-center gap-1 text-[10px] opacity-60 font-medium pt-1" :style="{color: themeConfig.fontColor}">
+                                        <span>{{ displayDate.dateString }}</span>
+                                        <i class="fas fa-heart text-[8px]"></i>
+                                        <span>{{ displayDate.dayString }}</span>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-1 text-[10px] opacity-60 font-medium pt-1" :style="{color: themeConfig.fontColor}">
-                                    <span>{{ displayDate.dateString }}</span>
-                                    <i class="fas fa-heart text-[8px]"></i>
-                                    <span>{{ displayDate.dayString }}</span>
+                                <div @click="appDragState.isEditing ? null : editCardProfile('bio')" class="text-[12px] leading-relaxed font-medium tracking-wide text-justify cursor-pointer active:opacity-50 border-t border-gray-50/20 pt-2 relative z-10" :style="{color: themeConfig.fontColor, fontSize: 'calc(var(--custom-font-size) * 0.9)'}">{{ cardProfile.bio }}</div>
+                            </div>
+                        </div>
+
+                        <!-- 中部个人信息 -->
+                        <div v-if="block === 'info'" class="flex flex-col items-center w-full mb-3 z-10 shrink-0 app-drop-zone relative" style="font-size: var(--custom-font-size)" data-type="block" data-name="d1p1Blocks" :data-index="bIdx" :class="{'jiggle cursor-move': appDragState.isEditing, 'opacity-0': appDragState.draggingId === block}" @touchstart="startAppDrag($event, 'block', 'd1p1Blocks', bIdx, block)" @mousedown="startAppDrag($event, 'block', 'd1p1Blocks', bIdx, block)">
+                            <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-gray-200 to-white shadow-lg mb-2 cursor-pointer active:scale-95 transition pointer-events-auto" @click.stop="appDragState.isEditing ? null : triggerHomeAvatarUpload()">
+                                <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 relative pointer-events-none">
+                                    <img v-if="homeProfile.avatar" :src="homeProfile.avatar" class="w-full h-full object-cover">
+                                    <i v-else class="fas fa-user text-gray-300 text-3xl flex h-full items-center justify-center"></i>
                                 </div>
                             </div>
-                            <div @click="appDragState.isEditing ? null : editCardProfile('bio')" class="text-[12px] leading-relaxed font-medium tracking-wide text-justify cursor-pointer active:opacity-50 border-t border-gray-50/20 pt-2" :style="{color: themeConfig.fontColor, fontSize: 'calc(var(--custom-font-size) * 0.9)'}">{{ cardProfile.bio }}</div>
-                        </div>
-                    </div>
-
-                    <!-- 中部个人信息 -->
-                    <div class="flex flex-col items-center w-full mb-3 z-10 shrink-0" style="font-size: var(--custom-font-size)" :class="{'jiggle': appDragState.isEditing}">
-                        <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-gray-200 to-white shadow-lg mb-2 cursor-pointer active:scale-95 transition" @click="appDragState.isEditing ? null : triggerHomeAvatarUpload()">
-                            <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 relative">
-                                <img v-if="homeProfile.avatar" :src="homeProfile.avatar" class="w-full h-full object-cover">
-                                <i v-else class="fas fa-user text-gray-300 text-3xl flex h-full items-center justify-center"></i>
+                            <h2 @click.stop="appDragState.isEditing ? null : editHomeProfile('name')" class="text-lg font-bold tracking-wide cursor-pointer active:opacity-50 transition pointer-events-auto" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeProfile.name }}</h2>
+                            <p @click.stop="appDragState.isEditing ? null : editHomeProfile('id')" class="text-xs opacity-80 mt-1 font-mono tracking-wider cursor-pointer active:opacity-50 transition pointer-events-auto" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">@{{ homeProfile.id }}</p>
+                            <p @click.stop="appDragState.isEditing ? null : editHomeProfile('bio')" class="text-[10px] opacity-80 mt-2 tracking-[0.1em] cursor-pointer active:opacity-50 transition px-8 text-center pointer-events-auto" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ homeProfile.bio }}</p>
+                            <div @click.stop="appDragState.isEditing ? null : editHomeProfile('location')" class="mt-3 flex items-center gap-1 text-xs opacity-80 cursor-pointer active:opacity-50 transition pointer-events-auto" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">
+                                <i class="fas fa-map-marker-alt"></i><span>{{ homeProfile.location }}</span>
                             </div>
                         </div>
-                        <h2 @click="appDragState.isEditing ? null : editHomeProfile('name')" class="text-lg font-bold tracking-wide cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeProfile.name }}</h2>
-                        <p @click="appDragState.isEditing ? null : editHomeProfile('id')" class="text-xs opacity-80 mt-1 font-mono tracking-wider cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">@{{ homeProfile.id }}</p>
-                        <p @click="appDragState.isEditing ? null : editHomeProfile('bio')" class="text-[10px] opacity-80 mt-2 tracking-[0.1em] cursor-pointer active:opacity-50 transition px-8 text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ homeProfile.bio }}</p>
-                        <div @click="appDragState.isEditing ? null : editHomeProfile('location')" class="mt-3 flex items-center gap-1 text-xs opacity-80 cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">
-                            <i class="fas fa-map-marker-alt"></i><span>{{ homeProfile.location }}</span>
-                        </div>
-                    </div>
 
-                    <!-- 下方 App 与动态小部件矩阵 (重构版) -->
-                    <div class="w-full px-8 grid grid-cols-2 gap-6 mb-auto z-10 items-start shrink-0" style="font-size: var(--custom-font-size)">
-                        <!-- 左侧：App 矩阵区 -->
-                        <div class="flex flex-col items-center">
-                            <h3 @click="appDragState.isEditing ? null : editHomeConfig('widgetTitle', '修改左侧标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeConfig.widgetTitle }}</h3>
-                            <transition-group name="app-list" tag="div" class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full relative min-h-[150px]">
-                                <div v-for="(id, idx) in desktopApps1" :key="id" 
-                                     class="flex flex-col items-center gap-1.5 home-icon cursor-pointer app-drop-zone relative"
-                                     :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
-                                     data-type="desktop" :data-index="idx"
-                                     @touchstart="startAppDrag($event, 'desktop', idx, id)"
-                                     @mousedown="startAppDrag($event, 'desktop', idx, id)"
-                                     @click="appDragState.isEditing ? null : handleAppClick(id)">
-                                    <!-- 删除 APP 按钮 -->
-                                    <div v-if="appDragState.isEditing" @click.stop="removeAppFromDesktop(idx)" class="absolute -top-1.5 -left-1.5 w-5 h-5 bg-gray-200/90 backdrop-blur text-gray-500 rounded-full flex items-center justify-center z-50 shadow-sm"><i class="fas fa-minus text-[10px]"></i></div>
+                        <!-- 下方 App 与动态小部件矩阵 -->
+                        <div v-if="block === 'matrix'" class="w-full px-8 grid grid-cols-2 gap-6 mb-auto z-10 items-start shrink-0 app-drop-zone relative" style="font-size: var(--custom-font-size)" data-type="block" data-name="d1p1Blocks" :data-index="bIdx" :class="{'opacity-0': appDragState.draggingId === block}">
+                            
+                            <!-- 占位触发拖拽 -->
+                            <div v-if="appDragState.isEditing" class="absolute -top-4 right-2 w-10 h-10 bg-white/50 backdrop-blur-md rounded-full shadow-lg border border-gray-300 flex items-center justify-center text-gray-600 jiggle cursor-move z-40" @touchstart.stop="startAppDrag($event, 'block', 'd1p1Blocks', bIdx, block)" @mousedown.stop="startAppDrag($event, 'block', 'd1p1Blocks', bIdx, block)"><i class="fas fa-arrows-alt"></i></div>
+
+                            <!-- 左侧：App 矩阵区 -->
+                            <div class="flex flex-col items-center w-full">
+                                <h3 @click="appDragState.isEditing ? null : editHomeConfig('widgetTitle', '修改左侧标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeConfig.widgetTitle }}</h3>
+                                <transition-group name="app-list" tag="div" class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full relative min-h-[150px]">
+                                    <div v-for="(id, idx) in desktopApps1" :key="id" 
+                                         class="flex flex-col items-center gap-1.5 home-icon cursor-pointer app-drop-zone relative"
+                                         :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                                         data-type="app" data-name="desktopApps1" :data-index="idx"
+                                         @touchstart="startAppDrag($event, 'app', 'desktopApps1', idx, id)"
+                                         @mousedown="startAppDrag($event, 'app', 'desktopApps1', idx, id)"
+                                         @click="appDragState.isEditing ? null : handleAppClick(id)">
+                                        <!-- 删除 APP 按钮 -->
+                                        <div v-if="appDragState.isEditing" @click.stop="removeAppFromDesktop(idx)" class="absolute -top-1.5 -left-1.5 w-5 h-5 bg-gray-200/90 backdrop-blur text-gray-500 rounded-full flex items-center justify-center z-50 shadow-sm"><i class="fas fa-minus text-[10px]"></i></div>
+                                        
+                                        <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden pointer-events-none">
+                                            <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
+                                            <i v-else :class="getDefaultIconClass(id)"></i>
+                                        </div>
+                                        <span class="text-[10px] font-bold pointer-events-none" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(id) }}</span>
+                                    </div>
                                     
-                                    <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden pointer-events-none">
-                                        <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
-                                        <i v-else :class="getDefaultIconClass(id)"></i>
+                                    <!-- 添加 APP 按钮 (仅编辑模式) -->
+                                    <div v-if="appDragState.isEditing" key="add_app_btn" class="flex flex-col items-center gap-1.5 cursor-pointer jiggle" @click="showAppLibraryModal = true">
+                                        <div class="w-12 h-12 rounded-xl bg-white/50 backdrop-blur border-2 border-dashed border-gray-300 text-gray-500 flex items-center justify-center text-xl shadow-sm"><i class="fas fa-plus"></i></div>
+                                        <span class="text-[10px] font-bold text-gray-600 drop-shadow-md">添加APP</span>
                                     </div>
-                                    <span class="text-[10px] font-bold pointer-events-none" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(id) }}</span>
-                                </div>
-                                
-                                <!-- 添加 APP 按钮 (仅编辑模式) -->
-                                <div v-if="appDragState.isEditing" key="add_app_btn" class="flex flex-col items-center gap-1.5 cursor-pointer jiggle" @click="showAppLibraryModal = true">
-                                    <div class="w-12 h-12 rounded-xl bg-white/50 backdrop-blur border-2 border-dashed border-gray-300 text-gray-500 flex items-center justify-center text-xl shadow-sm"><i class="fas fa-plus"></i></div>
-                                    <span class="text-[10px] font-bold text-gray-600 drop-shadow-md">添加APP</span>
-                                </div>
-                            </transition-group>
-                        </div>
+                                </transition-group>
+                            </div>
 
-                        <!-- 右侧：动态小组件区 -->
-                        <div class="flex flex-col items-center w-full gap-4 pt-2">
-                            <transition-group name="app-list" tag="div" class="flex flex-col items-center w-full gap-4 relative min-h-[150px]">
-                                <div v-for="(widget, wIdx) in activeDesktopWidgets" :key="widget.instanceId" class="relative group w-full flex justify-center" :class="{'jiggle': appDragState.isEditing}">
-                                    <div v-if="appDragState.isEditing" @click.stop="removeDesktopWidget(wIdx)" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur text-gray-600 rounded-full flex items-center justify-center z-50 shadow-md cursor-pointer"><i class="fas fa-minus text-[12px]"></i></div>
-                                    <!-- 动态渲染组件 HTML 和内联 CSS -->
-                                    <div v-html="widget.html" class="pointer-events-none" :style="widget.css"></div>
-                                </div>
-                            </transition-group>
+                            <!-- 右侧：动态小组件区 -->
+                            <div class="flex flex-col items-center w-full gap-4 pt-2">
+                                <transition-group name="app-list" tag="div" class="flex flex-col items-center w-full gap-4 relative min-h-[150px]">
+                                    <div v-for="(widget, wIdx) in activeDesktopWidgets" :key="widget.instanceId" 
+                                         class="relative group w-full flex justify-center app-drop-zone" 
+                                         :class="{'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === widget.instanceId}"
+                                         data-type="widget" data-name="activeDesktopWidgets" :data-index="wIdx"
+                                         @touchstart="startAppDrag($event, 'widget', 'activeDesktopWidgets', wIdx, widget)"
+                                         @mousedown="startAppDrag($event, 'widget', 'activeDesktopWidgets', wIdx, widget)">
+                                        <div v-if="appDragState.isEditing" @click.stop="removeDesktopWidget(wIdx)" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur text-gray-600 rounded-full flex items-center justify-center z-50 shadow-md cursor-pointer"><i class="fas fa-minus text-[12px]"></i></div>
+                                        <div v-html="widget.html" class="pointer-events-none w-full" :style="widget.css"></div>
+                                    </div>
+                                </transition-group>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </template>
+                </transition-group>
              </div> <!-- 第一页结束 -->
 
              <!-- ================= 桌面1 第二页 ================= -->
@@ -2645,70 +2657,40 @@ document.addEventListener('DOMContentLoaded', () => {
                          </div>
                      </div>
                      
-                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('情侣空间')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('couple_space')}">
-                                 <img v-if="hasCustomIcon('couple_space')" :src="getAppIcon('couple_space')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-heart text-gray-400 text-2xl"></i>
+                     <transition-group name="app-list" tag="div" class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5 relative">
+                         <div v-for="(id, idx) in d1p2Apps1" :key="id" 
+                              class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition app-drop-zone relative"
+                              :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                              data-type="app" data-name="d1p2Apps1" :data-index="idx"
+                              @touchstart="startAppDrag($event, 'app', 'd1p2Apps1', idx, id)"
+                              @mousedown="startAppDrag($event, 'app', 'd1p2Apps1', idx, id)"
+                              @click="appDragState.isEditing ? null : handleAppClick(id)">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden pointer-events-none">
+                                 <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
+                                 <i v-else :class="getDefaultIconClass(id) + ' text-gray-400 text-xl'"></i>
                              </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('couple_space') }}</span>
+                             <span class="text-[10px] font-bold text-gray-500 pointer-events-none">{{ getAppName(id) }}</span>
                          </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('游戏大厅')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('game_center')}">
-                                 <img v-if="hasCustomIcon('game_center')" :src="getAppIcon('game_center')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-gamepad text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('game_center') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('短信功能待接入')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('sms')}">
-                                 <img v-if="hasCustomIcon('sms')" :src="getAppIcon('sms')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-comment-sms text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('sms') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="openApp('jinjiang')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('jinjiang')}">
-                                 <img v-if="hasCustomIcon('jinjiang')" :src="getAppIcon('jinjiang')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-book-reader text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('jinjiang') }}</span>
-                         </div>
-                     </div>
+                     </transition-group>
                  </div>
 
                  <!-- 第二排分栏结构 -->
                  <div class="w-[90%] max-w-[340px] mt-6 flex gap-4 h-[145px]">
-                     <div class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5">
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('memo')}">
-                                 <img v-if="hasCustomIcon('memo')" :src="getAppIcon('memo')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-clipboard-list text-gray-400 text-xl"></i>
+                     <transition-group name="app-list" tag="div" class="flex-1 h-full grid grid-cols-2 gap-x-2 content-between py-0.5 relative">
+                         <div v-for="(id, idx) in d1p2Apps2" :key="id" 
+                              class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition app-drop-zone relative"
+                              :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                              data-type="app" data-name="d1p2Apps2" :data-index="idx"
+                              @touchstart="startAppDrag($event, 'app', 'd1p2Apps2', idx, id)"
+                              @mousedown="startAppDrag($event, 'app', 'd1p2Apps2', idx, id)"
+                              @click="appDragState.isEditing ? null : handleAppClick(id)">
+                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden pointer-events-none">
+                                 <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
+                                 <i v-else :class="getDefaultIconClass(id) + ' text-gray-400 text-xl'"></i>
                              </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('memo') }}</span>
+                             <span class="text-[10px] font-bold text-gray-500 pointer-events-none">{{ getAppName(id) }}</span>
                          </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('功能待接入...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('album')}">
-                                 <img v-if="hasCustomIcon('album')" :src="getAppIcon('album')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-images text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('album') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph5')}">
-                                 <img v-if="hasCustomIcon('ph5')" :src="getAppIcon('ph5')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-cloud text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph5') }}</span>
-                         </div>
-                         <div class="flex flex-col items-center gap-1 cursor-pointer active:scale-95 transition" @click="showToast('待开发...')">
-                             <div class="w-[46px] h-[46px] bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 flex items-center justify-center overflow-hidden" :class="{'home-icon-custom': hasCustomIcon('ph6')}">
-                                 <img v-if="hasCustomIcon('ph6')" :src="getAppIcon('ph6')" class="w-full h-full object-cover">
-                                 <i v-else class="fas fa-leaf text-gray-400 text-xl"></i>
-                             </div>
-                             <span class="text-[10px] font-bold text-gray-500">{{ getAppName('ph6') }}</span>
-                         </div>
-                     </div>
+                     </transition-group>
 
                      <!-- 右侧：虚线框卡片 (灰白色调) -->
                      <div class="w-[145px] h-full relative flex items-center justify-center">
@@ -2756,41 +2738,51 @@ document.addEventListener('DOMContentLoaded', () => {
              </div> <!-- 闭合第二页 -->
              
              <!-- ================= 桌面2 第一页 ================= -->
-             <div v-if="desktopStyle === 2" class="w-full h-full shrink-0 snap-center flex flex-col overflow-hidden relative px-4 pt-2 pb-[96px] gap-2.5">
-                <div class="w-full bg-white/90 backdrop-blur-2xl rounded-[32px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white flex flex-col shrink-0">
+             <div v-if="desktopStyle === 2" class="w-full h-full shrink-0 snap-center flex flex-col overflow-hidden relative px-4 pt-2 pb-[96px] gap-2.5"
+                  @touchstart="startDesktopLongPress" @touchmove="clearDesktopLongPress" @touchend="clearDesktopLongPress">
+                  
+                <!-- 桌面编辑模式顶部控制栏 -->
+                <transition name="fade">
+                    <div v-if="appDragState.isEditing" class="absolute top-12 left-0 w-full px-6 z-50 flex justify-between items-center">
+                        <div></div>
+                        <button @click="stopEditMode" class="bg-black/80 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg animate-fade-in">完成</button>
+                    </div>
+                </transition>
+
+                <div class="w-full bg-white/90 backdrop-blur-2xl rounded-[32px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white flex flex-col shrink-0" :class="{'jiggle': appDragState.isEditing}">
                     <div class="w-full flex items-center justify-between mb-3">
-                        <div class="relative w-[65px] h-[65px] shrink-0 cursor-pointer active:opacity-70 transition" @click="triggerD2Avatar('profile.avatar')">
-                            <div class="w-full h-full rounded-full border-2 border-dashed border-gray-300 p-1 flex items-center justify-center relative">
+                        <div class="relative w-[65px] h-[65px] shrink-0 cursor-pointer active:opacity-70 transition" @click="appDragState.isEditing ? null : triggerD2Avatar('profile.avatar')">
+                            <div class="w-full h-full rounded-full border-2 border-dashed border-gray-300 p-1 flex items-center justify-center relative pointer-events-none">
                                 <img :src="desktop2.profile.avatar" class="w-full h-full rounded-full object-cover">
                                 <i class="fas fa-heart absolute -top-1 -left-1 text-gray-800 text-lg drop-shadow-md"></i>
                                 <i class="fas fa-heart absolute top-0 left-2 text-gray-300 text-sm drop-shadow-md"></i>
                             </div>
-                            <div class="absolute bottom-0 right-0 bg-white rounded-full text-gray-600 shadow-sm border border-gray-100 flex items-center justify-center w-5 h-5"><i class="fas fa-plus text-[8px]"></i></div>
+                            <div class="absolute bottom-0 right-0 bg-white rounded-full text-gray-600 shadow-sm border border-gray-100 flex items-center justify-center w-5 h-5 pointer-events-none"><i class="fas fa-plus text-[8px]"></i></div>
                         </div>
                         <div class="flex-1 flex justify-around ml-2 text-center">
-                            <div class="flex flex-col cursor-pointer active:opacity-50" @click="editD2Text('修改 Posts', 'stats.posts', desktop2.stats.posts)"><span class="font-bold text-base text-gray-800">{{ desktop2.stats.posts }}</span><span class="text-[10px] text-gray-400 font-medium">Posts</span></div>
-                            <div class="flex flex-col cursor-pointer active:opacity-50" @click="editD2Text('修改 Followers', 'stats.followers', desktop2.stats.followers)"><span class="font-bold text-base text-gray-800">{{ desktop2.stats.followers }}</span><span class="text-[10px] text-gray-400 font-medium">Followers</span></div>
-                            <div class="flex flex-col cursor-pointer active:opacity-50" @click="editD2Text('修改 Following', 'stats.following', desktop2.stats.following)"><span class="font-bold text-base text-gray-800">{{ desktop2.stats.following }}</span><span class="text-[10px] text-gray-400 font-medium">Following</span></div>
+                            <div class="flex flex-col cursor-pointer active:opacity-50" @click="appDragState.isEditing ? null : editD2Text('修改 Posts', 'stats.posts', desktop2.stats.posts)"><span class="font-bold text-base text-gray-800">{{ desktop2.stats.posts }}</span><span class="text-[10px] text-gray-400 font-medium">Posts</span></div>
+                            <div class="flex flex-col cursor-pointer active:opacity-50" @click="appDragState.isEditing ? null : editD2Text('修改 Followers', 'stats.followers', desktop2.stats.followers)"><span class="font-bold text-base text-gray-800">{{ desktop2.stats.followers }}</span><span class="text-[10px] text-gray-400 font-medium">Followers</span></div>
+                            <div class="flex flex-col cursor-pointer active:opacity-50" @click="appDragState.isEditing ? null : editD2Text('修改 Following', 'stats.following', desktop2.stats.following)"><span class="font-bold text-base text-gray-800">{{ desktop2.stats.following }}</span><span class="text-[10px] text-gray-400 font-medium">Following</span></div>
                         </div>
                     </div>
-                    <div class="w-full text-[12px] text-gray-600 font-medium mb-1 cursor-pointer active:opacity-50" @click="editD2Text('修改第一行签名', 'bio.text1', desktop2.bio.text1)">{{ desktop2.bio.text1 }}</div>
-                    <div class="w-full text-[11px] text-gray-400 mb-3 tracking-widest cursor-pointer active:opacity-50" @click="editD2Text('修改装饰符号', 'bio.text2', desktop2.bio.text2)">{{ desktop2.bio.text2 }}</div>
-                    <button class="w-full py-1.5 border border-gray-200 bg-white rounded-[10px] text-[12px] font-bold text-gray-500 mb-3 shadow-sm active:scale-[0.98] transition" @click="showToast('点上面内容直接改呀')">Edit Profile</button>
+                    <div class="w-full text-[12px] text-gray-600 font-medium mb-1 cursor-pointer active:opacity-50" @click="appDragState.isEditing ? null : editD2Text('修改第一行签名', 'bio.text1', desktop2.bio.text1)">{{ desktop2.bio.text1 }}</div>
+                    <div class="w-full text-[11px] text-gray-400 mb-3 tracking-widest cursor-pointer active:opacity-50" @click="appDragState.isEditing ? null : editD2Text('修改装饰符号', 'bio.text2', desktop2.bio.text2)">{{ desktop2.bio.text2 }}</div>
+                    <button class="w-full py-1.5 border border-gray-200 bg-white rounded-[10px] text-[12px] font-bold text-gray-500 mb-3 shadow-sm active:scale-[0.98] transition" @click="appDragState.isEditing ? null : showToast('点上面内容直接改呀')">Edit Profile</button>
                     <div class="w-full flex justify-between px-1">
                         <div class="flex flex-col items-center gap-1.5"><div class="w-[45px] h-[45px] rounded-full border border-gray-300 flex items-center justify-center text-2xl text-gray-500 bg-transparent"><i class="font-light">+</i></div><span class="text-[10px] text-gray-500 font-bold">New</span></div>
-                        <div v-for="(h, idx) in desktop2.highlights" :key="idx" class="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="triggerD2Highlight(idx)"><div class="w-[45px] h-[45px] rounded-full border border-gray-200 p-0.5 bg-white shadow-sm overflow-hidden"><img :src="h.img" class="w-full h-full rounded-full object-cover" :class="{'opacity-50': idx===2}"></div><span class="text-[10px] text-gray-500 font-bold">{{ h.name }}</span></div>
+                        <div v-for="(h, idx) in desktop2.highlights" :key="idx" class="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95 transition" @click="appDragState.isEditing ? null : triggerD2Highlight(idx)"><div class="w-[45px] h-[45px] rounded-full border border-gray-200 p-0.5 bg-white shadow-sm overflow-hidden pointer-events-none"><img :src="h.img" class="w-full h-full rounded-full object-cover" :class="{'opacity-50': idx===2}"></div><span class="text-[10px] text-gray-500 font-bold pointer-events-none">{{ h.name }}</span></div>
                     </div>
                 </div>
 
-                <div class="w-full bg-white/90 backdrop-blur-2xl rounded-[28px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white flex flex-col gap-3 shrink-0 my-auto">
-                    <div class="flex justify-between items-center px-1">
+                <div class="w-full bg-white/90 backdrop-blur-2xl rounded-[28px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white flex flex-col gap-3 shrink-0 my-auto" :class="{'jiggle': appDragState.isEditing}">
+                    <div class="flex justify-between items-center px-1 pointer-events-none">
                         <div class="flex gap-1"><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div><div class="w-1.5 h-1.5 bg-gray-300 rounded-full"></div></div>
                         <div class="flex gap-4 text-[13px] font-bold text-gray-400"><span>Likes</span><span>Normal</span></div>
                         <div class="bg-gray-100 px-3 py-1 rounded-full text-[12px] font-bold text-gray-500 flex items-center gap-1.5 shadow-inner"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full"></div> Lives</div>
                     </div>
                     <div class="flex items-center gap-2">
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-300 shrink-0 border border-gray-100 shadow-inner overflow-hidden cursor-pointer active:opacity-70 transition" @click="triggerD2Avatar('middleAvatar')"><img :src="desktop2.middleAvatar" class="w-full h-full object-cover"></div>
-                        <div class="flex-1 h-9 bg-gray-100/80 rounded-[12px] border border-gray-200/60 shadow-inner flex items-center px-3 text-gray-400">|</div>
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-600 to-gray-300 shrink-0 border border-gray-100 shadow-inner overflow-hidden cursor-pointer active:opacity-70 transition" @click="appDragState.isEditing ? null : triggerD2Avatar('middleAvatar')"><img :src="desktop2.middleAvatar" class="w-full h-full object-cover pointer-events-none"></div>
+                        <div class="flex-1 h-9 bg-gray-100/80 rounded-[12px] border border-gray-200/60 shadow-inner flex items-center px-3 text-gray-400 pointer-events-none">|</div>
                     </div>
                     <div class="flex justify-between items-center px-1">
                         <div class="flex gap-3 text-gray-400 text-xl"><i class="far fa-sticky-note cursor-pointer"></i><i class="far fa-heart cursor-pointer"></i></div>
@@ -2799,16 +2791,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="w-full flex gap-3 mt-auto mb-8 items-center">
-                    <div class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
-                        <div v-for="id in ['wechat', 'themes', 'worldbook', 'settings']" :key="id" class="flex flex-col items-center gap-1 cursor-pointer home-icon" @click="handleAppClick(id)">
-                            <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-2xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
-                            <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
+                    <transition-group name="app-list" tag="div" class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center relative">
+                        <div v-for="(id, idx) in d2p1Apps" :key="id" 
+                             class="flex flex-col items-center gap-1 cursor-pointer home-icon app-drop-zone relative"
+                             :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                             data-type="app" data-name="d2p1Apps" :data-index="idx"
+                             @touchstart="startAppDrag($event, 'app', 'd2p1Apps', idx, id)"
+                             @mousedown="startAppDrag($event, 'app', 'd2p1Apps', idx, id)"
+                             @click="appDragState.isEditing ? null : handleAppClick(id)">
+                            <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-2xl overflow-hidden border border-gray-100 pointer-events-none"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
+                            <span class="text-[10px] font-bold text-gray-600 pointer-events-none">{{ getAppName(id) }}</span>
                         </div>
-                    </div>
+                    </transition-group>
                     
-                    <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-xl rounded-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative p-2.5 pl-6 flex flex-col justify-center cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('binderImage')">
-                        <div class="absolute left-0 top-0 h-full flex flex-col justify-evenly py-3 -translate-x-1.5"><div v-for="i in 8" :key="i" class="flex items-center relative"><div class="binder-ring"></div><div class="binder-hole"></div></div></div>
-                        <div class="w-full bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 rounded-[10px] flex flex-col items-center">
+                    <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-xl rounded-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative p-2.5 pl-6 flex flex-col justify-center cursor-pointer active:scale-95 transition" :class="{'jiggle': appDragState.isEditing}" @click="appDragState.isEditing ? null : triggerD2Avatar('binderImage')">
+                        <div class="absolute left-0 top-0 h-full flex flex-col justify-evenly py-3 -translate-x-1.5 pointer-events-none"><div v-for="i in 8" :key="i" class="flex items-center relative"><div class="binder-ring"></div><div class="binder-hole"></div></div></div>
+                        <div class="w-full bg-white p-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 rounded-[10px] flex flex-col items-center pointer-events-none">
                             <div class="w-full aspect-square bg-gray-100 overflow-hidden rounded-[4px]"><img :src="desktop2.binderImage" class="w-full h-full object-cover"></div>
                             <div class="w-full text-center text-[7px] text-gray-400 tracking-widest font-bold mt-2 mb-1 whitespace-nowrap overflow-hidden">------ ୨ ♠ ୧ ------</div>
                         </div>
@@ -2817,64 +2815,71 @@ document.addEventListener('DOMContentLoaded', () => {
              </div>
 
              <!-- ================= 桌面2 第二页 ================= -->
-             <div v-if="desktopStyle === 2" class="w-full h-full shrink-0 snap-center flex flex-col justify-center overflow-hidden relative px-4 pt-[20px] pb-[115px] gap-7">
+             <div v-if="desktopStyle === 2" class="w-full h-full shrink-0 snap-center flex flex-col justify-center overflow-hidden relative px-4 pt-[20px] pb-[115px] gap-7"
+                  @touchstart="startDesktopLongPress" @touchmove="clearDesktopLongPress" @touchend="clearDesktopLongPress">
                 <div class="w-full flex h-[165px] gap-3 shrink-0 relative z-10">
-                    <div class="w-[45%] grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
-                        <div v-for="id in ['couple_space', 'game_center', 'sms', 'jinjiang']" :key="id" class="flex flex-col items-center gap-1 cursor-pointer home-icon" @click="handleAppClick(id)">
-                            <div class="w-12 h-12 rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
-                            <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
+                    <transition-group name="app-list" tag="div" class="w-[45%] grid grid-cols-2 gap-x-2 gap-y-3 place-content-center relative">
+                        <div v-for="(id, idx) in d2p2Apps1" :key="id" 
+                             class="flex flex-col items-center gap-1 cursor-pointer home-icon app-drop-zone relative"
+                             :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                             data-type="app" data-name="d2p2Apps1" :data-index="idx"
+                             @touchstart="startAppDrag($event, 'app', 'd2p2Apps1', idx, id)"
+                             @mousedown="startAppDrag($event, 'app', 'd2p2Apps1', idx, id)"
+                             @click="appDragState.isEditing ? null : handleAppClick(id)">
+                            <div class="w-12 h-12 rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-xl overflow-hidden border border-gray-100 pointer-events-none"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
+                            <span class="text-[10px] font-bold text-gray-600 pointer-events-none">{{ getAppName(id) }}</span>
                         </div>
-                    </div>
+                    </transition-group>
                     
-                    <div class="w-[55%] h-full bg-[#fdfdfd] rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div class="w-[55%] h-full bg-[#fdfdfd] rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden" :class="{'jiggle': appDragState.isEditing}">
                         <div class="absolute inset-0 opacity-[0.15] pointer-events-none" style="background-image: radial-gradient(#6b7280 1px, transparent 1px); background-size: 10px 10px;"></div>
                         <div class="absolute top-9 left-6 z-20 flex items-center justify-center">
                             <div class="absolute -left-4 w-[20px] h-[20px] pointer-events-none" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain opacity-90"></div>
-                            <div class="w-8 h-8 rounded-full border-[1.5px] border-white shadow-sm overflow-hidden bg-gray-100 relative z-10 cursor-pointer active:scale-90 transition" @click="triggerD2Avatar('p2Avatar')"><img :src="desktop2.p2Avatar" class="w-full h-full object-cover"></div>
+                            <div class="w-8 h-8 rounded-full border-[1.5px] border-white shadow-sm overflow-hidden bg-gray-100 relative z-10 cursor-pointer active:scale-90 transition" @click="appDragState.isEditing ? null : triggerD2Avatar('p2Avatar')"><img :src="desktop2.p2Avatar" class="w-full h-full object-cover pointer-events-none"></div>
                             <div class="absolute -right-4 w-[20px] h-[20px] pointer-events-none" style="transform: scaleX(-1); filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain opacity-90"></div>
-                            <div class="absolute -top-7 -right-4 bg-gray-100/90 px-2 py-0.5 rounded-full text-[8px] font-bold text-gray-600 shadow-sm z-30 backdrop-blur-sm border border-gray-200 whitespace-nowrap cursor-pointer active:scale-90 transition" @click="editD2Text('修改颜文字', 'p2Kaomoji', desktop2.p2Kaomoji)">{{ desktop2.p2Kaomoji }}</div>
+                            <div class="absolute -top-7 -right-4 bg-gray-100/90 px-2 py-0.5 rounded-full text-[8px] font-bold text-gray-600 shadow-sm z-30 backdrop-blur-sm border border-gray-200 whitespace-nowrap cursor-pointer active:scale-90 transition" @click="appDragState.isEditing ? null : editD2Text('修改颜文字', 'p2Kaomoji', desktop2.p2Kaomoji)">{{ desktop2.p2Kaomoji }}</div>
                         </div>
-                        <div class="absolute top-3 right-1 transform rotate-3 bg-white p-1 pb-4 rounded-[6px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 w-[85px] z-10 cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('p2Img1')">
-                            <div class="w-full aspect-[4/5] bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img1" class="w-full h-full object-cover"></div>
+                        <div class="absolute top-3 right-1 transform rotate-3 bg-white p-1 pb-4 rounded-[6px] shadow-[0_4px_10px_rgba(0,0,0,0.05)] border border-gray-100 w-[85px] z-10 cursor-pointer active:scale-95 transition" @click="appDragState.isEditing ? null : triggerD2Avatar('p2Img1')">
+                            <div class="w-full aspect-[4/5] bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center pointer-events-none"><img :src="desktop2.p2Img1" class="w-full h-full object-cover"></div>
                         </div>
-                        <div class="absolute bottom-2 left-1.5 transform -rotate-3 bg-white p-1 pb-3 rounded-[6px] shadow-[0_8px_15px_rgba(0,0,0,0.08)] border border-gray-100 w-[80px] z-20 cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('p2Img2')">
-                            <div class="w-full aspect-square bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center"><img :src="desktop2.p2Img2" class="w-full h-full object-cover"></div>
-                            <div class="absolute bottom-0.5 left-0 w-full text-center text-[8px] font-bold text-gray-800 tracking-tighter" @click.stop="editD2Text('修改拍立得文字', 'p2Text', desktop2.p2Text)">{{ desktop2.p2Text }}</div>
+                        <div class="absolute bottom-2 left-1.5 transform -rotate-3 bg-white p-1 pb-3 rounded-[6px] shadow-[0_8px_15px_rgba(0,0,0,0.08)] border border-gray-100 w-[80px] z-20 cursor-pointer active:scale-95 transition" @click="appDragState.isEditing ? null : triggerD2Avatar('p2Img2')">
+                            <div class="w-full aspect-square bg-gray-100 rounded-sm overflow-hidden flex items-center justify-center pointer-events-none"><img :src="desktop2.p2Img2" class="w-full h-full object-cover"></div>
+                            <div class="absolute bottom-0.5 left-0 w-full text-center text-[8px] font-bold text-gray-800 tracking-tighter" @click.stop="appDragState.isEditing ? null : editD2Text('修改拍立得文字', 'p2Text', desktop2.p2Text)">{{ desktop2.p2Text }}</div>
                         </div>
                         <div class="absolute bottom-3 right-2 w-[40px] h-[16px] bg-gray-200/80 rounded-full shadow-inner border border-gray-300/50 flex items-center justify-center z-30 backdrop-blur-sm transform rotate-[-5deg]">
-                            <div class="w-3.5 h-3.5 bg-white shadow-sm border border-gray-100 cursor-pointer active:scale-90 transition overflow-hidden rounded-[2px]" @click.stop="triggerD2Avatar('p2BandAidImg')"><img :src="desktop2.p2BandAidImg" class="w-full h-full object-cover"></div>
+                            <div class="w-3.5 h-3.5 bg-white shadow-sm border border-gray-100 cursor-pointer active:scale-90 transition overflow-hidden rounded-[2px]" @click.stop="appDragState.isEditing ? null : triggerD2Avatar('p2BandAidImg')"><img :src="desktop2.p2BandAidImg" class="w-full h-full object-cover pointer-events-none"></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="w-full bg-white/90 backdrop-blur-2xl rounded-[32px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative shrink-0 flex flex-col gap-3 z-10 vertical-stripes">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center bg-gray-100 rounded-[8px] px-2 py-1.5 gap-2 shadow-inner w-[130px]">
-                            <span class="text-[11px] text-gray-500 font-bold tracking-wide cursor-pointer flex-1 truncate" @click="editD2Text('修改搜索文本', 'p2SearchText', desktop2.p2SearchText)">{{ desktop2.p2SearchText }}</span>
+                <div class="w-full bg-white/90 backdrop-blur-2xl rounded-[32px] p-4 shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative shrink-0 flex flex-col gap-3 z-10 vertical-stripes" :class="{'jiggle': appDragState.isEditing}">
+                    <div class="flex justify-between items-center pointer-events-none">
+                        <div class="flex items-center bg-gray-100 rounded-[8px] px-2 py-1.5 gap-2 shadow-inner w-[130px] pointer-events-auto">
+                            <span class="text-[11px] text-gray-500 font-bold tracking-wide cursor-pointer flex-1 truncate" @click="appDragState.isEditing ? null : editD2Text('修改搜索文本', 'p2SearchText', desktop2.p2SearchText)">{{ desktop2.p2SearchText }}</span>
                             <div class="w-[2px] h-3.5 bg-gray-400 rounded-full shrink-0"></div>
                         </div>
                         <i class="fas fa-search text-gray-400 text-sm ml-1"></i>
-                        <div class="border border-gray-200 rounded-[6px] px-2 py-1.5 text-[11px] font-bold text-gray-600 bg-white shadow-sm cursor-pointer ml-auto" @click="editD2Text('修改右上角文本', 'p2TopRightText', desktop2.p2TopRightText)">{{ desktop2.p2TopRightText }}</div>
+                        <div class="border border-gray-200 rounded-[6px] px-2 py-1.5 text-[11px] font-bold text-gray-600 bg-white shadow-sm cursor-pointer ml-auto pointer-events-auto" @click="appDragState.isEditing ? null : editD2Text('修改右上角文本', 'p2TopRightText', desktop2.p2TopRightText)">{{ desktop2.p2TopRightText }}</div>
                     </div>
-                    <div class="flex justify-between items-end relative h-10 mt-1">
+                    <div class="flex justify-between items-end relative h-10 mt-1 pointer-events-none">
                         <div class="flex gap-1.5">
                             <div class="w-[30px] h-[30px] border border-gray-100 bg-white rounded-[6px] flex items-center justify-center text-[11px] font-bold text-gray-800 shadow-sm">{{ desktop2Date.month }}</div>
                             <div class="w-[30px] h-[30px] border border-gray-100 bg-white rounded-[6px] flex items-center justify-center text-[12px] text-gray-400 shadow-sm"><i class="far fa-star"></i></div>
                             <div class="w-[30px] h-[30px] border border-gray-100 bg-white rounded-[6px] flex items-center justify-center text-[12px] text-gray-400 shadow-sm"><i class="fas fa-plus"></i></div>
                             <div class="w-[30px] h-[30px] border border-gray-100 bg-white rounded-[6px] flex items-center justify-center text-[11px] font-bold text-gray-800 shadow-sm">{{ desktop2Date.day }}</div>
                         </div>
-                        <div class="absolute left-[58%] -bottom-1 -translate-x-1/2 z-30 cursor-pointer active:scale-90 transition" @click="triggerD2Avatar('p2MidAvatar')">
-                            <div class="w-[52px] h-[52px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-100"><img :src="desktop2.p2MidAvatar" class="w-full h-full object-cover"></div>
+                        <div class="absolute left-[58%] -bottom-1 -translate-x-1/2 z-30 cursor-pointer active:scale-90 transition pointer-events-auto" @click="appDragState.isEditing ? null : triggerD2Avatar('p2MidAvatar')">
+                            <div class="w-[52px] h-[52px] rounded-full border-[3px] border-white shadow-sm overflow-hidden bg-gray-100"><img :src="desktop2.p2MidAvatar" class="w-full h-full object-cover pointer-events-none"></div>
                         </div>
-                        <div class="border border-gray-200 rounded-[6px] px-2 py-1.5 text-[10px] font-bold text-gray-500 bg-white shadow-sm cursor-pointer ml-auto" @click="editD2Text('修改右下角文本', 'p2BottomRightText', desktop2.p2BottomRightText)">{{ desktop2.p2BottomRightText }}</div>
+                        <div class="border border-gray-200 rounded-[6px] px-2 py-1.5 text-[10px] font-bold text-gray-500 bg-white shadow-sm cursor-pointer ml-auto pointer-events-auto" @click="appDragState.isEditing ? null : editD2Text('修改右下角文本', 'p2BottomRightText', desktop2.p2BottomRightText)">{{ desktop2.p2BottomRightText }}</div>
                         <i class="fas fa-mouse-pointer absolute right-2 -top-4 text-gray-400 transform -rotate-12 text-sm drop-shadow-sm"></i>
                     </div>
                 </div>
 
                 <div class="w-full flex gap-3 z-10 items-center shrink-0">
-                    <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-2xl rounded-[24px] py-1 text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white flex flex-col justify-center relative overflow-hidden">
+                    <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-2xl rounded-[24px] py-1 text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white flex flex-col justify-center relative overflow-hidden" :class="{'jiggle': appDragState.isEditing}">
                         <div class="absolute inset-0 opacity-[0.15] pointer-events-none" style="background-image: radial-gradient(#6b7280 1px, transparent 1px); background-size: 10px 10px;"></div>
-                        <div class="flex flex-col justify-center gap-1.5 w-full h-full relative z-10 py-3" style="-webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);">
+                        <div class="flex flex-col justify-center gap-1.5 w-full h-full relative z-10 py-3 pointer-events-none" style="-webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);">
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest mt-1">隐晦诗</span>
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest">终身雨季</span>
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest">可我需要你</span>
@@ -2888,8 +2893,20 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest mb-1">汇成海</span>
                         </div>
                     </div>
-                    <div class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
-                        <div v-for="id in ['memo', 'album', 'ph5', 'ph6']" :key="id" class="flex flex-col items-center gap-1 cursor-pointer home-icon" @click="handleAppClick(id)">
+                    <transition-group name="app-list" tag="div" class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center relative">
+                        <div v-for="(id, idx) in d2p2Apps2" :key="id" 
+                             class="flex flex-col items-center gap-1 cursor-pointer home-icon app-drop-zone relative"
+                             :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                             data-type="app" data-name="d2p2Apps2" :data-index="idx"
+                             @touchstart="startAppDrag($event, 'app', 'd2p2Apps2', idx, id)"
+                             @mousedown="startAppDrag($event, 'app', 'd2p2Apps2', idx, id)"
+                             @click="appDragState.isEditing ? null : handleAppClick(id)">
+                            <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-2xl overflow-hidden border border-gray-100 pointer-events-none"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
+                            <span class="text-[10px] font-bold text-gray-600 pointer-events-none">{{ getAppName(id) }}</span>
+                        </div>
+                    </transition-group>
+                </div>
+             </div>
                             <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-2xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
                             <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
                         </div>
@@ -7312,11 +7329,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <div class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.02)] divide-y divide-gray-50">
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50"><div class="flex items-center gap-4"><i class="fas fa-shield-alt text-gray-700 text-[18px] w-6 text-center opacity-80"></i><div><div class="font-medium text-[15px] text-gray-900 tracking-wide">数据防清理保护</div><div class="text-[11px] text-gray-400 mt-0.5">防止浏览器自动删档</div></div></div><input type="checkbox" id="data-protect-toggle" class="switch-checkbox" v-model="dataProtection" @change="toggleDataProtection"><label for="data-protect-toggle" class="switch-label"><div class="switch-button"></div></label></div>
-                                <div @click="exportData" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-export text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导出存档数据</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
-                                <div @click="triggerImport" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-import text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导入存档数据</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
+                                <div @click="exportData" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-export text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导出数据 (JSON)</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
+                                <div @click="exportDataZip" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-zipper text-purple-500 text-[18px] w-6 text-center opacity-80"></i><div><span class="font-medium text-[15px] text-purple-600 tracking-wide">导出为压缩包 (ZIP)</span><div class="text-[11px] text-gray-400 mt-0.5">极大幅度压缩体积，防崩溃</div></div></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
+                                <div @click="triggerImport" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-import text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导入存档 (JSON/ZIP)</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
                             </div>
                             <div class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.02)]"><div @click="confirmFactoryReset" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-exclamation-triangle text-red-500 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-red-500 tracking-wide">恢复出厂设置</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div></div>
-                            <input type="file" ref="importInput" accept=".json" class="hidden" @change="handleImport">
+                            <input type="file" ref="importInput" accept=".json,.zip" class="hidden" @change="handleImport">
                         </div>
                     </div>
                 </transition>
@@ -7342,9 +7360,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.65 更新日志 (当前最新) -->
+                            <!-- v1.66 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.66 全局拖拽修复与 ZIP 引擎集成</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-19 00:41</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">全屏拖拽引擎贯通：</span>修复了桌面 1 第二页、桌面 2 中部分 App 和小组件无法被拖拽的盲区 Bug。现在桌面所有版块均已接入底层的 `transition-group` 引擎，实现无死角、无掉帧的丝滑拖拽排版。</li>
+                                    <li><span class="font-bold text-gray-800">小翅膀组件抢救：</span>修复了初始化预设库时导致“纪念日倒数”组件两侧的小翅膀图标意外丢失的渲染错误，现已完美复原。</li>
+                                    <li><span class="font-bold text-gray-800">ZIP 压缩引擎：</span>在“数据管理”中全新搭载了 JSZip 库。现在你不仅可以导出体积臃肿的 JSON，更可以一键导出为高度压缩的 <code>.zip</code> 存档包，大幅减少存储占用。导入时，系统会自动在本地解压并解析，从根本上防止低端设备在传输大型存档时发生卡死崩溃。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.65 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.65 桌面编辑引擎与小组件商店上线</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-18 15:30</span>
@@ -8703,11 +8735,14 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     </transition>
 
-    <!-- 桌面 APP 拖拽跟随分身 (利用绝对定位悬浮在全界面最高层) -->
+    <!-- 桌面拖拽跟随分身 (利用绝对定位悬浮在全界面最高层) -->
     <div v-if="appDragState.showClone" class="floating-drag-clone" :style="{ left: appDragState.cloneX + 'px', top: appDragState.cloneY + 'px' }">
-        <div class="w-12 h-12 rounded-xl bg-white shadow-2xl flex items-center justify-center text-gray-400 text-xl border border-gray-100 overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appDragState.draggingId)}">
+        <div v-if="appDragState.itemType === 'app'" class="w-12 h-12 rounded-xl bg-white shadow-2xl flex items-center justify-center text-gray-400 text-xl border border-gray-100 overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appDragState.draggingId)}">
             <img v-if="hasCustomIcon(appDragState.draggingId)" :src="getAppIcon(appDragState.draggingId)" class="w-full h-full object-cover">
             <i v-else :class="getDefaultIconClass(appDragState.draggingId)"></i>
+        </div>
+        <div v-else class="w-32 h-16 bg-white/90 backdrop-blur-md rounded-2xl border-2 border-gray-400 shadow-2xl flex items-center justify-center text-gray-600 font-bold text-sm">
+            <i class="fas fa-arrows-alt mr-2"></i> {{ appDragState.itemType === 'block' ? '移动板块' : '移动小组件' }}
         </div>
     </div>
     
@@ -8978,9 +9013,15 @@ const app = createApp({
             // 桌面引擎与小组件商店状态
             desktopApps1: [], 
             dockApps: [], 
+            d1p1Blocks: ['card', 'info', 'matrix'],
+            d1p2Apps1: ['couple_space', 'game_center', 'sms', 'jinjiang'],
+            d1p2Apps2: ['memo', 'album', 'ph5', 'ph6'],
+            d2p1Apps: ['wechat', 'themes', 'worldbook', 'settings'],
+            d2p2Apps1: ['couple_space', 'game_center', 'sms', 'jinjiang'],
+            d2p2Apps2: ['memo', 'album', 'ph5', 'ph6'],
             widgetStore: [], 
             activeDesktopWidgets: [], 
-            appDragState: { isEditing: false, draggingId: null, sourceType: null, sourceIndex: -1, cloneX: 0, cloneY: 0, showClone: false, pressTimer: null },
+            appDragState: { isEditing: false, draggingId: null, itemType: null, sourceArrayName: null, sourceIndex: -1, cloneX: 0, cloneY: 0, showClone: false, pressTimer: null },
             showAppLibraryModal: false,
             showWidgetPicker: false,
             widgetStoreModal: { show: false, isEditing: false, editIndex: -1, form: { id: '', name: '', ratio: '1x1', html: '', css: '' } },
@@ -13031,15 +13072,16 @@ const app = createApp({
             this.appDragState.isEditing = false;
             this.saveData();
         },
-        startAppDrag(e, type, index, id) {
+        startAppDrag(e, itemType, arrayName, index, item) {
             if (!this.appDragState.isEditing) return;
             e.preventDefault();
             const touch = e.touches ? e.touches[0] : e;
-            this.appDragState.draggingId = id;
-            this.appDragState.sourceType = type;
+            this.appDragState.draggingId = item.instanceId || item; 
+            this.appDragState.itemType = itemType; // 'app', 'widget', or 'block'
+            this.appDragState.sourceArrayName = arrayName;
             this.appDragState.sourceIndex = index;
-            this.appDragState.cloneX = touch.clientX - 24;
-            this.appDragState.cloneY = touch.clientY - 24;
+            this.appDragState.cloneX = touch.clientX - (itemType === 'app' ? 24 : 60);
+            this.appDragState.cloneY = touch.clientY - (itemType === 'app' ? 24 : 40);
             this.appDragState.showClone = true;
             
             document.addEventListener('mousemove', this.onAppDragMove, {passive: false});
@@ -13050,30 +13092,31 @@ const app = createApp({
         onAppDragMove(e) {
             e.preventDefault();
             const touch = e.touches ? e.touches[0] : e;
-            this.appDragState.cloneX = touch.clientX - 24;
-            this.appDragState.cloneY = touch.clientY - 24;
+            this.appDragState.cloneX = touch.clientX - (this.appDragState.itemType === 'app' ? 24 : 60);
+            this.appDragState.cloneY = touch.clientY - (this.appDragState.itemType === 'app' ? 24 : 40);
             
             // Element swapping logic
             const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
             const dropZone = targetEl ? targetEl.closest('.app-drop-zone') : null;
             
             if (dropZone) {
-                const targetType = dropZone.getAttribute('data-type');
+                const targetItemType = dropZone.getAttribute('data-type');
+                if (targetItemType !== this.appDragState.itemType) return; // 只能同类交换
+                
+                const targetArrayName = dropZone.getAttribute('data-name');
                 const targetIndex = parseInt(dropZone.getAttribute('data-index'));
                 
-                if (targetType !== this.appDragState.sourceType || targetIndex !== this.appDragState.sourceIndex) {
+                if (targetArrayName !== this.appDragState.sourceArrayName || targetIndex !== this.appDragState.sourceIndex) {
                     // Dock 栏保底机制：至少留1个App
-                    if (this.appDragState.sourceType === 'dock' && targetType !== 'dock' && this.dockApps.length <= 1) {
-                        return;
-                    }
+                    if (this.appDragState.sourceArrayName === 'dockApps' && targetArrayName !== 'dockApps' && this.dockApps.length <= 1) return;
                     
-                    const sourceArray = this.appDragState.sourceType === 'desktop' ? this.desktopApps1 : this.dockApps;
-                    const targetArray = targetType === 'desktop' ? this.desktopApps1 : this.dockApps;
+                    const sourceArray = this[this.appDragState.sourceArrayName];
+                    const targetArray = this[targetArrayName];
                     
                     const item = sourceArray.splice(this.appDragState.sourceIndex, 1)[0];
                     targetArray.splice(targetIndex, 0, item);
                     
-                    this.appDragState.sourceType = targetType;
+                    this.appDragState.sourceArrayName = targetArrayName;
                     this.appDragState.sourceIndex = targetIndex;
                 }
             }
@@ -17067,6 +17110,43 @@ Structure:
             a.download = `AoveinOS_Backup_${dateStr}.json`; 
             a.click(); 
         },
+        exportDataZip() {
+            if (!window.JSZip) {
+                this.showToast('正在加载压缩库...');
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                document.head.appendChild(script);
+                script.onload = () => this.executeZipExport();
+                script.onerror = () => this.showToast('加载压缩库失败，请检查网络');
+            } else {
+                this.executeZipExport();
+            }
+        },
+        executeZipExport() {
+            this.showToast('正在压缩数据，请稍候...');
+            const d = JSON.parse(JSON.stringify(this.$data));
+            d.isAppOpen = false; d.currentApp = null;
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            
+            const zip = new JSZip();
+            zip.file(`AoveinOS_Backup_${dateStr}.json`, JSON.stringify(d));
+            
+            zip.generateAsync({
+                type:"blob",
+                compression: "DEFLATE",
+                compressionOptions: { level: 6 }
+            }).then((content) => {
+                const u = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = u; a.download = `AoveinOS_Backup_Zip_${dateStr}.zip`;
+                a.click();
+                URL.revokeObjectURL(u);
+                this.showToast('ZIP压缩备份导出成功');
+            }).catch(e => {
+                this.showToast('压缩失败: ' + e.message);
+            });
+        },
         async testGitHubToken() {
             if (!this.githubConfig.token || !this.githubConfig.repo) return this.showToast('请先填写Token和仓库路径');
             this.showToast('正在测试连接...');
@@ -17484,10 +17564,9 @@ Structure:
         handleImport(e) { 
             const f = e.target.files[0]; 
             if(!f) return; 
-            const r = new FileReader(); 
-            r.onload = async (ev) => { 
+            
+            const processImportText = async (rawText) => {
                 try { 
-                    const rawText = ev.target.result; 
                     if (!rawText || rawText.trim() === '') throw new Error('文件内容为空');
                     
                     let parsedData;
@@ -17501,38 +17580,70 @@ Structure:
                         throw new Error('这不是 Aovein OS 的存档文件');
                     }
 
-                    // 核心修复：设置全局拦截标志，防止网页刷新时触发 beforeunload 保存旧数据覆盖新数据！
                     window._isImporting = true;
-
                     let saveSuccess = false;
                     try { 
                         localStorage.setItem('onyunx_hybrid_v40', rawText); 
                         saveSuccess = true;
-                    } catch(err) { 
-                        console.warn('LocalStorage导入受限'); 
-                    }
+                    } catch(err) { console.warn('LocalStorage导入受限'); }
                     
                     try { 
                         await this.writeSafeData('onyunx_hybrid_v40', rawText); 
                         saveSuccess = true;
-                    } catch(err) { 
-                        console.error('IndexedDB 底层导入受阻', err); 
-                    }
+                    } catch(err) { console.error('IndexedDB 底层导入受阻', err); }
                     
                     if (saveSuccess) {
                         this.showToast('数据导入成功！系统即将刷新应用'); 
                         setTimeout(() => location.reload(), 1500); 
                     } else {
-                        window._isImporting = false; // 失败时解除拦截
+                        window._isImporting = false; 
                         throw new Error('设备可用存储空间不足，无法保存存档');
                     }
                 } catch(e) { 
-                    window._isImporting = false; // 失败时解除拦截
-                    console.error("跨浏览器导入错误: ", e);
+                    window._isImporting = false; 
                     this.showToast(`导入中止: ${e.message}`); 
                 } 
-            }; 
-            r.readAsText(f, 'UTF-8'); 
+            };
+
+            const ext = f.name.split('.').pop().toLowerCase();
+            if (ext === 'zip') {
+                this.showToast('正在解压 ZIP 文件...');
+                const extractZip = () => {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        JSZip.loadAsync(ev.target.result).then(function(zip) {
+                            let jsonFile = null;
+                            zip.forEach(function (relativePath, file){
+                                if(relativePath.endsWith('.json')) jsonFile = file;
+                            });
+                            if(jsonFile) {
+                                jsonFile.async("string").then(function(content) {
+                                    processImportText(content);
+                                });
+                            } else {
+                                alert("ZIP压缩包内未找到 .json 格式的备份文件！");
+                            }
+                        }).catch(function(e) {
+                            alert("解压失败: " + e.message);
+                        });
+                    };
+                    reader.readAsArrayBuffer(f);
+                };
+
+                if (!window.JSZip) {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                    document.head.appendChild(script);
+                    script.onload = () => extractZip();
+                    script.onerror = () => this.showToast('加载解压库失败');
+                } else {
+                    extractZip();
+                }
+            } else {
+                const r = new FileReader(); 
+                r.onload = (ev) => processImportText(ev.target.result); 
+                r.readAsText(f, 'UTF-8'); 
+            }
             e.target.value = ''; 
         },
         async loadData() { 
@@ -17559,8 +17670,14 @@ Structure:
             // 补全桌面动态拖拽数组
             if (!this.desktopApps1 || this.desktopApps1.length === 0) this.desktopApps1 = ['wechat', 'themes', 'worldbook', 'settings'];
             if (!this.dockApps || this.dockApps.length === 0) this.dockApps = ['icity', 'forum', 'check', 'taobao'];
+            if (!this.d1p1Blocks || this.d1p1Blocks.length === 0) this.d1p1Blocks = ['card', 'info', 'matrix'];
+            if (!this.d1p2Apps1 || this.d1p2Apps1.length === 0) this.d1p2Apps1 = ['couple_space', 'game_center', 'sms', 'jinjiang'];
+            if (!this.d1p2Apps2 || this.d1p2Apps2.length === 0) this.d1p2Apps2 = ['memo', 'album', 'ph5', 'ph6'];
+            if (!this.d2p1Apps || this.d2p1Apps.length === 0) this.d2p1Apps = ['wechat', 'themes', 'worldbook', 'settings'];
+            if (!this.d2p2Apps1 || this.d2p2Apps1.length === 0) this.d2p2Apps1 = ['couple_space', 'game_center', 'sms', 'jinjiang'];
+            if (!this.d2p2Apps2 || this.d2p2Apps2.length === 0) this.d2p2Apps2 = ['memo', 'album', 'ph5', 'ph6'];
             
-            // 补偿默认小组件数据入库
+            // 补偿默认小组件数据入库 (修复小翅膀丢失Bug)
             if (!this.widgetStore || this.widgetStore.length === 0) {
                 this.widgetStore = [
                     {
@@ -17570,10 +17687,14 @@ Structure:
                     },
                     {
                         id: 'w_default_2', name: '纪念日倒数', ratio: '2x1',
-                        html: '<div class="relative min-w-[120px] max-w-[240px] w-full px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] border-2 border-white mx-auto"><span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center pointer-events-none">6440天</span></div>',
+                        html: '<div class="relative min-w-[120px] max-w-[240px] w-full px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] border-2 border-white mx-auto"><div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div><span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center pointer-events-none">6440天</span><div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div></div>',
                         css: ''
                     }
                 ];
+                // 如果发现老存档中第二个组件丢失了翅膀，强行修复它
+                if (this.activeDesktopWidgets && this.activeDesktopWidgets[1] && !this.activeDesktopWidgets[1].html.includes('img')) {
+                    this.activeDesktopWidgets[1].html = this.widgetStore[1].html;
+                }
             }
             if (!this.activeDesktopWidgets || this.activeDesktopWidgets.length === 0) {
                 // 如果是旧存档平滑升级，把默认的组件放在桌面上
