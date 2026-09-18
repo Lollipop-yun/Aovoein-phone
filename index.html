@@ -678,11 +678,63 @@ document.addEventListener("DOMContentLoaded", () => {
             2. <b>第三方接口声明：</b> 您的 API Key 仅用于直接与您配置的大模型服务商（如 OpenAI、MiniMax 等）建立点对点通信，请妥善保管。<br><br>
             3. <b>免责条款：</b> 本产品仅供 UI 交互展示与娱乐模拟使用。使用者在应用内进行的一切模拟操作、AI 生成内容及由此产生的衍生行为，由使用者本人自行承担全部责任。使用者做出的任何行为均与本代码原作者（小红书：@檩因冬信）无关。<br><br>
             4. <b>合规使用：</b> 严禁将本产品用于任何非法、诈骗或造谣用途，一经发现，由使用者独立承担全部法律后果。<br><br>
-            5. <b>角色导入规范：</b> 严禁导入未经授权的第三方角色卡（如酒馆等平台的他人创作）。仅允许导入使用者本人原创，或已获得原作者明确授权的角色设定，请尊重原创版权。
+            5. <b>角色导入规范：</b> 严禁导入未经授权的第三方角色卡。仅允许导入使用者本人原创，或已获得原作者明确授权的角色设定，请尊重原创版权。<br><br>
+            <span style="color: #ef4444;">6. <b>未成年人限制（极度重要）：</b> 本网站不适用于未成年人。使用本产品即默认使用者为具备完全民事行为能力的成年女性。如您未满十八周岁，请立即退出并停止使用本网站。若未成年人隐瞒真实年龄擅自进入本网站，由此引发的一切衍生争议、心理影响及法律后果，皆由未成年人本人及其法定监护人自行承担全部责任。</span>
         </div>
-        <button id="modal-agree-btn" class="modal-btn" disabled>请认真阅读 (5s)</button>
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #e5e7eb; text-align: center;">
+            <p style="font-size: 11px; color: #ef4444; font-weight: bold; margin-bottom: 8px;">为确保您已悉知，请在下方框内手动输入以下确认语：<br><span style="user-select: all; text-decoration: underline; font-size: 13px; color: #111827; letter-spacing: 1px;">本人已满十八周岁，已完整阅读并同意免责声明全部内容</span></p>
+            <input type="text" id="disclaimer-confirm-input" placeholder="请手打或粘贴上方确认语..." style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; outline: none; text-align: center; margin-bottom: 5px;">
+        </div>
+        <button id="modal-agree-btn" class="modal-btn" disabled style="transition: all 0.3s; opacity: 0.5;">请认真阅读 (5s)</button>
     </div>
 </div>
+
+<script>
+// 独立阻断脚本：强制用户抄写免责声明确认语
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('disclaimer-confirm-input');
+    const btn = document.getElementById('modal-agree-btn');
+    const targetText = "本人已满十八周岁，已完整阅读并同意免责声明全部内容";
+    
+    if(input && btn) {
+        // 使用 MutationObserver 监听 activation.js 对按钮 5s 倒计时的修改
+        const observer = new MutationObserver(() => {
+            const isTimerDone = !btn.innerText.includes('s') && !btn.innerText.includes('秒');
+            const isTextMatch = input.value.trim() === targetText;
+            
+            if (isTimerDone) {
+                if (isTextMatch) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.innerText = "我已同意并接受";
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.innerText = "请输入正确的确认语";
+                }
+            }
+        });
+        
+        observer.observe(btn, { attributes: true, childList: true, characterData: true });
+        
+        // 监听输入框
+        input.addEventListener('input', (e) => {
+            const isTimerDone = !btn.innerText.includes('s') && !btn.innerText.includes('秒');
+            if (isTimerDone) {
+                if (e.target.value.trim() === targetText) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.innerText = "我已同意并接受";
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    btn.innerText = "请输入正确的确认语";
+                }
+            }
+        });
+    }
+});
+</script>
 
 <div id="app" v-cloak class="max-w-md mx-auto absolute inset-0 w-full bg-[#f3f4f6] flex flex-col overflow-hidden shadow-2xl border-x border-gray-200" style="display: none;" @click="closeAllMenus"
      :style="{ '--custom-font': themeConfig.fontFamily ? themeConfig.fontFamily : 'inherit', 'color': themeConfig.fontColor || '#000000', 'font-size': (themeConfig.fontSize || 1) + 'em' }">
@@ -707,6 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p>3. <b>免责条款：</b> 本产品仅供 UI 交互展示与娱乐模拟使用。使用者在应用内进行的一切模拟操作、AI 生成内容及由此产生的衍生行为，由使用者本人自行承担全部责任。使用者做出的任何行为均与本代码原作者无关。</p>
                     <p>4. <b>合规使用：</b> 严禁将本产品用于任何非法、诈骗或造谣用途，一经发现，由使用者独立承担全部法律后果。</p>
                     <p>5. <b>角色导入规范：</b> 严禁导入未经授权的第三方角色卡。仅允许导入使用者本人原创，或已获得原作者明确授权的角色设定，请尊重原创版权。</p>
+                    <p class="text-red-500">6. <b>未成年人限制：</b> 本网站不适用于未成年人。使用本产品即默认使用者为具备完全民事行为能力的成年女性。如您未满十八周岁，请立即退出并停止使用本网站。若未成年人隐瞒真实年龄擅自进入本网站，由此引发的一切衍生争议、心理影响及法律后果，皆由未成年人本人及其法定监护人自行承担全部责任。</p>
                 </div>
                 <div class="p-4 border-t border-gray-100 bg-gray-50 shrink-0">
                     <button @click="showSettingsDisclaimer = false" class="w-full bg-black text-white py-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition">关闭阅读</button>
@@ -7042,8 +7095,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <div v-if="imagePromptModal.faceLockEnabled" class="mt-4 space-y-3 border-t border-gray-50 pt-4">
                             <div>
-                                <label class="text-[11px] font-bold text-gray-500 mb-1 block">参考图链接 (支持 Midjourney --cref)</label>
-                                <input v-model="imagePromptModal.faceLockUrl" placeholder="https://... (人脸参考图URL)" class="w-full bg-gray-50 p-3 rounded-xl text-[13px] border border-gray-200 outline-none">
+                                <label class="text-[11px] font-bold text-gray-500 mb-1 block">参考图链接 (支持 Midjourney --cref 或本地上传)</label>
+                                <div class="flex gap-2 items-center">
+                                    <input v-model="imagePromptModal.faceLockUrl" placeholder="https://... 或点击右侧上传" class="flex-1 w-0 bg-gray-50 p-3 rounded-xl text-[13px] border border-gray-200 outline-none">
+                                    <button @click="triggerFaceLockUpload" class="w-11 h-11 shrink-0 bg-gray-100 text-gray-600 rounded-xl text-lg flex items-center justify-center shadow-sm active:bg-gray-200 transition border border-gray-200"><i class="fas fa-image"></i></button>
+                                </div>
+                                <div v-if="imagePromptModal.faceLockUrl && imagePromptModal.faceLockUrl.startsWith('data:')" class="mt-3 w-20 h-20 rounded-lg overflow-hidden border border-gray-200 shadow-sm relative mx-auto">
+                                     <img :src="imagePromptModal.faceLockUrl" class="w-full h-full object-cover">
+                                </div>
                             </div>
                             <div>
                                 <label class="text-[11px] font-bold text-gray-500 mb-1 block">固定种子 Seed (支持 DALL-E / SD)</label>
@@ -7137,7 +7196,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                     <div class="flex items-center gap-4"><i class="fas fa-eye-slash text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">隐藏状态栏</span></div><input type="checkbox" id="toggle-sb" class="switch-checkbox" v-model="hideStatusBar" @change="saveData"><label for="toggle-sb" class="switch-label"><div class="switch-button"></div></label>
                                 </div>
                             </div>
-                            <div class="mt-8 mb-24 flex items-center justify-center gap-2 text-[12px] font-medium text-gray-400">
+                            <div class="mt-8 mb-36 flex items-center justify-center gap-2 text-[12px] font-medium text-gray-400">
                                 <span>Version 1.0.0</span><span class="mx-1 text-gray-300">|</span><span @click="showSettingsDisclaimer = true" class="text-blue-500 cursor-pointer active:opacity-70">用户条约与免责声明</span>
                             </div>
                         </div>
@@ -7260,9 +7319,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.63 更新日志 (当前最新) -->
+                            <!-- v1.64 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.64 免责锁与极严提取正则升级</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-18 14:04</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">强制防锁屏确认：</span>重构了初始打开网站时的免责声明安全锁逻辑。现在不仅明确排斥未成年人使用并划定责任边界，而且除了硬性规定阅读 5 秒外，还必须手动输入完整的特定语句才能放行，最大程度规避使用风险。</li>
+                                    <li><span class="font-bold text-gray-800">生图相册读取：</span>生图高级设置中的“锁脸”功能现已支持直接点击图标从本地相册上传你的自拍作为参照原图，并配有极简优雅的小图回显。</li>
+                                    <li><span class="font-bold text-gray-800">极严正则提取器：</span>大幅增强了导入文档解析引擎的鲁棒性。不论文档里写的是“芳龄”、“岁数”还是带有冒号、方括号，全新的高宽容度正则表达式都能如同手术刀般将它们精准切下，彻底告别年龄姓名乱填或丢失的 Bug。</li>
+                                    <li><span class="font-bold text-gray-800">视觉微调：</span>设置页面最底端留白高度加大。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.63 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.63 核心大模型防越界法则重构（英文版）</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-17 15:20</span>
@@ -9439,6 +9513,12 @@ const app = createApp({
                 faceLockUrl: session.faceLockUrl || '',
                 faceLockSeed: session.faceLockSeed || ''
             };
+        },
+        triggerFaceLockUpload() {
+            // 复用通用图床裁剪上传逻辑
+            this.openUniversalAvatarUpload((url) => {
+                this.imagePromptModal.faceLockUrl = url;
+            });
         },
         saveImagePrompt() {
             const session = this.wechatState.activeSession;
@@ -12763,14 +12843,18 @@ const app = createApp({
 
         // ----------------- 更新的解析逻辑 -----------------
         extractContactInfoFromText(text) {
-            const extract = (regex) => { const m = text.match(regex); return m ? m[1].replace(/^[\]】]+|[\[【]+$/g, '').trim() : ''; };
+            const extract = (regex) => { 
+                const m = text.match(regex); 
+                // 彻底剥离可能沾在开头结尾的多余标点和括号
+                return m ? m[1].replace(/^[\]】:：\s]+|[\[【]+$/g, '').trim() : ''; 
+            };
             return {
-                name: extract(/(?:姓名|名字|角色名|Name)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,15})/) || '',
-                age: extract(/(?:年龄|Age|岁数)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,10})/) || '',
-                height: extract(/(?:身高|Height)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,15})/) || '',
-                weight: extract(/(?:体重|Weight)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,15})/) || '',
-                birthday: extract(/(?:生日|Birthday)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{2,15})/) || '',
-                gender: extract(/(?:性别|Gender)[\]】:：\s]*([男女])/) || '男',
+                name: extract(/(?:姓名|名字|角色名|人物|称呼|Name)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,20})/i) || '',
+                age: extract(/(?:年龄|岁数|芳龄|年纪|Age)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,15})/i) || '',
+                height: extract(/(?:身高|身长|Height)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,15})/i) || '',
+                weight: extract(/(?:体重|身型|体型|Weight)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{1,15})/i) || '',
+                birthday: extract(/(?:生日|出生日期|生辰|Birthday)[\]】:：\s]*([^\n\s,，;；。\[\]【】]{2,20})/i) || '',
+                gender: extract(/(?:性别|Gender)[\]】:：\s]*([男女])/i) || '男',
                 bio: text, // 绝对保留文件里的所有文字！
                 remark: '', username: '', wechatId: '', relationship: '', nudge: '', signature: '', 
                 avatar: 'https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg'
