@@ -263,17 +263,6 @@
         }
         .attach-label { font-size: 11px; color: #666; font-weight: 500; }
 
-        /* 桌面应用拖拽与抖动编辑系统 */
-        .list-move, .list-enter-active, .list-leave-active { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease; }
-        .list-leave-active { position: absolute; }
-        @keyframes edit-jiggle { 
-            0% { transform: rotate(-1.5deg) scale(1); } 
-            50% { transform: rotate(1.5deg) scale(1); } 
-            100% { transform: rotate(-1.5deg) scale(1); } 
-        }
-        .edit-jiggle { animation: edit-jiggle 0.3s infinite ease-in-out; }
-        .droppable-app { touch-action: none; } /* 防止移动端拖拽时触发滚动 */
-
         /* 气泡基础样式 */
         .chat-bubble { border-radius: 18px; padding: 8px 12px; font-size: 14px; max-width: 100%; line-height: 1.4; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.03); }
         .chat-bubble-ai { background-color: #ffffff; color: #333; border-top-left-radius: 4px; }
@@ -425,6 +414,15 @@
         .ios-list-item:first-child { border-top-left-radius: 12px; border-top-right-radius: 12px; }
         .ios-list-item:last-child { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; border-bottom: none; }
         .ios-list-item:active { background: #eee; }
+
+        /* App 拖拽与抖动动画 */
+        @keyframes jiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+        .jiggle { animation: jiggle 0.25s infinite; }
+        .app-list-move { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .floating-drag-clone { position: fixed; z-index: 999999; pointer-events: none; opacity: 0.9; transform: scale(1.15); transition: transform 0.05s; }
 
         .red-packet-bg { background-color: #f3f4f6; }
         .rp-header { background: #d44d44; position: relative; height: 160px; border-bottom-left-radius: 50% 30px; border-bottom-right-radius: 50% 30px; }
@@ -2461,25 +2459,34 @@ document.addEventListener('DOMContentLoaded', () => {
          <div class="flex-1 w-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-hide">
              
              <!-- ================= 桌面1 第一页 ================= -->
-             <div v-if="desktopStyle === 1" class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px]">
+             <div v-if="desktopStyle === 1" class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px]"
+                  @touchstart="startDesktopLongPress" @touchmove="clearDesktopLongPress" @touchend="clearDesktopLongPress">
+                 
+                 <!-- 桌面编辑模式顶部控制栏 -->
+                 <transition name="fade">
+                     <div v-if="appDragState.isEditing" class="absolute top-12 left-0 w-full px-6 z-50 flex justify-between items-center">
+                         <button @click="showWidgetPicker = true" class="w-8 h-8 bg-gray-200/80 backdrop-blur-md text-gray-600 rounded-full flex items-center justify-center shadow-md animate-fade-in"><i class="fas fa-plus"></i></button>
+                         <button @click="stopEditMode" class="bg-black/80 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg animate-fade-in">完成</button>
+                     </div>
+                 </transition>
+
                  <div class="w-full flex flex-col items-center skin-text-container">
                     
                     <!-- 顶部名片 -->
                     <div class="w-[90%] z-20 mt-2 mb-2 shrink-0">
-                        <div class="bg-white/90 backdrop-blur-sm rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative">
+                        <div class="bg-white/90 backdrop-blur-sm rounded-[20px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] relative" :class="{'jiggle': appDragState.isEditing}">
                             <div class="flex justify-between items-start mb-3">
                                 <div class="flex gap-3">
                                     <div class="w-[52px] h-[52px] border border-gray-100 rounded-lg p-0.5 flex flex-col items-center justify-between shrink-0 cursor-pointer active:scale-95 transition bg-white">
-                                        <!-- 补充了 @click.stop="triggerCardAvatarUpload" 触发本地相册 -->
-                                        <div class="w-full h-[70%] rounded-md overflow-hidden bg-gray-50 relative" @click.stop="triggerCardAvatarUpload">
+                                        <div class="w-full h-[70%] rounded-md overflow-hidden bg-gray-50 relative" @click.stop="appDragState.isEditing ? null : triggerCardAvatarUpload()">
                                             <img v-if="cardProfile.avatar" :src="cardProfile.avatar" class="w-full h-full object-cover">
                                             <i v-else class="fas fa-user text-gray-300 text-xl flex h-full items-center justify-center"></i>
                                         </div>
-                                        <span class="text-[8px] opacity-60 scale-90 origin-bottom font-medium truncate w-full text-center" @click.stop="editCardProfile('status')">{{ cardProfile.status }}</span>
+                                        <span class="text-[8px] opacity-60 scale-90 origin-bottom font-medium truncate w-full text-center" @click.stop="appDragState.isEditing ? null : editCardProfile('status')">{{ cardProfile.status }}</span>
                                     </div>
                                     <div class="flex flex-col pt-0.5" style="font-size: var(--custom-font-size)">
-                                        <h2 @click="editCardProfile('name')" class="text-[14px] font-bold tracking-wider mb-0.5 cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">{{ cardProfile.name }}</h2>
-                                        <p @click="editCardProfile('id')" class="text-[10px] opacity-60 font-mono tracking-wide cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">@ {{ cardProfile.id }}</p>
+                                        <h2 @click="appDragState.isEditing ? null : editCardProfile('name')" class="text-[14px] font-bold tracking-wider mb-0.5 cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">{{ cardProfile.name }}</h2>
+                                        <p @click="appDragState.isEditing ? null : editCardProfile('id')" class="text-[10px] opacity-60 font-mono tracking-wide cursor-pointer active:opacity-50" :style="{color: themeConfig.fontColor}">@ {{ cardProfile.id }}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-1 text-[10px] opacity-60 font-medium pt-1" :style="{color: themeConfig.fontColor}">
@@ -2488,89 +2495,67 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span>{{ displayDate.dayString }}</span>
                                 </div>
                             </div>
-                            <div @click="editCardProfile('bio')" class="text-[12px] leading-relaxed font-medium tracking-wide text-justify cursor-pointer active:opacity-50 border-t border-gray-50/20 pt-2" :style="{color: themeConfig.fontColor, fontSize: 'calc(var(--custom-font-size) * 0.9)'}">{{ cardProfile.bio }}</div>
+                            <div @click="appDragState.isEditing ? null : editCardProfile('bio')" class="text-[12px] leading-relaxed font-medium tracking-wide text-justify cursor-pointer active:opacity-50 border-t border-gray-50/20 pt-2" :style="{color: themeConfig.fontColor, fontSize: 'calc(var(--custom-font-size) * 0.9)'}">{{ cardProfile.bio }}</div>
                         </div>
                     </div>
 
                     <!-- 中部个人信息 -->
-                    <div class="flex flex-col items-center w-full mb-3 z-10 shrink-0" style="font-size: var(--custom-font-size)">
-                        <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-gray-200 to-white shadow-lg mb-2 cursor-pointer active:scale-95 transition" @click="triggerHomeAvatarUpload">
+                    <div class="flex flex-col items-center w-full mb-3 z-10 shrink-0" style="font-size: var(--custom-font-size)" :class="{'jiggle': appDragState.isEditing}">
+                        <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-gray-200 to-white shadow-lg mb-2 cursor-pointer active:scale-95 transition" @click="appDragState.isEditing ? null : triggerHomeAvatarUpload()">
                             <div class="w-full h-full rounded-full overflow-hidden bg-gray-100 relative">
                                 <img v-if="homeProfile.avatar" :src="homeProfile.avatar" class="w-full h-full object-cover">
                                 <i v-else class="fas fa-user text-gray-300 text-3xl flex h-full items-center justify-center"></i>
                             </div>
                         </div>
-                        <h2 @click="editHomeProfile('name')" class="text-lg font-bold tracking-wide cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeProfile.name }}</h2>
-                        <p @click="editHomeProfile('id')" class="text-xs opacity-80 mt-1 font-mono tracking-wider cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">@{{ homeProfile.id }}</p>
-                        <p @click="editHomeProfile('bio')" class="text-[10px] opacity-80 mt-2 tracking-[0.1em] cursor-pointer active:opacity-50 transition px-8 text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ homeProfile.bio }}</p>
-                        <div @click="editHomeProfile('location')" class="mt-3 flex items-center gap-1 text-xs opacity-80 cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">
+                        <h2 @click="appDragState.isEditing ? null : editHomeProfile('name')" class="text-lg font-bold tracking-wide cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeProfile.name }}</h2>
+                        <p @click="appDragState.isEditing ? null : editHomeProfile('id')" class="text-xs opacity-80 mt-1 font-mono tracking-wider cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">@{{ homeProfile.id }}</p>
+                        <p @click="appDragState.isEditing ? null : editHomeProfile('bio')" class="text-[10px] opacity-80 mt-2 tracking-[0.1em] cursor-pointer active:opacity-50 transition px-8 text-center" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ homeProfile.bio }}</p>
+                        <div @click="appDragState.isEditing ? null : editHomeProfile('location')" class="mt-3 flex items-center gap-1 text-xs opacity-80 cursor-pointer active:opacity-50 transition" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">
                             <i class="fas fa-map-marker-alt"></i><span>{{ homeProfile.location }}</span>
                         </div>
                     </div>
 
-                    <!-- 下方 App 与小部件矩阵 (重构：完全动态拖拽排列) -->
-                    <div class="w-full px-8 grid grid-cols-2 gap-6 mb-auto z-10 items-start shrink-0 relative" style="font-size: var(--custom-font-size)">
-                        
-                        <!-- 抖动编辑模式退出按钮遮罩 -->
-                        <transition name="fade">
-                            <div v-if="isHomeEditMode" class="fixed top-12 right-6 z-[100000]">
-                                <button @click="isHomeEditMode = false" class="bg-white/90 backdrop-blur-md text-black px-5 py-2 rounded-full text-[13px] font-bold shadow-[0_4px_15px_rgba(0,0,0,0.1)] border border-gray-100 active:scale-95 transition">完成</button>
-                            </div>
-                        </transition>
-
+                    <!-- 下方 App 与动态小部件矩阵 (重构版) -->
+                    <div class="w-full px-8 grid grid-cols-2 gap-6 mb-auto z-10 items-start shrink-0" style="font-size: var(--custom-font-size)">
+                        <!-- 左侧：App 矩阵区 -->
                         <div class="flex flex-col items-center">
-                            <h3 @click="isHomeEditMode ? null : editHomeConfig('widgetTitle', '修改左侧标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeConfig.widgetTitle }}</h3>
-                            <transition-group name="list" tag="div" class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full">
-                                <div v-for="(id, index) in homeLayout.grid" :key="id" 
-                                     class="flex flex-col items-center gap-1.5 home-icon droppable-app relative" 
-                                     :class="{'edit-jiggle': isHomeEditMode, 'opacity-0': appDragState.active && appDragState.item === id}" 
-                                     data-type="grid" :data-index="index"
-                                     @touchstart="onTouchStartApp($event, 'grid', index, id)" @touchmove="onTouchMoveApp" @touchend="onTouchEndApp"
-                                     @click="isHomeEditMode ? null : handleAppClick(id)">
-                                    <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(id)}">
+                            <h3 @click="appDragState.isEditing ? null : editHomeConfig('widgetTitle', '修改左侧标题')" class="text-sm font-bold mb-4 cursor-pointer active:opacity-50 transition self-start pl-2" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow-md': themeConfig.wallpaper}">{{ homeConfig.widgetTitle }}</h3>
+                            <transition-group name="app-list" tag="div" class="grid grid-cols-2 gap-x-5 gap-y-5 justify-items-center w-full relative min-h-[150px]">
+                                <div v-for="(id, idx) in desktopApps1" :key="id" 
+                                     class="flex flex-col items-center gap-1.5 home-icon cursor-pointer app-drop-zone relative"
+                                     :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                                     data-type="desktop" :data-index="idx"
+                                     @touchstart="startAppDrag($event, 'desktop', idx, id)"
+                                     @mousedown="startAppDrag($event, 'desktop', idx, id)"
+                                     @click="appDragState.isEditing ? null : handleAppClick(id)">
+                                    <!-- 删除 APP 按钮 -->
+                                    <div v-if="appDragState.isEditing" @click.stop="removeAppFromDesktop(idx)" class="absolute -top-1.5 -left-1.5 w-5 h-5 bg-gray-200/90 backdrop-blur text-gray-500 rounded-full flex items-center justify-center z-50 shadow-sm"><i class="fas fa-minus text-[10px]"></i></div>
+                                    
+                                    <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-sm border border-gray-100 overflow-hidden pointer-events-none">
                                         <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
                                         <i v-else :class="getDefaultIconClass(id)"></i>
                                     </div>
-                                    <span class="text-[10px] font-bold" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(id) }}</span>
+                                    <span class="text-[10px] font-bold pointer-events-none" :style="{color: themeConfig.fontColor}" :class="{'drop-shadow': themeConfig.wallpaper}">{{ getAppName(id) }}</span>
+                                </div>
+                                
+                                <!-- 添加 APP 按钮 (仅编辑模式) -->
+                                <div v-if="appDragState.isEditing" key="add_app_btn" class="flex flex-col items-center gap-1.5 cursor-pointer jiggle" @click="showAppLibraryModal = true">
+                                    <div class="w-12 h-12 rounded-xl bg-white/50 backdrop-blur border-2 border-dashed border-gray-300 text-gray-500 flex items-center justify-center text-xl shadow-sm"><i class="fas fa-plus"></i></div>
+                                    <span class="text-[10px] font-bold text-gray-600 drop-shadow-md">添加APP</span>
                                 </div>
                             </transition-group>
                         </div>
 
-                        <!-- 动态小组件区域 -->
-                        <transition-group name="list" tag="div" class="flex flex-col items-center w-full gap-5">
-                            <div v-for="(w, wIdx) in homeLayout.activeWidgets" :key="w.id" class="relative w-full flex justify-center" :class="{'edit-jiggle': isHomeEditMode}">
-                                <!-- 小组件删除按钮 -->
-                                <div v-if="isHomeEditMode" @click.stop="removeWidgetFromHome(wIdx)" class="absolute -top-2 left-0 w-6 h-6 bg-gray-200/95 backdrop-blur-sm text-gray-600 rounded-full flex items-center justify-center text-[11px] z-30 shadow-md border border-white cursor-pointer active:scale-90 transition"><i class="fas fa-minus"></i></div>
-                                
-                                <!-- 内置原版双图气泡组件 -->
-                                <div v-if="w.type === 'native' && w.id === 'default_bubbles'" class="flex gap-2 justify-center items-end mt-2 pointer-events-auto w-full">
-                                    <div class="flex flex-col items-center relative w-16">
-                                        <div @click="isHomeEditMode ? null : editCustomWidget(0, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[0].bubble }}</div>
-                                        <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="isHomeEditMode ? null : triggerWidgetImageUpload(0)">
-                                            <img v-if="customWidgets[0].image" :src="customWidgets[0].image" class="w-full h-full object-cover">
-                                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图1</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col items-center relative w-16">
-                                        <div @click="isHomeEditMode ? null : editCustomWidget(1, 'bubble')" class="widget-bubble cursor-pointer active:scale-95 transition !bg-white/95 !backdrop-blur-sm !text-gray-600 !rounded-2xl !px-3 !py-1.5 !shadow-sm !font-bold mb-1">{{ customWidgets[1].bubble }}</div>
-                                        <div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100 cursor-pointer active:scale-95 transition" @click="isHomeEditMode ? null : triggerWidgetImageUpload(1)">
-                                            <img v-if="customWidgets[1].image" :src="customWidgets[1].image" class="w-full h-full object-cover">
-                                            <div v-else class="w-full h-full flex items-center justify-center text-gray-300 text-xs">图2</div>
-                                        </div>
-                                    </div>
+                        <!-- 右侧：动态小组件区 -->
+                        <div class="flex flex-col items-center w-full gap-4 pt-2">
+                            <transition-group name="app-list" tag="div" class="flex flex-col items-center w-full gap-4 relative min-h-[150px]">
+                                <div v-for="(widget, wIdx) in activeDesktopWidgets" :key="widget.instanceId" class="relative group w-full flex justify-center" :class="{'jiggle': appDragState.isEditing}">
+                                    <div v-if="appDragState.isEditing" @click.stop="removeDesktopWidget(wIdx)" class="absolute -top-2 -left-2 w-6 h-6 bg-gray-200/90 backdrop-blur text-gray-600 rounded-full flex items-center justify-center z-50 shadow-md cursor-pointer"><i class="fas fa-minus text-[12px]"></i></div>
+                                    <!-- 动态渲染组件 HTML 和内联 CSS -->
+                                    <div v-html="widget.html" class="pointer-events-none" :style="widget.css"></div>
                                 </div>
-                                
-                                <!-- 内置原版天数记录组件 -->
-                                <div v-else-if="w.type === 'native' && w.id === 'default_days'" class="relative min-w-[120px] max-w-[240px] w-fit px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] cursor-pointer active:scale-95 transition border-2 border-white pointer-events-auto mx-auto" @click="isHomeEditMode ? null : editHomeConfig('rightWidgetTitle', '修改天数')">
-                                    <div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
-                                    <span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center break-words whitespace-pre-wrap leading-snug" :style="{color: themeConfig.fontColor}">{{ homeConfig.rightWidgetTitle || '6440天' }}</span>
-                                    <div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div>
-                                </div>
-
-                                <!-- 完全客制化 HTML 组件 -->
-                                <div v-else-if="w.type === 'custom'" v-html="w.html" class="w-full flex justify-center pointer-events-auto z-10 relative"></div>
-                            </div>
-                        </transition-group>
+                            </transition-group>
+                        </div>
                     </div>
                 </div>
              </div> <!-- 第一页结束 -->
@@ -2814,17 +2799,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="w-full flex gap-3 mt-auto mb-8 items-center">
-                    <transition-group name="list" tag="div" class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
-                        <div v-for="(id, idx) in homeLayout.grid.slice(0, 4)" :key="id" 
-                             class="flex flex-col items-center gap-1 cursor-pointer home-icon droppable-app relative" 
-                             :class="{'edit-jiggle': isHomeEditMode, 'opacity-0': appDragState.active && appDragState.item === id}" 
-                             data-type="grid" :data-index="idx"
-                             @touchstart="onTouchStartApp($event, 'grid', idx, id)" @touchmove="onTouchMoveApp" @touchend="onTouchEndApp"
-                             @click="isHomeEditMode ? null : handleAppClick(id)">
+                    <div class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
+                        <div v-for="id in ['wechat', 'themes', 'worldbook', 'settings']" :key="id" class="flex flex-col items-center gap-1 cursor-pointer home-icon" @click="handleAppClick(id)">
                             <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-2xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
                             <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
                         </div>
-                    </transition-group>
+                    </div>
                     
                     <div class="w-1/2 aspect-square bg-white/90 backdrop-blur-xl rounded-[24px] shadow-[0_4px_15px_rgba(0,0,0,0.03)] border border-white relative p-2.5 pl-6 flex flex-col justify-center cursor-pointer active:scale-95 transition" @click="triggerD2Avatar('binderImage')">
                         <div class="absolute left-0 top-0 h-full flex flex-col justify-evenly py-3 -translate-x-1.5"><div v-for="i in 8" :key="i" class="flex items-center relative"><div class="binder-ring"></div><div class="binder-hole"></div></div></div>
@@ -2839,17 +2819,12 @@ document.addEventListener('DOMContentLoaded', () => {
              <!-- ================= 桌面2 第二页 ================= -->
              <div v-if="desktopStyle === 2" class="w-full h-full shrink-0 snap-center flex flex-col justify-center overflow-hidden relative px-4 pt-[20px] pb-[115px] gap-7">
                 <div class="w-full flex h-[165px] gap-3 shrink-0 relative z-10">
-                    <transition-group name="list" tag="div" class="w-[45%] grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
-                        <div v-for="(id, idx) in homeLayout.grid.slice(4, 8)" :key="id" 
-                             class="flex flex-col items-center gap-1 cursor-pointer home-icon droppable-app relative" 
-                             :class="{'edit-jiggle': isHomeEditMode, 'opacity-0': appDragState.active && appDragState.item === id}" 
-                             data-type="grid" :data-index="idx + 4"
-                             @touchstart="onTouchStartApp($event, 'grid', idx + 4, id)" @touchmove="onTouchMoveApp" @touchend="onTouchEndApp"
-                             @click="isHomeEditMode ? null : handleAppClick(id)">
+                    <div class="w-[45%] grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
+                        <div v-for="id in ['couple_space', 'game_center', 'sms', 'jinjiang']" :key="id" class="flex flex-col items-center gap-1 cursor-pointer home-icon" @click="handleAppClick(id)">
                             <div class="w-12 h-12 rounded-xl bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
                             <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
                         </div>
-                    </transition-group>
+                    </div>
                     
                     <div class="w-[55%] h-full bg-[#fdfdfd] rounded-[24px] shadow-sm border border-gray-100 relative overflow-hidden">
                         <div class="absolute inset-0 opacity-[0.15] pointer-events-none" style="background-image: radial-gradient(#6b7280 1px, transparent 1px); background-size: 10px 10px;"></div>
@@ -2913,56 +2888,39 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="text-[9px] font-bold text-gray-400 tracking-widest mb-1">汇成海</span>
                         </div>
                     </div>
-                    <transition-group name="list" tag="div" class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
-                        <div v-for="(id, idx) in homeLayout.grid.slice(8, 12)" :key="id" 
-                             class="flex flex-col items-center gap-1 cursor-pointer home-icon droppable-app relative" 
-                             :class="{'edit-jiggle': isHomeEditMode, 'opacity-0': appDragState.active && appDragState.item === id}" 
-                             data-type="grid" :data-index="idx + 8"
-                             @touchstart="onTouchStartApp($event, 'grid', idx + 8, id)" @touchmove="onTouchMoveApp" @touchend="onTouchEndApp"
-                             @click="isHomeEditMode ? null : handleAppClick(id)">
+                    <div class="w-1/2 aspect-square grid grid-cols-2 gap-x-2 gap-y-3 place-content-center">
+                        <div v-for="id in ['memo', 'album', 'ph5', 'ph6']" :key="id" class="flex flex-col items-center gap-1 cursor-pointer home-icon" @click="handleAppClick(id)">
                             <div class="w-[50px] h-[50px] rounded-[14px] bg-white shadow-[0_2px_10px_rgba(0,0,0,0.05)] flex items-center justify-center text-gray-400 text-2xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}"><img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover"><i v-else :class="getDefaultIconClass(id)"></i></div>
                             <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
                         </div>
-                    </transition-group>
+                    </div>
                 </div>
              </div>
              
          </div> <!-- 闭合滑动分页容器 -->
 
-         <!-- 全局拖拽悬浮幽灵图标 (视觉反馈) -->
-         <div v-if="appDragState.active" class="fixed z-[100000] pointer-events-none opacity-80 scale-110 flex flex-col items-center gap-1.5 transition-none"
-              :style="{ left: (appDragState.ghostX - 24) + 'px', top: (appDragState.ghostY - 24) + 'px' }">
-              <div class="w-12 h-12 rounded-xl bg-white text-gray-400 flex items-center justify-center text-xl shadow-lg border border-gray-100 overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appDragState.item)}">
-                  <img v-if="hasCustomIcon(appDragState.item)" :src="getAppIcon(appDragState.item)" class="w-full h-full object-cover">
-                  <i v-else :class="getDefaultIconClass(appDragState.item)"></i>
-              </div>
-              <span class="text-[10px] font-bold text-gray-800 drop-shadow-md">{{ getAppName(appDragState.item) }}</span>
-         </div>
-
-         <!-- 桌面1 底部Dock栏 -->
-         <transition-group v-if="desktopStyle === 1" name="list" tag="div" class="dock-container w-[92%] left-[4%] h-24 flex items-center justify-around px-4 absolute bottom-4 shrink-0 z-20 shadow-sm bg-white/60 backdrop-blur-md">
-            <div v-for="(id, idx) in homeLayout.dock" :key="id" 
-                 class="flex flex-col items-center gap-1 home-icon droppable-app relative" 
-                 :class="{'edit-jiggle': isHomeEditMode, 'opacity-0': appDragState.active && appDragState.item === id, 'home-icon-custom': hasCustomIcon(id)}" 
-                 data-type="dock" :data-index="idx"
-                 @touchstart="onTouchStartApp($event, 'dock', idx, id)" @touchmove="onTouchMoveApp" @touchend="onTouchEndApp"
-                 @click="isHomeEditMode ? null : handleAppClick(id)">
-                <div class="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-lg overflow-hidden">
-                    <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
-                    <i v-else :class="getDefaultIconClass(id)"></i>
+         <!-- 桌面1 底部Dock栏 (支持无极拖拽替换) -->
+         <div v-if="desktopStyle === 1" class="dock-container w-[92%] left-[4%] h-24 flex items-center justify-around px-4 absolute bottom-4 shrink-0 z-20 shadow-sm bg-white/60 backdrop-blur-md">
+            <transition-group name="app-list" tag="div" class="flex items-center justify-around w-full h-full relative">
+                <div v-for="(id, idx) in dockApps" :key="id" 
+                     class="flex flex-col items-center gap-1 home-icon cursor-pointer app-drop-zone relative"
+                     :class="{'home-icon-custom': hasCustomIcon(id), 'jiggle': appDragState.isEditing, 'opacity-0': appDragState.draggingId === id}"
+                     data-type="dock" :data-index="idx"
+                     @touchstart="startAppDrag($event, 'dock', idx, id)"
+                     @mousedown="startAppDrag($event, 'dock', idx, id)"
+                     @click="appDragState.isEditing ? null : handleAppClick(id)">
+                    <div class="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-lg overflow-hidden border border-gray-100 pointer-events-none">
+                        <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
+                        <i v-else :class="getDefaultIconClass(id)"></i>
+                    </div>
+                    <span class="text-[10px] font-bold text-gray-600 pointer-events-none">{{ getAppName(id) }}</span>
                 </div>
-                <span class="text-[10px] font-bold text-gray-600">{{ getAppName(id) }}</span>
-            </div>
-        </transition-group>
+            </transition-group>
+        </div>
 
          <!-- 桌面2 底部Dock栏 -->
-         <transition-group v-if="desktopStyle === 2" name="list" tag="div" class="dock-container w-[92%] left-[4%] h-[80px] flex items-center justify-around px-4 absolute bottom-6 shrink-0 z-50">
-             <div v-for="(id, idx) in homeLayout.dock" :key="id" 
-                  class="flex flex-col items-center gap-1 home-icon droppable-app relative" 
-                  :class="{'edit-jiggle': isHomeEditMode, 'opacity-0': appDragState.active && appDragState.item === id}" 
-                  data-type="dock" :data-index="idx"
-                  @touchstart="onTouchStartApp($event, 'dock', idx, id)" @touchmove="onTouchMoveApp" @touchend="onTouchEndApp"
-                  @click="isHomeEditMode ? null : handleAppClick(id)">
+         <div v-if="desktopStyle === 2" class="dock-container w-[92%] left-[4%] h-[80px] flex items-center justify-around px-4 absolute bottom-6 shrink-0 z-50">
+             <div v-for="id in ['icity', 'forum', 'check', 'taobao']" :key="id" class="flex flex-col items-center gap-1 home-icon cursor-pointer" @click="id === 'taobao' ? openApp('taobao') : showToast('仅作为展示')">
                  <div class="w-[46px] h-[46px] rounded-xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-xl overflow-hidden border border-gray-100" :class="{'home-icon-custom': hasCustomIcon(id)}">
                      <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
                      <i v-else :class="getDefaultIconClass(id)"></i>
@@ -7388,13 +7346,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
                                 <div class="flex justify-between items-center mb-3">
-                                    <span class="font-bold text-[16px] text-gray-900">v1.65 主屏引擎重写：拖拽重排与小组件商店</span>
-                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-18 12:39</span>
+                                    <span class="font-bold text-[16px] text-gray-900">v1.65 桌面编辑引擎与小组件商店上线</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-18 15:30</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">iOS 级自由拖拽重排：</span>桌面渲染底层已由写死代码彻底变更为动态数组矩阵！现在在主屏幕长按任意 App 即可唤起全局“抖动编辑模式”。在这个模式下，你可以跨越桌面和底部 Dock 栏任意拖拽互换 App，系统会利用 Vue Transition Group 引擎为你呈现丝般顺滑的吸附避让动画。（Dock 栏受底层规则保护，最少强制保留 1 个 App）。</li>
-                                    <li><span class="font-bold text-gray-800">小组件商店：</span>主题 App 中全新挂载了高级 iOS 灰白风的“小组件商店”。原本强制绑死在桌面右侧的气泡和天数记录，已被剥离封装并上架至“官方预设”。你可以在抖动模式中随时卸载它们，或者去商店里一键部署到桌面。</li>
-                                    <li><span class="font-bold text-gray-800">自定义 HTML 组件部署：</span>在商店的“我的组件”中，你可以输入原始 HTML 与内联 CSS，自行创造极度精美的挂件、图片或交互框！支持选择 2x2 等比例，并能将其一键添加到主桌面。同时，你还可以把你的作品打包成 JSON 导出并分享给别人！</li>
+                                    <li><span class="font-bold text-gray-800">桌面编辑与防掉帧引擎：</span>重磅引入 iOS 原生级别的“抖动编辑模式（Jiggle Mode）”！长按桌面即可激活。底层的 <code>transition-group</code> 弹性动画引擎保证了在自由拖拽、交换 App 位置时的丝滑避让，彻底告别卡顿掉帧，完美复刻系统级视觉体验。</li>
+                                    <li><span class="font-bold text-gray-800">Dock 栏深度贯通：</span>底部的固定 Dock 栏现已支持双向拖拽。你可以将常用的 App 拖入 Dock，也能将其拖回主界面。同时系统注入了底层防线，确保 Dock 栏底线保留至少 1 个 App，防止布局坍塌。</li>
+                                    <li><span class="font-bold text-gray-800">高定小组件商店：</span>在主题 App 中全新实装了小组件商店。你可以发挥无尽的创意，利用 HTML + CSS 自由手搓各种比例（1x1、2x4、4x4 等）的挂件，提供实时预览并一键将其放置到桌面上，桌面排版自由度达到了顶峰。</li>
+                                    <li><span class="font-bold text-gray-800">资产云游与内置预设：</span>自己写出绝美的桌面小组件后，可以一键导出分享给其他人。同时，此前的“纪念日天数”、“双子气泡”已被系统自动提取为默认组件并悉数入库，随时供你调用修改。</li>
                                 </ul>
                             </div>
 
@@ -8303,84 +8262,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     <!-- 主题 App -->
     <transition name="app-slide"><div v-if="currentApp === 'themes'" class="absolute inset-0 z-[1000] bg-gray-50 flex flex-col overflow-hidden"><header class="bg-white/80 backdrop-blur h-[90px] pt-10 flex items-center justify-between px-4 border-b border-gray-200 sticky top-0 z-10"><button @click="navigateThemes('back')" class="w-8 h-8 flex items-center justify-center text-gray-800 bg-gray-100 rounded-full active:bg-gray-200 transition"><i v-if="themesPage !== 'main'" class="fas fa-chevron-left text-sm"></i><i v-else class="fas fa-times text-sm"></i></button><h1 class="font-bold text-gray-900 text-[17px]">{{ themesTitle }}</h1><div class="w-8"></div></header><main class="flex-1 overflow-y-auto relative">
-    <!-- 小组件商店页面 (iOS 灰白高级风) -->
-            <transition name="page-slide">
-                <div v-if="themesPage === 'widget_store'" class="absolute inset-0 pt-4 px-4 pb-20 flex flex-col bg-[#f4f4f6]">
-                    <!-- Tab切换 -->
-                    <div class="flex bg-gray-200/80 p-1 rounded-xl mb-4 shrink-0 shadow-inner">
-                        <button @click="widgetStoreConfig.currentTab = 'store'" class="flex-1 py-1.5 text-[13px] font-bold rounded-lg transition" :class="widgetStoreConfig.currentTab === 'store' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'">探索商店</button>
-                        <button @click="widgetStoreConfig.currentTab = 'custom'" class="flex-1 py-1.5 text-[13px] font-bold rounded-lg transition" :class="widgetStoreConfig.currentTab === 'custom' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'">我的组件</button>
-                    </div>
-
-                    <div class="flex-1 overflow-y-auto pb-safe scrollbar-hide">
-                        <!-- 探索商店 (系统内置预设组件) -->
-                        <div v-if="widgetStoreConfig.currentTab === 'store'" class="space-y-4">
-                            <div v-for="w in widgetStoreConfig.defaultWidgets" :key="w.id" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-                                <div class="w-full flex justify-between items-center mb-3 border-b border-gray-50 pb-2">
-                                    <div class="flex flex-col"><span class="font-bold text-[14px] text-gray-900">{{ w.name }}</span><span class="text-[10px] text-gray-400 font-mono">Size: {{ w.size }}</span></div>
-                                    <button @click="addWidgetToHome(w)" class="bg-black text-white px-4 py-1.5 rounded-full text-xs font-bold active:scale-95 shadow-md">添加至桌面</button>
-                                </div>
-                                <div class="w-full bg-[#f2f2f6] rounded-xl p-4 flex items-center justify-center overflow-hidden shadow-inner relative min-h-[100px]" v-html="w.previewHtml || w.html"></div>
-                            </div>
-                        </div>
-
-                        <!-- 我的组件 (可自定义编辑、导入导出) -->
-                        <div v-if="widgetStoreConfig.currentTab === 'custom'" class="flex flex-col gap-4">
-                            <div class="flex justify-end gap-3 items-center shrink-0">
-                                <input type="file" ref="widgetImportInput" accept=".json" class="hidden" @change="handleWidgetImport">
-                                <button @click="$refs.widgetImportInput.click()" class="text-[11px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-bold shadow-sm active:scale-95"><i class="fas fa-file-import mr-1"></i>导入 JSON</button>
-                                <button @click="openWidgetCreate" class="text-[11px] bg-gray-900 text-white px-3 py-1.5 rounded-full font-bold shadow-sm active:scale-95"><i class="fas fa-plus mr-1"></i>新建小组件</button>
-                            </div>
-
-                            <div v-if="widgetStoreConfig.customWidgets.length === 0" class="text-center text-gray-400 mt-20 text-xs flex flex-col items-center">
-                                <i class="fas fa-shapes text-4xl mb-4 opacity-20 block"></i>
-                                暂无自定义小组件，请点击右上角新建。
-                            </div>
-                            
-                            <div v-for="(w, idx) in widgetStoreConfig.customWidgets" :key="idx" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col items-center">
-                                <div class="w-full flex justify-between items-center mb-3 border-b border-gray-50 pb-2">
-                                    <div class="flex flex-col"><span class="font-bold text-[14px] text-gray-900">{{ w.name }}</span><span class="text-[10px] text-gray-400 font-mono">Size: {{ w.size }}</span></div>
-                                    <div class="flex items-center gap-2">
-                                        <button @click="addWidgetToHome(w)" class="bg-blue-50 text-blue-500 px-3 py-1.5 rounded-full text-xs font-bold active:scale-95 shadow-sm">添加至桌面</button>
-                                        <button @click="editCustomHtmlWidget(w, idx)" class="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center active:scale-95"><i class="fas fa-edit text-[10px]"></i></button>
-                                        <button @click="exportCustomWidget(w)" class="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center active:scale-95"><i class="fas fa-file-export text-[10px]"></i></button>
-                                        <button @click="deleteCustomWidget(idx)" class="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center active:scale-95"><i class="fas fa-trash text-[10px]"></i></button>
-                                    </div>
-                                </div>
-                                <div class="w-full bg-[#f2f2f6] rounded-xl p-4 flex items-center justify-center overflow-hidden shadow-inner relative min-h-[100px]" v-html="w.html"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </transition>
-
-            <!-- 新建/编辑 自定义HTML组件全屏弹窗 -->
-            <transition name="page-slide">
-                <div v-if="widgetEditModal.show" class="fixed inset-0 z-[120000] bg-[#f4f4f6] flex flex-col font-sans">
-                    <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-200 shrink-0 shadow-sm z-10">
-                        <button @click="widgetEditModal.show = false" class="w-8 h-8 flex items-center justify-center text-gray-800"><i class="fas fa-chevron-left text-lg"></i></button>
-                        <h1 class="font-bold text-[16px] text-gray-900">{{ widgetEditModal.isEdit ? '编辑小组件' : '新建小组件' }}</h1>
-                        <button @click="saveCustomHtmlWidget" class="text-blue-500 font-bold text-[14px] px-2 active:opacity-50">保存</button>
-                    </header>
-                    <div class="flex-1 overflow-y-auto pb-safe flex flex-col p-4 gap-4">
-                        <div class="bg-gray-100 rounded-2xl p-4 border border-gray-200 shrink-0">
-                            <div class="text-[11px] text-gray-400 mb-2 text-center font-bold tracking-widest">实时预览</div>
-                            <div class="bg-[#e5e5ea] rounded-xl p-4 shadow-inner min-h-[120px] flex items-center justify-center overflow-hidden w-full relative" v-html="widgetEditModal.html"></div>
-                        </div>
-                        <div class="flex flex-col shrink-0 gap-3">
-                            <input v-model="widgetEditModal.name" placeholder="输入小组件名称..." class="w-full bg-white p-3 rounded-[12px] text-[13px] border border-gray-200 outline-none shadow-sm font-bold">
-                            <select v-model="widgetEditModal.size" class="w-full bg-white p-3 rounded-[12px] text-[13px] border border-gray-200 outline-none shadow-sm font-mono cursor-pointer text-gray-600">
-                                <option value="1x1">1x1 (正方形小)</option>
-                                <option value="2x1">2x1 (横向长条)</option>
-                                <option value="2x2">2x2 (正方形大)</option>
-                                <option value="4x2">4x2 (宽屏横栏)</option>
-                            </select>
-                            <textarea v-model="widgetEditModal.html" placeholder="请填入组件的 HTML 代码 (支持内联 CSS Style)...\n例如: <div style='background: white; border-radius: 12px; padding: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; text-align: center;'><b>我的组件</b></div>" class="w-full h-48 bg-white shadow-inner p-3 rounded-[16px] text-[12px] font-mono border border-gray-200 outline-none resize-none mb-3"></textarea>
-                        </div>
-                    </div>
-                </div>
-            </transition>
     <transition name="page-slide"><div v-if="themesPage === 'main'" class="absolute inset-0 p-4"><div class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.02)] divide-y divide-gray-50">
+    <div @click="navigateThemes('widget_store')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
+        <div class="flex items-center gap-4"><i class="fas fa-shapes text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
+            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">小组件商店</div><div class="text-[11px] text-gray-400 mt-0.5">自定义与管理主屏幕组件</div></div>
+        </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
+    </div>
     <div @click="navigateThemes('beautify')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
         <div class="flex items-center gap-4"><i class="fas fa-wand-magic-sparkles text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">气泡与主题美化</div><div class="text-[11px] text-gray-400 mt-0.5">自定义界面CSS样式</div></div>
@@ -8407,12 +8294,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
     </div>
     
-    <div @click="navigateThemes('widget_store')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
-        <div class="flex items-center gap-4"><i class="fas fa-shapes text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
-            <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">小组件商店</div><div class="text-[11px] text-gray-400 mt-0.5">下载、自定义与部署主屏幕组件</div></div>
-        </div><i class="fas fa-chevron-right text-gray-300 text-sm"></i>
-    </div>
-    
     <div @click="navigateThemes('npc_avatars')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer">
         <div class="flex items-center gap-4"><i class="fas fa-users-viewfinder text-gray-700 text-[18px] w-6 text-center opacity-80"></i>
             <div><div class="font-medium text-[15px] text-gray-900 tracking-wide">NPC 形象库</div><div class="text-[11px] text-gray-400 mt-0.5">管理商城、论坛使用的 NPC 头像与网名</div></div>
@@ -8426,6 +8307,42 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 </div>
 </div></transition>
+
+        <!-- 小组件商店 (iOS 高级灰白风格) -->
+        <transition name="page-slide">
+            <div v-if="themesPage === 'widget_store'" class="absolute inset-0 bg-[#f4f4f6] flex flex-col font-sans z-20">
+                <div class="flex-1 overflow-y-auto pb-safe flex flex-col p-4 gap-4">
+                    <div class="flex justify-between items-center shrink-0">
+                        <span class="text-[13px] font-bold text-gray-500">我的小组件库</span>
+                        <div class="flex gap-2">
+                            <input type="file" ref="widgetImportInput" accept=".json" class="hidden" @change="importWidgetData">
+                            <button @click="$refs.widgetImportInput.click()" class="text-[11px] bg-white border border-gray-200 text-gray-600 px-3 py-1.5 rounded-full font-bold shadow-sm active:scale-95"><i class="fas fa-file-import mr-1"></i>导入</button>
+                            <button @click="openCreateWidgetModal" class="text-[11px] bg-gray-900 text-white px-3 py-1.5 rounded-full font-bold shadow-sm active:scale-95"><i class="fas fa-plus mr-1"></i>新建</button>
+                        </div>
+                    </div>
+                    
+                    <div v-if="widgetStore.length === 0" class="flex flex-col items-center justify-center h-40 text-gray-400 text-xs">暂无小组件，请点击新建</div>
+                    
+                    <div v-for="(widget, idx) in widgetStore" :key="widget.id" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3 relative overflow-hidden">
+                        <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold font-mono border border-gray-200">{{ widget.ratio }}</span>
+                                <span class="font-bold text-[14px] text-gray-800">{{ widget.name }}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-edit text-gray-400 hover:text-blue-500 transition cursor-pointer" @click="editWidgetData(widget, idx)"></i>
+                                <i class="fas fa-file-export text-gray-400 hover:text-green-500 transition cursor-pointer" @click="exportWidgetData(widget)"></i>
+                                <i class="fas fa-trash text-gray-400 hover:text-red-500 transition cursor-pointer" @click="deleteWidgetData(idx)"></i>
+                            </div>
+                        </div>
+                        <!-- 迷你预览区 -->
+                        <div class="bg-[#f0f0f0] rounded-xl p-3 flex items-center justify-center min-h-[80px] overflow-hidden pointer-events-none">
+                            <div v-html="widget.html" :style="widget.css"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
 
         <!-- 主屏幕预设管理页 -->
         <transition name="page-slide">
@@ -8714,6 +8631,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </main></div></transition>
     
+    <!-- 全局浮动组件：编辑桌面小组件拾取弹窗 -->
+    <transition name="app-slide">
+        <div v-if="showWidgetPicker" class="fixed inset-0 z-[120000] bg-white/95 backdrop-blur-xl flex flex-col">
+            <header class="h-[90px] pt-10 px-4 flex items-center justify-between border-b border-gray-100 shrink-0">
+                <h1 class="text-[17px] font-bold text-gray-900">选择要添加的小组件</h1>
+                <button @click="showWidgetPicker = false" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-800 font-bold active:scale-90"><i class="fas fa-times"></i></button>
+            </header>
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div v-for="widget in widgetStore" :key="widget.id" @click="addWidgetToDesktop(widget)" class="bg-gray-50 rounded-[20px] p-4 border border-gray-200 shadow-sm cursor-pointer active:scale-95 transition flex flex-col items-center">
+                    <div class="w-full flex justify-between items-center mb-3">
+                        <span class="text-[14px] font-bold text-gray-800">{{ widget.name }}</span>
+                        <span class="bg-white text-gray-500 px-2 py-0.5 rounded text-[10px] font-bold font-mono border border-gray-200">{{ widget.ratio }}</span>
+                    </div>
+                    <div class="pointer-events-none" v-html="widget.html" :style="widget.css"></div>
+                </div>
+            </div>
+        </div>
+    </transition>
+
+    <!-- 全局浮动组件：添加 APP 到桌面弹窗 -->
+    <transition name="app-slide">
+        <div v-if="showAppLibraryModal" class="fixed inset-0 z-[120000] bg-[#f4f4f6] flex flex-col">
+            <header class="h-[90px] pt-10 px-4 flex items-center justify-between bg-white border-b border-gray-100 shrink-0">
+                <h1 class="text-[17px] font-bold text-gray-900">App 资源库</h1>
+                <button @click="showAppLibraryModal = false" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-800 font-bold active:scale-90"><i class="fas fa-times"></i></button>
+            </header>
+            <div class="flex-1 overflow-y-auto p-6">
+                <div v-if="getAvailableAppsForDesktop().length === 0" class="text-center text-gray-400 mt-20 text-sm">所有应用已添加至主屏幕</div>
+                <div class="grid grid-cols-4 gap-y-6 gap-x-2">
+                    <div v-for="id in getAvailableAppsForDesktop()" :key="id" @click="addAppToDesktop(id)" class="flex flex-col items-center gap-1.5 cursor-pointer active:scale-90 transition">
+                        <div class="w-14 h-14 rounded-2xl bg-white text-gray-400 flex items-center justify-center text-2xl shadow-sm border border-gray-100 overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(id)}">
+                            <img v-if="hasCustomIcon(id)" :src="getAppIcon(id)" class="w-full h-full object-cover">
+                            <i v-else :class="getDefaultIconClass(id)"></i>
+                        </div>
+                        <span class="text-[11px] font-bold text-gray-600">{{ getAppName(id) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </transition>
+
+    <!-- 全局浮动组件：小组件编辑器弹窗 -->
+    <transition name="scale">
+        <div v-if="widgetStoreModal.show" class="fixed inset-0 z-[125000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div class="bg-white w-[90%] max-h-[90vh] rounded-[24px] overflow-hidden shadow-2xl p-5 flex flex-col gap-3 font-sans">
+                <h3 class="text-[17px] font-bold text-center text-gray-900 mb-1">{{ widgetStoreModal.isEditing ? '编辑小组件' : '新建小组件' }}</h3>
+                <div class="flex-1 overflow-y-auto scrollbar-hide space-y-3">
+                    <div class="flex gap-3">
+                        <div class="flex-1"><label class="text-[11px] font-bold text-gray-500 ml-1 mb-1 block">组件名称备注</label><input v-model="widgetStoreModal.form.name" placeholder="如: 天气组件" class="w-full bg-gray-50 p-2.5 rounded-xl text-[13px] border border-gray-200 outline-none"></div>
+                        <div class="w-24 shrink-0"><label class="text-[11px] font-bold text-gray-500 ml-1 mb-1 block">比例分类</label>
+                            <select v-model="widgetStoreModal.form.ratio" class="w-full bg-gray-50 p-2.5 rounded-xl text-[13px] font-bold border border-gray-200 outline-none font-mono">
+                                <option v-for="r in widgetRatios" :key="r" :value="r">{{ r }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div><label class="text-[11px] font-bold text-gray-500 ml-1 mb-1 block">HTML 代码 (支持 Tailwind CSS 类名)</label><textarea v-model="widgetStoreModal.form.html" placeholder="<div class='text-red-500'>Hello</div>" class="w-full h-24 bg-gray-50 p-2.5 rounded-xl text-[12px] font-mono border border-gray-200 outline-none resize-none"></textarea></div>
+                    <div><label class="text-[11px] font-bold text-gray-500 ml-1 mb-1 block">CSS 样式 (可选)</label><textarea v-model="widgetStoreModal.form.css" placeholder="在此输入自定义内联样式..." class="w-full h-16 bg-gray-50 p-2.5 rounded-xl text-[12px] font-mono border border-gray-200 outline-none resize-none"></textarea></div>
+                    
+                    <!-- 实时预览区 -->
+                    <div class="bg-[#f0f0f0] rounded-xl p-4 flex items-center justify-center min-h-[100px] overflow-hidden border border-gray-200 shadow-inner">
+                        <div v-html="widgetStoreModal.form.html" :style="widgetStoreModal.form.css"></div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 mt-2 shrink-0">
+                    <button @click="widgetStoreModal.show = false" class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-[13px] active:scale-95 transition">取消</button>
+                    <button @click="saveWidgetData" class="flex-1 bg-black text-white py-3 rounded-xl font-bold text-[13px] shadow-md active:scale-95 transition">保存入库</button>
+                </div>
+            </div>
+        </div>
+    </transition>
+
+    <!-- 桌面 APP 拖拽跟随分身 (利用绝对定位悬浮在全界面最高层) -->
+    <div v-if="appDragState.showClone" class="floating-drag-clone" :style="{ left: appDragState.cloneX + 'px', top: appDragState.cloneY + 'px' }">
+        <div class="w-12 h-12 rounded-xl bg-white shadow-2xl flex items-center justify-center text-gray-400 text-xl border border-gray-100 overflow-hidden" :class="{'home-icon-custom': hasCustomIcon(appDragState.draggingId)}">
+            <img v-if="hasCustomIcon(appDragState.draggingId)" :src="getAppIcon(appDragState.draggingId)" class="w-full h-full object-cover">
+            <i v-else :class="getDefaultIconClass(appDragState.draggingId)"></i>
+        </div>
+    </div>
+    
     <!-- 世界书 App -->
     <transition name="app-slide">
         <div v-if="currentApp === 'worldbook'" class="absolute inset-0 z-[1000] bg-gray-50 flex flex-col overflow-hidden font-sans">
@@ -8930,23 +8927,6 @@ const app = createApp({
             timestampModeModal: { show: false },
             groupManageModal: { show: false }, groupAdminModal: { show: false, isAdding: false, selectedIds:[] }, takeoutModal: { show: false, activeTab: 'home', note: '', selectedItem: null, storeList:[], searchKeyword: '', isSearching: false, searchResults: [], hotSales: [], isGeneratingDesc: false, cartItems: [] },
             headerClickTimer: null,
-            // 桌面应用拖拽与布局系统
-            isHomeEditMode: false,
-            homeLongPressTimer: null,
-            appDragState: { active: false, type: '', index: -1, ghostX: 0, ghostY: 0, item: null },
-            homeLayout: null, // 初始化在 loadData 里
-            
-            // 小组件商店系统
-            widgetStoreConfig: {
-                currentTab: 'store',
-                customWidgets: [],
-                defaultWidgets: [
-                    { id: 'default_bubbles', name: '官方双气泡头像状态', size: '2x2', type: 'native', previewHtml: '<div style="font-size:12px; font-weight:bold; color:#666;">[官方] 双气泡头像组件<br><span style="font-size:9px; font-weight:normal;">桌面1原版右侧上方模块</span></div>' },
-                    { id: 'default_days', name: '官方天数记录条', size: '2x1', type: 'native', previewHtml: '<div style="font-size:12px; font-weight:bold; color:#666;">[官方] 天数记录条组件<br><span style="font-size:9px; font-weight:normal;">桌面1原版右侧下方模块</span></div>' }
-                ]
-            },
-            widgetEditModal: { show: false, isEdit: false, editIndex: -1, name: '', size: '2x2', html: '' },
-
             // 新增：心声卡片美化数据
             statusBeautifyConfig: { 
                 show: false, 
@@ -8994,6 +8974,18 @@ const app = createApp({
             previewFontFamily: '', 
             appList: Object.keys(DEFAULT_APPS), appCustomization: {}, tempIconUrls: {}, uploadingAppId: null,
             homeScreenPresets:[],
+            
+            // 桌面引擎与小组件商店状态
+            desktopApps1: [], 
+            dockApps: [], 
+            widgetStore: [], 
+            activeDesktopWidgets: [], 
+            appDragState: { isEditing: false, draggingId: null, sourceType: null, sourceIndex: -1, cloneX: 0, cloneY: 0, showClone: false, pressTimer: null },
+            showAppLibraryModal: false,
+            showWidgetPicker: false,
+            widgetStoreModal: { show: false, isEditing: false, editIndex: -1, form: { id: '', name: '', ratio: '1x1', html: '', css: '' } },
+            widgetRatios: ['1x1', '1x2', '2x1', '2x2', '4x1', '4x2', '2x4', '4x3', '4x4'],
+
             wechatState: { activeFilter: 'Chats', activeNav: 'chat', contacts: [], searchQuery: '', friendList:[], sessions:[], activeSession: null, showPlusMenu: false, showChatFunctions: false, showAttachMenu: false, groups: [], newFriends:[], showGroupMentionPanel: false },
             contactImportModal: { show: false },
             translateLangModal: { show: false, type: 'source' },
@@ -13021,6 +13013,159 @@ const app = createApp({
         },
 
         // ----------------- 更新的解析逻辑 -----------------
+        // ================== 桌面 App 拖拽与小组件管理引擎 ==================
+        startDesktopLongPress(e) {
+            if (this.appDragState.isEditing) return;
+            this.appDragState.pressTimer = setTimeout(() => {
+                this.appDragState.isEditing = true;
+                if(navigator.vibrate) navigator.vibrate(50);
+            }, 800);
+        },
+        clearDesktopLongPress() {
+            if (this.appDragState.pressTimer) {
+                clearTimeout(this.appDragState.pressTimer);
+                this.appDragState.pressTimer = null;
+            }
+        },
+        stopEditMode() {
+            this.appDragState.isEditing = false;
+            this.saveData();
+        },
+        startAppDrag(e, type, index, id) {
+            if (!this.appDragState.isEditing) return;
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            this.appDragState.draggingId = id;
+            this.appDragState.sourceType = type;
+            this.appDragState.sourceIndex = index;
+            this.appDragState.cloneX = touch.clientX - 24;
+            this.appDragState.cloneY = touch.clientY - 24;
+            this.appDragState.showClone = true;
+            
+            document.addEventListener('mousemove', this.onAppDragMove, {passive: false});
+            document.addEventListener('touchmove', this.onAppDragMove, {passive: false});
+            document.addEventListener('mouseup', this.onAppDragEnd);
+            document.addEventListener('touchend', this.onAppDragEnd);
+        },
+        onAppDragMove(e) {
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            this.appDragState.cloneX = touch.clientX - 24;
+            this.appDragState.cloneY = touch.clientY - 24;
+            
+            // Element swapping logic
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            const dropZone = targetEl ? targetEl.closest('.app-drop-zone') : null;
+            
+            if (dropZone) {
+                const targetType = dropZone.getAttribute('data-type');
+                const targetIndex = parseInt(dropZone.getAttribute('data-index'));
+                
+                if (targetType !== this.appDragState.sourceType || targetIndex !== this.appDragState.sourceIndex) {
+                    // Dock 栏保底机制：至少留1个App
+                    if (this.appDragState.sourceType === 'dock' && targetType !== 'dock' && this.dockApps.length <= 1) {
+                        return;
+                    }
+                    
+                    const sourceArray = this.appDragState.sourceType === 'desktop' ? this.desktopApps1 : this.dockApps;
+                    const targetArray = targetType === 'desktop' ? this.desktopApps1 : this.dockApps;
+                    
+                    const item = sourceArray.splice(this.appDragState.sourceIndex, 1)[0];
+                    targetArray.splice(targetIndex, 0, item);
+                    
+                    this.appDragState.sourceType = targetType;
+                    this.appDragState.sourceIndex = targetIndex;
+                }
+            }
+        },
+        onAppDragEnd() {
+            this.appDragState.showClone = false;
+            this.appDragState.draggingId = null;
+            document.removeEventListener('mousemove', this.onAppDragMove);
+            document.removeEventListener('touchmove', this.onAppDragMove);
+            document.removeEventListener('mouseup', this.onAppDragEnd);
+            document.removeEventListener('touchend', this.onAppDragEnd);
+            this.saveData();
+        },
+        removeAppFromDesktop(idx) {
+            this.desktopApps1.splice(idx, 1);
+            this.saveData();
+        },
+        addAppToDesktop(id) {
+            if (!this.desktopApps1.includes(id) && !this.dockApps.includes(id)) {
+                this.desktopApps1.push(id);
+                this.saveData();
+            }
+            this.showAppLibraryModal = false;
+        },
+        getAvailableAppsForDesktop() {
+            return Object.keys(DEFAULT_APPS).filter(id => !this.desktopApps1.includes(id) && !this.dockApps.includes(id));
+        },
+        removeDesktopWidget(idx) {
+            this.activeDesktopWidgets.splice(idx, 1);
+            this.saveData();
+        },
+        addWidgetToDesktop(widgetTemplate) {
+            this.activeDesktopWidgets.push({
+                instanceId: 'w_inst_' + Date.now(),
+                ...widgetTemplate
+            });
+            this.showWidgetPicker = false;
+            this.saveData();
+        },
+        // --- 小组件商店逻辑 ---
+        openCreateWidgetModal() {
+            this.widgetStoreModal = { show: true, isEditing: false, editIndex: -1, form: { id: '', name: '', ratio: '1x1', html: '', css: '' } };
+        },
+        editWidgetData(widget, idx) {
+            this.widgetStoreModal = { show: true, isEditing: true, editIndex: idx, form: JSON.parse(JSON.stringify(widget)) };
+        },
+        saveWidgetData() {
+            if (!this.widgetStoreModal.form.name.trim() || !this.widgetStoreModal.form.html.trim()) return this.showToast('名称和 HTML 不能为空');
+            if (this.widgetStoreModal.isEditing) {
+                this.widgetStore[this.widgetStoreModal.editIndex] = { ...this.widgetStoreModal.form };
+            } else {
+                this.widgetStoreModal.form.id = 'w_' + Date.now();
+                this.widgetStore.unshift({ ...this.widgetStoreModal.form });
+            }
+            this.widgetStoreModal.show = false;
+            this.saveData();
+            this.showToast('小组件已保存');
+        },
+        deleteWidgetData(idx) {
+            this.showConfirm('确定从库中删除这个小组件模板吗？（不影响已添加到桌面的组件）', () => {
+                this.widgetStore.splice(idx, 1);
+                this.saveData();
+            });
+        },
+        exportWidgetData(widget) {
+            const b = new Blob([JSON.stringify({ type: 'Aovein_Widget_V1', ...widget }, null, 2)], {type: 'application/json'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a');
+            a.href = u; a.download = `AoveinWidget_${widget.name}.json`; a.click(); URL.revokeObjectURL(u);
+            this.showToast('组件已导出');
+        },
+        importWidgetData(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.type === 'Aovein_Widget_V1') {
+                        delete data.type;
+                        data.id = 'w_' + Date.now();
+                        this.widgetStore.unshift(data);
+                        this.saveData();
+                        this.showToast('导入成功');
+                    } else { this.showToast('无效的小组件文件'); }
+                } catch(err) { this.showToast('文件解析失败'); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        },
+        // ===================================================================
+        
         extractContactInfoFromText(text) {
             const extract = (regex) => { 
                 const m = text.match(regex); 
@@ -16437,147 +16582,6 @@ Structure:
         selectWorldFolder(id) { this.worldModal.parentId = id; this.folderSelectModal.show = false; },
         saveFileContent() { this.saveData(); this.showToast('已保存'); },
         toggleFileActive(file) { file.isActive = file.isActive === false ? true : false; this.saveData(); },
-        
-        // ================= 桌面 App 拖拽重排底层引擎 =================
-        onTouchStartApp(e, type, index, id) {
-            if (!this.isHomeEditMode) {
-                // 如果没进入编辑模式，按住 600ms 触发抖动
-                this.homeLongPressTimer = setTimeout(() => {
-                    this.isHomeEditMode = true;
-                    if (navigator.vibrate) navigator.vibrate(40);
-                }, 600);
-                return;
-            }
-            e.stopPropagation();
-            const touch = e.touches ? e.touches[0] : e;
-            this.appDragState = {
-                active: true, type: type, index: index, item: id,
-                ghostX: touch.clientX, ghostY: touch.clientY
-            };
-        },
-        onTouchMoveApp(e) {
-            if (!this.isHomeEditMode) {
-                clearTimeout(this.homeLongPressTimer);
-                return;
-            }
-            if (!this.appDragState.active) return;
-            e.preventDefault(); // 极其重要：拦截底层滑动，防止屏幕被拖走
-            const touch = e.touches ? e.touches[0] : e;
-            this.appDragState.ghostX = touch.clientX;
-            this.appDragState.ghostY = touch.clientY;
-            
-            // 实时探测手指下方的占位元素
-            const els = document.elementsFromPoint(touch.clientX, touch.clientY);
-            const targetEl = els.find(el => el.classList && el.classList.contains('droppable-app'));
-            
-            if (targetEl) {
-                const targetType = targetEl.dataset.type;
-                const targetIndex = parseInt(targetEl.dataset.index);
-                
-                // 自己移到自己头上，忽略
-                if (targetType === this.appDragState.type && targetIndex === this.appDragState.index) return;
-                
-                // 【绝对防线】：如果正在从 Dock 拖出，且 Dock 里只剩 1 个，强制拒绝出坞！
-                if (this.appDragState.type === 'dock' && targetType === 'grid' && this.homeLayout.dock.length <= 1) return;
-                
-                const sourceList = this.appDragState.type === 'grid' ? this.homeLayout.grid : this.homeLayout.dock;
-                const targetList = targetType === 'grid' ? this.homeLayout.grid : this.homeLayout.dock;
-                
-                // 瞬间执行数组解构替换 (Vue transition-group 会自动补足丝滑移动动画)
-                sourceList.splice(this.appDragState.index, 1);
-                targetList.splice(targetIndex, 0, this.appDragState.item);
-                
-                // 刷新内存拖拽指针，继续追击
-                this.appDragState.type = targetType;
-                this.appDragState.index = targetIndex;
-            }
-        },
-        onTouchEndApp() {
-            clearTimeout(this.homeLongPressTimer);
-            if (this.appDragState.active) {
-                this.appDragState.active = false;
-                this.saveData(); // 拖拽落地，存储布局
-            }
-        },
-        
-        // ================= 小组件商店底层引擎 =================
-        removeWidgetFromHome(idx) {
-            this.homeLayout.activeWidgets.splice(idx, 1);
-            this.saveData();
-            this.showToast('小组件已从桌面移除');
-        },
-        addWidgetToHome(widget) {
-            this.homeLayout.activeWidgets.push({
-                id: widget.id || 'cw_' + Date.now(),
-                type: widget.type || 'custom',
-                html: widget.html
-            });
-            this.saveData();
-            this.showToast('✨ 小组件已成功部署至桌面');
-        },
-        openWidgetCreate() {
-            this.widgetEditModal = { show: true, isEdit: false, editIndex: -1, name: '', size: '2x2', html: '' };
-        },
-        editCustomHtmlWidget(w, idx) {
-            this.widgetEditModal = { show: true, isEdit: true, editIndex: idx, name: w.name, size: w.size, html: w.html };
-        },
-        saveCustomHtmlWidget() {
-            if (!this.widgetEditModal.name.trim() || !this.widgetEditModal.html.trim()) return this.showToast('名称和 HTML 不能为空');
-            const data = {
-                id: this.widgetEditModal.isEdit ? this.widgetStoreConfig.customWidgets[this.widgetEditModal.editIndex].id : 'cw_' + Date.now(),
-                name: this.widgetEditModal.name,
-                size: this.widgetEditModal.size,
-                html: this.widgetEditModal.html,
-                type: 'custom'
-            };
-            if (this.widgetEditModal.isEdit) {
-                this.widgetStoreConfig.customWidgets[this.widgetEditModal.editIndex] = data;
-                // 同步刷新桌面上已经部署了的该组件
-                this.homeLayout.activeWidgets.forEach(w => { if(w.id === data.id) w.html = data.html; });
-            } else {
-                this.widgetStoreConfig.customWidgets.unshift(data);
-            }
-            this.saveData();
-            this.widgetEditModal.show = false;
-            this.showToast('小组件已保存');
-        },
-        deleteCustomWidget(idx) {
-            this.showConfirm('确认从商店删除此自定义组件吗？（桌面部署的将一并消失）', () => {
-                const id = this.widgetStoreConfig.customWidgets[idx].id;
-                this.widgetStoreConfig.customWidgets.splice(idx, 1);
-                this.homeLayout.activeWidgets = this.homeLayout.activeWidgets.filter(w => w.id !== id);
-                this.saveData();
-            });
-        },
-        exportCustomWidget(w) {
-            const exp = { type: 'Aovein_Widget_Export', data: w };
-            const b = new Blob([JSON.stringify(exp, null, 2)], {type: 'application/json'});
-            const u = URL.createObjectURL(b);
-            const a = document.createElement('a');
-            a.href = u; a.download = `Aovein_Widget_${w.name}.json`; a.click(); URL.revokeObjectURL(u);
-            this.showToast('小组件已导出');
-        },
-        handleWidgetImport(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                try {
-                    const parsed = JSON.parse(ev.target.result);
-                    if (parsed.type === 'Aovein_Widget_Export' && parsed.data) {
-                        parsed.data.id = 'cw_' + Date.now(); // 生成新ID防止覆盖
-                        this.widgetStoreConfig.customWidgets.unshift(parsed.data);
-                        this.saveData();
-                        this.showToast(`成功导入小组件：${parsed.data.name}`);
-                    } else {
-                        throw new Error('格式不正确');
-                    }
-                } catch(err) { this.showToast('导入失败：不是有效的小组件文件'); }
-            };
-            reader.readAsText(file);
-            e.target.value = '';
-        },
-        
         handleAppClick(id) { if(id==='themes'||id==='worldbook'||id==='settings'||id==='wechat')this.openApp(id); else this.showToast('仅作为展示'); },
         getAppName(id) { return (this.appCustomization[id] && this.appCustomization[id].name) ? this.appCustomization[id].name : DEFAULT_APPS[id].name; },
         hasCustomIcon(id) { return this.appCustomization[id] && this.appCustomization[id].icon; },
@@ -17549,20 +17553,35 @@ Structure:
                 } catch(e) { console.error('数据加载失败', e); } 
             }
             
-            // 【主屏幕布局防碎盾】：如果用户存档里没有布局数据，强制生成默认 iOS 绝美阵列，并挂载官方预设组件
-            if (!this.homeLayout) {
-                this.homeLayout = {
-                    grid: ['wechat', 'themes', 'worldbook', 'settings', 'couple_space', 'game_center', 'sms', 'jinjiang', 'memo', 'album', 'ph5', 'ph6'],
-                    dock: ['icity', 'forum', 'check', 'taobao'],
-                    activeWidgets: [
-                        { type: 'native', id: 'default_bubbles' },
-                        { type: 'native', id: 'default_days' }
-                    ]
-                };
-            }
-            
             // 【强制修复 BUG】：强制覆盖旧存档里的 App 列表，保证新增的 App 能够显示在主题商店中！
             this.appList = Object.keys(DEFAULT_APPS);
+            
+            // 补全桌面动态拖拽数组
+            if (!this.desktopApps1 || this.desktopApps1.length === 0) this.desktopApps1 = ['wechat', 'themes', 'worldbook', 'settings'];
+            if (!this.dockApps || this.dockApps.length === 0) this.dockApps = ['icity', 'forum', 'check', 'taobao'];
+            
+            // 补偿默认小组件数据入库
+            if (!this.widgetStore || this.widgetStore.length === 0) {
+                this.widgetStore = [
+                    {
+                        id: 'w_default_1', name: '双子气泡', ratio: '2x1',
+                        html: '<div class="flex gap-2 justify-center items-end w-full"><div class="flex flex-col items-center relative w-16"><div class="bg-white/95 backdrop-blur-sm text-gray-600 rounded-2xl px-3 py-1.5 shadow-sm font-bold mb-1 text-[10px]">状态</div><div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100"><img src="https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg" class="w-full h-full object-cover pointer-events-none"></div></div><div class="flex flex-col items-center relative w-16"><div class="bg-white/95 backdrop-blur-sm text-gray-600 rounded-2xl px-3 py-1.5 shadow-sm font-bold mb-1 text-[10px]">心情</div><div class="w-[60px] h-[60px] rounded-full border-[3px] border-white/95 shadow-[0_2px_10px_rgba(0,0,0,0.1)] overflow-hidden bg-gray-100"><img src="https://pic1.imgdb.cn/item/69d5d388fe07599d0e204634.jpg" class="w-full h-full object-cover pointer-events-none"></div></div></div>',
+                        css: ''
+                    },
+                    {
+                        id: 'w_default_2', name: '纪念日倒数', ratio: '2x1',
+                        html: '<div class="relative min-w-[120px] max-w-[240px] w-full px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] border-2 border-white mx-auto"><span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center pointer-events-none">6440天</span></div>',
+                        css: ''
+                    }
+                ];
+            }
+            if (!this.activeDesktopWidgets || this.activeDesktopWidgets.length === 0) {
+                // 如果是旧存档平滑升级，把默认的组件放在桌面上
+                this.activeDesktopWidgets = [
+                    { instanceId: 'w_inst_1', ...this.widgetStore[0] },
+                    { instanceId: 'w_inst_2', ...this.widgetStore[1] }
+                ];
+            }
 
             // 恢复系统激活状态
             if (localStorage.getItem('onyunx_is_activated') === 'true') { this.isActivated = true; }
