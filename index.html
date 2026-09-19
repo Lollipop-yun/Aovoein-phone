@@ -418,8 +418,8 @@
 
         /* App 拖拽与抖动动画 */
         @keyframes jiggle {
-            0%, 100% { transform: rotate(-2deg); }
-            50% { transform: rotate(2deg); }
+            0%, 100% { transform: rotate(-0.8deg); }
+            50% { transform: rotate(0.8deg); }
         }
         .jiggle { animation: jiggle 0.25s infinite; }
         .app-list-move { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -2460,8 +2460,7 @@ document.addEventListener('DOMContentLoaded', () => {
          <div class="flex-1 w-full flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-hide">
              
              <!-- ================= 桌面1 第一页 ================= -->
-             <div v-if="desktopStyle === 1" class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px]"
-                  @touchstart="startDesktopLongPress" @touchmove="clearDesktopLongPress" @touchend="clearDesktopLongPress">
+             <div v-if="desktopStyle === 1" class="w-full h-full shrink-0 snap-center flex flex-col items-center overflow-y-auto scrollbar-hide relative pb-[120px]">
                  
                  <!-- 桌面编辑模式顶部控制栏 -->
                  <transition name="fade">
@@ -2823,14 +2822,18 @@ document.addEventListener('DOMContentLoaded', () => {
          </div> <!-- 闭合滑动分页容器 -->
 
          <!-- 桌面1 底部Dock栏 (支持无极拖拽替换) -->
-         <div v-if="desktopStyle === 1" class="dock-container w-[92%] left-[4%] h-24 flex items-center justify-around px-4 absolute bottom-4 shrink-0 z-20 shadow-sm bg-white/60 backdrop-blur-md">
+         <div v-if="desktopStyle === 1" class="dock-container w-[92%] left-[4%] h-24 flex items-center justify-around px-4 absolute bottom-4 shrink-0 z-20 shadow-sm bg-white/60 backdrop-blur-md"
+              @touchstart="startDesktopLongPress" @touchmove="clearDesktopLongPress" @touchend="clearDesktopLongPress"
+              @mousedown="startDesktopLongPress" @mousemove="clearDesktopLongPress" @mouseup="clearDesktopLongPress">
             <transition-group name="app-list" tag="div" class="flex items-center justify-around w-full h-full relative">
                 <app-icon v-for="(item, idx) in dockApps" :key="typeof item === 'string' ? item : item.id" :item="item" type="dock" :index="idx" :app-drag-state="appDragState" :theme-config="themeConfig" :has-custom-icon="hasCustomIcon" :get-app-icon="getAppIcon" :get-default-icon-class="getDefaultIconClass" :get-app-name="getAppName" @remove="removeAppFrom(idx, 'dock')" @dragstart="startAppDrag" @clickapp="handleAppClick" @openfolder="openAppFolder"></app-icon>
             </transition-group>
         </div>
 
          <!-- 桌面2 底部Dock栏 -->
-         <div v-if="desktopStyle === 2" class="dock-container w-[92%] left-[4%] h-[80px] flex items-center justify-around px-4 absolute bottom-6 shrink-0 z-50">
+         <div v-if="desktopStyle === 2" class="dock-container w-[92%] left-[4%] h-[80px] flex items-center justify-around px-4 absolute bottom-6 shrink-0 z-50"
+              @touchstart="startDesktopLongPress" @touchmove="clearDesktopLongPress" @touchend="clearDesktopLongPress"
+              @mousedown="startDesktopLongPress" @mousemove="clearDesktopLongPress" @mouseup="clearDesktopLongPress">
             <transition-group name="app-list" tag="div" class="flex items-center justify-around w-full h-full relative">
                 <app-icon v-for="(item, idx) in dockApps" :key="typeof item === 'string' ? item : item.id" :item="item" type="dock" :index="idx" :app-drag-state="appDragState" :theme-config="themeConfig" :has-custom-icon="hasCustomIcon" :get-app-icon="getAppIcon" :get-default-icon-class="getDefaultIconClass" :get-app-name="getAppName" @remove="removeAppFrom(idx, 'dock')" @dragstart="startAppDrag" @clickapp="handleAppClick" @openfolder="openAppFolder"></app-icon>
             </transition-group>
@@ -7219,7 +7222,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <div class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.02)] divide-y divide-gray-50">
                                 <div class="p-4 flex items-center justify-between active:bg-gray-50"><div class="flex items-center gap-4"><i class="fas fa-shield-alt text-gray-700 text-[18px] w-6 text-center opacity-80"></i><div><div class="font-medium text-[15px] text-gray-900 tracking-wide">数据防清理保护</div><div class="text-[11px] text-gray-400 mt-0.5">防止浏览器自动删档</div></div></div><input type="checkbox" id="data-protect-toggle" class="switch-checkbox" v-model="dataProtection" @change="toggleDataProtection"><label for="data-protect-toggle" class="switch-label"><div class="switch-button"></div></label></div>
-                                <div @click="exportData" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-export text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导出存档数据 (.zip)</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
+                                <div @click="exportData('json')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-code text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导出存档数据 (.json)</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
+                                <div @click="exportData('zip')" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-archive text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导出压缩存档 (.zip)</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
                                 <div @click="triggerImport" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-file-import text-gray-700 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-gray-900 tracking-wide">导入存档数据 (.json/.zip)</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div>
                             </div>
                             <div class="bg-white rounded-[20px] overflow-hidden shadow-[0_2px_15px_rgba(0,0,0,0.02)]"><div @click="confirmFactoryReset" class="p-4 flex items-center justify-between active:bg-gray-50 cursor-pointer"><div class="flex items-center gap-4"><i class="fas fa-exclamation-triangle text-red-500 text-[18px] w-6 text-center opacity-80"></i><span class="font-medium text-[15px] text-red-500 tracking-wide">恢复出厂设置</span></div><i class="fas fa-chevron-right text-gray-300 text-sm"></i></div></div>
@@ -7249,15 +7253,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 <transition name="page-slide">
                     <div v-if="settingsPage === 'changelog'" class="absolute inset-0 p-4 pb-20 overflow-y-auto scrollbar-hide">
                         <div class="space-y-4">
-                            <!-- v1.66 更新日志 (当前最新) -->
+                            <!-- v1.67 更新日志 (当前最新) -->
                             <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
                                 <div class="absolute top-0 left-0 w-1 h-full bg-[#000000]"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="font-bold text-[16px] text-gray-900">v1.67 小组件 UI 焕新与全局悬浮编辑</span>
+                                    <span class="text-[11px] text-gray-400 font-mono">2026-09-19 19:41</span>
+                                </div>
+                                <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
+                                    <li><span class="font-bold text-gray-800">UI 高级感升级：</span>彻底重构了原先的“倒数日”小组件。现在它变身为一款极其精致的胶囊型组件，两侧环绕着纯白天使翅膀，内部默认显示“输入文字”，你可以随意在小组件库里编辑它的文本，极具高级手账风格。</li>
+                                    <li><span class="font-bold text-gray-800">全域长按触发：</span>修复了“只有在桌面第一页才能触发编辑模式”的限制。现在将长按唤醒 `Jiggle` 抖动模式的触发热区全域绑定到了底部的 Dock 栏上。无论你在哪一页滑动，只要长按底部 Dock 栏即可瞬间进入桌面排版编辑状态。</li>
+                                    <li><span class="font-bold text-gray-800">抖动幅度微调：</span>调整了图标和小组件进入编辑状态时的抖动（Jiggle）动画。将旋转角度的幅度大幅降低，现在它们只会呈现出克制、优雅且轻微的系统级浮动，不再有之前大幅度晃动带来的眩晕感。</li>
+                                    <li><span class="font-bold text-gray-800">导出选择回归：</span>在“数据管理”界面，我们保留并并存了“导出 JSON”和“导出 ZIP”两个选项，而不是一刀切。你可以根据自己的需求，随时选择极速裸格式或者高强度压缩格式进行数据备份。</li>
+                                </ul>
+                            </div>
+
+                            <!-- v1.66 更新日志 -->
+                            <div class="bg-white rounded-[20px] p-5 shadow-sm border border-gray-100 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-[#333333]"></div>
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="font-bold text-[16px] text-gray-900">v1.66 桌面级文件夹引擎与 Zip 强力压缩</span>
                                     <span class="text-[11px] text-gray-400 font-mono">2026-09-19 12:54</span>
                                 </div>
                                 <ul class="list-disc pl-4 space-y-2 text-[13px] text-gray-600 leading-relaxed marker:text-gray-300">
-                                    <li><span class="font-bold text-gray-800">桌面引擎彻底重构：</span>修复了桌面 1 纪念日倒数组件无翅膀的遗留问题。打通了桌面1、桌面2所有分栏网格的底层拖拽事件链路，现在所有的 App 图标都能跨越网格甚至跨越不同页的桌面系统进行自由无极拖拽流转。并且也顺便打通了最上方大组件、组件块组相互对调排版的阻碍。</li>
+                                    <li><span class="font-bold text-gray-800">桌面引擎彻底重构：</span>打通了桌面1、桌面2所有分栏网格的底层拖拽事件链路，现在所有的 App 图标都能跨越网格甚至跨越不同页的桌面系统进行自由无极拖拽流转。并且也顺便打通了最上方大组件、组件块组相互对调排版的阻碍。</li>
                                     <li><span class="font-bold text-gray-800">App 文件夹收纳引擎：</span>实装了 iOS 原生级的应用收纳系统！在桌面长按呼出抖动模式下，将一个 App 拖拽重叠到另一个 App 的正中心区域，即可瞬间合并生成收纳文件夹，支持毛玻璃透视效果。点击文件夹展开后，不仅可以自定义修改文件夹名称，还能对其内部的 App 进行拖拽、删除等管理；如果将里面的 App 删剩 1 个，文件夹将自动解散并将剩余的 App 吐回桌面。</li>
                                     <li><span class="font-bold text-gray-800">Zip 压缩包引擎装载：</span>为数据管理页面搭载了原生的 <code>JSZip</code> 库引擎。现在无论是备份还是导入存档，都可以直接使用体积更小、更安全的 <code>.zip</code> 格式压缩包！底层会自动高强度压缩你的 JSON 文本，极大缓解了浏览器导出或读取超大型文本时发生的内存卡顿与崩溃问题。</li>
                                 </ul>
@@ -17102,7 +17121,7 @@ Structure:
                 }
             });
         },
-        exportData() { 
+        exportData(format = 'json') { 
             // 完美深拷贝，斩断所有 Vue proxy 响应式关联
             const d = JSON.parse(JSON.stringify(this.$data)); 
             
@@ -17134,7 +17153,7 @@ Structure:
             const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
             const jsonStr = JSON.stringify(d);
 
-            if (window.JSZip) {
+            if (format === 'zip' && window.JSZip) {
                 this.showToast('正在封装 ZIP 高强度压缩包，请稍候...');
                 const zip = new JSZip();
                 zip.file(`AoveinOS_Backup_${dateStr}.json`, jsonStr);
@@ -17677,16 +17696,17 @@ Structure:
                         css: ''
                     },
                     {
-                        id: 'w_default_2', name: '纪念日倒数', ratio: '2x1',
-                        html: '<div class="relative min-w-[120px] max-w-[240px] w-full px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] border-2 border-white mx-auto"><div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div><span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center pointer-events-none">6440天</span><div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div></div>',
+                        id: 'w_default_2', name: '白羽翅膀', ratio: '2x1',
+                        html: '<div class="relative min-w-[120px] max-w-[200px] w-full px-4 min-h-[44px] h-auto py-2 bg-[#f4f4f4]/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-[inset_0_0_2px_rgba(255,255,255,1),0_2px_10px_rgba(0,0,0,0.03)] border-[1.5px] border-white mx-auto"><div class="absolute -left-[20px] top-1/2 w-[42px] h-[42px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.04));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90 brightness-110"></div><span class="text-[15px] font-bold text-[#111] tracking-widest z-10 text-center pointer-events-none">输入文字</span><div class="absolute -right-[20px] top-1/2 w-[42px] h-[42px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.04));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90 brightness-110"></div></div>',
                         css: ''
                     }
                 ];
             }
-            // 补偿旧版的纪念日倒数缺失翅膀
+            // 补偿旧版的纪念日倒数更新为白羽翅膀
             this.widgetStore.forEach(w => {
-                if (w.id === 'w_default_2' && !w.html.includes('69d1eb56ee81d8282b3ec4fb.png')) {
-                    w.html = '<div class="relative min-w-[120px] max-w-[240px] w-full px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] border-2 border-white mx-auto"><div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div><span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center pointer-events-none">6440天</span><div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div></div>';
+                if (w.id === 'w_default_2' && (!w.html.includes('输入文字') || !w.html.includes('rounded-full'))) {
+                    w.name = '白羽翅膀';
+                    w.html = '<div class="relative min-w-[120px] max-w-[200px] w-full px-4 min-h-[44px] h-auto py-2 bg-[#f4f4f4]/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-[inset_0_0_2px_rgba(255,255,255,1),0_2px_10px_rgba(0,0,0,0.03)] border-[1.5px] border-white mx-auto"><div class="absolute -left-[20px] top-1/2 w-[42px] h-[42px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.04));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90 brightness-110"></div><span class="text-[15px] font-bold text-[#111] tracking-widest z-10 text-center pointer-events-none">输入文字</span><div class="absolute -right-[20px] top-1/2 w-[42px] h-[42px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.04));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90 brightness-110"></div></div>';
                 }
             });
             if (!this.activeDesktopWidgets || this.activeDesktopWidgets.length === 0) {
@@ -17696,8 +17716,9 @@ Structure:
                 ];
             } else {
                 this.activeDesktopWidgets.forEach(w => {
-                    if (w.id === 'w_default_2' && !w.html.includes('69d1eb56ee81d8282b3ec4fb.png')) {
-                        w.html = '<div class="relative min-w-[120px] max-w-[240px] w-full px-5 min-h-[40px] h-auto py-2 bg-[#f0f0f0] rounded-[20px] flex items-center justify-center shadow-[inset_0_2px_5px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.05)] border-2 border-white mx-auto"><div class="absolute -left-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div><span class="text-[13px] font-bold text-[#999999] tracking-wider z-10 text-center pointer-events-none">6440天</span><div class="absolute -right-[14px] top-1/2 w-[32px] h-[32px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.06));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-80"></div></div>';
+                    if (w.id === 'w_default_2' && (!w.html.includes('输入文字') || !w.html.includes('rounded-full'))) {
+                        w.name = '白羽翅膀';
+                        w.html = '<div class="relative min-w-[120px] max-w-[200px] w-full px-4 min-h-[44px] h-auto py-2 bg-[#f4f4f4]/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-[inset_0_0_2px_rgba(255,255,255,1),0_2px_10px_rgba(0,0,0,0.03)] border-[1.5px] border-white mx-auto"><div class="absolute -left-[20px] top-1/2 w-[42px] h-[42px] pointer-events-none z-30" style="transform: translateY(-50%); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.04));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90 brightness-110"></div><span class="text-[15px] font-bold text-[#111] tracking-widest z-10 text-center pointer-events-none">输入文字</span><div class="absolute -right-[20px] top-1/2 w-[42px] h-[42px] pointer-events-none z-30" style="transform: translateY(-50%) scaleX(-1); filter: drop-shadow(0 2px 3px rgba(0,0,0,0.04));"><img src="https://pic1.imgdb.cn/item/69d1eb56ee81d8282b3ec4fb.png" class="w-full h-full object-contain grayscale opacity-90 brightness-110"></div></div>';
                     }
                 });
             }
